@@ -6,7 +6,7 @@
  *
  * ## Why this exists
  *
- * Four `prebuild` gates (plans, stripe tiers, authz registry, mission schema)
+ * The `prebuild` freshness gates (plans, authz registry, mission schema)
  * each guard one committed generated file against one canonical upstream
  * source. Until dashboard#1019 they were four near-identical scripts, each
  * invoked in `prebuild` *immediately after its own generator had rewritten the

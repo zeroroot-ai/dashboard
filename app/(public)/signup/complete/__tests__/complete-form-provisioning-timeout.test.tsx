@@ -18,32 +18,14 @@
  * failure or reset. A genuine hard failure (INTERNAL_ERROR) still returns to
  * the form with a toast.
  *
- * Uses the card-free profile (billingEnabled=false): no Stripe, so the submit
- * goes straight to completeSignup, which is where the wait runs.
+ * The submit goes straight to completeSignup, which is where the wait runs.
+ * The last block covers the external signup step (dashboard#226).
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
-
-// ---------------------------------------------------------------------------
-// Stripe mocks — the card-free path never touches them, but the module
-// imports must resolve.
-// ---------------------------------------------------------------------------
-
-vi.mock('@stripe/stripe-js', () => ({
-  loadStripe: vi.fn().mockResolvedValue(null),
-}));
-
-vi.mock('@stripe/react-stripe-js', () => ({
-  Elements: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  PaymentElement: () => (
-    <div data-testid="stripe-payment-element">PaymentElement</div>
-  ),
-  useStripe: () => null,
-  useElements: () => null,
-}));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -63,13 +45,11 @@ vi.mock('next/navigation', () => ({
 // Server-action mocks — the subject of these tests.
 // ---------------------------------------------------------------------------
 
-const { mockCompleteSignup, mockStartSignupPayment } = vi.hoisted(() => ({
+const { mockCompleteSignup } = vi.hoisted(() => ({
   mockCompleteSignup: vi.fn(),
-  mockStartSignupPayment: vi.fn(),
 }));
 vi.mock('@/app/actions/signup', () => ({
   completeSignup: mockCompleteSignup,
-  startSignupPayment: mockStartSignupPayment,
   signupAction: vi.fn(),
 }));
 
@@ -77,10 +57,6 @@ vi.mock('@/app/actions/signup', () => ({
 const { mockToastError } = vi.hoisted(() => ({ mockToastError: vi.fn() }));
 vi.mock('sonner', () => ({
   toast: { error: mockToastError, success: vi.fn() },
-}));
-
-vi.mock('@/src/lib/billing/confirm-card', () => ({
-  confirmCardSetup: vi.fn(),
 }));
 
 vi.mock('@/src/lib/server-action-skew', () => ({
@@ -94,7 +70,7 @@ import { PROVISIONING_TIMEOUT_MESSAGE } from '../../types';
 
 const ATTEMPT = 'aaaaaaaa-0000-0000-0000-0000000000d1';
 
-/** Card-free (self-hosted / kind autoconfirm) props: no Stripe. */
+/** Props with no external signup step configured. */
 const CARD_FREE_PROPS = {
   verified: {
     attemptId: ATTEMPT,
@@ -103,8 +79,17 @@ const CARD_FREE_PROPS = {
     tier: 'team',
   },
   passwordPolicy: DEFAULT_PASSWORD_POLICY,
-  publishableKey: '',
-  billingEnabled: false,
+  stepText: null,
+};
+
+/** The step texts. The values are test fixtures, not product text. */
+const STEP_TEXT = {
+  title: 'step-title',
+  text: 'step-text',
+  buttonLabel: 'step-button',
+  waitingText: 'step-waiting',
+  failureText: 'step-failure',
+  retryLabel: 'step-retry',
 };
 
 /** Fill the password pair and submit. */
@@ -136,7 +121,6 @@ describe('CompleteSignupForm field labels (dashboard#77)', () => {
 describe('CompleteSignupForm PROVISIONING_TIMEOUT handling (dashboard#962)', () => {
   beforeEach(() => {
     mockCompleteSignup.mockReset();
-    mockStartSignupPayment.mockReset();
     mockToastError.mockClear();
     // The ProvisioningPanel polls /api/signup/progress/:id; serve the
     // terminal timeout record the server action wrote before returning.
@@ -159,11 +143,6 @@ describe('CompleteSignupForm PROVISIONING_TIMEOUT handling (dashboard#962)', () 
   });
   afterEach(() => {
     vi.unstubAllGlobals();
-  });
-
-  it('never asks the billing actions to run on the card-free profile', () => {
-    render(<CompleteSignupForm {...CARD_FREE_PROPS} />);
-    expect(mockStartSignupPayment).not.toHaveBeenCalled();
   });
 
   // Generous timeout: the panel's real 1s poll interval has to tick at least
@@ -223,5 +202,28 @@ describe('CompleteSignupForm PROVISIONING_TIMEOUT handling (dashboard#962)', () 
     expect(
       screen.getByRole('button', { name: /create account/i }),
     ).toBeInTheDocument();
+  });
+});
+
+describe('CompleteSignupForm external signup step (dashboard#226)', () => {
+  beforeEach(() => {
+    mockCompleteSignup.mockReset();
+  });
+
+  it('shows the step texts from config and links the button to the step route', async () => {
+    mockCompleteSignup.mockResolvedValue({
+      ok: true,
+      phase: 'external_step',
+      attemptId: ATTEMPT,
+    });
+    const user = userEvent.setup();
+    render(<CompleteSignupForm {...CARD_FREE_PROPS} stepText={STEP_TEXT} />);
+
+    await fillAndSubmit(user);
+
+    await waitFor(() => expect(screen.getByText('step-title')).toBeInTheDocument());
+    expect(screen.getByText('step-text')).toBeInTheDocument();
+    const button = screen.getByRole('link', { name: 'step-button' });
+    expect(button).toHaveAttribute('href', '/signup/step/start');
   });
 });

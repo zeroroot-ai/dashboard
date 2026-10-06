@@ -5,31 +5,31 @@
  * deployment-profile.ts — single source of truth for deployment posture.
  *
  * Open-core seam model (ADR-0074, dashboard#920/#921): the dashboard
- * can run as a self-hosted install (card-free, no marketing site, optional
- * open registration) or as the ZeroRoot SaaS offering (billing wired, card-
- * first signup, marketing host). Three env knobs govern the split:
+ * can run as a self-hosted install (no marketing site, optional open
+ * registration) or as the ZeroRoot SaaS offering (marketing host, account
+ * link, external signup step). These env knobs govern the split:
  *
  *   SIGNUP_SELF_SERVE              — set by the SaaS gitops overlay; absent =
  *                                    self-hosted (no self-serve signup path).
- *   DASHBOARD_BILLING_PAID_TIERS_ENABLED — "true"|"1" when the Stripe billing
- *                                    backend is wired (SaaS only).
  *   WWW_URL                        — full origin of the marketing host, e.g.
  *                                    https://www.zeroroot.ai. Absent on self-
  *                                    hosted (no marketing surface).
+ *   DASHBOARD_ACCOUNT_URL and DASHBOARD_ACCOUNT_LINK_LABEL
+ *                                  — the account link of the settings area.
+ *   DASHBOARD_SIGNUP_STEP_*        — the texts of the external signup step.
  *
- * THIS MODULE is the SOLE reader of those three knobs. All other surfaces read
- * the resolved `DeploymentProfile` object — never raw `process.env.*` for these
- * vars. That single-reader invariant is what makes "self-hosted can never show
- * a card" and "SaaS can never silently run unbilled" enforceable by inspection
- * rather than convention.
+ * The dashboard holds no billing code (ADR-0060, D54). A private component
+ * connects through two neutral points: the account URL, and the signup step.
+ * The daemon owns the step URL and returns it from Signup (gibson#895). The
+ * dashboard owns only the texts, and the source holds no default for them.
  *
- * Fail-closed: an incoherent combination (billing UI enabled while the platform
- * is not configured to require entitlements) throws a loud, descriptive error
- * rather than rendering a half-state. The check is deliberately conservative:
- * we require that if `billingEnabled` is true, `selfServeSignup` must also be
- * true (a billing-on install with no self-serve signup gate makes no sense —
- * users can never pay to sign up) and `marketingUrl` must be non-null (a
- * billing-on install with no marketing host is likely misconfigured).
+ * THIS MODULE is the SOLE reader of those knobs. All other surfaces read the
+ * resolved `DeploymentProfile` object — never raw `process.env.*` for these
+ * vars.
+ *
+ * Fail-closed: an incoherent combination (a URL with no label, or some step
+ * texts with others missing) throws a loud, descriptive error rather than
+ * rendering a half-state.
  *
  * Resolved at RUNTIME (no NEXT_PUBLIC_* mirror; `import 'server-only'` enforces
  * the server-only boundary). The result is deploy-time-only — no request input
@@ -39,10 +39,10 @@
  *
  *   import { getDeploymentProfile } from '@/src/lib/deployment-profile';
  *   const profile = getDeploymentProfile();
- *   if (profile.billingEnabled) { ... }
+ *   if (profile.selfServeSignup) { ... }
  *
  * Never call in a Client Component. Pass resolved fields as props from the
- * nearest server boundary, exactly as billingEnabled() was used before.
+ * nearest server boundary.
  */
 
 import 'server-only';
@@ -72,17 +72,6 @@ interface DeploymentProfile {
   selfServeSignup: boolean;
 
   /**
-   * True when the dashboard is wired to a Stripe-backed billing backend
-   * (the hosted SaaS offering). False on self-hosted / on-prem (the default).
-   *
-   * When false: no Stripe checkout, no billing management UI, no upgrade CTAs.
-   * Plan and entitlement display is not gated — that always shows.
-   *
-   * Derived from `DASHBOARD_BILLING_PAID_TIERS_ENABLED` ("true"|"1" = true).
-   */
-  billingEnabled: boolean;
-
-  /**
    * Full origin of the marketing host (e.g. `https://www.zeroroot.ai`), or
    * null on self-hosted where there is no marketing surface.
    *
@@ -107,7 +96,51 @@ interface DeploymentProfile {
    * shares so the two cannot disagree.
    */
   docsUrl: string;
+
+  /**
+   * The account link of the settings area, or null when no account URL is
+   * set. Only the tenant Owner sees it. The service behind the URL checks the
+   * role again, so the hidden link is a convenience, not the control.
+   *
+   * Derived from `DASHBOARD_ACCOUNT_URL` and `DASHBOARD_ACCOUNT_LINK_LABEL`.
+   */
+  accountLink: AccountLink | null;
+
+  /**
+   * The texts of the external signup step, or null when none is set. The
+   * daemon decides whether a signup has a step. When it returns one and these
+   * texts are null, the signup fails with an operator-facing log line.
+   *
+   * Derived from the six `DASHBOARD_SIGNUP_STEP_*` variables.
+   */
+  signupStepText: SignupStepText | null;
 }
+
+/** The account link: a URL and the label that the settings area shows. */
+export interface AccountLink {
+  url: string;
+  label: string;
+}
+
+/** The texts of the external signup step. All of them come from config. */
+export interface SignupStepText {
+  title: string;
+  text: string;
+  buttonLabel: string;
+  waitingText: string;
+  failureText: string;
+  retryLabel: string;
+}
+
+/** Env name of each signup step text, for the error message. */
+const SIGNUP_STEP_TEXT_ENV: Record<keyof SignupStepText, string> = {
+  title: 'DASHBOARD_SIGNUP_STEP_TITLE',
+  text: 'DASHBOARD_SIGNUP_STEP_TEXT',
+  buttonLabel: 'DASHBOARD_SIGNUP_STEP_BUTTON_LABEL',
+  waitingText: 'DASHBOARD_SIGNUP_STEP_WAITING_TEXT',
+  failureText: 'DASHBOARD_SIGNUP_STEP_FAILURE_TEXT',
+  retryLabel: 'DASHBOARD_SIGNUP_STEP_RETRY_LABEL',
+};
 
 // ---------------------------------------------------------------------------
 // Incoherence detection
@@ -132,26 +165,13 @@ export class IncoherentDeploymentProfileError extends Error {
 // ---------------------------------------------------------------------------
 
 /**
- * Resolve the deployment posture from the three seam env knobs.
+ * Resolve the deployment posture from the seam env knobs.
  *
  * Call once at the server boundary; pass the resulting object down as props
  * rather than calling this multiple times in a render tree.
  *
- * Throws `IncoherentDeploymentProfileError` for invalid knob combinations.
- * Valid combinations:
- *
- *   Self-hosted (OSS default):
- *     SIGNUP_SELF_SERVE unset, DASHBOARD_BILLING_PAID_TIERS_ENABLED absent/false,
- *     WWW_URL unset → { selfServeSignup: false, billingEnabled: false, marketingUrl: null }
- *
- *   Self-hosted with open registration:
- *     SIGNUP_SELF_SERVE=true, DASHBOARD_BILLING_PAID_TIERS_ENABLED absent/false,
- *     WWW_URL unset → { selfServeSignup: true, billingEnabled: false, marketingUrl: null }
- *
- *   SaaS:
- *     SIGNUP_SELF_SERVE=true, DASHBOARD_BILLING_PAID_TIERS_ENABLED=true,
- *     WWW_URL=https://www.zeroroot.ai
- *     → { selfServeSignup: true, billingEnabled: true, marketingUrl: 'https://www.zeroroot.ai' }
+ * Throws `IncoherentDeploymentProfileError` for invalid knob combinations:
+ * a URL with no label, a label with no URL, or a partial set of step texts.
  *
  * @param source - env override; defaults to `process.env`. Tests inject their
  *   own records here so they do not mutate the real process environment.
@@ -161,37 +181,46 @@ export function getDeploymentProfile(
 ): DeploymentProfile {
   const selfServeSignup = !!(source['SIGNUP_SELF_SERVE']);
 
-  const billingRaw = source['DASHBOARD_BILLING_PAID_TIERS_ENABLED'];
-  const billingEnabled = billingRaw === 'true' || billingRaw === '1';
-
   const wwwRaw = source['WWW_URL'];
   const marketingUrl = wwwRaw ? wwwRaw.replace(/\/$/, '') : null;
 
-  // ---- Incoherence checks ----
-
-  // billing-on without self-serve signup: a pay-to-sign-up flow requires an
-  // accessible signup gate. A billing-on + no-signup install has no way to
-  // onboard new paying users — it is almost certainly a misconfiguration.
-  if (billingEnabled && !selfServeSignup) {
+  // Dotted reads on purpose: check-env-declared-is-read counts `env.X` as the
+  // reader of each declared name.
+  const env = source;
+  const accountUrl = (env.DASHBOARD_ACCOUNT_URL ?? '').trim();
+  const accountLabel = (env.DASHBOARD_ACCOUNT_LINK_LABEL ?? '').trim();
+  if ((accountUrl === '') !== (accountLabel === '')) {
     throw new IncoherentDeploymentProfileError(
-      'DASHBOARD_BILLING_PAID_TIERS_ENABLED is true but SIGNUP_SELF_SERVE is unset.\n' +
-        'A billing-enabled install requires an accessible signup path.\n' +
-        'Fix: set SIGNUP_SELF_SERVE=true in the SaaS overlay, or disable billing ' +
-        '(unset DASHBOARD_BILLING_PAID_TIERS_ENABLED) for a self-hosted install.',
+      'DASHBOARD_ACCOUNT_URL and DASHBOARD_ACCOUNT_LINK_LABEL must be set together.\n' +
+        'Fix: set both for an install with an account service, or neither.',
     );
   }
+  const accountLink = accountUrl ? { url: accountUrl, label: accountLabel } : null;
 
-  // billing-on without a marketing URL: the SaaS billing flow redirects users
-  // to the marketing pricing page for plan selection. Without WWW_URL, the
-  // redirect target is unknown and the flow is broken.
-  if (billingEnabled && !marketingUrl) {
+  const stepText: SignupStepText = {
+    title: (env.DASHBOARD_SIGNUP_STEP_TITLE ?? '').trim(),
+    text: (env.DASHBOARD_SIGNUP_STEP_TEXT ?? '').trim(),
+    buttonLabel: (env.DASHBOARD_SIGNUP_STEP_BUTTON_LABEL ?? '').trim(),
+    waitingText: (env.DASHBOARD_SIGNUP_STEP_WAITING_TEXT ?? '').trim(),
+    failureText: (env.DASHBOARD_SIGNUP_STEP_FAILURE_TEXT ?? '').trim(),
+    retryLabel: (env.DASHBOARD_SIGNUP_STEP_RETRY_LABEL ?? '').trim(),
+  };
+  const stepKeys = Object.keys(stepText) as Array<keyof SignupStepText>;
+  const missing = stepKeys.filter((key) => stepText[key] === '');
+  if (missing.length > 0 && missing.length < stepKeys.length) {
     throw new IncoherentDeploymentProfileError(
-      'DASHBOARD_BILLING_PAID_TIERS_ENABLED is true but WWW_URL is unset.\n' +
-        'The SaaS billing flow requires a marketing host for plan selection redirects.\n' +
-        'Fix: set WWW_URL=https://www.your-marketing-host.example in the SaaS overlay, ' +
-        'or disable billing (unset DASHBOARD_BILLING_PAID_TIERS_ENABLED) for a self-hosted install.',
+      `The signup step texts are set in part. Missing: ${missing
+        .map((key) => SIGNUP_STEP_TEXT_ENV[key])
+        .join(', ')}.\n` + 'Fix: set all six DASHBOARD_SIGNUP_STEP_* texts, or none.',
     );
   }
+  const signupStepText = missing.length === 0 ? stepText : null;
 
-  return { selfServeSignup, billingEnabled, marketingUrl, docsUrl: resolveDocsOrigin(source) };
+  return {
+    selfServeSignup,
+    marketingUrl,
+    docsUrl: resolveDocsOrigin(source),
+    accountLink,
+    signupStepText,
+  };
 }

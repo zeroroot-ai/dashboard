@@ -53,7 +53,8 @@ const DOCS = "https://docs.zeroroot.ai";
 function profile(marketingUrl: string | null) {
   return {
     selfServeSignup: marketingUrl !== null,
-    billingEnabled: marketingUrl !== null,
+    accountLink: null,
+    signupStepText: null,
     marketingUrl,
     docsUrl: DOCS,
   };

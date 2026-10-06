@@ -18,6 +18,18 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard/pages/settings/account",
 }));
 
+// The viewer's role in the active tenant drives the account link.
+const tenant = { id: "acme", role: "member" };
+vi.mock("@/src/lib/auth/tenant", () => ({
+  useTenantId: () => tenant.id,
+}));
+vi.mock("@/src/lib/tenant-context", () => ({
+  useTenantContext: () => ({ rolesByTenant: { [tenant.id]: tenant.role } }),
+}));
+
+/** A test fixture, not product text. */
+const ACCOUNT_LINK = { url: "https://account.example.test/portal", label: "account-label" };
+
 import { SidebarNav } from "../sidebar-nav";
 
 describe("settings SidebarNav, member-management IA (#609)", () => {
@@ -28,7 +40,7 @@ describe("settings SidebarNav, member-management IA (#609)", () => {
     allowByMethod["/gibson.secrets.v1.SecretsService/GetBrokerConfig"] = true;
     allowByMethod["/gibson.tenant.v1.GrantsService/ListActiveGrants"] = true;
 
-    render(<SidebarNav />);
+    render(<SidebarNav accountLink={null} />);
 
     expect(screen.queryByRole("link", { name: /members/i })).toBeNull();
     // The remaining admin entries still render and are gated on their real RPC.
@@ -42,9 +54,34 @@ describe("settings SidebarNav, member-management IA (#609)", () => {
     allowByMethod["/gibson.secrets.v1.SecretsService/GetBrokerConfig"] = false;
     allowByMethod["/gibson.tenant.v1.GrantsService/ListActiveGrants"] = false;
 
-    render(<SidebarNav />);
+    render(<SidebarNav accountLink={null} />);
 
     expect(screen.queryByRole("link", { name: /secret broker/i })).toBeNull();
     expect(screen.queryByRole("link", { name: /permissions/i })).toBeNull();
+  });
+});
+
+describe("settings SidebarNav, account link (dashboard#226)", () => {
+  it("shows the account link from config to the tenant Owner", () => {
+    tenant.role = "owner";
+    render(<SidebarNav accountLink={ACCOUNT_LINK} />);
+    const link = screen.getByRole("link", { name: /account-label/ });
+    expect(link).toHaveAttribute("href", ACCOUNT_LINK.url);
+  });
+
+  it("hides the account link from every other role", () => {
+    for (const role of ["admin", "member", "viewer"]) {
+      tenant.role = role;
+      const { unmount } = render(<SidebarNav accountLink={ACCOUNT_LINK} />);
+      expect(screen.queryByRole("link", { name: /account-label/ })).toBeNull();
+      unmount();
+    }
+  });
+
+  it("shows no account link and no Billing entry with no account URL", () => {
+    tenant.role = "owner";
+    render(<SidebarNav accountLink={null} />);
+    expect(screen.queryByRole("link", { name: /account-label/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /billing/i })).toBeNull();
   });
 });

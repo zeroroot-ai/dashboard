@@ -89,9 +89,9 @@ export async function register() {
   const { validateEnvConfig } = await import('@/src/lib/config');
   validateEnvConfig();
 
-  // Billing configuration validation: throws if DASHBOARD_BILLING_PAID_TIERS_ENABLED=true
-  // and the Stripe key mode doesn't match the environment (test key in prod, live key in dev).
-  // See spec stripe-billing-integration R8.1, R8.2.
-  const { validateBillingConfig } = await import('@/src/lib/billing/stripe');
-  validateBillingConfig();
+  // Deployment-profile validation: throws on an incoherent seam config (an
+  // account URL with no label, or a partial set of signup step texts), so the
+  // pod fails at boot rather than on the first page that reads it.
+  const { getDeploymentProfile } = await import('@/src/lib/deployment-profile');
+  getDeploymentProfile();
 }

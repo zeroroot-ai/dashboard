@@ -45,12 +45,11 @@ const GUARDS = [
   "check-api-route-csrf.mjs",
   "check-client-mutation-uses-apifetch.mjs",
   "check-proto-bindings-fresh.mjs",
-  // The four single-artifact freshness gates (dashboard#1019). They shared the
+  // The single-artifact freshness gates (dashboard#1019). They shared the
   // "generator runs immediately before its own checker" defect, which made all
-  // four incapable of failing; their self-tests exist to keep that from
+  // of them incapable of failing; their self-tests exist to keep that from
   // recurring silently.
   "check-plans-fresh.mjs",
-  "check-stripe-tiers-fresh.mjs",
   "check-authz-registry-fresh.mjs",
   "check-mission-schema-fresh.mjs",
   // The templates drift gate (dashboard#1156). It guards the vendored ADK

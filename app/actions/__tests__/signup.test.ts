@@ -2,24 +2,24 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Unit tests for signupAction / startSignupPayment / completeSignup.
+ * Unit tests for signupAction / completeSignup / readSignupStepState /
+ * finishSignupAfterStep.
  *
  * The property under test throughout is ORDERING. Self-serve signup is split
- * across two screens so that nothing persistent, billable or tenant-visible
- * exists for an email address before somebody has proven they can receive mail
- * at it:
+ * across two screens so that nothing persistent or tenant-visible exists for
+ * an email address before somebody has proven they can receive mail at it:
  *
  *   signupAction        — asks the daemon to send a link. Creates NOTHING else.
- *   startSignupPayment  — first billing call, and it needs the redeemed-session
- *                         cookie, so it cannot run before the link is opened.
- *   completeSignup      — creates the account, again only with that cookie.
+ *   completeSignup      — creates the account, only with the redeemed-session
+ *                         cookie. With an external signup step configured
+ *                         daemon-side (gibson#895), it hands the browser to
+ *                         the step instead of waiting for the workspace.
  *
- * The regression these guard against is the previous shape, which created a
- * Stripe customer and a SetupIntent in step one, from an anonymous form post.
+ * The dashboard creates no billing object at any point (dashboard#226).
  *
  * All external dependencies (SignupService RPC wrappers, daemon provisioning
- * status, rate-limit, progress-store, billing, next/headers) are mocked so the
- * tests run without a cluster.
+ * status, rate-limit, progress-store, next/headers) are mocked so the tests
+ * run without a cluster.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -55,20 +55,20 @@ vi.mock('next/headers', () => ({
   })),
 }));
 
-// The four SignupService RPC wrappers.
+// The SignupService RPC wrappers.
 const {
   mockRequestSignupVerification,
-  mockAttachSignupCustomer,
   mockCompleteSignupOwner,
+  mockGetSignupStep,
 } = vi.hoisted(() => ({
   mockRequestSignupVerification: vi.fn(),
-  mockAttachSignupCustomer: vi.fn(),
   mockCompleteSignupOwner: vi.fn(),
+  mockGetSignupStep: vi.fn(),
 }));
 vi.mock('@/src/lib/signup/owner-provisioning', () => ({
   requestSignupVerification: mockRequestSignupVerification,
-  attachSignupCustomer: mockAttachSignupCustomer,
   completeSignupOwner: mockCompleteSignupOwner,
+  getSignupStep: mockGetSignupStep,
 }));
 
 // Mock rate-limit to always allow.
@@ -93,28 +93,6 @@ vi.mock('@/src/lib/gibson-client/provisioning', () => ({
   getTenantProvisioningStatus: mockGetTenantProvisioningStatus,
 }));
 
-const {
-  mockFindOrCreateSignupCustomer,
-  mockCreateSetupIntent,
-  mockCreateTrialingSubscription,
-  mockFinalizeSignupCustomer,
-  mockVerifySignupCustomer,
-} = vi.hoisted(() => ({
-  mockFindOrCreateSignupCustomer: vi.fn().mockResolvedValue('cus_1'),
-  mockCreateSetupIntent: vi.fn().mockResolvedValue({ client_secret: 'seti_secret_123' }),
-  mockCreateTrialingSubscription: vi.fn().mockResolvedValue({ id: 'sub_1', status: 'trialing' }),
-  mockFinalizeSignupCustomer: vi.fn().mockResolvedValue(undefined),
-  mockVerifySignupCustomer: vi.fn().mockResolvedValue(true),
-}));
-vi.mock('@/src/lib/billing/stripe', () => ({
-  findOrCreateSignupCustomer: mockFindOrCreateSignupCustomer,
-  createSetupIntent: mockCreateSetupIntent,
-  createTrialingSubscription: mockCreateTrialingSubscription,
-  finalizeSignupCustomer: mockFinalizeSignupCustomer,
-  verifySignupCustomer: mockVerifySignupCustomer,
-  priceIdForTier: vi.fn(async () => 'price_team_123'),
-}));
-
 // Breached-password gate. Mocked so the suite never reaches out to HIBP; the
 // gate's own policy (refuse / allow / fail-open) is covered in
 // src/lib/auth/__tests__/breached-password-gate.test.ts. Defaults to "allowed"
@@ -127,7 +105,12 @@ vi.mock('@/src/lib/auth/breached-password-gate', () => ({
 }));
 
 // After mocks are set up, import the subject.
-import { signupAction, startSignupPayment, completeSignup } from '../signup';
+import {
+  signupAction,
+  completeSignup,
+  readSignupStepState,
+  finishSignupAfterStep,
+} from '../signup';
 import { getTenantProvisioningStatus } from '@/src/lib/gibson-client/provisioning';
 import {
   SIGNUP_VERIFIED_COOKIE,
@@ -157,8 +140,8 @@ const STATUS_NOT_FOUND: TenantProvisioningStatus = {
   zitadelOrgReady: false,
 };
 
-// There is no zitadelOrgSlug / stripeCustomerId / billingActive to seed here:
-// the daemon redacts all three for the unauthenticated signup-poller caller
+// There is no zitadelOrgSlug to seed here: the daemon redacts it for the
+// unauthenticated signup-poller caller
 // (gibson#1230), so TenantProvisioningStatus does not carry them at all
 // (dashboard#1016). zitadelOrgReady is the readiness signal the poller reads.
 const STATUS_READY: TenantProvisioningStatus = {
@@ -214,31 +197,47 @@ function resetMocks() {
   mockHeaderBag.clear();
   mockHeaderBag.set('x-forwarded-for', '203.0.113.7');
   mockRequestSignupVerification.mockReset().mockResolvedValue(undefined);
-  mockAttachSignupCustomer.mockReset().mockResolvedValue(undefined);
-  mockCompleteSignupOwner
-    .mockReset()
-    .mockResolvedValue({ tenantId: 'test-workspace', ownerUserId: 'zid-1' });
+  mockCompleteSignupOwner.mockReset().mockResolvedValue({
+    tenantId: 'test-workspace',
+    ownerUserId: 'zid-1',
+    stepUrl: '',
+    stepToken: '',
+  });
+  mockGetSignupStep.mockReset().mockResolvedValue('none');
   mockGetTenantProvisioningStatus.mockReset().mockResolvedValue(STATUS_NOT_FOUND);
-  mockFindOrCreateSignupCustomer.mockClear().mockResolvedValue('cus_1');
-  mockCreateSetupIntent.mockClear().mockResolvedValue({ client_secret: 'seti_secret_123' });
-  mockCreateTrialingSubscription.mockClear().mockResolvedValue({ id: 'sub_1', status: 'trialing' });
-  mockFinalizeSignupCustomer.mockClear();
-  mockVerifySignupCustomer.mockClear().mockResolvedValue(true);
   mockAssertPasswordNotBreached.mockReset().mockResolvedValue({ allowed: true });
 }
 
+/** The six step texts. The values are test fixtures, not product text. */
+const STEP_TEXT_ENV: Record<string, string> = {
+  DASHBOARD_SIGNUP_STEP_TITLE: 'step-title',
+  DASHBOARD_SIGNUP_STEP_TEXT: 'step-text',
+  DASHBOARD_SIGNUP_STEP_BUTTON_LABEL: 'step-button',
+  DASHBOARD_SIGNUP_STEP_WAITING_TEXT: 'step-waiting',
+  DASHBOARD_SIGNUP_STEP_FAILURE_TEXT: 'step-failure',
+  DASHBOARD_SIGNUP_STEP_RETRY_LABEL: 'step-retry',
+};
+
 function enableSaaS() {
-  // dashboard#921: billing-on requires the full SaaS knob set so the
-  // deployment-profile resolver does not reject the combination as incoherent.
-  process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED = 'true';
   process.env.SIGNUP_SELF_SERVE = 'true';
   process.env.WWW_URL = 'https://www.zeroroot.ai';
+  Object.assign(process.env, STEP_TEXT_ENV);
 }
 
 function disableSaaS() {
-  delete process.env.DASHBOARD_BILLING_PAID_TIERS_ENABLED;
   delete process.env.SIGNUP_SELF_SERVE;
   delete process.env.WWW_URL;
+  for (const key of Object.keys(STEP_TEXT_ENV)) delete process.env[key];
+}
+
+/** The daemon holds the tenant for an external step (gibson#895). */
+function withStep() {
+  mockCompleteSignupOwner.mockResolvedValue({
+    tenantId: 'test-workspace',
+    ownerUserId: 'zid-1',
+    stepUrl: 'https://billing.example.test/signup-step',
+    stepToken: 'opaque-token',
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -269,13 +268,8 @@ describe('signupAction', () => {
       }),
     );
 
-    // This is the regression. An anonymous form post used to leave a Stripe
-    // customer and a SetupIntent behind for an address that might belong to
-    // someone else entirely.
-    expect(mockFindOrCreateSignupCustomer).not.toHaveBeenCalled();
-    expect(mockCreateSetupIntent).not.toHaveBeenCalled();
+    // No account exists for an address nobody has proven they control.
     expect(mockCompleteSignupOwner).not.toHaveBeenCalled();
-    expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
   });
 
   it('never sends a password with the verification request', async () => {
@@ -304,46 +298,6 @@ describe('signupAction', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Billing setup: gated on the redeemed session
-// ---------------------------------------------------------------------------
-
-describe('startSignupPayment', () => {
-  beforeEach(() => {
-    resetMocks();
-    enableSaaS();
-  });
-  afterEach(disableSaaS);
-
-  it('refuses without a redeemed-session cookie, and creates no billing object', async () => {
-    const result = await startSignupPayment();
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.code).toBe('VERIFICATION_INVALID');
-    expect(mockFindOrCreateSignupCustomer).not.toHaveBeenCalled();
-    expect(mockCreateSetupIntent).not.toHaveBeenCalled();
-  });
-
-  it('creates the customer + SetupIntent and pins the customer to the session', async () => {
-    seedVerifiedSession();
-    const result = await startSignupPayment();
-
-    expect(result.ok).toBe(true);
-    if (result.ok && 'phase' in result && result.phase === 'card') {
-      expect(result.cardClientSecret).toBe('seti_secret_123');
-    }
-    expect(mockFindOrCreateSignupCustomer).toHaveBeenCalled();
-    expect(mockCreateSetupIntent).toHaveBeenCalled();
-    // Pinned daemon-side BEFORE the card form is handed to the browser, so the
-    // completion call never carries a customer id the daemon has to trust.
-    expect(mockAttachSignupCustomer).toHaveBeenCalledWith(
-      expect.objectContaining({
-        verifiedSessionToken: 'sess-1',
-        stripeCustomerId: 'cus_1',
-      }),
-    );
-  });
-});
-
-// ---------------------------------------------------------------------------
 // Completion: also gated on the redeemed session
 // ---------------------------------------------------------------------------
 
@@ -361,13 +315,12 @@ describe('completeSignup', () => {
     expect(mockCompleteSignupOwner).not.toHaveBeenCalled();
   });
 
-  it('creates the owner, then the subscription, and spends the session cookie', async () => {
-    seedVerifiedSession({ stripeCustomerId: 'cus_1' });
+  it('creates the owner and spends the session cookie', async () => {
+    seedVerifiedSession();
     vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
 
     const result = await completeSignup({
-      password: 'Passw0rd!Test',
-      paymentMethodId: 'pm_1',
+      password: 'Passw0rd!Test'
     });
 
     expect(result.ok).toBe(true);
@@ -378,7 +331,6 @@ describe('completeSignup', () => {
         password: 'Passw0rd!Test',
       }),
     );
-    expect(mockCreateTrialingSubscription).toHaveBeenCalled();
     // The daemon consumed the session. The cookie stays, marked spent, so the
     // completion page can send a returning browser to /login (dashboard#79).
     // Deleting it here re-rendered the route inside the action's response and
@@ -389,62 +341,41 @@ describe('completeSignup', () => {
   });
 
   it('refuses a second completion on a spent session', async () => {
-    seedVerifiedSession({ stripeCustomerId: 'cus_1' });
+    seedVerifiedSession();
     vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
-    const first = await completeSignup({ password: 'Passw0rd!Test', paymentMethodId: 'pm_1' });
+    const first = await completeSignup({ password: 'Passw0rd!Test' });
     expect(first.ok).toBe(true);
     mockCompleteSignupOwner.mockClear();
 
     // The spent cookie is no capability: the action must not reach the daemon.
-    const second = await completeSignup({ password: 'Passw0rd!Test', paymentMethodId: 'pm_1' });
+    const second = await completeSignup({ password: 'Passw0rd!Test' });
     expect(second.ok).toBe(false);
     expect(second).toMatchObject({ code: 'VERIFICATION_INVALID' });
     expect(mockCompleteSignupOwner).not.toHaveBeenCalled();
   });
 
   it('sends no signup-identifying fields on the completion call', async () => {
-    seedVerifiedSession({ stripeCustomerId: 'cus_1' });
+    seedVerifiedSession();
     vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
 
-    await completeSignup({ password: 'Passw0rd!Test', paymentMethodId: 'pm_1' });
+    await completeSignup({ password: 'Passw0rd!Test' });
 
     const sent = mockCompleteSignupOwner.mock.calls[0]?.[0] as Record<string, unknown>;
-    for (const forbidden of ['ownerEmail', 'workspaceName', 'tier', 'stripeCustomerId']) {
+    for (const forbidden of ['ownerEmail', 'workspaceName', 'tier']) {
       expect(sent).not.toHaveProperty(forbidden);
     }
   });
 
   it('maps a spent or expired session to VERIFICATION_INVALID', async () => {
-    seedVerifiedSession({ stripeCustomerId: 'cus_1' });
+    seedVerifiedSession();
     mockCompleteSignupOwner.mockRejectedValue(
       new ConnectError('no longer valid', Code.PermissionDenied),
     );
     const result = await completeSignup({
-      password: 'Passw0rd!Test',
-      paymentMethodId: 'pm_1',
+      password: 'Passw0rd!Test'
     });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe('VERIFICATION_INVALID');
-    expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
-  });
-
-  it('refuses a session cookie carrying someone else\'s customer, before creating anything', async () => {
-    // The cookie is httpOnly but it is still the browser's to send: an attacker
-    // holding a valid session of their own can swap in another account's
-    // customer id. Stripe says it does not belong to this proven address, so
-    // nothing is created and no card is attached to a stranger's billing.
-    seedVerifiedSession({ stripeCustomerId: 'cus_victim' });
-    mockVerifySignupCustomer.mockResolvedValue(false);
-
-    const result = await completeSignup({
-      password: 'Passw0rd!Test',
-      paymentMethodId: 'pm_1',
-    });
-
-    expect(result.ok).toBe(false);
-    expect(mockVerifySignupCustomer).toHaveBeenCalledWith('cus_victim', 'test@example.com');
-    expect(mockCompleteSignupOwner).not.toHaveBeenCalled();
-    expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
   });
 
   // -------------------------------------------------------------------------
@@ -452,26 +383,23 @@ describe('completeSignup', () => {
   // -------------------------------------------------------------------------
   //
   // The cookie is httpOnly, which stops a script on the page reading it. It
-  // does nothing about the person holding the browser. `tier` rides in this
-  // cookie and the dashboard prices from it, so an unsigned cookie meant the
-  // daemon could provision one plan (it resolves the tier from its own
-  // verification row) while the dashboard billed for another.
+  // does nothing about the person holding the browser. The cookie carries the
+  // tier and, after completion, the step link, so an unsigned cookie could
+  // send the user somewhere else.
 
-  it('refuses a forged cookie outright, and bills nothing', async () => {
-    seedForgedSession({ stripeCustomerId: 'cus_1' });
+  it('refuses a forged cookie outright, and creates nothing', async () => {
+    seedForgedSession();
 
     const result = await completeSignup({
-      password: 'Passw0rd!Test',
-      paymentMethodId: 'pm_1',
+      password: 'Passw0rd!Test'
     });
 
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe('VERIFICATION_INVALID');
     expect(mockCompleteSignupOwner).not.toHaveBeenCalled();
-    expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
   });
 
-  it('a tier downgraded inside a genuine cookie cannot select a cheaper price', async () => {
+  it('a tier changed inside a genuine cookie is refused', async () => {
     // Start from a REAL signed cookie on the dearer plan, then rewrite just the
     // tier to a real, cheaper, valid plan — the exact edit the attack needs.
     // `team` is a live plan id, so this does not pass merely because the forged
@@ -483,7 +411,6 @@ describe('completeSignup', () => {
       email: 'test@example.com',
       workspaceName: 'test-workspace',
       tier: 'org',
-      stripeCustomerId: 'cus_1',
     });
     const lastDot = genuine.lastIndexOf('.');
     const downgraded =
@@ -493,40 +420,25 @@ describe('completeSignup', () => {
     mockCookieStore.store.set(SIGNUP_VERIFIED_COOKIE, downgraded);
 
     const result = await completeSignup({
-      password: 'Passw0rd!Test',
-      paymentMethodId: 'pm_1',
+      password: 'Passw0rd!Test'
     });
 
-    // Refused outright, rather than subscribed at the cheaper price.
+    // Refused outright.
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe('VERIFICATION_INVALID');
-    expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
     expect(mockCompleteSignupOwner).not.toHaveBeenCalled();
   });
 
-  it('subscribes on the tier the daemon put in the signed cookie', async () => {
-    seedVerifiedSession({ stripeCustomerId: 'cus_1' });
-    vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
-
-    await completeSignup({ password: 'Passw0rd!Test', paymentMethodId: 'pm_1' });
-
-    expect(mockCreateTrialingSubscription).toHaveBeenCalledWith(
-      expect.objectContaining({ tier: 'team' }),
-    );
-  });
-
-  it('does not create a subscription when the account could not be created', async () => {
-    seedVerifiedSession({ stripeCustomerId: 'cus_1' });
+  it('maps an existing account to ALREADY_PROVISIONED', async () => {
+    seedVerifiedSession();
     mockCompleteSignupOwner.mockRejectedValue(
       new ConnectError('exists', Code.AlreadyExists),
     );
     const result = await completeSignup({
-      password: 'Passw0rd!Test',
-      paymentMethodId: 'pm_1',
+      password: 'Passw0rd!Test'
     });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe('ALREADY_PROVISIONED');
-    expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
   });
 
   // -------------------------------------------------------------------------
@@ -536,13 +448,12 @@ describe('completeSignup', () => {
   // Same ordering property as the rest of this file: the refusal must land
   // before anything exists, so a rejected password leaves nothing behind.
 
-  it('refuses a breached password BEFORE any account or subscription exists', async () => {
-    seedVerifiedSession({ stripeCustomerId: 'cus_1' });
+  it('refuses a breached password BEFORE any account exists', async () => {
+    seedVerifiedSession();
     mockAssertPasswordNotBreached.mockResolvedValue({ allowed: false, count: 24230577 });
 
     const result = await completeSignup({
-      password: 'Passw0rd!Test',
-      paymentMethodId: 'pm_1',
+      password: 'Passw0rd!Test'
     });
 
     expect(result.ok).toBe(false);
@@ -556,26 +467,14 @@ describe('completeSignup', () => {
 
     // Nothing was created, and nothing needs rolling back.
     expect(mockCompleteSignupOwner).not.toHaveBeenCalled();
-    expect(mockCreateTrialingSubscription).not.toHaveBeenCalled();
-    expect(mockFinalizeSignupCustomer).not.toHaveBeenCalled();
-  });
-
-  it('runs the gate before the customer check, so a breach costs no Stripe call', async () => {
-    seedVerifiedSession({ stripeCustomerId: 'cus_1' });
-    mockAssertPasswordNotBreached.mockResolvedValue({ allowed: false, count: 5 });
-
-    await completeSignup({ password: 'Passw0rd!Test', paymentMethodId: 'pm_1' });
-
-    expect(mockVerifySignupCustomer).not.toHaveBeenCalled();
   });
 
   it('checks the password the user actually submitted', async () => {
-    seedVerifiedSession({ stripeCustomerId: 'cus_1' });
+    seedVerifiedSession();
     vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
 
     await completeSignup({
-      password: 'correct-horse-battery-staple',
-      paymentMethodId: 'pm_1',
+      password: 'correct-horse-battery-staple'
     });
 
     expect(mockAssertPasswordNotBreached).toHaveBeenCalledWith(
@@ -586,12 +485,94 @@ describe('completeSignup', () => {
   });
 
   it('proceeds when the gate allows the password', async () => {
-    seedVerifiedSession({ stripeCustomerId: 'cus_1' });
+    seedVerifiedSession();
     vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
     mockAssertPasswordNotBreached.mockResolvedValue({ allowed: true });
 
-    await completeSignup({ password: 'Passw0rd!Test', paymentMethodId: 'pm_1' });
+    await completeSignup({ password: 'Passw0rd!Test' });
 
     expect(mockCompleteSignupOwner).toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// External signup step (gibson#895, dashboard#226)
+// ---------------------------------------------------------------------------
+
+describe('external signup step', () => {
+  beforeEach(() => {
+    resetMocks();
+    enableSaaS();
+  });
+  afterEach(disableSaaS);
+
+  it('with no step from the daemon, waits for the workspace as before', async () => {
+    seedVerifiedSession();
+    vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
+
+    const result = await completeSignup({ password: 'Passw0rd!Test' });
+
+    expect(result).toMatchObject({ ok: true, redirect: expect.any(String) });
+    const spent = decodeVerifiedSession(mockCookieStore.store.get(SIGNUP_VERIFIED_COOKIE));
+    expect(spent?.stepLink).toBeUndefined();
+  });
+
+  it('with a step, returns the external_step phase and keeps the link with the token', async () => {
+    seedVerifiedSession();
+    withStep();
+
+    const result = await completeSignup({ password: 'Passw0rd!Test' });
+
+    expect(result).toMatchObject({ ok: true, phase: 'external_step', attemptId: ATTEMPT });
+    // It does not wait for the workspace: the tenant waits for the step.
+    expect(mockGetTenantProvisioningStatus).not.toHaveBeenCalled();
+    const spent = decodeVerifiedSession(mockCookieStore.store.get(SIGNUP_VERIFIED_COOKIE));
+    expect(spent?.spent).toBe(true);
+    expect(spent?.tenantSlug).toBe('test-workspace');
+    expect(spent?.stepLink).toBe('https://billing.example.test/signup-step?token=opaque-token');
+  });
+
+  it('with a step and no step texts in config, fails without sending the browser anywhere', async () => {
+    seedVerifiedSession();
+    withStep();
+    for (const key of Object.keys(STEP_TEXT_ENV)) delete process.env[key];
+
+    const result = await completeSignup({ password: 'Passw0rd!Test' });
+
+    expect(result).toMatchObject({ ok: false, code: 'INTERNAL_ERROR' });
+  });
+
+  it('reads the step state of the attempt in the cookie, never of a caller value', async () => {
+    seedVerifiedSession();
+    withStep();
+    await completeSignup({ password: 'Passw0rd!Test' });
+    mockGetSignupStep.mockResolvedValue('waiting');
+
+    await expect(readSignupStepState()).resolves.toBe('waiting');
+    expect(mockGetSignupStep).toHaveBeenCalledWith(ATTEMPT);
+  });
+
+  it('reports none with no completed session', async () => {
+    seedVerifiedSession();
+    await expect(readSignupStepState()).resolves.toBe('none');
+    expect(mockGetSignupStep).not.toHaveBeenCalled();
+  });
+
+  it('after the step, waits for the tenant from the cookie and redirects to login', async () => {
+    seedVerifiedSession();
+    withStep();
+    await completeSignup({ password: 'Passw0rd!Test' });
+    vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
+
+    const result = await finishSignupAfterStep();
+
+    expect(result).toMatchObject({ ok: true, redirect: expect.any(String) });
+    expect(mockGetTenantProvisioningStatus).toHaveBeenCalledWith('test-workspace');
+  });
+
+  it('refuses to finish with no completed session', async () => {
+    seedVerifiedSession();
+    const result = await finishSignupAfterStep();
+    expect(result).toMatchObject({ ok: false, code: 'VERIFICATION_INVALID' });
   });
 });

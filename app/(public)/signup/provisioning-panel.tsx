@@ -77,13 +77,6 @@ const STEP_GROUPS: StepGroup[] = [
     label: "$ allocating tenant namespace",
   },
   {
-    // Card-first signup (dashboard#785): the card is already confirmed by the
-    // time the panel shows; this is the server creating the trialing
-    // subscription before any account/company is provisioned.
-    steps: ["create_billing"],
-    label: "$ starting trial subscription",
-  },
-  {
     steps: ["setup_workspace"],
     label: "$ provisioning control plane",
   },

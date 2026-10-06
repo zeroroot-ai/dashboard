@@ -166,8 +166,8 @@ tenant is required is a **compile error**, not merely a runtime fail-close.
 - `makeClient(svc, getToken, getTenant)` requires `getTenant: () => Promise<TenantId>`,
   so the daemon-call boundary cannot receive an unvalidated tenant.
 - The single documented escape hatch is `unsafeTenantId(value)`, used only by
-  the service-acting transport (`serviceClient`) and Stripe-webhook tenant
-  attribution, neither of which has a cookie/user to validate against. A
+  the service-acting transport (`serviceClient`), which has no cookie or user
+  to validate against. A
   `unsafeTenantId(...)` call in a user-facing route handler is a review smell.
 
 `check-no-stale-tenant-resolution.mjs` is kept: it guards against re-introducing

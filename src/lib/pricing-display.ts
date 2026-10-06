@@ -80,18 +80,9 @@ export const pricingDisplays: readonly PricingTierDisplay[] = plans.map(planToDi
 
 /**
  * selfServeTierIds is the list of plan ids whose signup flow proceeds via
- * self-serve (Stripe checkout) rather than a contact-sales form. The
+ * self-serve signup rather than a contact-sales form. The
  * signup page allow-lists `?plan=` against this set.
  */
 export const selfServeTierIds: readonly string[] = pricingDisplays
   .filter((d) => !d.contactSales)
-  .map((d) => d.id);
-
-/**
- * contactTierIds, plan ids whose signup flow routes to a contact-sales
- * form rather than a Stripe checkout. Used by the billing checkout
- * route to reject contact-only tiers.
- */
-const contactTierIds: readonly string[] = pricingDisplays
-  .filter((d) => d.contactSales)
   .map((d) => d.id);

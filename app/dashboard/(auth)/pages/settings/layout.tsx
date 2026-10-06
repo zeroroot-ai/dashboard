@@ -4,6 +4,7 @@
 import { Metadata } from "next";
 import { generateMeta } from "@/lib/utils";
 
+import { getDeploymentProfile } from "@/src/lib/deployment-profile";
 import { SidebarNav } from "./components/sidebar-nav";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -17,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+  const { accountLink } = getDeploymentProfile();
   return (
     <div className="mx-auto max-w-5xl space-y-4 lg:space-y-6">
       <div className="space-y-0.5">
@@ -27,7 +29,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
       </div>
       <div className="flex flex-col space-y-4 lg:flex-row lg:space-y-0 lg:space-x-4">
         <aside className="lg:w-64">
-          <SidebarNav />
+          <SidebarNav accountLink={accountLink} />
         </aside>
         <div className="flex-1 lg:max-w-2xl">{children}</div>
       </div>

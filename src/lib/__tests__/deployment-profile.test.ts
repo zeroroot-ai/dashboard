@@ -3,15 +3,14 @@
 
 /**
  * Tests for getDeploymentProfile() — the single source of truth for
- * deployment posture (dashboard#921 / PRD dashboard#920 / ADR-0074).
+ * deployment posture (dashboard#921, ADR-0074, dashboard#226).
  *
  * Strategy: inject env via the `source` parameter so tests are isolated
- * from the real process.env and from each other. Mirrors the test pattern
- * used in src/lib/billing/__tests__/billing-enabled.test.ts.
+ * from the real process.env and from each other.
  *
  * Three required behavioral properties:
- *   A) Self-hosted profile (card-free, no marketing, login-only by default).
- *   B) SaaS profile (billing on, marketing URL set, signup open).
+ *   A) Self-hosted profile: no marketing host, no account link, no step text.
+ *   B) SaaS profile: marketing URL, account link and step texts from config.
  *   C) Incoherent combinations fail closed with a loud error.
  */
 
@@ -26,7 +25,7 @@ import {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Minimal env for a fully self-hosted (closed-door, no billing) install. */
+/** Minimal env for a fully self-hosted (closed-door) install. */
 const SELF_HOSTED_CLOSED: Record<string, string> = {};
 
 /** Self-hosted with open registration. */
@@ -34,11 +33,23 @@ const SELF_HOSTED_OPEN: Record<string, string> = {
   SIGNUP_SELF_SERVE: 'true',
 };
 
-/** Full SaaS profile: signup on, billing on, marketing URL set. */
+/** The six step texts. The values are test fixtures, not product text. */
+const STEP_TEXTS: Record<string, string> = {
+  DASHBOARD_SIGNUP_STEP_TITLE: 'step-title',
+  DASHBOARD_SIGNUP_STEP_TEXT: 'step-text',
+  DASHBOARD_SIGNUP_STEP_BUTTON_LABEL: 'step-button',
+  DASHBOARD_SIGNUP_STEP_WAITING_TEXT: 'step-waiting',
+  DASHBOARD_SIGNUP_STEP_FAILURE_TEXT: 'step-failure',
+  DASHBOARD_SIGNUP_STEP_RETRY_LABEL: 'step-retry',
+};
+
+/** Full SaaS profile: signup on, marketing URL, account link, step texts. */
 const SAAS: Record<string, string> = {
   SIGNUP_SELF_SERVE: 'true',
-  DASHBOARD_BILLING_PAID_TIERS_ENABLED: 'true',
   WWW_URL: 'https://www.zeroroot.ai',
+  DASHBOARD_ACCOUNT_URL: 'https://account.example.test/portal',
+  DASHBOARD_ACCOUNT_LINK_LABEL: 'account-label',
+  ...STEP_TEXTS,
 };
 
 // ---------------------------------------------------------------------------
@@ -50,10 +61,11 @@ describe('getDeploymentProfile — self-hosted (A)', () => {
     const profile = getDeploymentProfile(SELF_HOSTED_CLOSED);
     expect(profile).toEqual({
       selfServeSignup: false,
-      billingEnabled: false,
       marketingUrl: null,
       // Never null, in either audience: docs ship self-hosted too.
       docsUrl: 'https://docs.zeroroot.ai',
+      accountLink: null,
+      signupStepText: null,
     });
   });
 
@@ -65,35 +77,26 @@ describe('getDeploymentProfile — self-hosted (A)', () => {
     expect(getDeploymentProfile({ SIGNUP_SELF_SERVE: '' }).selfServeSignup).toBe(false);
   });
 
-  it('A.4: selfServeSignup is true when SIGNUP_SELF_SERVE is set (open registration)', () => {
+  it('A.4: open registration sets selfServeSignup and nothing else', () => {
     const profile = getDeploymentProfile(SELF_HOSTED_OPEN);
     expect(profile.selfServeSignup).toBe(true);
-    expect(profile.billingEnabled).toBe(false);
     expect(profile.marketingUrl).toBeNull();
+    expect(profile.accountLink).toBeNull();
+    expect(profile.signupStepText).toBeNull();
   });
 
-  it('A.5: billingEnabled is false when DASHBOARD_BILLING_PAID_TIERS_ENABLED is absent', () => {
-    expect(getDeploymentProfile({}).billingEnabled).toBe(false);
-  });
-
-  it('A.6: billingEnabled is false for "false"', () => {
-    expect(
-      getDeploymentProfile({ DASHBOARD_BILLING_PAID_TIERS_ENABLED: 'false' }).billingEnabled,
-    ).toBe(false);
-  });
-
-  it('A.7: billingEnabled is false for unrecognised values (fail-closed)', () => {
-    expect(
-      getDeploymentProfile({ DASHBOARD_BILLING_PAID_TIERS_ENABLED: 'yes' }).billingEnabled,
-    ).toBe(false);
-  });
-
-  it('A.8: marketingUrl is null when WWW_URL is absent', () => {
+  it('A.5: marketingUrl is null when WWW_URL is absent', () => {
     expect(getDeploymentProfile({}).marketingUrl).toBeNull();
   });
 
-  it('A.9: marketingUrl is null when WWW_URL is empty', () => {
+  it('A.6: marketingUrl is null when WWW_URL is empty', () => {
     expect(getDeploymentProfile({ WWW_URL: '' }).marketingUrl).toBeNull();
+  });
+
+  it('A.7: the old billing knob changes nothing', () => {
+    const profile = getDeploymentProfile({ DASHBOARD_BILLING_PAID_TIERS_ENABLED: 'true' });
+    expect(profile).not.toHaveProperty('billingEnabled');
+    expect(profile.accountLink).toBeNull();
   });
 });
 
@@ -106,33 +109,26 @@ describe('getDeploymentProfile — SaaS (B)', () => {
     const profile = getDeploymentProfile(SAAS);
     expect(profile).toEqual({
       selfServeSignup: true,
-      billingEnabled: true,
       marketingUrl: 'https://www.zeroroot.ai',
       // A DIFFERENT host from marketingUrl, on purpose: the marketing site
       // serves no /docs and answers 404 for it.
       docsUrl: 'https://docs.zeroroot.ai',
+      accountLink: {
+        url: 'https://account.example.test/portal',
+        label: 'account-label',
+      },
+      signupStepText: {
+        title: 'step-title',
+        text: 'step-text',
+        buttonLabel: 'step-button',
+        waitingText: 'step-waiting',
+        failureText: 'step-failure',
+        retryLabel: 'step-retry',
+      },
     });
   });
 
-  it('B.2: billingEnabled is true for "true"', () => {
-    expect(
-      getDeploymentProfile({
-        ...SAAS,
-        DASHBOARD_BILLING_PAID_TIERS_ENABLED: 'true',
-      }).billingEnabled,
-    ).toBe(true);
-  });
-
-  it('B.3: billingEnabled is true for "1"', () => {
-    expect(
-      getDeploymentProfile({
-        ...SAAS,
-        DASHBOARD_BILLING_PAID_TIERS_ENABLED: '1',
-      }).billingEnabled,
-    ).toBe(true);
-  });
-
-  it('B.4: docsUrl follows DOCS_URL and is never the marketing host', () => {
+  it('B.2: docsUrl follows DOCS_URL and is never the marketing host', () => {
     const profile = getDeploymentProfile({
       ...SAAS,
       DOCS_URL: 'https://docs.staging.zeroroot.ai/',
@@ -141,7 +137,7 @@ describe('getDeploymentProfile — SaaS (B)', () => {
     expect(profile.docsUrl).not.toBe(profile.marketingUrl);
   });
 
-  it('B.5: marketingUrl strips a trailing slash from WWW_URL', () => {
+  it('B.3: marketingUrl strips a trailing slash from WWW_URL', () => {
     const profile = getDeploymentProfile({
       ...SAAS,
       WWW_URL: 'https://www.zeroroot.ai/',
@@ -149,8 +145,17 @@ describe('getDeploymentProfile — SaaS (B)', () => {
     expect(profile.marketingUrl).toBe('https://www.zeroroot.ai');
   });
 
-  it('B.6: selfServeSignup is true in the SaaS profile', () => {
-    expect(getDeploymentProfile(SAAS).selfServeSignup).toBe(true);
+  it('B.4: the account link and the step texts are independent', () => {
+    const onlyLink = getDeploymentProfile({
+      DASHBOARD_ACCOUNT_URL: 'https://account.example.test/',
+      DASHBOARD_ACCOUNT_LINK_LABEL: 'account-label',
+    });
+    expect(onlyLink.accountLink).not.toBeNull();
+    expect(onlyLink.signupStepText).toBeNull();
+
+    const onlyStep = getDeploymentProfile(STEP_TEXTS);
+    expect(onlyStep.accountLink).toBeNull();
+    expect(onlyStep.signupStepText).not.toBeNull();
   });
 });
 
@@ -159,68 +164,31 @@ describe('getDeploymentProfile — SaaS (B)', () => {
 // ---------------------------------------------------------------------------
 
 describe('getDeploymentProfile — incoherent combinations (C)', () => {
-  it('C.1: billing-on without self-serve signup throws IncoherentDeploymentProfileError', () => {
+  it('C.1: an account URL with no label throws and names both knobs', () => {
+    const call = () =>
+      getDeploymentProfile({ DASHBOARD_ACCOUNT_URL: 'https://account.example.test/' });
+    expect(call).toThrow(IncoherentDeploymentProfileError);
+    expect(call).toThrow('DASHBOARD_ACCOUNT_URL');
+    expect(call).toThrow('DASHBOARD_ACCOUNT_LINK_LABEL');
+  });
+
+  it('C.2: a label with no account URL throws', () => {
     expect(() =>
-      getDeploymentProfile({
-        // No SIGNUP_SELF_SERVE
-        DASHBOARD_BILLING_PAID_TIERS_ENABLED: 'true',
-        WWW_URL: 'https://www.zeroroot.ai',
-      }),
+      getDeploymentProfile({ DASHBOARD_ACCOUNT_LINK_LABEL: 'account-label' }),
     ).toThrow(IncoherentDeploymentProfileError);
   });
 
-  it('C.1: billing-on without self-serve signup error names both knobs', () => {
-    expect(() =>
-      getDeploymentProfile({
-        DASHBOARD_BILLING_PAID_TIERS_ENABLED: 'true',
-        WWW_URL: 'https://www.zeroroot.ai',
-      }),
-    ).toThrow('DASHBOARD_BILLING_PAID_TIERS_ENABLED');
+  it('C.3: a partial set of step texts throws and names the missing ones', () => {
+    const partial = { ...STEP_TEXTS };
+    delete partial.DASHBOARD_SIGNUP_STEP_RETRY_LABEL;
+    const call = () => getDeploymentProfile(partial);
+    expect(call).toThrow(IncoherentDeploymentProfileError);
+    expect(call).toThrow('DASHBOARD_SIGNUP_STEP_RETRY_LABEL');
   });
 
-  it('C.1: billing-on without self-serve signup error mentions SIGNUP_SELF_SERVE', () => {
-    expect(() =>
-      getDeploymentProfile({
-        DASHBOARD_BILLING_PAID_TIERS_ENABLED: 'true',
-        WWW_URL: 'https://www.zeroroot.ai',
-      }),
-    ).toThrow('SIGNUP_SELF_SERVE');
-  });
-
-  it('C.2: billing-on without marketing URL throws IncoherentDeploymentProfileError', () => {
-    expect(() =>
-      getDeploymentProfile({
-        SIGNUP_SELF_SERVE: 'true',
-        DASHBOARD_BILLING_PAID_TIERS_ENABLED: 'true',
-        // No WWW_URL
-      }),
-    ).toThrow(IncoherentDeploymentProfileError);
-  });
-
-  it('C.2: billing-on without marketing URL error names WWW_URL', () => {
-    expect(() =>
-      getDeploymentProfile({
-        SIGNUP_SELF_SERVE: 'true',
-        DASHBOARD_BILLING_PAID_TIERS_ENABLED: 'true',
-      }),
-    ).toThrow('WWW_URL');
-  });
-
-  it('C.2: billing-on without marketing URL error names the billing knob', () => {
-    expect(() =>
-      getDeploymentProfile({
-        SIGNUP_SELF_SERVE: 'true',
-        DASHBOARD_BILLING_PAID_TIERS_ENABLED: 'true',
-      }),
-    ).toThrow('DASHBOARD_BILLING_PAID_TIERS_ENABLED');
-  });
-
-  it('C.3: the error name is IncoherentDeploymentProfileError, not a generic Error', () => {
+  it('C.4: the error name is IncoherentDeploymentProfileError, not a generic Error', () => {
     try {
-      getDeploymentProfile({
-        DASHBOARD_BILLING_PAID_TIERS_ENABLED: 'true',
-        WWW_URL: 'https://www.zeroroot.ai',
-      });
+      getDeploymentProfile({ DASHBOARD_ACCOUNT_LINK_LABEL: 'account-label' });
       expect.fail('expected to throw');
     } catch (err) {
       expect(err).toBeInstanceOf(IncoherentDeploymentProfileError);

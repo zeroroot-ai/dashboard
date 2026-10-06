@@ -36,8 +36,8 @@ vi.mock('next/navigation', () => ({ redirect: mockRedirect }));
 vi.mock('@/src/lib/zitadel/password-policy-cache', () => ({
   DEFAULT_PASSWORD_POLICY: { minLength: 12 },
 }));
-vi.mock('@/src/lib/billing/billing-enabled', () => ({
-  billingEnabled: () => false,
+vi.mock('@/src/lib/deployment-profile', () => ({
+  getDeploymentProfile: () => ({ signupStepText: null }),
 }));
 vi.mock('../complete-form', () => ({
   CompleteSignupForm: () => null,
@@ -87,6 +87,18 @@ describe('/signup/complete page', () => {
       encodeVerifiedSession({ ...SESSION, spent: true }),
     );
     expect(await landing()).toBe(POST_SIGNUP_REDIRECT);
+  });
+
+  it('sends a spent session that holds a step link to the step page', async () => {
+    mockCookieStore.store.set(
+      SIGNUP_VERIFIED_COOKIE,
+      encodeVerifiedSession({
+        ...SESSION,
+        spent: true,
+        stepLink: 'https://billing.example.test/step?token=t',
+      }),
+    );
+    expect(await landing()).toBe('/signup/step');
   });
 
   it('sends a browser with no session to the shared failure destination', async () => {

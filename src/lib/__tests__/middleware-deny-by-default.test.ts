@@ -79,7 +79,7 @@ describe('unauthenticated requests', () => {
     '/dashboard/organization/users',
     '/device',
     '/api/missions',
-    '/api/admin/billing/trial-extension',
+    '/api/admin/plugins',
     '/api/debug/recent-errors',
     '/api/test/inject-fault',
   ])('denies %s', async (path) => {

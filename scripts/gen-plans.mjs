@@ -29,7 +29,7 @@
  * Emits:  src/generated/plans.ts
  *
  * The generated file contains strongly-typed Plan / Quotas / Pricing / PlanID
- * definitions + the frozen `plans` constant used by /pricing, BillingContent,
+ * definitions + the frozen `plans` constant used by /pricing, the signup plan display,
  * and tier-checker. This script is the single bridge between the Go operator's
  * source of truth and the dashboard; no other TS file should parse the YAML
  * directly.

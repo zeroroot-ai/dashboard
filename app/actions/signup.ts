@@ -25,7 +25,7 @@
  * longer writes the Tenant CR itself (dashboard#813, ADR-0023 preserved). The
  * dashboard no longer holds a privileged Zitadel signup-bot PAT (dashboard#812
  * / E9). The operator owns the rest: per-tenant Zitadel org + FGA tuples +
- * Langfuse/Stripe/Redis/Neo4j init all happen downstream of the Tenant CR it
+ * Langfuse/Redis/Neo4j init all happen downstream of the Tenant CR it
  * creates. This action stays focused on:
  *   (1) provisioning the founding-owner identity via the daemon RPC (which
  *       enqueues the tenant for the operator to create),
@@ -62,21 +62,12 @@ import {
   type ProvisioningStep,
 } from "@/app/(public)/signup/types";
 import {
-  findOrCreateSignupCustomer,
-  finalizeSignupCustomer,
-  verifySignupCustomer,
-  createSetupIntent,
-  createTrialingSubscription,
-  priceIdForTier,
-  type BillingTier,
-} from "@/src/lib/billing/stripe";
-import { billingEnabled } from "@/src/lib/billing/billing-enabled";
-import { lookupPlan, type PlanID } from "@/src/generated/plans";
-import {
   requestSignupVerification,
-  attachSignupCustomer,
   completeSignupOwner,
+  getSignupStep,
+  type SignupStepStatus,
 } from "@/src/lib/signup/owner-provisioning";
+import { getDeploymentProfile } from "@/src/lib/deployment-profile";
 import { assertPasswordNotBreached } from "@/src/lib/auth/breached-password-gate";
 import { resolveClientIp } from "@/src/lib/signup/client-ip";
 import {
@@ -132,7 +123,7 @@ import { recordSignup } from "@/src/lib/metrics/auth";
  *
  * Chain invariant (same failure class as deploy#1020): every HTTP hop above
  * this wait must exceed the worst-case action duration (~255s = 240s wait +
- * Stripe/owner-provisioning preamble). Envoy's app-vhost catch-all route
+ * owner-provisioning preamble). Envoy's app-vhost catch-all route
  * timeout is 300s (deploy helm/gibson-workloads/files/envoy/envoy.yaml) and
  * the staging NLB TCP idle timeout is a fixed 350s:
  *   NLB 350s > Envoy 300s > action ~255s > TENANT_READY_TIMEOUT_MS 240s.
@@ -264,11 +255,8 @@ export async function signupAction(
 
     // 3. Ask the daemon to email a verification link. THIS IS THE WHOLE STEP.
     //
-    //    No Zitadel user, no Stripe customer, no SetupIntent, no Tenant CR. The
-    //    previous shape created a billing customer and a SetupIntent right here,
-    //    before anyone had shown they could receive mail at the address — which
-    //    meant an anonymous request left a billing object behind for an address
-    //    that might belong to someone else entirely.
+    //    No Zitadel user and no Tenant CR. Nothing exists for an address until
+    //    someone has shown they can receive mail at it.
     await advanceStep(attemptId, "send_verify_email");
     try {
       await requestSignupVerification({
@@ -306,83 +294,9 @@ export async function signupAction(
 }
 
 /**
- * startSignupPayment is the paid path's FIRST billing call, and it cannot run
- * before this point in the flow.
- *
- * It reads the verified-session cookie, which only exists because the emailed
- * link was redeemed. Then, and only then, it creates the Stripe customer and a
- * SetupIntent, and pins the customer to the session daemon-side so the
- * completion call does not have to be trusted for it.
- *
- * On the card-free profile (self-hosted / paid tiers disabled) it is a no-op
- * that reports no client secret; the completion screen renders without a card.
- */
-export async function startSignupPayment(): Promise<SignupActionResult> {
-  const session = await readVerifiedSession();
-  if (!session) {
-    return {
-      ok: false,
-      attemptId: "",
-      code: "VERIFICATION_INVALID",
-      userMessage: "That link is no longer valid. Please start again.",
-    };
-  }
-  if (!paidTiersEnabled()) {
-    return { ok: true, phase: "card", attemptId: session.attemptId, cardClientSecret: "" };
-  }
-
-  const tenantSlug = slugify(session.workspaceName);
-  try {
-    const stripeCustomerId = await findOrCreateSignupCustomer({
-      email: session.email,
-      name: session.workspaceName,
-      tenantSlug,
-      tier: session.tier,
-    });
-    const intent = await createSetupIntent({
-      customerId: stripeCustomerId,
-      tenantSlug,
-      idempotencyKey: `signup:${session.attemptId}:setup-intent`,
-    });
-    if (!intent.client_secret) {
-      throw new Error("SetupIntent has no client_secret");
-    }
-    // Pin it daemon-side BEFORE handing the card form to the browser, so the
-    // completion call never carries a customer id the daemon has to trust.
-    await attachSignupCustomer({
-      verifiedSessionToken: session.verifiedSessionToken,
-      stripeCustomerId,
-      clientIp: await resolveClientIp(),
-    });
-    await writeVerifiedSession({ ...session, stripeCustomerId });
-    return {
-      ok: true,
-      phase: "card",
-      attemptId: session.attemptId,
-      cardClientSecret: intent.client_secret,
-    };
-  } catch (err) {
-    logger.error(
-      {
-        attemptId: session.attemptId,
-        action: "signup_setup_intent",
-        err: err instanceof Error ? err.message : String(err),
-      },
-      "payment setup failed after verification",
-    );
-    return {
-      ok: false,
-      attemptId: session.attemptId,
-      code: "INTERNAL_ERROR",
-      userMessage: "We couldn't start payment setup. Please try again.",
-    };
-  }
-}
-
-/**
- * finishProvisioning runs the post-tenant steps shared by the kind-autoconfirm
- * path (called inline by signupAction) and the card-first path (called by
- * completeSignup once the trialing subscription is created): poll the daemon's
+ * finishProvisioning runs the post-tenant steps shared by `completeSignup` (no
+ * external step) and `finishSignupAfterStep` (after the step is done): poll the
+ * daemon's
  * operator-reported provisioning status until the workspace is Ready (org
  * created + founding-owner TenantMember wired by the operator, gibson#958) →
  * redirect to /login → done.
@@ -471,19 +385,20 @@ async function finishProvisioning(ctx: Ctx): Promise<SignupActionResult> {
  * completeSignup finishes a VERIFIED signup.
  *
  * Its authority is the verified-session cookie and nothing else. Note what it
- * does not accept from the caller: no email, no company name, no plan, no
- * customer id. All of those are read daemon-side from the verification row the
- * session resolves to, so a caller who redeemed a link for one address cannot
- * provision a workspace for another. The only inputs are the password the user
- * just typed and, on the paid path, the payment method they just confirmed.
+ * does not accept from the caller: no email, no company name, no plan. All of
+ * those are read daemon-side from the verification row the session resolves
+ * to, so a caller who redeemed a link for one address cannot provision a
+ * workspace for another. The only input is the password the user just typed.
  *
  * Order:
  *   0. Refuse a known-breached password, before anything at all exists.
  *   1. Create the founding-owner identity and enqueue the tenant (the daemon
  *      consumes the session here, so it cannot be replayed into a second
  *      workspace).
- *   2. Create the trialing subscription on the already-confirmed card.
- *   3. Poll provisioning to Ready and hand back the /login redirect.
+ *   2. If the daemon holds the tenant for an external signup step, return the
+ *      `external_step` phase. The browser goes to the step, and
+ *      `finishSignupAfterStep` continues when it comes back.
+ *   3. Otherwise poll provisioning to Ready and hand back the /login redirect.
  */
 export async function completeSignup(
   input: CompleteSignupInput,
@@ -499,10 +414,10 @@ export async function completeSignup(
   }
 
   // Breached-password gate, FIRST. This is the only point in the flow where
-  // the password exists, and it runs before the identity, the tenant, the
-  // billing customer's subscription — before anything a refusal would have to
-  // be rolled back from. A rejected attempt leaves the verified session live
-  // so the user simply picks another password on the same screen.
+  // the password exists, and it runs before the identity and the tenant exist,
+  // before anything a refusal would have to be rolled back from. A rejected
+  // attempt leaves the verified session live so the user simply picks another
+  // password on the same screen.
   //
   // Fail-open on an unreachable HIBP: see assertPasswordNotBreached.
   const breach = await assertPasswordNotBreached(
@@ -525,7 +440,139 @@ export async function completeSignup(
     };
   }
 
-  const ctx: Ctx = {
+  const ctx = ctxFromSession(session);
+
+  try {
+    // 1. Create the founding-owner identity + enqueue the tenant. The daemon
+    //    reads the address, company name and plan from its own verification
+    //    row; this call supplies only the session and the password.
+    await advanceStep(ctx.attemptId, "create_user");
+    const clientIp = await resolveClientIp();
+    let result: Awaited<ReturnType<typeof completeSignupOwner>>;
+    try {
+      result = await completeSignupOwner({
+        attemptId: ctx.attemptId,
+        verifiedSessionToken: session.verifiedSessionToken,
+        password: input.password,
+        clientIp,
+      });
+    } catch (err) {
+      return await finish(ctx, "create_user", mapCompletionError(err));
+    }
+    ctx.zitadelUserId = result.ownerUserId;
+    ctx.tenantSlug = result.tenantId;
+
+    // The session is spent daemon-side. Mark the cookie spent rather than
+    // deleting it: readVerifiedSession treats a spent session as absent, so a
+    // stale cookie cannot re-enter a completion, and the completion page sends
+    // a returning browser to /login. Deleting it here made Next.js re-render
+    // the route inside this action's response, and the page then redirected to
+    // /signup?verify=invalid before the client could reach /login
+    // (dashboard#79). The spent cookie also keeps the step link and the tenant
+    // slug for the step page.
+    const stepLink = result.stepUrl
+      ? buildStepLink(result.stepUrl, result.stepToken)
+      : undefined;
+    await writeVerifiedSession({
+      ...session,
+      spent: true,
+      tenantSlug: result.tenantId,
+      ...(stepLink ? { stepLink } : {}),
+    });
+
+    // 2. The daemon holds the tenant for an external step.
+    if (stepLink) {
+      if (!getDeploymentProfile().signupStepText) {
+        // The daemon has a step URL and the dashboard has no texts for it.
+        // That is an operator misconfiguration; the user cannot act on it.
+        logger.error(
+          { attemptId: ctx.attemptId, action: "signup_step_unconfigured" },
+          "the daemon returned a signup step and the DASHBOARD_SIGNUP_STEP_* texts are not set",
+        );
+        return await finish(ctx, "external_step", {
+          code: "INTERNAL_ERROR",
+          userMessage: "Something went wrong on our end.",
+        });
+      }
+      await advanceStep(ctx.attemptId, "external_step");
+      return { ok: true, phase: "external_step", attemptId: ctx.attemptId };
+    }
+
+    // 3. Finish provisioning (wait for Ready → /login).
+    return await finishProvisioning(ctx);
+  } catch (err) {
+    logger.error(
+      {
+        attemptId: ctx.attemptId,
+        action: "signup_complete",
+        err: err instanceof Error ? err.message : String(err),
+      },
+      "completeSignup unhandled",
+    );
+    return await finish(ctx, "create_user", {
+      code: "INTERNAL_ERROR",
+      userMessage: "Something went wrong on our end.",
+    });
+  }
+}
+
+/**
+ * readSignupStepState reports the state of the external signup step of the
+ * signup in this browser. The step page polls it after the browser returns.
+ *
+ * The attempt id comes from the session cookie, never from the caller. With no
+ * cookie, or a cookie from before completion, the answer is `none`.
+ */
+export async function readSignupStepState(): Promise<SignupStepStatus> {
+  const session = await readCompletedSession();
+  if (!session?.stepLink) return "none";
+  try {
+    return await getSignupStep(session.attemptId);
+  } catch (err) {
+    logger.warn(
+      {
+        attemptId: session.attemptId,
+        action: "signup_step_state",
+        err: err instanceof Error ? err.message : String(err),
+      },
+      "signup step state read failed; reporting waiting",
+    );
+    return "waiting";
+  }
+}
+
+/**
+ * finishSignupAfterStep runs after the external step is done: it waits for
+ * the tenant to be Ready and hands back the /login redirect, exactly as
+ * `completeSignup` does for a signup with no step.
+ */
+export async function finishSignupAfterStep(): Promise<SignupActionResult> {
+  const session = await readCompletedSession();
+  if (!session?.tenantSlug) {
+    return {
+      ok: false,
+      attemptId: session?.attemptId ?? "",
+      code: "VERIFICATION_INVALID",
+      userMessage: "That link is no longer valid. Please start again.",
+    };
+  }
+  const ctx = ctxFromSession(session);
+  ctx.tenantSlug = session.tenantSlug;
+  return await finishProvisioning(ctx);
+}
+
+/**
+ * buildStepLink adds the opaque step token to the step URL as the query
+ * parameter `token`, the contract of gibson#895 and billing#20.
+ */
+function buildStepLink(stepUrl: string, stepToken: string): string {
+  const url = new URL(stepUrl);
+  url.searchParams.set("token", stepToken);
+  return url.toString();
+}
+
+function ctxFromSession(session: VerifiedSignupSession): Ctx {
+  return {
     attemptId: session.attemptId,
     input: {
       email: session.email,
@@ -539,146 +586,6 @@ export async function completeSignup(
     zitadelUserId: undefined,
     tenantSlug: slugify(session.workspaceName),
   };
-
-  try {
-    const paid = paidTiersEnabled();
-    if (paid && (!input.paymentMethodId || !session.stripeCustomerId)) {
-      return await finish(ctx, "create_billing", {
-        code: "INTERNAL_ERROR",
-        userMessage: "We couldn't verify your payment details. Please start over.",
-      });
-    }
-
-    // The customer id rides in the session cookie, and a cookie is a value the
-    // browser holds: someone with a valid session of their own can put another
-    // account's customer id in it and have us subscribe a card to a stranger's
-    // billing record. The daemon pinned this customer to the verification row
-    // but does not hand it back, so the cookie is what we have — confirm it
-    // still belongs to the address this session proved before subscribing it.
-    // Checked before the account is created so a rejection leaves nothing
-    // behind.
-    if (paid && session.stripeCustomerId) {
-      if (!(await verifySignupCustomer(session.stripeCustomerId, session.email))) {
-        logger.error(
-          { attemptId: ctx.attemptId, action: "signup_customer_mismatch" },
-          "session customer does not belong to the verified address",
-        );
-        return await finish(ctx, "create_billing", {
-          code: "INTERNAL_ERROR",
-          userMessage: "We couldn't verify your payment details. Please start over.",
-        });
-      }
-    }
-
-    // Validate billing config BEFORE creating the account, so a misconfigured
-    // plan does not leave a user with an identity and no subscription.
-    let priceId: string | null = null;
-    let trialDays: number | undefined;
-    if (paid) {
-      priceId = await priceIdForTier(session.tier);
-      trialDays = lookupPlan(session.tier as PlanID).trialDays;
-      if (!priceId || !trialDays || trialDays <= 0) {
-        logger.error(
-          { attemptId: ctx.attemptId, tier: session.tier },
-          "billing misconfigured for tier (missing price or trialDays)",
-        );
-        return await finish(ctx, "create_billing", {
-          code: "INTERNAL_ERROR",
-          userMessage:
-            "Billing isn't configured for that plan. Please contact support.",
-        });
-      }
-    }
-
-    // 1. Create the founding-owner identity + enqueue the tenant. The daemon
-    //    reads the address, company name, plan and customer id from its own
-    //    verification row; this call supplies only the session and the password.
-    await advanceStep(ctx.attemptId, "create_user");
-    const clientIp = await resolveClientIp();
-    let ownerUserId: string;
-    try {
-      const result = await completeSignupOwner({
-        attemptId: ctx.attemptId,
-        verifiedSessionToken: session.verifiedSessionToken,
-        password: input.password,
-        clientIp,
-      });
-      ownerUserId = result.ownerUserId;
-      ctx.tenantSlug = result.tenantId;
-    } catch (err) {
-      return await finish(ctx, "create_user", mapCompletionError(err));
-    }
-    ctx.zitadelUserId = ownerUserId;
-
-    // 2. Create the trialing subscription on the confirmed card.
-    if (paid && priceId && trialDays && session.stripeCustomerId && input.paymentMethodId) {
-      await advanceStep(ctx.attemptId, "create_billing");
-      try {
-        await createTrialingSubscription({
-          tier: session.tier as BillingTier,
-          priceId,
-          customerId: session.stripeCustomerId,
-          paymentMethodId: input.paymentMethodId,
-          trialPeriodDays: trialDays,
-          tenantSlug: ctx.tenantSlug ?? "",
-          // One subscription per signup attempt; tolerates retries.
-          idempotencyKey: `signup:${ctx.attemptId}:subscription`,
-        });
-      } catch (err) {
-        logger.error(
-          {
-            attemptId: ctx.attemptId,
-            action: "signup_subscription",
-            err: err instanceof Error ? err.message : String(err),
-          },
-          "createTrialingSubscription failed",
-        );
-        return await finish(ctx, "create_billing", {
-          code: "INTERNAL_ERROR",
-          userMessage:
-            "We couldn't start your subscription and your card was not charged. Please try again.",
-        });
-      }
-      // The customer now belongs to this tenant; drop the reuse tag so a later
-      // unrelated signup with the same email never reuses it (best-effort).
-      await finalizeSignupCustomer(session.stripeCustomerId);
-    }
-
-    // The session is spent daemon-side. Mark the cookie spent rather than
-    // deleting it: readVerifiedSession treats a spent session as absent, so a
-    // stale cookie cannot re-enter a completion, and the completion page sends
-    // a returning browser to /login. Deleting it here made Next.js re-render
-    // the route inside this action's response, and the page then redirected to
-    // /signup?verify=invalid before the client could reach /login
-    // (dashboard#79).
-    await markVerifiedSessionSpent(session);
-
-    // 3. Finish provisioning (wait for Ready → /login).
-    return await finishProvisioning(ctx);
-  } catch (err) {
-    logger.error(
-      {
-        attemptId: ctx.attemptId,
-        action: "signup_complete",
-        err: err instanceof Error ? err.message : String(err),
-      },
-      "completeSignup unhandled",
-    );
-    return await finish(ctx, "create_billing", {
-      code: "INTERNAL_ERROR",
-      userMessage: "Something went wrong on our end.",
-    });
-  }
-}
-
-/**
- * paidTiersEnabled mirrors the dashboard billing master switch via the single
- * source of truth (billingEnabled / DASHBOARD_BILLING_PAID_TIERS_ENABLED).
- * When off (on-prem / kind dev), signup runs the autoconfirm path with no
- * card step.
- */
-function paidTiersEnabled(): boolean {
-  return billingEnabled();
 }
 
 // ---------------------------------------------------------------------------
@@ -759,7 +666,7 @@ function slugify(s: string): string {
 }
 
 /**
- * readVerifiedSession / writeVerifiedSession / markVerifiedSessionSpent — the
+ * readVerifiedSession / writeVerifiedSession / readCompletedSession — the
  * completion capability, in an httpOnly cookie.
  *
  * Every post-redemption action reads the session from here rather than taking
@@ -785,10 +692,15 @@ async function writeVerifiedSession(s: VerifiedSignupSession): Promise<void> {
   });
 }
 
-async function markVerifiedSessionSpent(
-  s: VerifiedSignupSession,
-): Promise<void> {
-  await writeVerifiedSession({ ...s, spent: true });
+/**
+ * readCompletedSession reads a session that completion has spent. The step
+ * page uses it: the account exists, and the cookie holds the step link and
+ * the tenant slug.
+ */
+async function readCompletedSession(): Promise<VerifiedSignupSession | null> {
+  const jar = await cookies();
+  const session = decodeVerifiedSession(jar.get(SIGNUP_VERIFIED_COOKIE)?.value);
+  return session?.spent ? session : null;
 }
 
 /**

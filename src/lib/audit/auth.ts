@@ -46,17 +46,7 @@ export type AuthActionName =
   | "org_created"
   | "org_deleted"
   | "hibp_unavailable"
-  | "captcha_failed"
-  | "billing_rollback"
-  // Stripe billing lifecycle events (spec: stripe-billing-integration)
-  | "billing.checkout_completed"
-  | "billing.subscription_cancelled"
-  | "billing.payment_failed"
-  | "billing.refund"
-  | "billing.trial_extension"
-  | "billing.subscription_updated"
-  | "billing.trial_will_end"
-  | "billing.invoice_paid";
+  | "captcha_failed";
 
 /**
  * Shape of every auth audit record written to stdout.

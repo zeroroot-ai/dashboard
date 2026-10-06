@@ -5,9 +5,8 @@
  * The verified-signup session cookie.
  *
  * After the emailed link is redeemed the daemon hands back a short-lived
- * completion session token. Everything downstream of redemption — creating the
- * billing customer, confirming the card, creating the account — is authorized
- * by that token and by nothing else.
+ * completion session token. Everything downstream of redemption, creating the
+ * account above all, is authorized by that token and by nothing else.
  *
  * It lives in an httpOnly cookie for one reason: it is a capability. If it were
  * reachable from client JavaScript, any script running on the page could carry
@@ -15,8 +14,8 @@
  * receives the token, only the display fields alongside it.
  *
  * The cookie also carries the fields the completion page shows (address,
- * workspace name, tier) and, on the paid path, the billing customer pinned to
- * this session. Those are not secrets in the same sense — they belong to the
+ * workspace name, tier) and, after completion, the external step link. Those
+ * are not secrets in the same sense — they belong to the
  * person who just proved control of the mailbox — but they ride in the same
  * httpOnly cookie because there is no reason for the browser to read them
  * either.
@@ -29,12 +28,11 @@
  * THE COOKIE IS SIGNED. httpOnly stops a script on the page reading it; it does
  * nothing about the person holding the browser, who can put whatever they like
  * in it and send it back. That mattered because `tier` rides in here and the
- * dashboard prices from it: the daemon resolves the plan from its own
+ * dashboard displays it: the daemon resolves the plan from its own
  * verification row (`row.Tier`) and provisions accordingly, so a browser-chosen
- * tier could not change what got provisioned, but it could change what got
- * billed and how long the trial ran. Provisioned as one plan, charged for
- * another. `stripeCustomerId` rides here too and had to be re-checked against
- * Stripe at completion for exactly the same reason.
+ * tier could not change what got provisioned. After completion the cookie also
+ * carries the external step link and the tenant slug, and a changed link would
+ * send the user somewhere else.
  *
  * Signing removes the class rather than the one field: every value in the
  * payload is now tamper-evident, and a cookie that does not verify is treated
@@ -80,12 +78,16 @@ export interface VerifiedSignupSession {
   workspaceName: string;
   tier: string;
   /**
-   * Paid path only: the billing customer pinned to this session. The daemon
-   * holds the authoritative copy (AttachSignupCustomer wrote it to the
-   * verification row) and does not hand it back, so completion needs its own
-   * reference to subscribe it.
+   * Set at completion when the daemon returned an external signup step
+   * (gibson#895): the step URL with the opaque step token. The step page sends
+   * the browser here, and again on a retry.
    */
-  stripeCustomerId?: string;
+  stepLink?: string;
+  /**
+   * Set at completion: the tenant slug the daemon derived. The step page
+   * waits for this tenant after the step is done.
+   */
+  tenantSlug?: string;
   /**
    * Set once completion succeeded. The daemon spent the session, so the
    * cookie must never re-enter a completion; it stays so the completion page
@@ -216,8 +218,12 @@ export function decodeVerifiedSession(
       email: s.email,
       workspaceName: s.workspaceName,
       tier: s.tier,
-      stripeCustomerId:
-        typeof s.stripeCustomerId === 'string' ? s.stripeCustomerId : undefined,
+      ...(typeof s.stepLink === 'string' && s.stepLink !== ''
+        ? { stepLink: s.stepLink }
+        : {}),
+      ...(typeof s.tenantSlug === 'string' && s.tenantSlug !== ''
+        ? { tenantSlug: s.tenantSlug }
+        : {}),
       ...(s.spent === true ? { spent: true as const } : {}),
     };
   } catch {
@@ -225,7 +231,7 @@ export function decodeVerifiedSession(
   }
 }
 
-/** Build a session record from a redemption. Billing is attached later. */
+/** Build a session record from a redemption. */
 export function verifiedSessionFrom(
   redeemed: RedeemedSignupVerification,
 ): VerifiedSignupSession {

@@ -50,9 +50,14 @@ describe('verified-session codec', () => {
     expect(decodeVerifiedSession(forge({ ...SESSION, spent: true }))).toBeNull();
   });
 
-  it('round-trips the optional billing customer', () => {
-    const withCustomer = { ...SESSION, stripeCustomerId: 'cus_123' };
-    expect(decodeVerifiedSession(encodeVerifiedSession(withCustomer))).toEqual(withCustomer);
+  it('round-trips the step link and the tenant of a completed session', () => {
+    const completed = {
+      ...SESSION,
+      spent: true as const,
+      stepLink: 'https://billing.example.test/step?token=t',
+      tenantSlug: 'acme',
+    };
+    expect(decodeVerifiedSession(encodeVerifiedSession(completed))).toEqual(completed);
   });
 
   it('rejects an unsigned cookie, which is the old on-disk format', () => {
@@ -81,8 +86,10 @@ describe('verified-session codec', () => {
     expect(decodeVerifiedSession(`${tampered}.${signature}`)).toBeNull();
   });
 
-  it('rejects a swapped billing customer', () => {
-    expect(decodeVerifiedSession(forge({ ...SESSION, stripeCustomerId: 'cus_victim' }))).toBeNull();
+  it('rejects a swapped step link', () => {
+    expect(
+      decodeVerifiedSession(forge({ ...SESSION, spent: true, stepLink: 'https://evil.example.test/' })),
+    ).toBeNull();
   });
 
   it('rejects a signature lifted from a different session', () => {

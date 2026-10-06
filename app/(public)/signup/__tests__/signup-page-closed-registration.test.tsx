@@ -118,24 +118,21 @@ import SignupPage from '../page';
 // Resolved profile fixtures.
 // ---------------------------------------------------------------------------
 
-/** Closed-registration self-hosted: no signup, no billing, no marketing. */
+/** Closed-registration self-hosted: no signup, no marketing. */
 const CLOSED_PROFILE = {
   selfServeSignup: false,
-  billingEnabled: false,
   marketingUrl: null,
 };
 
-/** Open-registration self-hosted: signup on, billing off, no marketing. */
+/** Open-registration self-hosted: signup on, no marketing. */
 const OPEN_SELF_HOSTED_PROFILE = {
   selfServeSignup: true,
-  billingEnabled: false,
   marketingUrl: null,
 };
 
-/** Full SaaS profile: signup on, billing on, marketing URL set. */
+/** Full SaaS profile: signup on, marketing URL set. */
 const SAAS_PROFILE = {
   selfServeSignup: true,
-  billingEnabled: true,
   marketingUrl: 'https://www.zeroroot.ai',
 };
 

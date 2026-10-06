@@ -6,21 +6,14 @@
  *
  * Unit tests for gibson-client/provisioning.ts (dashboard#1016).
  *
- * Two halves, both required:
+ * The redacted field stays OFF `getTenantProvisioningStatus`. That RPC is
+ * proto-annotated `unauthenticated: true`, so ext-authz never resolves a
+ * tenant for it and the daemon's same-tenant unredaction branch can never be
+ * taken. The mapper must therefore drop `zitadel_org_slug` unconditionally,
+ * even when the daemon does send it. The daemon is the real gate; the
+ * dashboard must not re-widen it.
  *
- * 1. The billing identifiers stay REACHABLE through the rule-mode RPCs —
- *    `TenantService.GetTenantBilling` (own tenant, `tenant_from_identity`) and
- *    `AdminTenantService.AdminGetTenantBilling` (`platform_operator` on
- *    `system_tenant`). Both go over `userClient`, so ext-authz resolves and
- *    authorizes the caller before the daemon handler runs.
- *
- * 2. The redacted fields stay OFF `getTenantProvisioningStatus`. That RPC is
- *    proto-annotated `unauthenticated: true`, so ext-authz never resolves a
- *    tenant for it and the daemon's same-tenant unredaction branch can never
- *    be taken. The mapper must therefore drop `zitadel_org_slug` /
- *    `stripe_customer_id` / `billing_active` unconditionally — even when the
- *    daemon does send them. The daemon is the real gate; the dashboard must
- *    not re-widen it.
+ * The dashboard reads no billing identifier at all (dashboard#226).
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -28,38 +21,20 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('server-only', () => ({}));
 
 const mockGetTenantProvisioningStatus = vi.fn();
-const mockSetTenantBillingActive = vi.fn();
-const mockGetTenantBilling = vi.fn();
-const mockAdminGetTenantBilling = vi.fn();
 
 const serviceClientCalls: unknown[][] = [];
-const userClientCalls: unknown[][] = [];
 
 vi.mock('../transport', () => ({
   serviceClient: (...args: unknown[]) => {
     serviceClientCalls.push(args);
     return {
       getTenantProvisioningStatus: mockGetTenantProvisioningStatus,
-      setTenantBillingActive: mockSetTenantBillingActive,
-    };
-  },
-  userClient: (...args: unknown[]) => {
-    userClientCalls.push(args);
-    return {
-      getTenantBilling: mockGetTenantBilling,
-      adminGetTenantBilling: mockAdminGetTenantBilling,
     };
   },
 }));
 
 import * as provisioning from '../provisioning';
-import {
-  getTenantProvisioningStatus,
-  getTenantBilling,
-  adminGetTenantBilling,
-} from '../provisioning';
-import { TenantService } from '@/src/gen/gibson/tenant/v1/tenant_pb';
-import { AdminTenantService } from '@/src/gen/gibson/tenant/v1/admin_tenant_pb';
+import { getTenantProvisioningStatus } from '../provisioning';
 
 /**
  * A wire response the daemon would only ever produce for an authenticated
@@ -74,8 +49,6 @@ const WIRE_RESPONSE_WITH_REDACTED_FIELDS = {
   stores: { postgres: 'ready', redis: 'ready', neo4j: 'provisioning' },
   zitadelOrgReady: true,
   zitadelOrgSlug: 'acme-org',
-  stripeCustomerId: 'cus_LEAK',
-  billingActive: true,
 };
 
 /** Every string/boolean leaf reachable from `value`. */
@@ -87,7 +60,6 @@ function leaves(value: unknown): unknown[] {
 beforeEach(() => {
   vi.clearAllMocks();
   serviceClientCalls.length = 0;
-  userClientCalls.length = 0;
 });
 
 describe('getTenantProvisioningStatus', () => {
@@ -124,7 +96,7 @@ describe('getTenantProvisioningStatus', () => {
   });
 
   // ---- the leak-stays-shut half ------------------------------------------
-  it('drops zitadel_org_slug / stripe_customer_id / billing_active even when the daemon sends them', async () => {
+  it('drops zitadel_org_slug even when the daemon sends it', async () => {
     mockGetTenantProvisioningStatus.mockResolvedValue(
       WIRE_RESPONSE_WITH_REDACTED_FIELDS,
     );
@@ -132,8 +104,6 @@ describe('getTenantProvisioningStatus', () => {
     const result = await getTenantProvisioningStatus('acme');
 
     expect(result).not.toHaveProperty('zitadelOrgSlug');
-    expect(result).not.toHaveProperty('stripeCustomerId');
-    expect(result).not.toHaveProperty('billingActive');
   });
 
   it('surfaces no redacted VALUE anywhere in the mapped result', async () => {
@@ -146,9 +116,7 @@ describe('getTenantProvisioningStatus', () => {
     // Structural scan: a renamed or nested re-export leaks just as badly as
     // the original field name, so assert on the values, not only the keys.
     const values = leaves(result);
-    expect(values).not.toContain('cus_LEAK');
     expect(values).not.toContain('acme-org');
-    expect(JSON.stringify(result)).not.toContain('cus_LEAK');
     expect(JSON.stringify(result)).not.toContain('acme-org');
   });
 
@@ -164,93 +132,11 @@ describe('getTenantProvisioningStatus', () => {
   });
 });
 
-describe('SetTenantBillingActive has no dashboard wrapper', () => {
-  // dashboard#1016 ask 4. The dashboard serves no Stripe webhook route and
-  // holds no GIBSON_BILLING_WEBHOOK_SECRET, so it cannot sign the HMAC
-  // assertion the daemon now demands. Nothing here may call or re-export it.
-  it('exports no billing-active writer', () => {
+describe('no billing reader', () => {
+  // dashboard#226: the dashboard holds no billing code. gibson#895 removed the
+  // billing RPCs, and nothing here may wrap one.
+  it('exports no billing helper', () => {
     const exported = Object.keys(provisioning);
-    expect(exported).not.toContain('setTenantBillingActive');
-    expect(exported.filter((n) => /billingactive/i.test(n))).toEqual([]);
-  });
-
-  it('never calls the SetTenantBillingActive RPC from any exported helper', async () => {
-    mockGetTenantProvisioningStatus.mockResolvedValue(
-      WIRE_RESPONSE_WITH_REDACTED_FIELDS,
-    );
-    mockGetTenantBilling.mockResolvedValue({
-      found: true,
-      stripeCustomerId: 'cus_real',
-      billingActive: true,
-      zitadelOrgSlug: 'acme-org',
-    });
-    mockAdminGetTenantBilling.mockResolvedValue({
-      found: true,
-      stripeCustomerId: 'cus_real',
-      billingActive: true,
-      zitadelOrgSlug: 'acme-org',
-    });
-
-    await getTenantProvisioningStatus('acme');
-    await getTenantBilling();
-    await adminGetTenantBilling('acme');
-
-    expect(mockSetTenantBillingActive).not.toHaveBeenCalled();
-  });
-});
-
-describe('getTenantBilling', () => {
-  it('returns the real billing identifiers over the authenticated user transport', async () => {
-    mockGetTenantBilling.mockResolvedValue({
-      found: true,
-      stripeCustomerId: 'cus_real',
-      billingActive: true,
-      zitadelOrgSlug: 'acme-org',
-    });
-
-    const result = await getTenantBilling();
-
-    expect(userClientCalls).toEqual([[TenantService]]);
-    expect(result).toEqual({
-      found: true,
-      stripeCustomerId: 'cus_real',
-      billingActive: true,
-      zitadelOrgSlug: 'acme-org',
-    });
-  });
-
-  it('sends no tenant_id — the daemon derives it from the caller identity', async () => {
-    mockGetTenantBilling.mockResolvedValue({
-      found: true,
-      stripeCustomerId: 'cus_real',
-      billingActive: true,
-      zitadelOrgSlug: 'acme-org',
-    });
-
-    await getTenantBilling();
-
-    expect(mockGetTenantBilling).toHaveBeenCalledWith({});
-  });
-});
-
-describe('adminGetTenantBilling', () => {
-  it('forwards the target tenant and returns its billing identifiers', async () => {
-    mockAdminGetTenantBilling.mockResolvedValue({
-      found: true,
-      stripeCustomerId: 'cus_other',
-      billingActive: false,
-      zitadelOrgSlug: 'other-org',
-    });
-
-    const result = await adminGetTenantBilling('other-tenant');
-
-    expect(userClientCalls).toEqual([[AdminTenantService]]);
-    expect(mockAdminGetTenantBilling).toHaveBeenCalledWith({ tenantId: 'other-tenant' });
-    expect(result).toEqual({
-      found: true,
-      stripeCustomerId: 'cus_other',
-      billingActive: false,
-      zitadelOrgSlug: 'other-org',
-    });
+    expect(exported.filter((n) => /billing/i.test(n))).toEqual([]);
   });
 });

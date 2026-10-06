@@ -124,7 +124,7 @@ async function readIfExists(path) {
 /**
  * Parse the config and pull out:
  *   - the CSP directive list, with simple `const X = "..."` references resolved
- *     so `connect-src ${STRIPE_CONNECT}` can actually be inspected
+ *     so `connect-src ${ANALYTICS_CONNECT}` can actually be inspected
  *   - whether a Content-Security-Policy header is attached to the catch-all
  */
 function parseConfig(sourceText, fileName) {
@@ -409,8 +409,8 @@ async function runScan(root) {
 /** Mirrors the real next.config.ts shape closely enough to be a fair fixture. */
 const GOOD_CONFIG = `
 const isDev = process.env.NODE_ENV !== "production";
-const STRIPE_SCRIPT = "https://js.stripe.com";
-const STRIPE_CONNECT = "https://api.stripe.com https://r.stripe.com";
+const ANALYTICS_SCRIPT = "https://www.googletagmanager.com";
+const ANALYTICS_CONNECT = "https://region1.google-analytics.com";
 const CAPTCHA = "https://challenges.cloudflare.com";
 
 export const CONTENT_SECURITY_POLICY = [
@@ -419,9 +419,9 @@ export const CONTENT_SECURITY_POLICY = [
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  \`script-src 'self' 'unsafe-inline'\${isDev ? " 'unsafe-eval'" : ""} \${STRIPE_SCRIPT} \${CAPTCHA}\`,
+  \`script-src 'self' 'unsafe-inline'\${isDev ? " 'unsafe-eval'" : ""} \${ANALYTICS_SCRIPT} \${CAPTCHA}\`,
   "style-src 'self' 'unsafe-inline'",
-  \`connect-src 'self' \${STRIPE_CONNECT} \${CAPTCHA}\`,
+  \`connect-src 'self' \${ANALYTICS_CONNECT} \${CAPTCHA}\`,
 ].join("; ");
 
 const securityHeaders = [
@@ -497,12 +497,12 @@ async function runSelfTest() {
     {
       name: "connect-src with a bare * is caught",
       expectFail: true,
-      files: mutate(`connect-src 'self' \${STRIPE_CONNECT}`, `connect-src 'self' * \${STRIPE_CONNECT}`),
+      files: mutate(`connect-src 'self' \${ANALYTICS_CONNECT}`, `connect-src 'self' * \${ANALYTICS_CONNECT}`),
     },
     {
       name: "connect-src with a bare https: is caught",
       expectFail: true,
-      files: mutate(`connect-src 'self' \${STRIPE_CONNECT}`, `connect-src 'self' https: \${STRIPE_CONNECT}`),
+      files: mutate(`connect-src 'self' \${ANALYTICS_CONNECT}`, `connect-src 'self' https: \${ANALYTICS_CONNECT}`),
     },
     {
       name: "unconditional 'unsafe-eval' is caught",

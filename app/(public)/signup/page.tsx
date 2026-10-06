@@ -8,10 +8,10 @@
  *
  * Plan-missing / plan-invalid behavior depends on the deployment profile
  * (resolved via getDeploymentProfile(), dashboard#921):
- *   - SaaS (billingEnabled=true, marketingUrl set): redirect to
+ *   - SaaS (marketingUrl set): redirect to
  *     `${marketingUrl}/pricing?missing_plan=true` so users can choose a plan
  *     on the marketing site.
- *   - Self-hosted (billingEnabled=false, marketingUrl null): no `?plan=`
+ *   - Self-hosted (marketingUrl null): no `?plan=`
  *     required and no off-cluster redirect. Plans are a SaaS concept; self-
  *     hosted runs unlimited-metered entitlements. Default to the first self-
  *     serve tier internally (for the daemon wire) but hide the plan row from
@@ -82,16 +82,17 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
   // marketingUrl is null on self-hosted (WWW_URL unset) and non-null on SaaS.
   // dashboard#917 / deploy#1055: the pricing redirect is SaaS-only.
   // dashboard#921: resolved via the deployment-profile resolver (single reader).
-  const { marketingUrl, billingEnabled } = profile;
+  const { marketingUrl } = profile;
+  const showPlan = marketingUrl !== null;
 
   if (!isValidPlan) {
-    if (billingEnabled && marketingUrl) {
+    if (marketingUrl) {
       // SaaS: bounce to the marketing pricing page so the user can pick a plan.
-      // Self-hosted (billingEnabled=false): no ?plan= required — plans are a
-      // SaaS concept; fall through to the card-free form. dashboard#923.
+      // Self-hosted: no ?plan= required. Plans are a SaaS concept; fall
+      // through to the form. dashboard#923.
       redirect(`${marketingUrl}/pricing?missing_plan=true`);
     }
-    // Self-hosted (billingEnabled=false, marketingUrl null): fall through to
+    // Self-hosted (marketingUrl null): fall through to
     // the form with the first self-serve tier used for the daemon wire.
     // The plan row is hidden from the user entirely (dashboard#923).
     const fallbackPlan = selfServeTierIds[0] ?? "solo";
@@ -109,7 +110,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           plan={fallbackPlan}
           planDisplayName={fallbackDisplayName}
           pricingUrl={marketingUrl ? `${marketingUrl}/pricing` : null}
-          billingEnabled={billingEnabled}
+          showPlan={showPlan}
           termsUrl={marketingUrl ? `${marketingUrl}/terms` : null}
           privacyUrl={marketingUrl ? `${marketingUrl}/privacy` : null}
         />
@@ -117,9 +118,8 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
     );
   }
 
-  // At this point rawPlan is guaranteed non-null and valid (SaaS path: billingEnabled=true
-  // and marketingUrl set so the redirect above ran, or billingEnabled=false where
-  // we fell through above with the fallback).
+  // At this point rawPlan is guaranteed non-null and valid: an invalid plan
+  // either redirected (SaaS) or returned the fallback form above (self-hosted).
   const plan = rawPlan as string;
 
   // Resolve the human-readable plan name for the read-only tier display.
@@ -141,7 +141,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         plan={plan}
         planDisplayName={planDisplayName}
         pricingUrl={marketingUrl ? `${marketingUrl}/pricing` : null}
-        billingEnabled={billingEnabled}
+        showPlan={showPlan}
         termsUrl={marketingUrl ? `${marketingUrl}/terms` : null}
         privacyUrl={marketingUrl ? `${marketingUrl}/privacy` : null}
       />

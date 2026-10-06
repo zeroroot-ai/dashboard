@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import {
   BotIcon,
-  CreditCardIcon,
   DatabaseIcon,
+  ExternalLinkIcon,
   DollarSignIcon,
   KeyIcon,
   ScaleIcon,
@@ -23,13 +23,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
+import { useTenantId } from "@/src/lib/auth/tenant";
+import { useTenantContext } from "@/src/lib/tenant-context";
+import type { AccountLink } from "@/src/lib/deployment-profile";
 
 /**
  * Settings sidebar.
  *
  * Three sections, each a flat list (no nested items):
  *
- *   Account   , user-prefs / billing surfaces every member sees
+ *   Account   , user-prefs surfaces every member sees, plus the account
+ *                link from config, which only the tenant Owner sees
  *   Workspace , Gibson product surfaces (LLM providers, agents, plugins, …)
  *   Admin     , admin-gated surfaces hidden via useAuthorize() until the
  *                membership query confirms tenant_admin
@@ -44,7 +48,6 @@ import { useAuthorize } from "@/src/lib/auth/use-authorize";
 
 const accountNav = [
   { title: "Profile", href: "/dashboard/pages/settings/account", icon: UserIcon },
-  { title: "Billing", href: "/dashboard/pages/settings/billing", icon: CreditCardIcon },
   { title: "CLI", href: "/dashboard/pages/settings/cli", icon: TerminalIcon },
 ];
 
@@ -129,6 +132,27 @@ function GatedNavLink({
   return <NavLink title={title} href={href} icon={icon} pathname={pathname} />;
 }
 
+/**
+ * The account link from config (dashboard#226). Only the tenant Owner sees it.
+ * The service behind the URL checks the role again, so hiding the link is a
+ * convenience, not the control. The label comes from config; the source holds
+ * no text for it.
+ */
+function AccountLinkEntry({ link }: { link: AccountLink }) {
+  const tenantId = useTenantId() ?? "";
+  const { rolesByTenant } = useTenantContext();
+  const isOwner = tenantId !== "" && rolesByTenant[tenantId] === "owner";
+  if (!isOwner) return null;
+  return (
+    <Button variant="ghost" className="hover:bg-muted justify-start" asChild>
+      <a href={link.url}>
+        <ExternalLinkIcon />
+        {link.label}
+      </a>
+    </Button>
+  );
+}
+
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="px-2 pb-1 pt-3">
@@ -140,7 +164,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function SidebarNav() {
+export function SidebarNav({ accountLink }: { accountLink: AccountLink | null }) {
   const pathname = usePathname();
 
   return (
@@ -151,6 +175,7 @@ export function SidebarNav() {
           {accountNav.map((item) => (
             <NavLink key={item.href} {...item} pathname={pathname} />
           ))}
+          {accountLink ? <AccountLinkEntry link={accountLink} /> : null}
 
           <SectionLabel>Workspace</SectionLabel>
           {workspaceNav.map((item) => (
