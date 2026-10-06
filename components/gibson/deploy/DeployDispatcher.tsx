@@ -12,8 +12,8 @@
  *
  * Branches:
  *   kind=plugin             → renders AddPluginGuide, a read-only walkthrough
- *                              of the real plugin lifecycle (author in the
- *                              integrations repo, PR, GitOps values, SPIFFE
+ *                              of the real plugin lifecycle (author in a
+ *                              plugin repo, PR, GitOps values, SPIFFE
  *                              auto-enrollment). There is no manifest upload
  *                              or bootstrap-token step in this model
  *                              (ADR-0065/0066).
