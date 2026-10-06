@@ -19,14 +19,10 @@
     "scripts/ast-checks/fixtures/**"
   ],
   "ignoreDependencies": [
-    "pg",
-    "@vitest/coverage-v8",
-    "@auth/core",
     "tailwindcss",
     "tailwindcss-animate",
     "eslint-config-next",
     "pino-pretty",
-    "@bufbuild/buf",
     "@bufbuild/protoc-gen-es",
     "@zeroroot-ai/brand"
   ],
@@ -74,8 +70,6 @@
     ]
   },
   "ignoreBinaries": [
-    "kubectl",
-    "dnsx",
     "openssl"
   ]
 }

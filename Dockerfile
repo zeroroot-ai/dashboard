@@ -75,7 +75,6 @@ ENV DASHBOARD_HSTS_DISABLED=${DASHBOARD_HSTS_DISABLED}
 # Build-time placeholders for modules that validate env vars at import time.
 # These are NOT baked into the runtime image — real values come from K8s secrets.
 ENV AUTH_SECRET="build-placeholder"
-ENV NEXTAUTH_SECRET="build-placeholder"
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 
 # No SKIP_GEN_* / SKIP_*_FRESH_CHECK envs any more (dashboard#1019).

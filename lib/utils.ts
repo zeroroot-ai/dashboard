@@ -35,7 +35,7 @@ export function generateMeta({
     // environment (inlined undefined at build), so staging pages advertised
     // prod canonical/OG URLs (dashboard#1036).
     metadataBase: new URL(
-      process.env.NEXTAUTH_URL ?? process.env.AUTH_URL ?? 'https://app.zeroroot.ai',
+      process.env.AUTH_URL ?? 'https://app.zeroroot.ai',
     ),
     alternates: {
       canonical: `/dashboard${canonical}`

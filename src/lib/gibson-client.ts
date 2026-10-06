@@ -219,55 +219,6 @@ export { ConnectError, Code };
 // Tenant Management API
 // ============================================================================
 
-// TenantUpdates removed, tenant mutation moved to the Tenant CRD operator.
-
-interface AuditLogQueryOptions {
-  startTime?: Date;
-  endTime?: Date;
-  action?: string;
-  limit?: number;
-}
-
-interface AuditLogEntry {
-  id: string;
-  tenantId: string;
-  action: string;
-  actorSubject: string;
-  actorEmail: string;
-  resourceKind: string;
-  resourceId: string;
-  timestamp: string;
-  metadata: Record<string, string>;
-}
-
-interface ProvisioningStep {
-  name: string;
-  status: string;
-  message: string;
-}
-
-// listTenants / getTenant / updateTenant removed, tenant CRUD now flows
-// through the daemon's AdminTenantService (operator-pull, gibson#964);
-// see `app/actions/crd/tenant.ts` for the admin mutations.
-
-// createAPIKey / listAPIKeys / revokeAPIKey removed, the gsk_ API key
-// system has been removed. Agent identity provisioning now goes through
-// TenantAdminService.CreateAgentIdentity (spec: agent-service-credentials).
-
-// listUserTenants / MembershipInfo removed, tenant membership is now
-// served by the daemon's MembershipService (ADR-0093/0058).
-
-// getAuthSchema / getProvisioningStatus / deprovisionTenant removed -
-// auth schema is now served by the FGA-backed GetMyPermissions RPC, and
-// provisioning lifecycle moved to the Tenant CRD operator.
-
-// ============================================================================
-// Audit Log, ListAuditEvents RPC (DEFERRED, admin-services-completion spec)
-// ============================================================================
-// ListAuditEvents has been deferred per design.md disposition table.
-// Dashboard call sites that previously called queryAuditLog now return empty
-// results to avoid hitting the Unimplemented stub.
-
 /**
  * Retrieve the live counter values (current usage) for a tenant via
  * TenantAdminService.GetTenantQuotaUsage. Cheap (single Redis MGET on
@@ -286,38 +237,6 @@ export async function getTenantQuotaUsage(
     agentsActive: Number(response.agentsActive ?? 0),
   };
 }
-
-// setTenantQuota removed, DEFERRED per admin-services-completion design.md.
-// SetTenantQuota moved to PlatformOperatorService (platform-operator only; tenants
-// do not set their own quotas). Dashboard call site deleted per task 19.
-
-// ============================================================================
-// Alert Management, DEFERRED per admin-services-completion spec
-// ============================================================================
-// ListAlerts / MarkAlertRead / MarkAllAlertsRead have been deferred.
-// No alert producer exists today; the daemon stubs return Unimplemented.
-// Route handlers that previously called these functions now return empty
-// responses so the dashboard degrades gracefully without hitting Unimplemented.
-//
-// These exports are retained as no-ops so any reference to them compiles;
-// route files are updated to not call the daemon at all.
-
-interface AlertRecord {
-  id: string;
-  tenantId: string;
-  userId: string;
-  title: string;
-  body: string;
-  severity: string;
-  read: boolean;
-  createdAt: string;
-  source: string;
-  sourceId: string;
-}
-
-// listAlerts removed, DEFER per design.md. Call site in /api/alerts/route.ts returns empty.
-// markAlertRead removed, DEFER per design.md. Call site in /api/alerts/[id]/read/route.ts returns ok.
-// markAllAlertsRead removed, DEFER per design.md. Call site in /api/alerts/mark-all-read/route.ts returns ok.
 
 // ============================================================================
 // Conversation History, UserService RPCs (spec: chat-conversation-persistence)
@@ -1697,17 +1616,3 @@ export async function executeLLM(
     usage: fromProtoLLMUsage(resp.usage),
   };
 }
-
-// ---------------------------------------------------------------------------
-// Admin v1 sub-module re-exports
-// spec: secrets-tenant-lifecycle Task 6
-//
-// These named sub-modules mirror one proto service each and are the canonical
-// import path for new server-only code. They compose with the existing
-// userClient / serviceClient factories defined above.
-// ---------------------------------------------------------------------------
-
-export * as secretsAdmin from './gibson-client/secrets';
-export * as pluginsAdmin from './gibson-client/plugins-admin';
-export * as grantsAdmin from './gibson-client/grants';
-export * as tenantBrokerAdmin from './gibson-client/tenant-broker-config';
