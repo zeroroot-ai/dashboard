@@ -44,7 +44,7 @@ export default async function SecretDetailPage({ params }: SecretDetailPageProps
   // Non-members are redirected.
   // Spec: dashboard-authz-ui-gating Task 14, Requirement 5.4.
   try {
-    await assertAuthorized("/gibson.tenant.v1.SecretsService/GetSecret");
+    await assertAuthorized("/gibson.secrets.v1.SecretsService/GetSecret");
   } catch (err) {
     if (authzDenial(err)) {
       redirect("/dashboard/pages/settings/secrets");

@@ -4,7 +4,7 @@
 import 'server-only';
 
 /**
- * Typed dashboard client methods for gibson.tenant.v1.SecretsService (broker config RPCs).
+ * Typed dashboard client methods for gibson.secrets.v1.SecretsService (broker config RPCs).
  *
  * Backs the dashboard's secrets-backend page. Get / Probe / Set semantics:
  *  - getBrokerConfig: returns redacted (non-sensitive) current config.
@@ -21,7 +21,7 @@ import 'server-only';
  */
 
 import { userClient } from '../gibson-client';
-import { SecretsService } from '@/src/gen/gibson/tenant/v1/secrets_pb';
+import { SecretsService } from '@/src/gen/gibson/secrets/v1/secrets_pb';
 import type {
   RedactedConfig,
   CandidateConfig,
@@ -30,7 +30,7 @@ import type {
   ProbeBrokerConfigResponse,
   SetBrokerConfigResponse,
   BrokerProvider,
-} from '@/src/gen/gibson/tenant/v1/secrets_pb';
+} from '@/src/gen/gibson/secrets/v1/secrets_pb';
 import { throwMapped } from './secrets';
 
 export type {
@@ -118,4 +118,4 @@ export async function countSecrets(): Promise<number> {
 }
 
 // Re-export the BrokerProvider enum for convenience in action files.
-export { BrokerProvider } from '@/src/gen/gibson/tenant/v1/secrets_pb';
+export { BrokerProvider } from '@/src/gen/gibson/secrets/v1/secrets_pb';

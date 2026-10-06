@@ -23,7 +23,7 @@ vi.mock("@/app/actions/secrets-backend", () => ({
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 import { SecretsBackendForm } from "../SecretsBackendForm";
-import { BrokerProvider } from "@/src/gen/gibson/tenant/v1/secrets_pb";
+import { BrokerProvider } from "@/src/gen/gibson/secrets/v1/secrets_pb";
 import type { RedactedConfig } from "@/src/lib/gibson-client/tenant-broker-config";
 
 const TENANT_ID = "tenant-abc";

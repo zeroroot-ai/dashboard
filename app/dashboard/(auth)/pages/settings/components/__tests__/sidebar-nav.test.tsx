@@ -24,8 +24,8 @@ describe("settings SidebarNav, member-management IA (#609)", () => {
   it("does NOT render a Members entry, member management lives in the Organization 'Members & Access' home", () => {
     // Allow everything; Members must still be absent from Settings (it was
     // consolidated into the Organization nav, see #609).
-    allowByMethod["/gibson.tenant.v1.SecretsService/ListSecrets"] = true;
-    allowByMethod["/gibson.tenant.v1.SecretsService/GetBrokerConfig"] = true;
+    allowByMethod["/gibson.secrets.v1.SecretsService/ListSecrets"] = true;
+    allowByMethod["/gibson.secrets.v1.SecretsService/GetBrokerConfig"] = true;
     allowByMethod["/gibson.tenant.v1.GrantsService/ListActiveGrants"] = true;
 
     render(<SidebarNav />);
@@ -38,8 +38,8 @@ describe("settings SidebarNav, member-management IA (#609)", () => {
   });
 
   it("hides admin entries whose backing RPC is denied", () => {
-    allowByMethod["/gibson.tenant.v1.SecretsService/ListSecrets"] = false;
-    allowByMethod["/gibson.tenant.v1.SecretsService/GetBrokerConfig"] = false;
+    allowByMethod["/gibson.secrets.v1.SecretsService/ListSecrets"] = false;
+    allowByMethod["/gibson.secrets.v1.SecretsService/GetBrokerConfig"] = false;
     allowByMethod["/gibson.tenant.v1.GrantsService/ListActiveGrants"] = false;
 
     render(<SidebarNav />);

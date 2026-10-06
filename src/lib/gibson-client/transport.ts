@@ -389,7 +389,7 @@ export function sessionManagerFor(
 //
 //   - The method path is derived from the descriptor as
 //     `/${service.typeName}/${method.name}`, exactly matching the AuthRegistry
-//     key shape (e.g. `/gibson.tenant.v1.SecretsService/SetSecret`).
+//     key shape (e.g. `/gibson.secrets.v1.SecretsService/SetSecret`).
 //   - `assertAuthorized` is fail-closed: an unknown method throws
 //     `AuthzDeniedError(unknown_method)` before the request leaves the process.
 //   - It SKIPS registry entries marked `unauthenticated`, returning without

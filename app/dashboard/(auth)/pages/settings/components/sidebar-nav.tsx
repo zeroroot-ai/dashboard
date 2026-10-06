@@ -73,13 +73,13 @@ const adminNav: AdminEntry[] = [
     title: "Secrets",
     href: "/dashboard/pages/settings/secrets",
     icon: KeyIcon,
-    method: "/gibson.tenant.v1.SecretsService/ListSecrets",
+    method: "/gibson.secrets.v1.SecretsService/ListSecrets",
   },
   {
     title: "Secret Broker",
     href: "/dashboard/pages/settings/secrets-backend",
     icon: DatabaseIcon,
-    method: "/gibson.tenant.v1.SecretsService/GetBrokerConfig",
+    method: "/gibson.secrets.v1.SecretsService/GetBrokerConfig",
   },
   {
     title: "Permissions",

@@ -76,7 +76,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // Auth gate: tenant_admin only.
   try {
-    await assertAuthorized('/gibson.tenant.v1.SecretsService/CountSecrets');
+    await assertAuthorized('/gibson.secrets.v1.SecretsService/CountSecrets');
   } catch (err) {
     if (authzDenial(err)) {
       return NextResponse.json({ error: 'permission denied' }, { status: 403 });

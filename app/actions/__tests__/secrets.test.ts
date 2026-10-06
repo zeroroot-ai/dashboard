@@ -58,7 +58,7 @@ vi.mock("@/src/lib/gibson-client/secrets", () => ({
   deleteSecret: mockDeleteSecret,
 }));
 
-vi.mock("@/src/gen/gibson/tenant/v1/secrets_pb", () => ({
+vi.mock("@/src/gen/gibson/secrets/v1/secrets_pb", () => ({
   SecretCategory: { UNSPECIFIED: 0, CRED: 1, PROVIDER_CONFIG: 2 },
 }));
 
@@ -353,7 +353,7 @@ describe("createSecretAction, authz denied", () => {
     vi.clearAllMocks();
     mockSetSecret.mockRejectedValueOnce(
       new MockAuthzDeniedError(
-        "/gibson.tenant.v1.SecretsService/SetSecret",
+        "/gibson.secrets.v1.SecretsService/SetSecret",
         "relation-not-met",
       ),
     );
@@ -374,7 +374,7 @@ describe("rotateSecretAction, authz denied", () => {
     vi.clearAllMocks();
     mockRotateSecret.mockRejectedValueOnce(
       new MockAuthzDeniedError(
-        "/gibson.tenant.v1.SecretsService/RotateSecret",
+        "/gibson.secrets.v1.SecretsService/RotateSecret",
         "relation-not-met",
       ),
     );
@@ -395,7 +395,7 @@ describe("deleteSecretAction, authz denied", () => {
     vi.clearAllMocks();
     mockDeleteSecret.mockRejectedValueOnce(
       new MockAuthzDeniedError(
-        "/gibson.tenant.v1.SecretsService/DeleteSecret",
+        "/gibson.secrets.v1.SecretsService/DeleteSecret",
         "relation-not-met",
       ),
     );

@@ -40,10 +40,10 @@ import { useAuthorize } from '../use-authorize';
 // ---------------------------------------------------------------------------
 
 /** A known admin-only method from the generated registry. */
-const ADMIN_METHOD = '/gibson.tenant.v1.SecretsService/SetSecret';
+const ADMIN_METHOD = '/gibson.secrets.v1.SecretsService/SetSecret';
 
 /** A known member-tier method. */
-const MEMBER_METHOD = '/gibson.tenant.v1.SecretsService/ListSecrets';
+const MEMBER_METHOD = '/gibson.secrets.v1.SecretsService/ListSecrets';
 
 /** A method with unauthenticated: true (Ping or equivalent). */
 // We test the unauthenticated path by mocking the registry instead.
@@ -59,9 +59,9 @@ const SERVICE_METHOD_SENTINEL = '__test_service_only__';
 vi.mock('@/src/gen/authz/registry', () => ({
   IdentityClass: { USER: 1, SERVICE: 2, COMPONENT: 4, PLATFORM_OPERATOR: 8 } as const,
   AuthRegistry: {
-    '/gibson.tenant.v1.SecretsService/SetSecret': {
-      method: '/gibson.tenant.v1.SecretsService/SetSecret',
-      service: 'gibson.tenant.v1.SecretsService',
+    '/gibson.secrets.v1.SecretsService/SetSecret': {
+      method: '/gibson.secrets.v1.SecretsService/SetSecret',
+      service: 'gibson.secrets.v1.SecretsService',
       relation: 'admin',
       objectType: 'tenant',
       objectDeriver: 'tenant_from_identity',
@@ -69,9 +69,9 @@ vi.mock('@/src/gen/authz/registry', () => ({
       unauthenticated: false,
       self: false,
     },
-    '/gibson.tenant.v1.SecretsService/ListSecrets': {
-      method: '/gibson.tenant.v1.SecretsService/ListSecrets',
-      service: 'gibson.tenant.v1.SecretsService',
+    '/gibson.secrets.v1.SecretsService/ListSecrets': {
+      method: '/gibson.secrets.v1.SecretsService/ListSecrets',
+      service: 'gibson.secrets.v1.SecretsService',
       relation: 'member',
       objectType: 'tenant',
       objectDeriver: 'tenant_from_identity',
@@ -91,9 +91,9 @@ vi.mock('@/src/gen/authz/registry', () => ({
     },
     // Object-scoped entry, USER-callable so the identity gate does not
     // short-circuit the decision under test. GHSA-mvxf-pr5g-7pvx.
-    '/gibson.tenant.v1.SecretsService/GetCredential': {
-      method: '/gibson.tenant.v1.SecretsService/GetCredential',
-      service: 'gibson.tenant.v1.SecretsService',
+    '/gibson.secrets.v1.SecretsService/GetCredential': {
+      method: '/gibson.secrets.v1.SecretsService/GetCredential',
+      service: 'gibson.secrets.v1.SecretsService',
       relation: 'can_resolve',
       objectType: 'secret',
       objectDeriver: "tenant_and_field('Name')",
@@ -287,7 +287,7 @@ describe('useAuthorize, member role', () => {
 // ---------------------------------------------------------------------------
 
 describe('useAuthorize, object-scoped relation', () => {
-  const SECRET_METHOD = '/gibson.tenant.v1.SecretsService/GetCredential';
+  const SECRET_METHOD = '/gibson.secrets.v1.SecretsService/GetCredential';
 
   it('DENIES a tenant admin an object-scoped grant on a secret', async () => {
     mockMemberships('tenant-a', { 'tenant-a': { role: 'admin' } });

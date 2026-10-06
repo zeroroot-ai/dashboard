@@ -36,7 +36,7 @@ describe("fetchMissionAudit authorization (#616)", () => {
   it("throws permission_denied when the transport denies the RPC", async () => {
     getMissionAuditMock.mockRejectedValueOnce(
       new AuthzDeniedError(
-        "/gibson.tenant.v1.SecretsService/GetMissionAudit",
+        "/gibson.secrets.v1.SecretsService/GetMissionAudit",
         "relation-not-met",
       ),
     );

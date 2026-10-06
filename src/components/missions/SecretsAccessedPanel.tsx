@@ -49,7 +49,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { fetchMissionAudit } from "@/src/components/missions/secrets-panel-action";
 import type { MissionSecretAccess, SecretCategory } from "@/src/lib/gibson-client/secrets";
-import { SecretCategory as SC } from "@/src/gen/gibson/tenant/v1/secrets_pb";
+import { SecretCategory as SC } from "@/src/gen/gibson/secrets/v1/secrets_pb";
 
 // ---------------------------------------------------------------------------
 // Helpers

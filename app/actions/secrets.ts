@@ -35,7 +35,7 @@ import {
   type SecretMetadata,
 } from "@/src/lib/gibson-client/secrets";
 import { getServerSession } from "@/src/lib/auth";
-import { SecretCategory } from "@/src/gen/gibson/tenant/v1/secrets_pb";
+import { SecretCategory } from "@/src/gen/gibson/secrets/v1/secrets_pb";
 import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
 import { serverActionError } from "@/src/lib/errors/server-action-error";
 

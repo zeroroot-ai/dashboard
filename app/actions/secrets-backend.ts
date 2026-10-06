@@ -36,7 +36,7 @@ import {
   type RedactedConfig,
   type ProbeResult,
 } from "@/src/lib/gibson-client/tenant-broker-config";
-import type { CandidateConfig } from "@/src/gen/gibson/tenant/v1/secrets_pb";
+import type { CandidateConfig } from "@/src/gen/gibson/secrets/v1/secrets_pb";
 import { getServerSession } from "@/src/lib/auth";
 import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
 import {
