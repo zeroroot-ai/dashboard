@@ -35,7 +35,7 @@ beforeEach(() => {
 
 describe('GET /api/findings page tokens', () => {
   it('asks for the first page with an empty token and returns the next cursor', async () => {
-    mockGetFindings.mockResolvedValue({ findings: [], total: 120n, nextPageToken: 'tok-2' });
+    mockGetFindings.mockResolvedValue({ findings: [], total: BigInt(120), nextPageToken: 'tok-2' });
 
     const res = await GET(request('?limit=50'));
     const body = await res.json();
@@ -47,7 +47,7 @@ describe('GET /api/findings page tokens', () => {
   });
 
   it('passes the cursor back as the page token, and the last page has no cursor', async () => {
-    mockGetFindings.mockResolvedValue({ findings: [], total: 120n, nextPageToken: '' });
+    mockGetFindings.mockResolvedValue({ findings: [], total: BigInt(120), nextPageToken: '' });
 
     const res = await GET(request('?limit=50&cursor=tok-2'));
     const body = await res.json();
