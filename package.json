@@ -99,7 +99,7 @@
     "isomorphic-dompurify": "^4.4.0",
     "jose": "^6.2.12",
     "lucide-react": "^1.50.0",
-    "marked": "^15.0.12",
+    "marked": "^18.0.14",
     "mermaid": "11.17.2",
     "monaco-editor": "^0.57.0",
     "next": "16.3.8",
