@@ -61,9 +61,8 @@ import { recordActiveTenantValidation } from '@/src/lib/metrics/auth';
 // dashboard#583) a *type-system* invariant.
 //
 // The single documented escape hatch is `unsafeTenantId()`: the service-acting
-// transport (`serviceClient`) and the Stripe-webhook tenant attribution have
-// no user context and legitimately carry a daemon-derived or empty tenant
-// string. Those call sites brand explicitly and greppably; everything else
+// transport (`serviceClient`) has no user context and legitimately carries a
+// daemon-derived or empty tenant string. Those call sites brand explicitly and greppably; everything else
 // must route through the mint.
 
 /**

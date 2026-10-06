@@ -219,7 +219,7 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
     kind: 'url',
     hint:
       'Public base URL of the dashboard (matches AUTH_URL in single-origin deploys). ' +
-      'Used for Stripe checkout return_url, billing-portal success_url, transactional emails.',
+      'Used for transactional emails.',
   },
 
   // ---- Stores ----
@@ -228,7 +228,7 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
     kind: 'string',
     hint:
       'Postgres connection string for the dashboard control-plane DB ' +
-      '(auth nonces, billing idempotency table). e.g. postgres://gibson_dashboard:...@cnpg-rw:5432/gibson_dashboard',
+      '(auth nonces). e.g. postgres://gibson_dashboard:...@cnpg-rw:5432/gibson_dashboard',
   },
   {
     name: 'NEO4J_URI',
@@ -302,33 +302,19 @@ const OPTIONAL_ENV = [
   // ---- CAPTCHA secret (gated by DASHBOARD_CAPTCHA_PROVIDER) ----
   'DASHBOARD_CAPTCHA_SECRET_KEY',
 
-  // ---- Stripe billing (gated by DASHBOARD_BILLING_PAID_TIERS_ENABLED) ----
-  // validateBillingConfig() at boot already throws if the toggle is on and
-  // any of these are missing. Optional at the validator level so non-billing
-  // pods boot without them.
-  //
-  // DASHBOARD_BILLING_PAID_TIERS_ENABLED is the billing MASTER SWITCH. It
-  // gates both (a) the server-side Stripe wiring (validateBillingConfig,
-  // signup card flow) AND (b) the purchase/manage billing UI surfaces via
-  // src/lib/billing/billing-enabled.ts — the single source of truth read by
-  // the pricing checkout CTA, the settings Billing portal/upgrade buttons,
-  // the quota-banner upgrade CTA, and the /api/billing/{checkout,portal}
-  // routes (dashboard#809 / ADR-0089). Off (absent) = on-prem default:
-  // no Stripe UI, app runs on the config-driven Entitlements default.
-  // Plan/tier + entitlement/quota DISPLAY is never gated.
-  'DASHBOARD_BILLING_PAID_TIERS_ENABLED',
-  'STRIPE_SECRET_KEY',
-  'STRIPE_WEBHOOK_SECRET',
-  'STRIPE_PORTAL_CONFIGURATION_ID',
-  // STRIPE_PRICE_TEAM / STRIPE_PRICE_ORG / STRIPE_PRICE_ENTERPRISE are
-  // intentionally absent: price IDs are now resolved at runtime from Stripe
-  // via stable lookup_keys (LOOKUP_KEY_MAP / plans.yaml), so no per-environment
-  // price ID env vars are required. The same config works across every Stripe
-  // account and test/live mode.
-  // Card-first-signup mode guard (dashboard#767): explicit billing mode
-  // ("test"|"live") asserted against the key prefix at boot. Required when
-  // paid tiers are enabled; validateBillingConfig()/stripe.ts owns semantics.
-  'STRIPE_EXPECTED_MODE',
+  // ---- Neutral billing connection points (dashboard#226, ADR-0060) ----
+  // The dashboard holds no billing code. A private component connects through
+  // an account URL and an external signup step. All of these are optional and
+  // empty by default: no link and no step texts. getDeploymentProfile() is the
+  // one reader, and it fails the boot on a half-set group.
+  'DASHBOARD_ACCOUNT_URL',
+  'DASHBOARD_ACCOUNT_LINK_LABEL',
+  'DASHBOARD_SIGNUP_STEP_TITLE',
+  'DASHBOARD_SIGNUP_STEP_TEXT',
+  'DASHBOARD_SIGNUP_STEP_BUTTON_LABEL',
+  'DASHBOARD_SIGNUP_STEP_WAITING_TEXT',
+  'DASHBOARD_SIGNUP_STEP_FAILURE_TEXT',
+  'DASHBOARD_SIGNUP_STEP_RETRY_LABEL',
 
   // ---- Zitadel admin ----
   // NOTE: the broad ZITADEL_SIGNUP_BOT_PAT + ZITADEL_EXTERNAL_DOMAIN pair was
@@ -371,11 +357,6 @@ const OPTIONAL_ENV = [
   // metadataBase now derives from NEXTAUTH_URL/AUTH_URL at request time.)
   'NEXT_PUBLIC_API_URL',
   'NEXT_PUBLIC_IDENTITY_PROVIDER_URL',
-  // Card-first signup: publishable key for the in-page Payment Element.
-  // Read at RUNTIME by the signup server component and passed to the client
-  // (NOT NEXT_PUBLIC / build-time): the shared :main image can't bake a per-env
-  // test-vs-live key, so it must be injected at runtime (dashboard#783).
-  'STRIPE_PUBLISHABLE_KEY',
 
   // NOTE: the previous *_AUTHZ_PERMISSIVE_DEV escape hatches were deleted by
   // spec "eliminate-permissive-authz" Requirement 2. The check-no-permissive-

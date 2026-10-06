@@ -9,7 +9,7 @@ This file documents conventions specific to the `zeroroot-ai/dashboard` reposito
 - This is a **Shadcn UI Kit** template. Do not touch pages/components that are unrelated to the Gibson product surface, the template pages are intentionally untouched.
 - Dashboard → daemon always goes through **Envoy + ext_authz**. Never open a direct gRPC channel to `:50051` / `:50002` or use `GIBSON_DAEMON_ADDRESS`. The guard script `scripts/check-no-direct-daemon-grpc.mjs` will fail the build if you do.
 - `pnpm prebuild` runs a chain of policy-guard scripts. Do not disable them. Fix the code instead.
-- **`prebuild` never runs a generator.** It runs the freshness *gates* only, so a stale committed artifact fails the build instead of being silently rewritten. Regeneration is explicit: `pnpm gen:plans`, `pnpm gen:stripe-tiers`, `pnpm gen:authz`, `pnpm gen:mission-schema`, `pnpm proto:generate`. Putting a `gen-*` step back into `prebuild` re-creates the defect where four gates diffed the generator's output against the generator's output and none of them could fail.
+- **`prebuild` never runs a generator.** It runs the freshness *gates* only, so a stale committed artifact fails the build instead of being silently rewritten. Regeneration is explicit: `pnpm gen:plans`, `pnpm gen:authz`, `pnpm gen:mission-schema`, `pnpm proto:generate`. Putting a `gen-*` step back into `prebuild` re-creates the defect where four gates diffed the generator's output against the generator's output and none of them could fail.
 - **No hardcoded colors anywhere under `app/**` or `components/**`.** Every color goes through a token declared in `app/globals.css`. The guard `scripts/check-no-hardcoded-colors.mjs` rejects tailwind palette utilities (`text-emerald-*`, `bg-zinc-*`), tailwind arbitrary-value colors (`bg-[#...]`, `text-[oklch(...)]`), black/white utilities (`bg-white`, `text-black`), inline-style colors, and raw `#...`/`oklch(...)`/`rgb(...)`/`hsl(...)` in `.css` files. Two files are exempt because they declare the token system itself: `app/globals.css`, `app/themes.css`. See the design-system guide below.
 - **Customer-facing docs name product capabilities, not vendors.** `content/docs/**/*.mdx` must not mention Zitadel, OpenFGA / FGA, Envoy, ext-authz, jwt_authn, JWKS, x-gibson-identity-*, Langfuse, SPIFFE / SPIRE, Neo4j, CNPG, ArgoCD, cert-manager, ESO, OPA, or "Gibson-hosted Vault". Write product language instead, "Gibson identity service", "Gibson permissions", "Gibson Traces", "Gibson-managed secrets storage". The full deny-list is in the Customer terminology section below. Internal developer docs at `docs/*.md` and every `CLAUDE.md` are intentionally exempt.
 
@@ -217,23 +217,21 @@ bake in output that is about to change again.
 
 ## Single-artifact freshness gates
 
-Four committed artifacts are generated from a canonical upstream in a sibling
+These committed artifacts are generated from a canonical upstream in a sibling
 repo, and each has a gate in `pnpm prebuild`:
 
 | Artifact | Upstream | Gate | Regenerate |
 |---|---|---|---|
 | `src/generated/plans.ts` | `charts`: `helm/gibson-operators/files/plans.yaml` | `check-plans-fresh.mjs` | `pnpm gen:plans` |
-| `src/lib/billing/stripe_gen.ts` | the same `plans.yaml` | `check-stripe-tiers-fresh.mjs` | `pnpm gen:stripe-tiers` |
 | `src/gen/authz/registry.ts` | SDK + gibson daemon-local protos | `check-authz-registry-fresh.mjs` | `pnpm gen:authz` |
 | `src/data/mission-definition.schema.json` | `sdk`: `gen/mission-definition.schema.json` | `check-mission-schema-fresh.mjs` | `pnpm gen:mission-schema` |
 | `docs/AUTH_RBAC_INVENTORY.md` | `charts`: `helm/testdata/golden/values-baseline.withcaps.yaml` | `check-auth-rbac-inventory-fresh.mjs` | `pnpm gen:auth-rbac-inventory` |
 
-All four share one implementation, `scripts/lib/freshness-gate.mjs`. Read that
+All of them share one implementation, `scripts/lib/freshness-gate.mjs`. Read that
 file before touching any of them; the gate scripts themselves are configuration.
 
 ```bash
 pnpm check:plans          # selftest, then the real check
-pnpm check:stripe-tiers
 pnpm check:authz-registry
 pnpm check:mission-schema
 ```

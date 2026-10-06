@@ -12,8 +12,8 @@
  *
  * The property worth pinning hardest is what the COMPLETION call does not
  * carry. It sends the session and the password, and nothing that describes
- * which signup is being completed: no address, no company name, no plan, no
- * customer id. All of those are read daemon-side from the verification row the
+ * which signup is being completed: no address, no company name, no plan. All
+ * of those are read daemon-side from the verification row the
  * session resolves to, which is what stops a caller from proving control of one
  * address and provisioning a workspace for another.
  */
@@ -24,20 +24,20 @@ const {
   mockSignup,
   mockRequest,
   mockRedeem,
-  mockAttach,
+  mockGetStep,
   mockServiceClient,
 } = vi.hoisted(() => {
   const mockSignup = vi.fn();
   const mockRequest = vi.fn();
   const mockRedeem = vi.fn();
-  const mockAttach = vi.fn();
+  const mockGetStep = vi.fn();
   const mockServiceClient = vi.fn(() => ({
     signup: mockSignup,
     requestEmailVerification: mockRequest,
     redeemEmailVerification: mockRedeem,
-    attachSignupCustomer: mockAttach,
+    getSignupStep: mockGetStep,
   }));
-  return { mockSignup, mockRequest, mockRedeem, mockAttach, mockServiceClient };
+  return { mockSignup, mockRequest, mockRedeem, mockGetStep, mockServiceClient };
 });
 
 vi.mock('@/src/lib/gibson-client', () => ({
@@ -47,17 +47,17 @@ vi.mock('@/src/lib/gibson-client', () => ({
 import {
   requestSignupVerification,
   redeemSignupVerification,
-  attachSignupCustomer,
   completeSignupOwner,
+  getSignupStep,
 } from '../owner-provisioning';
-import { SignupService } from '@/src/gen/gibson/tenant/v1/signup_pb';
+import { SignupService, SignupStepState } from '@/src/gen/gibson/tenant/v1/signup_pb';
 
 describe('signup service wrappers', () => {
   beforeEach(() => {
     mockSignup.mockReset();
     mockRequest.mockReset();
     mockRedeem.mockReset();
-    mockAttach.mockReset();
+    mockGetStep.mockReset();
     mockServiceClient.mockClear();
   });
 
@@ -129,22 +129,28 @@ describe('signup service wrappers', () => {
     });
   });
 
-  it('pins the billing customer to the session, not to the completion call', async () => {
-    mockAttach.mockResolvedValue({});
-    await attachSignupCustomer({
-      verifiedSessionToken: 'sess-1',
-      stripeCustomerId: 'cus_42',
-      clientIp: '203.0.113.7',
-    });
-    expect(mockAttach).toHaveBeenCalledWith({
-      verifiedSessionToken: 'sess-1',
-      stripeCustomerId: 'cus_42',
-      clientIp: '203.0.113.7',
-    });
+  it('maps each step state of the daemon to the dashboard state', async () => {
+    const cases: Array<[SignupStepState, string]> = [
+      [SignupStepState.WAITING, 'waiting'],
+      [SignupStepState.DONE, 'done'],
+      [SignupStepState.FAILED, 'failed'],
+      [SignupStepState.NONE, 'none'],
+      [SignupStepState.UNSPECIFIED, 'none'],
+    ];
+    for (const [state, want] of cases) {
+      mockGetStep.mockResolvedValueOnce({ state });
+      await expect(getSignupStep('attempt-6')).resolves.toBe(want);
+    }
+    expect(mockGetStep).toHaveBeenCalledWith({ attemptId: 'attempt-6' });
   });
 
   it('completes with the session and password ONLY', async () => {
-    mockSignup.mockResolvedValue({ tenantId: 'acme', ownerUserId: 'u-1' });
+    mockSignup.mockResolvedValue({
+      tenantId: 'acme',
+      ownerUserId: 'u-1',
+      stepUrl: 'https://billing.example.test/step',
+      stepToken: 'opaque',
+    });
 
     const result = await completeSignupOwner({
       attemptId: 'attempt-5',
@@ -169,11 +175,15 @@ describe('signup service wrappers', () => {
       'tier',
       'ownerFirstName',
       'ownerLastName',
-      'stripeCustomerId',
     ]) {
       expect(sent).not.toHaveProperty(forbidden);
     }
 
-    expect(result).toEqual({ tenantId: 'acme', ownerUserId: 'u-1' });
+    expect(result).toEqual({
+      tenantId: 'acme',
+      ownerUserId: 'u-1',
+      stepUrl: 'https://billing.example.test/step',
+      stepToken: 'opaque',
+    });
   });
 });

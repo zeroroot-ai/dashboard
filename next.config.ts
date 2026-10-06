@@ -43,10 +43,6 @@ const isDev = process.env.NODE_ENV !== "production";
 // Third-party origins the BROWSER genuinely reaches. Each entry is justified;
 // anything not listed is denied by the `default-src 'self'` fallback.
 //
-//   js.stripe.com / hooks.stripe.com / m.stripe.network , Stripe.js + the
-//     Payment Element iframes used by card-first signup and the billing
-//     settings page (@stripe/react-stripe-js injects the script at runtime).
-//   api.stripe.com / r.stripe.com , Stripe.js XHR + error telemetry.
 //   challenges.cloudflare.com / *.hcaptcha.com , the Turnstile / hCaptcha
 //     widget scripts and frames. Selected by DASHBOARD_CAPTCHA_PROVIDER; the
 //     default is "disabled", so these are usually unused. Listing them costs
@@ -60,9 +56,6 @@ const isDev = process.env.NODE_ENV !== "production";
 // (`loader.config({ monaco: monacoEditor })` in MissionCUEEditor.tsx), so no
 // CDN origin is required. HIBP and the captcha siteverify calls are
 // server-side only.
-const STRIPE_SCRIPT = "https://js.stripe.com";
-const STRIPE_FRAMES = "https://js.stripe.com https://hooks.stripe.com https://m.stripe.network";
-const STRIPE_CONNECT = "https://api.stripe.com https://m.stripe.network https://r.stripe.com";
 const CAPTCHA = "https://challenges.cloudflare.com https://*.hcaptcha.com";
 const ANALYTICS_SCRIPT = "https://www.googletagmanager.com";
 const ANALYTICS_CONNECT =
@@ -110,12 +103,12 @@ export const CONTENT_SECURITY_POLICY = [
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${STRIPE_SCRIPT} ${CAPTCHA} ${ANALYTICS_SCRIPT}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${CAPTCHA} ${ANALYTICS_SCRIPT}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://www.googletagmanager.com https://*.google-analytics.com",
   "font-src 'self' data:",
-  `connect-src 'self' ${STRIPE_CONNECT} ${CAPTCHA} ${ANALYTICS_CONNECT}`,
-  `frame-src 'self' ${STRIPE_FRAMES} ${CAPTCHA}`,
+  `connect-src 'self' ${CAPTCHA} ${ANALYTICS_CONNECT}`,
+  `frame-src 'self' ${CAPTCHA}`,
   "worker-src 'self' blob:",
   "media-src 'self' data: blob:",
   "manifest-src 'self'",
@@ -311,20 +304,6 @@ const nextConfig: NextConfig = {
       {
         source: "/pages/settings/organization/security-policy",
         destination: "/dashboard/organization/security-policy",
-        permanent: true,
-      },
-      // /dashboard/settings/billing and /dashboard/billing/upgrade were
-      // duplicates of /dashboard/pages/settings/billing (dashboard#147).
-      // Send the legacy URLs to the canonical location so external links
-      // (Stripe portal return URLs, billing emails, bookmarks) keep working.
-      {
-        source: "/dashboard/settings/billing",
-        destination: "/dashboard/pages/settings/billing",
-        permanent: true,
-      },
-      {
-        source: "/dashboard/billing/upgrade",
-        destination: "/dashboard/pages/settings/billing",
         permanent: true,
       },
       // The pre-Zitadel signup flows at /dashboard/register/v1 and v2

@@ -2,7 +2,8 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Tests for ApproachingLimitBanner. Spec plans-and-quotas-simplification R9.B.
+ * Tests for ApproachingLimitBanner. Spec plans-and-quotas-simplification R9.B,
+ * and dashboard#226: the action points at the account link from config.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -18,9 +19,11 @@ import { useTenantQuotaUsage } from '@/src/lib/hooks/use-tenant-quota-usage';
 
 const mockUseTenantQuotaUsage = vi.mocked(useTenantQuotaUsage);
 
+/** A test fixture, not product text. */
+const ACCOUNT_LINK = { url: 'https://account.example.test/portal', label: 'account-label' };
+
 beforeEach(() => {
   mockUseTenantQuotaUsage.mockReset();
-  // Reset session storage between tests.
   if (typeof window !== 'undefined') {
     window.sessionStorage.clear();
   }
@@ -38,89 +41,38 @@ describe('ApproachingLimitBanner', () => {
   it('renders nothing under 80% usage', () => {
     withUsage(5, 25);
     const { container } = render(
-      <ApproachingLimitBanner plan="team" missionsLimit={10} agentsLimit={50} />,
+      <ApproachingLimitBanner missionsLimit={10} agentsLimit={50} />,
     );
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders at 80% missions usage with team upgrade CTA', () => {
+  it('links to the account URL with the label from config at 80% usage', () => {
     withUsage(8, 0);
     render(
-      <ApproachingLimitBanner
-        plan="team"
-        missionsLimit={10}
-        agentsLimit={50}
-        billingEnabled
-      />,
+      <ApproachingLimitBanner missionsLimit={10} agentsLimit={50} accountLink={ACCOUNT_LINK} />,
     );
     expect(screen.getByTestId('quota-approaching-limit-banner')).toBeTruthy();
     const cta = screen.getByTestId('quota-banner-upgrade-cta');
-    expect(cta.getAttribute('href')).toContain('/billing/upgrade?target=org');
+    expect(cta.getAttribute('href')).toBe(ACCOUNT_LINK.url);
+    expect(cta.textContent).toContain(ACCOUNT_LINK.label);
   });
 
-  it('shows the quota warning but NO upgrade CTA when billing is disabled (on-prem)', () => {
+  it('shows the quota warning but no action with no account link (self-hosted)', () => {
     withUsage(8, 0);
-    // billingEnabled omitted ⇒ defaults to false (fail-closed).
-    render(
-      <ApproachingLimitBanner
-        plan="team"
-        missionsLimit={10}
-        agentsLimit={50}
-      />,
-    );
-    // The quota warning still renders…
+    render(<ApproachingLimitBanner missionsLimit={10} agentsLimit={50} />);
     expect(screen.getByTestId('quota-approaching-limit-banner')).toBeTruthy();
-    // …but the purchase-action upgrade CTA is suppressed.
     expect(screen.queryByTestId('quota-banner-upgrade-cta')).toBeNull();
-    // Copy drops the "Upgrade to scale" line.
-    expect(screen.queryByText(/Upgrade to scale/i)).toBeNull();
   });
 
   it('renders at 100% with the at-limit copy', () => {
     withUsage(50, 0);
-    render(
-      <ApproachingLimitBanner plan="team" missionsLimit={50} agentsLimit={50} />,
-    );
+    render(<ApproachingLimitBanner missionsLimit={50} agentsLimit={50} />);
     expect(screen.getByText(/hit your plan limit/i)).toBeTruthy();
-  });
-
-  it('routes enterprise tenants to contact-sales', () => {
-    withUsage(0, 800);
-    render(
-      <ApproachingLimitBanner
-        plan="enterprise"
-        missionsLimit={100}
-        agentsLimit={1000}
-        billingEnabled
-      />,
-    );
-    const cta = screen.getByTestId('quota-banner-upgrade-cta');
-    expect(cta.getAttribute('href')).toContain('/contact-sales');
-  });
-
-  it('renders no CTA for enterprise-deploy', () => {
-    withUsage(0, 0);
-    // enterprise-deploy has limit=0 which suppresses the row entirely;
-    // so test with an explicit limit-set for the test path.
-    render(
-      <ApproachingLimitBanner plan="enterprise-deploy" missionsLimit={10} agentsLimit={50} />,
-    );
-    // Force >=80 by setting usage above limit.
-    withUsage(10, 50);
-    const { rerender } = render(
-      <ApproachingLimitBanner plan="enterprise-deploy" missionsLimit={10} agentsLimit={50} />,
-    );
-    rerender(
-      <ApproachingLimitBanner plan="enterprise-deploy" missionsLimit={10} agentsLimit={50} />,
-    );
-    expect(screen.queryByTestId('quota-banner-upgrade-cta')).toBeNull();
   });
 
   it('dismisses to sessionStorage', () => {
     withUsage(8, 0);
-    render(
-      <ApproachingLimitBanner plan="team" missionsLimit={10} agentsLimit={50} />,
-    );
+    render(<ApproachingLimitBanner missionsLimit={10} agentsLimit={50} />);
     fireEvent.click(screen.getByLabelText('Dismiss'));
     expect(window.sessionStorage.getItem('gibson:quota-banner-dismissed:default')).toBe('1');
   });

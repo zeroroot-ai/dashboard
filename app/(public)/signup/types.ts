@@ -202,14 +202,14 @@ export type SignupActionResult =
     }
   | {
       /**
-       * Completion is waiting on the card. The SetupIntent and its customer
-       * were created AFTER redemption, which is the ordering this whole flow
-       * exists to enforce: no billing object for an unproven address.
+       * The account exists and the daemon holds the tenant for an external
+       * signup step (gibson#895). The completion screen shows the step texts
+       * from config, and its button sends the browser to /signup/step, which
+       * forwards it to the step link held in the session cookie.
        */
       ok: true;
-      phase: "card";
+      phase: "external_step";
       attemptId: string;
-      cardClientSecret: string;
     }
   | {
       ok: false;
@@ -241,16 +241,14 @@ export type SignupActionResult =
 /**
  * Input to `completeSignup`, the step that runs on /signup/complete.
  *
- * Note how little is here. The email, company name, plan and billing customer
- * are all absent by design: the daemon reads them from the verification row the
+ * Note how little is here. The email, company name and plan are all absent by
+ * design: the daemon reads them from the verification row the
  * session cookie resolves to. A completion call therefore cannot describe a
  * signup other than the one whose link was opened.
  */
 export interface CompleteSignupInput {
   /** The password chosen on the completion screen. Write-only, never persisted here. */
   password: string;
-  /** Paid path only: the payment method produced by confirming the SetupIntent. */
-  paymentMethodId?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -265,11 +263,10 @@ export type ProvisioningStep =
   | "rate_limit"
   | "policy"
   /**
-   * Card-first signup (dashboard#785): phase 2 begins by creating the trialing
-   * subscription on the already-confirmed card, BEFORE the account/company
-   * exist. Absent (skipped) when paid tiers are disabled (kind dev autoconfirm).
+   * The tenant waits for the external signup step (gibson#895). Absent when
+   * the daemon has no step configured.
    */
-  | "create_billing"
+  | "external_step"
   | "create_user"
   | "send_verify_email"
   | "apply_tenant"

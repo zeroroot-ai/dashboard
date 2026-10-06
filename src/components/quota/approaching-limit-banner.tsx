@@ -14,27 +14,22 @@
  */
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 
-import type { PlanID } from "@/src/generated/plans";
-import { getUpgradeTarget } from "@/src/lib/billing/upgrade-target";
+import type { AccountLink } from "@/src/lib/deployment-profile";
 import { useTenantQuotaUsage } from "@/src/lib/hooks/use-tenant-quota-usage";
 
 type ApproachingLimitBannerProps = {
-  /** Plan id; drives upgrade-target copy. */
-  plan: PlanID | string | undefined;
   /** Plan limits; 0 = unlimited (suppresses the row). */
   missionsLimit: number;
   agentsLimit: number;
   /** Optional storage-key suffix so the missions and agents pages can
    * dismiss independently. */
   storageKeySuffix?: string;
-  /** Whether the dashboard is wired to a Stripe-backed billing backend.
-   * Pass from the nearest server boundary (src/lib/billing/billing-enabled).
-   * When false (on-prem default) the quota warning still shows but the
-   * "Upgrade" purchase CTA is suppressed — there is nothing to buy.
-   * Fail-closed: defaults to false. */
-  billingEnabled?: boolean;
+  /** The account link from config (dashboard#226). Pass it from the
+   * nearest server boundary (getDeploymentProfile().accountLink). With no
+   * link (the self-hosted default) the quota warning still shows, but the
+   * banner offers no action. Fail-closed: defaults to null. */
+  accountLink?: AccountLink | null;
 };
 
 const STORAGE_KEY_BASE = "gibson:quota-banner-dismissed:";
@@ -45,11 +40,10 @@ function pct(used: number, limit: number): number {
 }
 
 export function ApproachingLimitBanner({
-  plan,
   missionsLimit,
   agentsLimit,
   storageKeySuffix = "",
-  billingEnabled = false,
+  accountLink = null,
 }: ApproachingLimitBannerProps) {
   const { data } = useTenantQuotaUsage();
   const [dismissed, setDismissed] = useState(false);
@@ -67,8 +61,8 @@ export function ApproachingLimitBanner({
   if (maxPct < 80) return null;
 
   const atLimit = maxPct >= 100;
-  // Upgrade is a purchase action — only offer it when billing is wired.
-  const upgrade = billingEnabled ? getUpgradeTarget(plan) : null;
+  // The account service owns plan changes; the banner only links to it.
+  const upgrade = accountLink;
 
   const variant = atLimit
     ? "border-red-500 bg-red-50 text-red-900"
@@ -100,20 +94,18 @@ export function ApproachingLimitBanner({
         <p className="mt-1 opacity-80">
           {atLimit
             ? "You've hit your plan limit. New work will be rejected until in-flight items complete."
-            : billingEnabled
-              ? "Approaching your plan limit. Upgrade to scale."
-              : "Approaching your plan limit."}
+            : "Approaching your plan limit."}
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         {upgrade ? (
-          <Link
-            href={upgrade.href}
+          <a
+            href={upgrade.url}
             className="text-sm font-semibold underline-offset-2 hover:underline"
             data-testid="quota-banner-upgrade-cta"
           >
             {upgrade.label} →
-          </Link>
+          </a>
         ) : null}
         <button
           type="button"

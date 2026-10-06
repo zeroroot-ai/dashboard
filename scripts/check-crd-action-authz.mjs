@@ -17,10 +17,10 @@
  * Intended for rare cases; use a codeowner review to keep this honest.
  *
  * A route-level opt-out for app/api/.../route.ts files with a non-browser
- * trust boundary (e.g. Stripe-signature-verified webhooks) is supported via
+ * trust boundary (e.g. signature-verified webhooks) is supported via
  *   // @crd-authz-exempt-route: <reason>
  * anywhere in the top-of-file comment block. The reason MUST describe the
- * alternative auth boundary (e.g. "stripe-signature-verified").
+ * alternative auth boundary (e.g. "signature-verified").
  *
  * Runs as `prebuild` alongside check-no-public-auth.mjs.
  */

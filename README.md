@@ -49,17 +49,16 @@ freshness, etc.). Do not disable them, fix the underlying code.
 
 ## Standalone build (outside the polyrepo workspace)
 
-`pnpm build` runs the prebuild chain, which includes four freshness gates
-(`check-plans-fresh.mjs`, `check-stripe-tiers-fresh.mjs`,
-`check-authz-registry-fresh.mjs`, `check-mission-schema-fresh.mjs`) whose
+`pnpm build` runs the prebuild chain, which includes the freshness gates
+(`check-plans-fresh.mjs`, `check-authz-registry-fresh.mjs`,
+`check-mission-schema-fresh.mjs`) whose
 generators read sibling private repos in the canonical `~/Code/zeroroot.ai/`
 workspace. Those siblings are not present in a standalone checkout.
 
 The generators themselves are **not** part of `prebuild`; regeneration is
-explicit (`pnpm gen:plans`, `pnpm gen:stripe-tiers`, `pnpm gen:authz`,
-`pnpm gen:mission-schema`) and requires the workspace. The committed generated
-files (`src/generated/plans.ts`, `src/lib/billing/stripe_gen.ts`,
-`src/gen/authz/registry.ts`, `src/data/mission-definition.schema.json`) are the
+explicit (`pnpm gen:plans`, `pnpm gen:authz`, `pnpm gen:mission-schema`) and
+requires the workspace. The committed generated files
+(`src/generated/plans.ts`, `src/gen/authz/registry.ts`, `src/data/mission-definition.schema.json`) are the
 source of truth at build time.
 
 No skip envs are needed, and none exist for these four gates. Each gate asks

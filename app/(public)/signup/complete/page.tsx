@@ -9,17 +9,17 @@
  * nothing to complete, so this page sends the visitor back to the start rather
  * than rendering a form that could never succeed.
  *
- * This is where the password and the card are collected, and where the Stripe
- * customer is first created. That ordering is the entire point of splitting
- * signup across two screens: before the link is opened, an address is just
- * something a stranger typed into a form.
+ * This is where the password is collected and the account is created. That
+ * ordering is the entire point of splitting signup across two screens: before
+ * the link is opened, an address is just something a stranger typed into a
+ * form.
  */
 
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
 import { DEFAULT_PASSWORD_POLICY } from "@/src/lib/zitadel/password-policy-cache";
-import { billingEnabled } from "@/src/lib/billing/billing-enabled";
+import { getDeploymentProfile } from "@/src/lib/deployment-profile";
 import {
   SIGNUP_VERIFIED_COOKIE,
   decodeVerifiedSession,
@@ -39,9 +39,10 @@ export default async function SignupCompletePage() {
   const session = decodeVerifiedSession(jar.get(SIGNUP_VERIFIED_COOKIE)?.value);
 
   if (session?.spent) {
-    // Completion already succeeded in this browser. The account exists; the
-    // only thing left to do is sign in (dashboard#79).
-    redirect(POST_SIGNUP_REDIRECT);
+    // Completion already succeeded in this browser. The account exists. With
+    // an external signup step, the step page takes over; otherwise the only
+    // thing left to do is sign in (dashboard#79).
+    redirect(session.stepLink ? "/signup/step" : POST_SIGNUP_REDIRECT);
   }
 
   if (!session) {
@@ -51,7 +52,7 @@ export default async function SignupCompletePage() {
     redirect("/signup?verify=invalid");
   }
 
-  const paid = billingEnabled();
+  const { signupStepText } = getDeploymentProfile();
 
   return (
     <CompleteSignupForm
@@ -59,8 +60,7 @@ export default async function SignupCompletePage() {
       // it stays in the httpOnly cookie and is read server-side by the actions.
       verified={displayOnly(session)}
       passwordPolicy={DEFAULT_PASSWORD_POLICY}
-      publishableKey={paid ? (process.env.STRIPE_PUBLISHABLE_KEY ?? "") : ""}
-      billingEnabled={paid}
+      stepText={signupStepText}
     />
   );
 }

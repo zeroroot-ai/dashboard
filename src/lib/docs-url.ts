@@ -16,8 +16,8 @@
  * Server-derived, at call time: the chart renders `DOCS_URL` from
  * `gibson.docsOrigin` (global.domain), so each environment links to its own
  * docs host. Client components cannot read it — their server page computes
- * the href with `docsUrl()` and passes it down as a prop, the same
- * runtime-not-build-time pattern as STRIPE_PUBLISHABLE_KEY (dashboard#783).
+ * the href with `docsUrl()` and passes it down as a prop: a runtime value,
+ * not a build-time one (dashboard#783).
  * The previous `NEXT_PUBLIC_DOCS_URL` read was set by nothing and would have
  * been inlined at image build time anyway, which pinned every environment's
  * docs links to prod (dashboard#1036).

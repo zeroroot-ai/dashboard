@@ -6,28 +6,20 @@
 /**
  * CompleteSignupForm — the post-verification screen.
  *
- * It collects the password and, on the paid profile, the card. Both live here
- * rather than on /signup because neither may exist for an address nobody has
- * proven they control: a password collected earlier would have to be held
- * across the mail round-trip, and a card field needs a SetupIntent, which needs
- * a customer, which is a billing object.
+ * It collects the password. The password lives here rather than on /signup
+ * because it may not exist for an address nobody has proven they control: a
+ * password collected earlier would have to be held across the mail round-trip.
  *
- * The Stripe customer and SetupIntent are created by `startSignupPayment` when
- * this component mounts — that is, strictly after redemption. The client never
- * sees the completion session token; it lives in an httpOnly cookie and the
- * Server Actions read it from there.
+ * When the daemon holds the new tenant for an external signup step
+ * (gibson#895), this screen then shows the step texts from config. Its button
+ * goes to /signup/step/start, which forwards the browser to the step link.
+ * The client never sees the completion session token or the step token; both
+ * live in an httpOnly cookie.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loadStripe, type Appearance, type Stripe, type StripeElements } from "@stripe/stripe-js";
-import {
-  Elements,
-  PaymentElement,
-  useElements,
-  useStripe,
-} from "@stripe/react-stripe-js";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
@@ -49,19 +41,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { completeSignup, startSignupPayment } from "@/app/actions/signup";
-import {
-  confirmCardSetup,
-  type ConfirmCardStripe,
-} from "@/src/lib/billing/confirm-card";
+import { completeSignup } from "@/app/actions/signup";
 import {
   isServerActionDeploymentSkew,
   reloadForDeploymentSkew,
 } from "@/src/lib/server-action-skew";
 import type { PasswordPolicy } from "@/src/lib/zitadel/password-policy-cache";
 import type { VerifiedSignupDisplay } from "@/src/lib/signup/verified-session";
+import type { SignupStepText } from "@/src/lib/deployment-profile";
 import { PasswordStrengthMeter } from "../password-strength-meter";
-import { buildStripeAppearance } from "../stripe-appearance";
 import { ProvisioningPanel } from "../provisioning-panel";
 import {
   completeSignupInputSchema,
@@ -72,93 +60,13 @@ interface CompleteSignupFormProps {
   /** Display-only view of the verified session. Carries NO completion token. */
   verified: VerifiedSignupDisplay;
   passwordPolicy: PasswordPolicy;
-  publishableKey: string;
-  billingEnabled: boolean;
+  /** The texts of the external signup step, or null when none is configured. */
+  stepText: SignupStepText | null;
 }
 
 /** Timeout codes are non-destructive: the account and workspace both exist. */
 function isNonFatalTimeout(code: string): boolean {
   return code === "PROVISIONING_TIMEOUT" || code === "MEMBERSHIP_TIMEOUT";
-}
-
-export function CompleteSignupForm(props: CompleteSignupFormProps) {
-  const paidFlow = props.billingEnabled && props.publishableKey !== "";
-
-  // The SetupIntent client secret, fetched on mount via a Server Action. Null
-  // until it arrives — and it can only arrive because the session cookie exists,
-  // which is what makes this the first moment a billing object may be created.
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [appearance, setAppearance] = useState<Appearance>({ theme: "night" });
-
-  useEffect(() => {
-    setAppearance(buildStripeAppearance());
-  }, []);
-
-  useEffect(() => {
-    if (!paidFlow) return;
-    let cancelled = false;
-    void (async () => {
-      const result = await startSignupPayment();
-      if (cancelled) return;
-      if (result.ok && "phase" in result && result.phase === "card") {
-        setClientSecret(result.cardClientSecret);
-      } else if (!result.ok) {
-        setPaymentError(result.userMessage);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [paidFlow]);
-
-  const [stripePromise] = useState(() =>
-    paidFlow ? loadStripe(props.publishableKey) : null,
-  );
-
-  if (!paidFlow) {
-    // Card-free profile: never load Stripe, never mount <Elements>. Calling the
-    // Stripe hooks without a provider throws in this version of the library.
-    return <CompleteSignupFormInner {...props} stripe={null} elements={null} />;
-  }
-
-  if (paymentError) {
-    return (
-      <CompleteShell verified={props.verified}>
-        <p className="text-sm text-destructive" role="alert">
-          {paymentError}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Nothing has been created. Reload this page to try again.
-        </p>
-      </CompleteShell>
-    );
-  }
-
-  if (!clientSecret || !stripePromise) {
-    return (
-      <CompleteShell verified={props.verified}>
-        <p className="text-sm text-muted-foreground" aria-busy="true">
-          Preparing your payment details…
-        </p>
-      </CompleteShell>
-    );
-  }
-
-  return (
-    <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
-      <CompleteSignupFormWithStripe {...props} clientSecret={clientSecret} />
-    </Elements>
-  );
-}
-
-/** Bridge that reads the Stripe hooks. Rendered ONLY inside <Elements>. */
-function CompleteSignupFormWithStripe(
-  props: CompleteSignupFormProps & { clientSecret: string },
-) {
-  const stripe = useStripe();
-  const elements = useElements();
-  return <CompleteSignupFormInner {...props} stripe={stripe} elements={elements} />;
 }
 
 /** Shared chrome so the loading, error and form states look like one screen. */
@@ -198,24 +106,13 @@ function CompleteShell({
   );
 }
 
-function CompleteSignupFormInner({
+export function CompleteSignupForm({
   verified,
   passwordPolicy,
-  billingEnabled,
-  publishableKey,
-  clientSecret,
-  stripe,
-  elements,
-}: CompleteSignupFormProps & {
-  clientSecret?: string;
-  stripe: Stripe | null;
-  elements: StripeElements | null;
-}) {
-  const paidFlow = billingEnabled && publishableKey !== "";
-
+  stepText,
+}: CompleteSignupFormProps) {
   const [showPassword, setShowPassword] = useState(false);
-  const [cardComplete, setCardComplete] = useState(false);
-  const [cardError, setCardError] = useState<string | null>(null);
+  const [stepPending, setStepPending] = useState(false);
   const [provisioning, setProvisioning] = useState(false);
   const [redirectOnSuccess, setRedirectOnSuccess] = useState("");
   // Set only on a non-fatal PROVISIONING_TIMEOUT result (dashboard#967):
@@ -235,41 +132,14 @@ function CompleteSignupFormInner({
 
   const onSubmit = useCallback(
     async (data: CompleteSignupFormInput) => {
-      let paymentMethodId: string | undefined;
-
-      if (paidFlow) {
-        if (!stripe || !elements || !clientSecret) {
-          setCardError("Payment form is still loading. Try again in a moment.");
-          return;
-        }
-        setCardError(null);
-        const { error: submitErr } = await elements.submit();
-        if (submitErr) {
-          setCardError(submitErr.message ?? "Please check your card details.");
-          return;
-        }
-        const confirmed = await confirmCardSetup({
-          stripe: stripe as unknown as ConfirmCardStripe,
-          elements,
-          clientSecret,
-          // Cards confirm inline, but Stripe requires a return_url whenever
-          // redirect-capable methods are offered.
-          returnUrl: `${window.location.origin}/signup/complete`,
-        });
-        if (!confirmed.ok) {
-          setCardError(confirmed.error);
-          toast.error(confirmed.error);
-          return;
-        }
-        paymentMethodId = confirmed.paymentMethodId;
-      }
-
       setProvisioning(true);
       try {
-        const result = await completeSignup({
-          password: data.password,
-          paymentMethodId,
-        });
+        const result = await completeSignup({ password: data.password });
+        if (result.ok && "phase" in result && result.phase === "external_step") {
+          setProvisioning(false);
+          setStepPending(true);
+          return;
+        }
         if (result.ok && "redirect" in result) {
           setRedirectOnSuccess(result.redirect);
           return;
@@ -313,8 +183,22 @@ function CompleteSignupFormInner({
         toast.error("Something went wrong on our end. Please try again.");
       }
     },
-    [paidFlow, stripe, elements, clientSecret, form],
+    [form],
   );
+
+  if (stepPending && stepText) {
+    return (
+      <CompleteShell verified={verified}>
+        <h2 className="text-lg font-semibold">{stepText.title}</h2>
+        <p className="text-sm text-muted-foreground">{stepText.text}</p>
+        <Button asChild className="w-full">
+          {/* A plain anchor: the route answers with a redirect to another
+              origin, which client-side navigation cannot follow. */}
+          <a href="/signup/step/start">{stepText.buttonLabel}</a>
+        </Button>
+      </CompleteShell>
+    );
+  }
 
   if (provisioning) {
     return (
@@ -404,36 +288,10 @@ function CompleteSignupFormInner({
             )}
           />
 
-          {paidFlow ? (
-            <div className="space-y-2">
-              <FormLabel>Payment method</FormLabel>
-              <div className="rounded-md border border-border bg-background p-3">
-                <PaymentElement
-                  options={{
-                    layout: { type: "accordion", defaultCollapsed: false },
-                  }}
-                  onChange={(e) => {
-                    setCardComplete(e.complete);
-                    if (e.complete) setCardError(null);
-                  }}
-                />
-              </div>
-              {cardError ? (
-                <p className="text-xs text-destructive" role="alert" aria-live="polite">
-                  {cardError}
-                </p>
-              ) : null}
-              <p className="text-xs text-muted-foreground">
-                Start your free trial. Your card won&apos;t be charged until it
-                ends. Cancel anytime.
-              </p>
-            </div>
-          ) : null}
-
           <Button
             type="submit"
             className="w-full"
-            disabled={isDisabled || (paidFlow && !cardComplete)}
+            disabled={isDisabled}
             aria-busy={isDisabled}
           >
             {isDisabled ? "Creating account…" : "Create account"}

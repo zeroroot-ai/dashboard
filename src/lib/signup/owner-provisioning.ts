@@ -12,11 +12,11 @@
  *                               object.
  *   redeemSignupVerification  — exchanges the emailed token for a short-lived
  *                               completion session.
- *   attachSignupCustomer      — pins the billing customer to that session, so
- *                               the daemon reads the customer id from its own
- *                               row instead of trusting the completion call.
  *   completeSignupOwner       — creates the founding-owner user and enqueues
- *                               the tenant. Requires the session.
+ *                               the tenant. Requires the session. With an
+ *                               external signup step configured daemon-side,
+ *                               it also returns the step URL and token.
+ *   getSignupStep             — reads the state of that external step.
  *
  * ORDERING is enforced daemon-side, not here. The completion RPC takes no
  * email, workspace name or tier — it reads all of them back from the
@@ -38,7 +38,10 @@
 import 'server-only';
 
 import { serviceClient } from '@/src/lib/gibson-client';
-import { SignupService } from '@/src/gen/gibson/tenant/v1/signup_pb';
+import {
+  SignupService,
+  SignupStepState,
+} from '@/src/gen/gibson/tenant/v1/signup_pb';
 
 /** Inputs to `requestSignupVerification`. */
 interface RequestSignupVerificationInput {
@@ -124,31 +127,19 @@ export async function redeemSignupVerification(input: {
   };
 }
 
-/**
- * Pin the billing customer to the verified session.
- *
- * The completion call carries no customer id; the daemon reads it from the row
- * this writes. Only reachable with a live verified session, which is what keeps
- * billing objects from existing for unproven addresses.
- */
-export async function attachSignupCustomer(input: {
-  verifiedSessionToken: string;
-  stripeCustomerId: string;
-  clientIp: string;
-}): Promise<void> {
-  await serviceClient(SignupService, '').attachSignupCustomer({
-    verifiedSessionToken: input.verifiedSessionToken,
-    stripeCustomerId: input.stripeCustomerId,
-    clientIp: input.clientIp,
-  });
-}
-
 /** Outcome of owner provisioning. */
 interface CompleteSignupOwnerResult {
   /** Deterministic tenant slug the daemon derived from the workspace name. */
   tenantId: string;
   /** Zitadel id of the founding-owner human user this call created. */
   ownerUserId: string;
+  /**
+   * Where the browser goes for the external signup step (gibson#895). Empty
+   * when the daemon has no step configured: the tenant does not wait.
+   */
+  stepUrl: string;
+  /** Opaque token of this signup for the external step. Empty with no step. */
+  stepToken: string;
 }
 
 /**
@@ -175,5 +166,35 @@ export async function completeSignupOwner(input: {
     clientIp: input.clientIp,
   });
 
-  return { tenantId: resp.tenantId, ownerUserId: resp.ownerUserId };
+  return {
+    tenantId: resp.tenantId,
+    ownerUserId: resp.ownerUserId,
+    stepUrl: resp.stepUrl,
+    stepToken: resp.stepToken,
+  };
+}
+
+/** The state of the external signup step, as the dashboard reads it. */
+export type SignupStepStatus = 'none' | 'waiting' | 'done' | 'failed';
+
+/**
+ * Read the state of the external signup step of one attempt.
+ *
+ * The attempt id is the capability, as for the progress RPC. An unknown
+ * attempt reads as `none`, so the answer does not tell which attempts exist.
+ *
+ * Throws a `ConnectError` on RPC-level failure.
+ */
+export async function getSignupStep(attemptId: string): Promise<SignupStepStatus> {
+  const resp = await serviceClient(SignupService, '').getSignupStep({ attemptId });
+  switch (resp.state) {
+    case SignupStepState.WAITING:
+      return 'waiting';
+    case SignupStepState.DONE:
+      return 'done';
+    case SignupStepState.FAILED:
+      return 'failed';
+    default:
+      return 'none';
+  }
 }

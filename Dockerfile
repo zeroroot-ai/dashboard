@@ -83,7 +83,7 @@ ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 # `prebuild` used to run each generator immediately before its own freshness
 # gate, so every gate diffed the generator's output against the generator's
 # output and could never fail. The generators are out of `prebuild` now, and
-# the four gates (plans, stripe tiers, authz registry, mission schema) compare
+# the gates (plans, authz registry, mission schema) compare
 # the COMMITTED artifact against freshly generated output.
 #
 # The polyrepo siblings those generators read — deploy/helm/gibson-operators/
@@ -95,7 +95,7 @@ ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 # Being told to look away is no longer an option, which is the point.
 
 # Build the standalone application. All sibling-sourced generated files
-# (plans.ts, stripe_gen.ts, authz registry, proto bindings) are committed, and
+# (plans.ts, authz registry, proto bindings) are committed, and
 # the freshness gates verify them structurally here (see the note above), so the
 # build performs no cross-repo fetch and reads no token.
 RUN pnpm run build

@@ -10,11 +10,11 @@
  * Fields (in DOM order): firstName, lastName, email, workspaceName, acceptToS
  * checkbox, acceptPrivacy checkbox.
  *
- * There is NO password field and NO card field here, and their absence is the
- * whole point of this screen. Submitting asks the daemon to email a single-use
- * verification link and nothing else happens: no account, no billing customer,
- * no workspace. The password and the card are collected on /signup/complete,
- * which is only reachable by following that link.
+ * There is NO password field here, and its absence is the whole point of this
+ * screen. Submitting asks the daemon to email a single-use verification link
+ * and nothing else happens: no account and no workspace. The password is
+ * collected on /signup/complete, which is only reachable by following that
+ * link.
  *
  * On submit:
  *  1. Disables the form.
@@ -84,13 +84,11 @@ interface SignupFormProps {
    */
   pricingUrl: string | null;
   /**
-   * Whether the deployment profile has billing enabled (SaaS). When false
-   * (self-hosted / card-free profile): the plan display row, Stripe Elements,
-   * and payment-method field are all omitted. The form collects only email,
-   * password, and workspace name. When true the card-first SaaS flow renders
-   * exactly as before (no regression). dashboard#923 / PRD dashboard#920.
+   * Whether the form shows the chosen plan. True on the SaaS profile, where
+   * the user picked a plan on the marketing site. False on self-hosted, where
+   * plans are a SaaS concept. dashboard#923 / PRD dashboard#920.
    */
-  billingEnabled: boolean;
+  showPlan: boolean;
   /**
    * Full URL of the Terms of Service page, e.g. "https://www.zeroroot.ai/terms".
    * Derived server-side from marketingUrl (dashboard#924 / PRD dashboard#920).
@@ -110,18 +108,14 @@ interface SignupFormProps {
 // Component
 // ---------------------------------------------------------------------------
 
-// SignupForm collects the account details ONLY. It no longer mounts Stripe.
-//
-// The card step moved to /signup/complete, which runs after the emailed link is
-// redeemed. That is not a layout preference: a Payment Element needs a
-// SetupIntent, a SetupIntent needs a customer, and creating a customer here
-// would mean a billing object exists for an address nobody has proven they
-// control. Submitting this form sends one email and creates nothing else.
+// SignupForm collects the account details ONLY. Submitting this form sends one
+// email and creates nothing else. The password is collected on
+// /signup/complete, after the emailed link is redeemed.
 export function SignupForm({
   plan,
   planDisplayName,
   pricingUrl,
-  billingEnabled,
+  showPlan,
   termsUrl,
   privacyUrl,
 }: SignupFormProps) {
@@ -310,13 +304,10 @@ export function SignupForm({
               className="space-y-5"
               noValidate
             >
-              {/* Read-only plan display — SaaS only (billingEnabled).
-                  Self-hosted (billingEnabled=false): plans are a SaaS concept;
-                  self-hosted runs unlimited-metered entitlements with no plan
-                  picker. Hide this row entirely on the card-free profile so
-                  the form is clean: email / password / workspace only.
-                  dashboard#923 / PRD dashboard#920. */}
-              {billingEnabled && (
+              {/* Read-only plan display, SaaS only (showPlan). Self-hosted
+                  runs unlimited-metered entitlements with no plan picker, so
+                  the row is hidden there. dashboard#923 / PRD dashboard#920. */}
+              {showPlan && (
                 <div className="flex items-center justify-between rounded-md border border-border bg-muted/50 px-3 py-2">
                   <span className="text-sm text-muted-foreground">Plan</span>
                   <div className="flex items-center gap-2">

@@ -315,7 +315,6 @@ describe("AuthActionName union", () => {
     "org_deleted",
     "hibp_unavailable",
     "captcha_failed",
-    "billing_rollback",
   ];
 
   it("emits successfully for every defined AuthActionName", () => {
