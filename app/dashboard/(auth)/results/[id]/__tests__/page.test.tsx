@@ -61,6 +61,9 @@ vi.mock('@/components/gibson/brain/BrainView', () => ({
 vi.mock('@/components/gibson/missions/MissionFindingsTab', () => ({
   MissionFindingsTab: () => <div />,
 }));
+vi.mock('@/components/gibson/missions/RunChainTab', () => ({
+  RunChainTab: () => null,
+}));
 vi.mock('@/src/components/gibson/mission-graph/MissionFlowTab', () => ({
   MissionFlowTab: () => <div />,
 }));
