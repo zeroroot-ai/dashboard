@@ -24,6 +24,7 @@ import { BrainView } from "@/components/gibson/brain/BrainView";
 import { ToolStreamProgress } from "@/src/components/mission/ToolStreamProgress";
 import { MissionFindingsTab } from "@/components/gibson/missions/MissionFindingsTab";
 import { RunJobsTab } from "@/components/gibson/missions/RunJobsTab";
+import { RunChainTab } from "@/components/gibson/missions/RunChainTab";
 import { MissionFlowTab } from "@/src/components/gibson/mission-graph/MissionFlowTab";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import type { MissionTerminalHandle } from "@/src/components/missions/MissionTerminal";
@@ -327,6 +328,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="jobs" data-testid="tab-jobs">Jobs</TabsTrigger>
+          <TabsTrigger value="runs" data-testid="tab-runs">Runs</TabsTrigger>
           <TabsTrigger value="findings">
             Findings
             {mission.findings > 0 && (
@@ -494,6 +496,10 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
         {/* Findings */}
         <TabsContent value="jobs" className="space-y-4">
           <RunJobsTab missionId={id} />
+        </TabsContent>
+        {/* Runs: the run chain, the checkpoints and the rewind action */}
+        <TabsContent value="runs" className="mt-4">
+          <RunChainTab missionId={mission.id} missionName={mission.name} />
         </TabsContent>
         <TabsContent value="findings" className="mt-4">
           <MissionFindingsTab missionId={mission.id} />
