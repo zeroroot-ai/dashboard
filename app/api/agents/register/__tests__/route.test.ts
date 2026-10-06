@@ -31,6 +31,7 @@ const mockGetServerSession = vi.fn();
 const mockGetActiveTenant = vi.fn();
 const mockHasRoleAtLeast = vi.fn();
 const mockCreateAgentIdentity = vi.fn();
+const mockWriteSecretGrants = vi.fn();
 
 // CSRF is enforced by these routes (src/lib/auth/csrf.ts). Stubbed to pass here
 // so these cases keep testing what they are about; the gate itself is covered,
@@ -63,6 +64,7 @@ vi.mock('@/src/lib/auth/roles', () => ({
 vi.mock('@/src/lib/gibson-client', () => ({
   userClient: vi.fn(() => ({
     createAgentIdentity: mockCreateAgentIdentity,
+    writeSecretGrants: mockWriteSecretGrants,
   })),
 }));
 
@@ -86,6 +88,7 @@ beforeEach(() => {
   mockGetActiveTenant.mockReset();
   mockHasRoleAtLeast.mockReset();
   mockCreateAgentIdentity.mockReset();
+  mockWriteSecretGrants.mockReset();
 });
 
 // ---------------------------------------------------------------------------
@@ -316,5 +319,95 @@ describe('POST /api/agents/register, daemon error mapping', () => {
     } finally {
       errSpy.mockRestore();
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Secret access (ADR-0097, dashboard#174)
+// ---------------------------------------------------------------------------
+
+describe('POST /api/agents/register, secret access', () => {
+  function asAdmin() {
+    mockAuth.mockResolvedValue({ user: { id: 'u1' } });
+    mockGetActiveTenant.mockResolvedValue('acme');
+    mockGetServerSession.mockResolvedValue({ user: { id: 'u1', rolesByTenant: { acme: 'admin' } } });
+    mockHasRoleAtLeast.mockReturnValue(true);
+    mockCreateAgentIdentity.mockResolvedValue({
+      principalId: 'plugin_principal:sa-1',
+      bootstrapToken: 'bt-secret',
+      gibsonUrl: 'https://api.example',
+    });
+  }
+
+  it('writes the grant of a plugin before it returns the bootstrap token', async () => {
+    asAdmin();
+    const order: string[] = [];
+    mockCreateAgentIdentity.mockImplementation(async () => {
+      order.push('create');
+      return { principalId: 'plugin_principal:sa-1', bootstrapToken: 'bt-secret', gibsonUrl: 'u' };
+    });
+    mockWriteSecretGrants.mockImplementation(async () => {
+      order.push('grant');
+      return { written: 1, alreadyPresent: 0 };
+    });
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ name: 'gh-plugin', kind: 'plugin', secretGrants: ['cred:github_token'] }));
+    expect(res.status).toBe(201);
+    expect(order).toEqual(['create', 'grant']);
+    expect(mockWriteSecretGrants).toHaveBeenCalledWith({
+      targetPrincipalId: 'plugin_principal:sa-1',
+      secretNames: ['cred:github_token'],
+    });
+    expect((await res.json()).bootstrapToken).toBe('bt-secret');
+  });
+
+  it('accepts a plugin with no secret and writes no grant', async () => {
+    asAdmin();
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ name: 'gh-plugin', kind: 'plugin', secretGrants: [] }));
+    expect(res.status).toBe(201);
+    expect(mockWriteSecretGrants).not.toHaveBeenCalled();
+  });
+
+  it('refuses secret access for an agent or a tool', async () => {
+    for (const kind of ['agent', 'tool']) {
+      asAdmin();
+      const { POST } = await import('../route');
+      const res = await POST(makeRequest({ name: 'redteam-1', kind, secretGrants: ['cred:db'] }));
+      expect(res.status).toBe(400);
+    }
+    expect(mockCreateAgentIdentity).not.toHaveBeenCalled();
+  });
+
+  it('returns no token when the daemon refuses a secret of another tenant', async () => {
+    asAdmin();
+    mockWriteSecretGrants.mockRejectedValue(new ConnectError('secret not found in this tenant', Code.NotFound));
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ name: 'gh-plugin', kind: 'plugin', secretGrants: ['cred:theirs'] }));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error.code).toBe('SECRET_GRANT_REFUSED');
+    expect(JSON.stringify(body)).not.toContain('bt-secret');
+  });
+
+  it('returns no token when the grant cannot be written', async () => {
+    asAdmin();
+    mockWriteSecretGrants.mockRejectedValue(new ConnectError('down', Code.Unavailable));
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ name: 'gh-plugin', kind: 'plugin', secretGrants: ['cred:db'] }));
+    expect(res.status).toBe(502);
+    expect(JSON.stringify(await res.json())).not.toContain('bt-secret');
+  });
+
+  it('refuses a member before any daemon call', async () => {
+    mockAuth.mockResolvedValue({ user: { id: 'u1' } });
+    mockGetActiveTenant.mockResolvedValue('acme');
+    mockGetServerSession.mockResolvedValue({ user: { id: 'u1', rolesByTenant: { acme: 'member' } } });
+    mockHasRoleAtLeast.mockReturnValue(false);
+    const { POST } = await import('../route');
+    const res = await POST(makeRequest({ name: 'gh-plugin', kind: 'plugin', secretGrants: ['cred:db'] }));
+    expect(res.status).toBe(403);
+    expect(mockCreateAgentIdentity).not.toHaveBeenCalled();
+    expect(mockWriteSecretGrants).not.toHaveBeenCalled();
   });
 });

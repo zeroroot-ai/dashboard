@@ -11,17 +11,19 @@
  * chart and a hardcoded localhost:30002 URL).
  *
  * Branches:
- *   kind=plugin             → renders AddPluginGuide, a read-only walkthrough
- *                              of the real plugin lifecycle (author in a
- *                              plugin repo, PR, GitOps values, SPIFFE
- *                              auto-enrollment). There is no manifest upload
- *                              or bootstrap-token step in this model
- *                              (ADR-0065/0066).
  *   kind=agent | tool       → 4-step flow:
  *                              1. Type & name
  *                              2. Permissions
  *                              3. Credential panel (one-time)
  *                              4. Wait for connection
+ *   kind=plugin             → the same flow, with step 2 Secret access: a
+ *                              tenant admin selects the tenant secrets the
+ *                              plugin may resolve (ADR-0097, dashboard#174).
+ *                              Secret access is assigned here, never declared
+ *                              by the component (gibson#554). The register
+ *                              route writes the grant before it returns the
+ *                              bootstrap token. AddPluginGuide still explains
+ *                              the GitOps path of a platform plugin.
  *
  * Spec: component-bootstrap-e2e Requirements 1, 2, 5, 13.
  */
@@ -59,6 +61,8 @@ import {
   type GrantSelection as CatalogGrantSelection,
 } from '@/components/gibson/permissions/CatalogPicker';
 import { apiFetch } from '@/src/lib/api/fetch';
+import { listSecretNamesAction } from '@/app/actions/read/listSecretNames';
+import { SECRET_ACCESS_TEXTS as SA } from './secret-access-texts';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -370,6 +374,98 @@ function PermissionsStep({
 }
 
 // ---------------------------------------------------------------------------
+// Step 2 (plugin): Secret access
+// ---------------------------------------------------------------------------
+
+/**
+ * A tenant admin selects the secrets the plugin may resolve. The list holds
+ * only the secrets of the active tenant: the action reads them through the
+ * daemon, which scopes the list by the caller's tenant. An empty selection
+ * is valid.
+ */
+export function SecretAccessStep({
+  selected,
+  onSelectedChange,
+  onShowGuide,
+  onBack,
+  onNext,
+}: {
+  selected: string[];
+  onSelectedChange: (names: string[]) => void;
+  onShowGuide: () => void;
+  onBack: () => void;
+  onNext: () => void;
+}) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['deploy-secret-names'],
+    queryFn: async () => {
+      const res = await listSecretNamesAction();
+      if (!res.ok) throw new Error(res.error);
+      return res.data;
+    },
+  });
+  const names = data ?? [];
+
+  function toggle(name: string, on: boolean) {
+    onSelectedChange(on ? [...selected, name] : selected.filter((n) => n !== name));
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold tracking-tight font-mono text-glow-green">{SA.heading}</h2>
+        <p className="text-sm text-muted-foreground">{SA.description}</p>
+      </div>
+
+      {isLoading && <p className="text-xs text-muted-foreground">{SA.loading}</p>}
+      {error && (
+        <Alert variant="destructive">
+          <AlertTriangle className="size-4" />
+          <AlertDescription>{SA.loadError}</AlertDescription>
+        </Alert>
+      )}
+      {!isLoading && !error && names.length === 0 && (
+        <p className="text-xs text-muted-foreground">{SA.empty}</p>
+      )}
+      {names.length > 0 && (
+        <ul className="space-y-2" data-testid="secret-access-list">
+          {names.map((name) => (
+            <li key={name}>
+              <label className="flex items-center gap-2 font-mono text-sm">
+                <Checkbox
+                  checked={selected.includes(name)}
+                  onCheckedChange={(v) => toggle(name, !!v)}
+                  aria-label={name}
+                />
+                <span>{name}</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <Alert>
+        <AlertDescription className="text-xs">{SA.summary(selected.length)}</AlertDescription>
+      </Alert>
+
+      <Button variant="link" className="h-auto p-0 text-xs" onClick={onShowGuide}>
+        {SA.guideLink}
+      </Button>
+
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" onClick={onBack} className="gap-2 text-muted-foreground">
+          <ArrowLeft className="size-4" />
+          Back
+        </Button>
+        <Button onClick={onNext} className="gap-2">
+          Next <ArrowRight className="size-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Step 3: Submit + Credential Panel
 // ---------------------------------------------------------------------------
 
@@ -381,12 +477,14 @@ function CredentialStep({
   componentName,
   componentType,
   grants,
+  secretGrants,
   onAcknowledged,
   onBack,
 }: {
   componentName: string;
-  componentType: 'agent' | 'tool';
+  componentType: ComponentType;
   grants: GrantSelection[];
+  secretGrants: string[];
   onAcknowledged: (creds: Credentials) => void;
   onBack: () => void;
 }) {
@@ -404,7 +502,8 @@ function CredentialStep({
         body: JSON.stringify({
           name: componentName,
           kind: componentType,
-          componentGrants: grants,
+          componentGrants: componentType === 'plugin' ? [] : grants,
+          secretGrants: componentType === 'plugin' ? secretGrants : [],
         }),
       });
       if (!res.ok) {
@@ -614,18 +713,19 @@ export function DeployDispatcher({
   const [componentName, setComponentName] = useState('');
   const [grants, setGrants] = useState<GrantSelection[]>([]);
   const [acknowledgedMinimal, setAcknowledgedMinimal] = useState(false);
+  const [secretGrants, setSecretGrants] = useState<string[]>([]);
+  const [showGuide, setShowGuide] = useState(false);
 
-  // Plugin path: delegate entirely to AddPluginGuide. We render the
-  // type-selection step first so the operator can switch back to
-  // agent/tool, then hand off.
-  if (componentType === 'plugin' && step >= 2) {
+  // The GitOps guide of a platform plugin, reached from the secret access
+  // step. Back returns to that step.
+  if (componentType === 'plugin' && showGuide) {
     return (
       <div className="max-w-2xl mx-auto py-8 px-4">
         <AddPluginGuide
           docsPluginsHref={docsPluginsHref}
           docsConnectorsHref={docsConnectorsHref}
           docsBootstrapHref={docsComponentBootstrapHref}
-          onBack={() => setStep(1)}
+          onBack={() => setShowGuide(false)}
         />
       </div>
     );
@@ -644,10 +744,7 @@ export function DeployDispatcher({
 
       <Card className="border-0 shadow-xl">
         <CardHeader className="pb-4">
-          <StepIndicator
-            step={step}
-            total={componentType === 'plugin' ? 1 : TOTAL_STEPS}
-          />
+          <StepIndicator step={step} total={TOTAL_STEPS} />
         </CardHeader>
         <Separator className="bg-highlight/20" />
         <CardContent className="pt-6 pb-8 px-6">
@@ -671,11 +768,21 @@ export function DeployDispatcher({
               onNext={() => setStep(3)}
             />
           )}
-          {step === 3 && componentType !== 'plugin' && (
+          {step === 2 && componentType === 'plugin' && (
+            <SecretAccessStep
+              selected={secretGrants}
+              onSelectedChange={setSecretGrants}
+              onShowGuide={() => setShowGuide(true)}
+              onBack={() => setStep(1)}
+              onNext={() => setStep(3)}
+            />
+          )}
+          {step === 3 && (
             <CredentialStep
               componentName={componentName}
               componentType={componentType}
               grants={grants}
+              secretGrants={secretGrants}
               onBack={() => setStep(2)}
               onAcknowledged={() => setStep(4)}
             />
