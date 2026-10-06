@@ -32,6 +32,7 @@ import { ErrorAlert } from '@/components/gibson/shared/ErrorAlert';
 import { EmptyState } from '@/components/gibson/shared/EmptyState';
 import { TableSkeleton } from '@/components/gibson/shared/DataSkeleton';
 import { ReliabilityDiagram } from '@/components/gibson/reliability/ReliabilityDiagram';
+import { TrackRecordPanel } from '@/components/gibson/reliability/TrackRecordPanel';
 import { useCalibration } from '@/src/hooks/useCalibration';
 import type { CalibrationReport, TechniqueCalibration } from '@/src/types/calibration';
 
@@ -166,6 +167,8 @@ export function ReliabilityDiagramContent() {
           </CardContent>
         </Card>
       )}
+
+      {technique !== OVERALL_VALUE && <TrackRecordPanel technique={technique} />}
     </div>
   );
 }

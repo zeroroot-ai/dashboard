@@ -66,3 +66,20 @@ export interface CalibrationReport {
   /** The bin resolution this report was computed at (the echoed request value). */
   bins: number;
 }
+
+/**
+ * The track record of one technique in one scope (ADR-0129 §3, gibson#619,
+ * dashboard#192), from WorldService.GetReputation.
+ */
+export interface TrackRecord {
+  technique: string;
+  scopeId: string;
+  /**
+   * The confidence a new hypothesis of this technique starts from in this
+   * scope: the observed TRUE frequency once bets settled, or the neutral
+   * prior when hasTrackRecord is false.
+   */
+  priorStrength: number;
+  /** False when no bet of this technique has settled in this scope. */
+  hasTrackRecord: boolean;
+}
