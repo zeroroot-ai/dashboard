@@ -87,6 +87,11 @@ const TENANT_ROLE_ORDER: Readonly<Record<string, number>> = {
   // proto relation lands here unclassified).
   platform_operator: 1000, // cross-tenant ops tier, higher than any tenant-scoped relation
   platform_owner: 1000, // the Platform owner; see the block comment above
+  // signup_service: the service identity of the dashboard server on
+  // system_tenant (gibson model.fga, D11, gibson#761). It gates the two
+  // signup-progress RPCs, which run before any tenant exists. No person's
+  // membership role can equal it, so it takes the same placeholder tier.
+  signup_service: 1000,
   owner: 150, // tenant owner, highest tenant-scoped role; FGA: admin = [user] or owner
   admin: 100,
   // writer: tenant-scoped write access (e.g. DaemonService/CreateMissionDefinition).
