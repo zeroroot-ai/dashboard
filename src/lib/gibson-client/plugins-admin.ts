@@ -31,8 +31,10 @@ import { throwMapped } from './secrets';
 interface ListPluginInstallsOptions {
   nameFilter?: string;
   statusFilter?: PluginInstallStatus;
-  limit?: number;
-  offset?: number;
+  /** Page size; 0 or absent takes the daemon default. */
+  pageSize?: number;
+  /** The `nextPageToken` of the previous page; empty for the first page. */
+  pageToken?: string;
 }
 
 /**
@@ -46,8 +48,8 @@ async function listPluginInstalls(
     return await client.listPluginInstalls({
       nameFilter: opts.nameFilter ?? '',
       statusFilter: opts.statusFilter ?? 0,
-      limit: opts.limit ?? 50,
-      offset: opts.offset ?? 0,
+      pageSize: opts.pageSize ?? 50,
+      pageToken: opts.pageToken ?? '',
     });
   } catch (err) {
     throwMapped(err);

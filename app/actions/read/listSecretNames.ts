@@ -20,14 +20,12 @@ export async function listSecretNamesAction(): Promise<ActionResult<string[]>> {
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
     const names: string[] = [];
-    let offset = 0;
-    const limit = 200;
-    for (;;) {
-      const page = await listSecrets({ limit, offset });
+    let pageToken = "";
+    do {
+      const page = await listSecrets({ pageSize: 200, pageToken });
       for (const s of page.secrets) names.push(s.name);
-      if (page.secrets.length < limit) break;
-      offset += limit;
-    }
+      pageToken = page.nextPageToken;
+    } while (pageToken);
     return { ok: true, data: names.sort() };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Failed to list secrets" };

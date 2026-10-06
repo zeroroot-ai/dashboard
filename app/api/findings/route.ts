@@ -41,15 +41,18 @@ export async function GET(request: NextRequest) {
     const missionId = searchParams.get('missionId') ?? '';
     const search = searchParams.get('search') ?? '';
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
-    const offset = parseInt(searchParams.get('offset') || '0');
+    // The page token of the daemon (ADR-0028 rule 3, sdk#232). The client
+    // sends back the `nextCursor` of the previous page; an empty value asks
+    // for the first page.
+    const pageToken = searchParams.get('cursor') ?? '';
 
     const resp = await userClient(GraphService).getFindings({
       severityFilter: severity,
       categoryFilter: category,
       missionId,
       search,
-      limit,
-      offset,
+      pageSize: limit,
+      pageToken,
     });
 
     const findings = resp.findings.map((f) => {
@@ -80,9 +83,9 @@ export async function GET(request: NextRequest) {
     const response: PaginatedResponse<Finding> = {
       data: findings as Finding[],
       total,
-      page: Math.floor(offset / limit) + 1,
       limit,
-      hasMore: offset + limit < total,
+      ...(resp.nextPageToken ? { nextCursor: resp.nextPageToken } : {}),
+      hasMore: resp.nextPageToken !== '',
     };
 
     return NextResponse.json(response);

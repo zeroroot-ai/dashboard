@@ -110,11 +110,15 @@ export async function ping(userId?: string, tenantId?: string): Promise<{ timest
   return response;
 }
 
-export async function listMissions(activeOnly = false, limit = 100, userId?: string, tenantId?: string) {
+/**
+ * One page of missions. `pageSize` caps the page (the daemon allows up to
+ * 1000); the first page is the only one read here (sdk#232 page tokens).
+ */
+export async function listMissions(activeOnly = false, pageSize = 100, userId?: string, tenantId?: string) {
   const client = await getClient(userId, tenantId);
   const response = await client.listMissions({
     activeOnly,
-    limit,
+    pageSize,
   });
   return response;
 }
@@ -195,16 +199,6 @@ export async function runMission(
     return { success: true, missionId: event.missionId, event };
   }
   return { success: true };
-}
-
-async function getMissionHistory(name: string, limit = 100, offset = 0, userId?: string, tenantId?: string) {
-  const client = await getClient(userId, tenantId);
-  const response = await client.getMissionHistory({
-    name,
-    limit,
-    offset,
-  });
-  return response;
 }
 
 export async function listMissionDefinitions(userId?: string, tenantId?: string) {
