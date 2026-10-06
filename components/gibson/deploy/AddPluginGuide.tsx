@@ -8,7 +8,7 @@
  *
  * Replaces the deleted plugin-registration wizard (manifest upload +
  * bootstrap token, ADR-0065/0066 retired that model). A plugin is now
- * vendor-SDK code authored in the `integrations` monorepo, deployed by
+ * vendor-SDK code authored in a plugin repository, deployed by
  * adding an entry under `.Values.plugins.<vendor>` in GitOps, and
  * auto-enrolled in-cluster via its SPIFFE SVID, no manifest upload, no
  * bootstrap token, no CLI enroll command.
@@ -39,9 +39,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-const EXAMPLE_PLUGIN_URL =
-  'https://github.com/zeroroot-ai/integrations/tree/main/plugins/github';
-
 const HANDLER_SNIPPET = `type GetRepositoryRequest struct {
     Owner string
     Repo  string
@@ -63,7 +60,7 @@ const VALUES_SNIPPET = `plugins:
   github:
     enabled: true
     image:
-      repository: ghcr.io/your-org/integrations/github
+      repository: ghcr.io/your-org/plugins/github
       tag: v0.1.0
     runtime: pod`;
 
@@ -192,18 +189,16 @@ export function AddPluginGuide({
             <CardTitle className="flex items-center gap-2 text-sm">
               <StepNumber n={1} />
               <GitForkIcon className="text-highlight size-4" aria-hidden="true" />
-              Author it in your integrations repo
+              Author it in your plugin repo
             </CardTitle>
           </CardHeader>
           <CardContent className="text-muted-foreground space-y-2 pb-4 text-sm">
             <p>
-              Fork or clone <code className="bg-muted rounded px-1 font-mono text-xs">integrations</code>,
-              copy the <code className="bg-muted rounded px-1 font-mono text-xs">plugins/github</code> example, and replace its
-              handlers with calls to your vendor&apos;s API.
+              Create a repository for your plugin, and write its handlers as calls to your
+              vendor&apos;s API.
             </p>
             <div className="flex flex-wrap gap-x-4 gap-y-1">
               <DocsLink href={docsPluginsHref}>Plugin authoring docs</DocsLink>
-              <DocsLink href={EXAMPLE_PLUGIN_URL}>Example plugin on GitHub</DocsLink>
             </div>
           </CardContent>
         </Card>
@@ -237,7 +232,7 @@ export function AddPluginGuide({
             <p>
               Your repo&apos;s CI builds the plugin image and pushes it to your own registry, for example{' '}
               <code className="bg-muted rounded px-1 font-mono text-xs">
-                ghcr.io/&lt;org&gt;/integrations/&lt;vendor&gt;
+                ghcr.io/&lt;org&gt;/plugins/&lt;vendor&gt;
               </code>.
             </p>
           </CardContent>
