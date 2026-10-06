@@ -3,6 +3,8 @@
 
 "use client";
 
+import type * as React from "react";
+
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -17,6 +19,8 @@ import {
   useSidebar
 } from "@/components/ui/sidebar";
 import { RunningAgentsBadge } from "@/components/gibson/agent-console/RunningAgentsBadge";
+import { ComplianceNavGate } from "@/components/gibson/compliance/ComplianceNavGate";
+import { COMPLIANCE_MENU_TITLE } from "@/components/gibson/compliance/texts";
 import {
   ActivityIcon,
   AlertTriangleIcon,
@@ -41,6 +45,7 @@ import {
   ServerIcon,
   SettingsIcon,
   ShieldAlertIcon,
+  FileTextIcon,
   TerminalIcon,
   LayersIcon,
   ShieldCheckIcon,
@@ -72,6 +77,11 @@ type NavItem = {
   isNew?: boolean;
   /** Live count of the tenant's running agents (the console entry). */
   liveBadge?: "running-agents";
+  /**
+   * "compliance": the entry shows only for the Owner and the Admin, and only
+   * when the tenant enabled a compliance pack (D56).
+   */
+  gate?: "compliance";
   newTab?: boolean;
   items?: NavItem;
 }[];
@@ -205,6 +215,14 @@ export const navItems: NavGroup[] = [
         title: "Authorizations",
         href: "/dashboard/destructive-actions",
         icon: ShieldAlertIcon
+      },
+      {
+        // The compliance evidence page (ADR-0113, D56). Evidence only, never
+        // a verdict.
+        title: COMPLIANCE_MENU_TITLE,
+        href: "/dashboard/compliance",
+        icon: FileTextIcon,
+        gate: "compliance"
       }
     ]
   },
@@ -248,6 +266,11 @@ export const navItems: NavGroup[] = [
   },
 ];
 
+function GatedItem({ gate, children }: { gate?: "compliance"; children: React.ReactNode }) {
+  if (gate === "compliance") return <ComplianceNavGate>{children}</ComplianceNavGate>;
+  return <>{children}</>;
+}
+
 export function NavMain() {
   const pathname = usePathname();
   const { isMobile } = useSidebar();
@@ -260,7 +283,8 @@ export function NavMain() {
           <SidebarGroupContent className="flex flex-col gap-2">
             <SidebarMenu>
               {nav.items.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <GatedItem key={item.title} gate={item.gate}>
+                <SidebarMenuItem>
                   {Array.isArray(item.items) && item.items.length > 0 ? (
                     <>
                       <div className="hidden group-data-[collapsible=icon]:block">
@@ -347,6 +371,7 @@ export function NavMain() {
                     </SidebarMenuBadge>
                   )}
                 </SidebarMenuItem>
+                </GatedItem>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
