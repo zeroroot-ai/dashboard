@@ -32,8 +32,10 @@ interface ListActiveGrantsOptions {
   rpcFilter?: string;
   /** When true, returns only grants expiring within 5 minutes. */
   includeNearExpiryOnly?: boolean;
-  limit?: number;
-  offset?: number;
+  /** The largest number of grants on one page. Zero means the server default. */
+  pageSize?: number;
+  /** The nextPageToken of the previous page. Empty for the first page. */
+  pageToken?: string;
 }
 
 /**
@@ -51,8 +53,8 @@ export async function listActiveGrants(
       recipientClassFilter: opts.recipientClassFilter ?? 0,
       rpcFilter: opts.rpcFilter ?? '',
       includeNearExpiryOnly: opts.includeNearExpiryOnly ?? false,
-      limit: opts.limit ?? 50,
-      offset: opts.offset ?? 0,
+      pageSize: opts.pageSize ?? 50,
+      pageToken: opts.pageToken ?? '',
     });
   } catch (err) {
     throwMapped(err);
