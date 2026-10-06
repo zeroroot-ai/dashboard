@@ -26,6 +26,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
   mockGrantAccess,
   mockRevokeAccess,
+  mockListAccess,
   mockGetModelAccessClient,
   mockGetServerSession,
   MockAuthzDeniedError,
@@ -42,12 +43,15 @@ const {
   }
   const grantAccess = vi.fn(async () => ({}));
   const revokeAccess = vi.fn(async () => ({}));
+  const listAccess = vi.fn(async () => ({ grants: [] as unknown[] }));
   return {
     mockGrantAccess: grantAccess,
     mockRevokeAccess: revokeAccess,
+    mockListAccess: listAccess,
     mockGetModelAccessClient: vi.fn(async () => ({
       grantAccess,
       revokeAccess,
+      listAccess,
     })),
     mockGetServerSession: vi.fn(async () => ({
       user: { id: "user-1", tenantId: "tenant-abc" },
@@ -89,6 +93,7 @@ vi.mock("@/src/gen/gibson/tenant/v1/model_access_pb", () => ({
 
 import {
   grantModelAccessAction,
+  listModelAccessAction,
   revokeModelAccessAction,
   type GrantInput,
 } from "../modelAccess";
@@ -164,5 +169,62 @@ describe("revokeModelAccessAction, authz mapping", () => {
     if (result.ok) throw new Error("expected not-ok");
     expect(result.code).toBe("permission_denied");
     expect(result.error).toBe("Permission denied");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The default tenant grants (dashboard#221)
+// ---------------------------------------------------------------------------
+
+describe("the tenant subject needs no id", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("lists with subject kind TENANT and an empty subject id", async () => {
+    mockListAccess.mockResolvedValueOnce({
+      grants: [
+        {
+          tenantId: "tenant-abc",
+          subjectKind: 3,
+          subjectId: "",
+          targetKind: 1,
+          targetId: "anthropic",
+          grantedAtUnix: BigInt(0),
+          grantedByUserId: "",
+        },
+      ],
+    });
+    const result = await listModelAccessAction("tenant", "");
+    expect(mockListAccess).toHaveBeenCalledWith({ subjectKind: 3, subjectId: "" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("expected ok");
+    expect(result.data).toEqual([
+      expect.objectContaining({ subjectKind: "tenant", subjectId: "", targetKind: "provider", targetId: "anthropic" }),
+    ]);
+  });
+
+  it("drops a typed id for the tenant subject, so the caller's own tenant is used", async () => {
+    await listModelAccessAction("tenant", "other-tenant");
+    expect(mockListAccess).toHaveBeenCalledWith({ subjectKind: 3, subjectId: "" });
+  });
+
+  it("revokes the default grant of a provider with an empty subject id", async () => {
+    const result = await revokeModelAccessAction({
+      subjectKind: "tenant",
+      subjectId: "",
+      targetKind: "provider",
+      targetId: "anthropic",
+    });
+    expect(result.ok).toBe(true);
+    expect(mockRevokeAccess).toHaveBeenCalledWith({
+      subjectKind: 3,
+      subjectId: "",
+      targetKind: 1,
+      targetId: "anthropic",
+    });
+  });
+
+  it("keeps the id of a user subject", async () => {
+    await listModelAccessAction("user", "user-2");
+    expect(mockListAccess).toHaveBeenCalledWith({ subjectKind: 1, subjectId: "user-2" });
   });
 });

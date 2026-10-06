@@ -70,6 +70,15 @@ function subjectToProto(k: SubjectKindInput): GrantSubjectKind {
   }
 }
 
+/**
+ * The subject id sent to the daemon. A tenant subject is always the caller's
+ * own tenant, so it carries no id: the daemon resolves it from the session
+ * and refuses the id of another tenant (hosted#358).
+ */
+function subjectIdForProto(k: SubjectKindInput, id: string): string {
+  return k === "tenant" ? "" : id;
+}
+
 function targetToProto(k: TargetKindInput): GrantTargetKind {
   switch (k) {
     case "provider":
@@ -125,7 +134,7 @@ export async function grantModelAccessAction(
       grant: {
         tenantId: "", // daemon overwrites with session tenant
         subjectKind: subjectToProto(input.subjectKind),
-        subjectId: input.subjectId,
+        subjectId: subjectIdForProto(input.subjectKind, input.subjectId),
         targetKind: targetToProto(input.targetKind),
         targetId: input.targetId,
         grantedAtUnix: BigInt(Math.floor(Date.now() / 1000)),
@@ -149,7 +158,7 @@ export async function revokeModelAccessAction(
     const client = await getModelAccessClient();
     await client.revokeAccess({
       subjectKind: subjectToProto(input.subjectKind),
-      subjectId: input.subjectId,
+      subjectId: subjectIdForProto(input.subjectKind, input.subjectId),
       targetKind: targetToProto(input.targetKind),
       targetId: input.targetId,
     });
@@ -176,7 +185,7 @@ export async function listModelAccessAction(
     const client = await getModelAccessClient();
     const resp = await client.listAccess({
       subjectKind: subjectToProto(subjectKind),
-      subjectId,
+      subjectId: subjectIdForProto(subjectKind, subjectId),
     });
     return {
       ok: true,
