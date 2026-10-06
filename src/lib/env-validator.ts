@@ -214,13 +214,6 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
       'Public Envoy URL surfaced to agents/tools/plugins via /api/config/public ' +
       '(matches GIBSON_PLATFORM_PUBLIC_URL in practice; surface kept for the wizard).',
   },
-  {
-    name: 'PUBLIC_URL',
-    kind: 'url',
-    hint:
-      'Public base URL of the dashboard (matches AUTH_URL in single-origin deploys). ' +
-      'Used for transactional emails.',
-  },
 
   // ---- Stores ----
   {

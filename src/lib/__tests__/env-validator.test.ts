@@ -63,7 +63,6 @@ const VALID_ENV: Record<string, string> = {
   // Daemon front door
   GIBSON_PLATFORM_PUBLIC_URL: 'https://api.zeroroot.local:30443',
   GIBSON_PUBLIC_URL: 'https://api.zeroroot.local:30443',
-  PUBLIC_URL: 'https://app.zeroroot.local:30443',
 
   // Stores
   DATABASE_URL: 'postgres://user:pass@db:5432/gibson_dashboard',

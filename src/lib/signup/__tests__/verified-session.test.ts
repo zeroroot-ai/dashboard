@@ -55,7 +55,7 @@ describe('verified-session codec', () => {
       ...SESSION,
       spent: true as const,
       stepLink: 'https://billing.example.test/step?token=t',
-      tenantId: 'acme',
+      tenantSlug: 'acme',
     };
     expect(decodeVerifiedSession(encodeVerifiedSession(completed))).toEqual(completed);
   });

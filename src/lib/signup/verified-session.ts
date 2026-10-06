@@ -87,7 +87,7 @@ export interface VerifiedSignupSession {
    * Set at completion: the tenant slug the daemon derived. The step page
    * waits for this tenant after the step is done.
    */
-  tenantId?: string;
+  tenantSlug?: string;
   /**
    * Set once completion succeeded. The daemon spent the session, so the
    * cookie must never re-enter a completion; it stays so the completion page
@@ -221,8 +221,8 @@ export function decodeVerifiedSession(
       ...(typeof s.stepLink === 'string' && s.stepLink !== ''
         ? { stepLink: s.stepLink }
         : {}),
-      ...(typeof s.tenantId === 'string' && s.tenantId !== ''
-        ? { tenantId: s.tenantId }
+      ...(typeof s.tenantSlug === 'string' && s.tenantSlug !== ''
+        ? { tenantSlug: s.tenantSlug }
         : {}),
       ...(s.spent === true ? { spent: true as const } : {}),
     };

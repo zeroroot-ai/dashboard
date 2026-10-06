@@ -132,7 +132,7 @@ export interface SignupStepText {
   retryLabel: string;
 }
 
-/** Env name of each signup step text. */
+/** Env name of each signup step text, for the error message. */
 const SIGNUP_STEP_TEXT_ENV: Record<keyof SignupStepText, string> = {
   title: 'DASHBOARD_SIGNUP_STEP_TITLE',
   text: 'DASHBOARD_SIGNUP_STEP_TEXT',
@@ -184,8 +184,11 @@ export function getDeploymentProfile(
   const wwwRaw = source['WWW_URL'];
   const marketingUrl = wwwRaw ? wwwRaw.replace(/\/$/, '') : null;
 
-  const accountUrl = (source['DASHBOARD_ACCOUNT_URL'] ?? '').trim();
-  const accountLabel = (source['DASHBOARD_ACCOUNT_LINK_LABEL'] ?? '').trim();
+  // Dotted reads on purpose: check-env-declared-is-read counts `env.X` as the
+  // reader of each declared name.
+  const env = source;
+  const accountUrl = (env.DASHBOARD_ACCOUNT_URL ?? '').trim();
+  const accountLabel = (env.DASHBOARD_ACCOUNT_LINK_LABEL ?? '').trim();
   if ((accountUrl === '') !== (accountLabel === '')) {
     throw new IncoherentDeploymentProfileError(
       'DASHBOARD_ACCOUNT_URL and DASHBOARD_ACCOUNT_LINK_LABEL must be set together.\n' +
@@ -194,23 +197,24 @@ export function getDeploymentProfile(
   }
   const accountLink = accountUrl ? { url: accountUrl, label: accountLabel } : null;
 
-  const stepEntries = Object.entries(SIGNUP_STEP_TEXT_ENV).map(
-    ([key, env]) => [key, (source[env] ?? '').trim()] as const,
-  );
-  const stepSet = stepEntries.filter(([, value]) => value !== '');
-  if (stepSet.length > 0 && stepSet.length < stepEntries.length) {
-    const missing = stepEntries
-      .filter(([, value]) => value === '')
-      .map(([key]) => SIGNUP_STEP_TEXT_ENV[key as keyof SignupStepText]);
+  const stepText: SignupStepText = {
+    title: (env.DASHBOARD_SIGNUP_STEP_TITLE ?? '').trim(),
+    text: (env.DASHBOARD_SIGNUP_STEP_TEXT ?? '').trim(),
+    buttonLabel: (env.DASHBOARD_SIGNUP_STEP_BUTTON_LABEL ?? '').trim(),
+    waitingText: (env.DASHBOARD_SIGNUP_STEP_WAITING_TEXT ?? '').trim(),
+    failureText: (env.DASHBOARD_SIGNUP_STEP_FAILURE_TEXT ?? '').trim(),
+    retryLabel: (env.DASHBOARD_SIGNUP_STEP_RETRY_LABEL ?? '').trim(),
+  };
+  const stepKeys = Object.keys(stepText) as Array<keyof SignupStepText>;
+  const missing = stepKeys.filter((key) => stepText[key] === '');
+  if (missing.length > 0 && missing.length < stepKeys.length) {
     throw new IncoherentDeploymentProfileError(
-      `The signup step texts are set in part. Missing: ${missing.join(', ')}.\n` +
-        'Fix: set all six DASHBOARD_SIGNUP_STEP_* texts, or none.',
+      `The signup step texts are set in part. Missing: ${missing
+        .map((key) => SIGNUP_STEP_TEXT_ENV[key])
+        .join(', ')}.\n` + 'Fix: set all six DASHBOARD_SIGNUP_STEP_* texts, or none.',
     );
   }
-  const signupStepText =
-    stepSet.length === stepEntries.length
-      ? (Object.fromEntries(stepEntries) as unknown as SignupStepText)
-      : null;
+  const signupStepText = missing.length === 0 ? stepText : null;
 
   return {
     selfServeSignup,

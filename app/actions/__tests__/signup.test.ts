@@ -528,7 +528,7 @@ describe('external signup step', () => {
     expect(mockGetTenantProvisioningStatus).not.toHaveBeenCalled();
     const spent = decodeVerifiedSession(mockCookieStore.store.get(SIGNUP_VERIFIED_COOKIE));
     expect(spent?.spent).toBe(true);
-    expect(spent?.tenantId).toBe('test-workspace');
+    expect(spent?.tenantSlug).toBe('test-workspace');
     expect(spent?.stepLink).toBe('https://billing.example.test/signup-step?token=opaque-token');
   });
 

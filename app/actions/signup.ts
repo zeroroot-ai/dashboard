@@ -476,7 +476,7 @@ export async function completeSignup(
     await writeVerifiedSession({
       ...session,
       spent: true,
-      tenantId: result.tenantId,
+      tenantSlug: result.tenantId,
       ...(stepLink ? { stepLink } : {}),
     });
 
@@ -548,7 +548,7 @@ export async function readSignupStepState(): Promise<SignupStepStatus> {
  */
 export async function finishSignupAfterStep(): Promise<SignupActionResult> {
   const session = await readCompletedSession();
-  if (!session?.tenantId) {
+  if (!session?.tenantSlug) {
     return {
       ok: false,
       attemptId: session?.attemptId ?? "",
@@ -557,7 +557,7 @@ export async function finishSignupAfterStep(): Promise<SignupActionResult> {
     };
   }
   const ctx = ctxFromSession(session);
-  ctx.tenantSlug = session.tenantId;
+  ctx.tenantSlug = session.tenantSlug;
   return await finishProvisioning(ctx);
 }
 
