@@ -195,10 +195,15 @@ interface SecretsListProps {
   secrets: SecretMetadata[];
   /** Total count for pagination display. */
   total: number;
-  /** Current page offset (server-side pagination). */
-  offset: number;
+  /** 1-based number of the page on screen. Display only. */
+  pageNumber: number;
   /** Page size. */
   limit: number;
+  /**
+   * The daemon's token for the next page, empty on the last page (sdk#232).
+   * The token is opaque: the page passes it back and never reads it.
+   */
+  nextPageToken: string;
   /** Base href for pagination navigation, e.g. "/dashboard/pages/settings/secrets" */
   basePath: string;
 }
@@ -206,8 +211,9 @@ interface SecretsListProps {
 export function SecretsList({
   secrets,
   total,
-  offset,
+  pageNumber,
   limit,
+  nextPageToken,
   basePath,
 }: SecretsListProps) {
   const router = useRouter();
@@ -228,19 +234,22 @@ export function SecretsList({
     state: { sorting },
   });
 
-  const currentPage = Math.floor(offset / limit);
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
+  // A page token only moves forward. "Previous" goes back in the browser
+  // history, which holds the URL of the page before.
   function prevPage() {
-    const newOffset = Math.max(0, offset - limit);
-    router.push(`${basePath}?offset=${newOffset}&limit=${limit}`);
+    router.back();
   }
 
   function nextPage() {
-    const newOffset = offset + limit;
-    if (newOffset < total) {
-      router.push(`${basePath}?offset=${newOffset}&limit=${limit}`);
-    }
+    if (!nextPageToken) return;
+    const params = new URLSearchParams({
+      pageToken: nextPageToken,
+      page: String(pageNumber + 1),
+      limit: String(limit),
+    });
+    router.push(`${basePath}?${params.toString()}`);
   }
 
   return (
@@ -313,16 +322,16 @@ export function SecretsList({
       {total > limit && (
         <div className="flex items-center justify-end gap-2">
           <span className="text-muted-foreground text-sm">
-            Page {currentPage + 1} of {totalPages}
+            Page {pageNumber} of {totalPages}
           </span>
-          <Button variant="outline" size="sm" onClick={prevPage} disabled={offset === 0}>
+          <Button variant="outline" size="sm" onClick={prevPage} disabled={pageNumber <= 1}>
             Previous
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={nextPage}
-            disabled={offset + limit >= total}
+            disabled={!nextPageToken}
           >
             Next
           </Button>

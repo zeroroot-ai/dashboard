@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
 const PAGE_LIMIT = 25;
 
 interface SecretsPageProps {
-  searchParams: Promise<{ offset?: string; limit?: string }>;
+  searchParams: Promise<{ pageToken?: string; page?: string; limit?: string }>;
 }
 
 export default async function SecretsPage({ searchParams }: SecretsPageProps) {
@@ -58,7 +58,9 @@ export default async function SecretsPage({ searchParams }: SecretsPageProps) {
   }
 
   const params = await searchParams;
-  const offset = Math.max(0, parseInt(params.offset ?? "0", 10) || 0);
+  // The daemon's page token (sdk#232). `page` is the page number on screen.
+  const pageToken = params.pageToken ?? "";
+  const pageNumber = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(params.limit ?? String(PAGE_LIMIT), 10) || PAGE_LIMIT));
 
   // Determine the active backend from the daemon's explicit signal. Hosted is
@@ -101,7 +103,7 @@ export default async function SecretsPage({ searchParams }: SecretsPageProps) {
   let secrets: Awaited<ReturnType<typeof listSecrets>> | null = null;
   let fetchError: string | null = null;
   try {
-    secrets = await listSecrets({ offset, limit });
+    secrets = await listSecrets({ pageToken, pageSize: limit });
   } catch (err) {
     fetchError = err instanceof Error ? err.message : "Failed to load secrets";
   }
@@ -129,8 +131,9 @@ export default async function SecretsPage({ searchParams }: SecretsPageProps) {
         <SecretsList
           secrets={secrets!.secrets}
           total={total}
-          offset={offset}
+          pageNumber={pageNumber}
           limit={limit}
+          nextPageToken={secrets!.nextPageToken}
           basePath="/dashboard/pages/settings/secrets"
         />
       )}

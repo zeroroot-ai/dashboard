@@ -40,8 +40,9 @@ export async function GET(
       categoryFilter: '',
       missionId: id,
       search: '',
-      limit: 500,
-      offset: 0,
+      // One page of up to 500, the same bound as before page tokens (sdk#232).
+      pageSize: 500,
+      pageToken: '',
     });
 
     // Transform to the existing response shape: flat array of finding objects.

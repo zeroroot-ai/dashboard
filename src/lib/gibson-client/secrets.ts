@@ -74,8 +74,10 @@ export function throwMapped(err: unknown): never {
 
 interface ListSecretsOptions {
   categoryFilter?: SecretCategory;
-  limit?: number;
-  offset?: number;
+  /** Page size; 0 or absent takes the daemon default. */
+  pageSize?: number;
+  /** The `nextPageToken` of the previous page; empty for the first page. */
+  pageToken?: string;
   namePrefix?: string;
 }
 
@@ -88,8 +90,8 @@ export async function listSecrets(opts: ListSecretsOptions = {}): Promise<ListSe
     const client = userClient(SecretsService);
     return await client.listSecrets({
       categoryFilter: opts.categoryFilter ?? 0,
-      limit: opts.limit ?? 50,
-      offset: opts.offset ?? 0,
+      pageSize: opts.pageSize ?? 50,
+      pageToken: opts.pageToken ?? '',
       namePrefix: opts.namePrefix ?? '',
     });
   } catch (err) {

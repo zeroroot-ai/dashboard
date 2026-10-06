@@ -89,8 +89,8 @@ describe('listSecrets', () => {
     expect(mockSecretsClient.listSecrets).toHaveBeenCalledOnce();
     expect(mockSecretsClient.listSecrets).toHaveBeenCalledWith({
       categoryFilter: 0,
-      limit: 50,
-      offset: 0,
+      pageSize: 50,
+      pageToken: '',
       namePrefix: '',
     });
     expect(result).toBe(expected);
@@ -99,10 +99,10 @@ describe('listSecrets', () => {
   it('forwards caller-supplied options', async () => {
     mockSecretsClient.listSecrets.mockResolvedValue({ secrets: [], total: 0 });
 
-    await listSecrets({ limit: 10, offset: 20, namePrefix: 'cred:' });
+    await listSecrets({ pageSize: 10, pageToken: 'tok-2', namePrefix: 'cred:' });
 
     expect(mockSecretsClient.listSecrets).toHaveBeenCalledWith(
-      expect.objectContaining({ limit: 10, offset: 20, namePrefix: 'cred:' }),
+      expect.objectContaining({ pageSize: 10, pageToken: 'tok-2', namePrefix: 'cred:' }),
     );
   });
 

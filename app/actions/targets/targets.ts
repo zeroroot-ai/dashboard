@@ -168,8 +168,10 @@ export async function listTargetsAction(filter?: {
   type?: string;
   status?: string;
   tags?: string[];
-  limit?: number;
-  offset?: number;
+  /** Page size; 0 or absent takes the daemon default. */
+  pageSize?: number;
+  /** The `nextPageToken` of the previous page; empty for the first page. */
+  pageToken?: string;
 }): Promise<TargetActionResult<TargetView[]>> {
   try {
     const client = userClient(DaemonService);
@@ -179,9 +181,9 @@ export async function listTargetsAction(filter?: {
         type: filter?.type ?? "",
         status: filter?.status ?? "",
         tags: filter?.tags ?? [],
-        limit: filter?.limit ?? 0,
-        offset: filter?.offset ?? 0,
       },
+      pageSize: filter?.pageSize ?? 0,
+      pageToken: filter?.pageToken ?? "",
     });
     return { ok: true, data: (resp.targets ?? []).map(toView) };
   } catch (err) {
