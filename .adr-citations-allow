@@ -1,0 +1,5 @@
+# why: protoc-gen-es writes this file from secrets.proto of the sdk tag that
+# the dashboard pins. That tag cites a retired number. sdk main cites only
+# live numbers, so the next pin move removes the finding, and then this entry
+# fails the guard until it leaves.
+src/gen/gibson/secrets/v1/secrets_pb.ts
