@@ -62,7 +62,7 @@ export default async function PluginDetailPage({
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Button asChild variant="ghost" size="sm" className="-ml-2">
-          <Link href="/dashboard/plugins">
+          <Link href="/dashboard/integrations?tab=plugins">
             <ArrowLeftIcon className="mr-1 size-3.5" aria-hidden="true" />
             Back to plugins
           </Link>

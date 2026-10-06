@@ -21,12 +21,12 @@ import {
 import { RunningAgentsBadge } from "@/components/gibson/agent-console/RunningAgentsBadge";
 import { ComplianceNavGate } from "@/components/gibson/compliance/ComplianceNavGate";
 import { COMPLIANCE_MENU_TITLE } from "@/components/gibson/compliance/texts";
+import { INTEGRATIONS_TEXTS } from "@/components/gibson/integrations/texts";
 import {
   ActivityIcon,
   AlertTriangleIcon,
   BotIcon,
   BoxIcon,
-  CableIcon,
   UserIcon,
   UsersIcon,
   ChevronRight,
@@ -172,17 +172,13 @@ export const navItems: NavGroup[] = [
         icon: WrenchIcon
       },
       {
-        title: "Plugins",
-        href: "/dashboard/plugins",
+        // Plugins and connectors are two tabs of one Integrations page
+        // (ADR-0065, dashboard#86). Connectors are a first-class component
+        // kind, a peer of plugins and tools, so the page sits in the primary
+        // nav rather than under Settings.
+        title: INTEGRATIONS_TEXTS.nav,
+        href: "/dashboard/integrations",
         icon: Plug2Icon
-      },
-      {
-        // Connectors are a first-class component kind, a peer of plugins and
-        // tools (ADR-0065), so they sit in the primary nav rather than under
-        // Settings.
-        title: "Connectors",
-        href: "/dashboard/connectors",
-        icon: CableIcon
       },
       {
         // Domain Packs are a curated, per-tenant enable/disable catalog
