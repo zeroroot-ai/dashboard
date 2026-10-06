@@ -335,8 +335,6 @@ const OPTIONAL_ENV = [
   'DASHBOARD_DEBUG',
   // Logging level; defaults via isProduction in logger.ts.
   'LOG_LEVEL',
-  // Test-fixtures bypass (NODE_ENV-gated independently).
-  'TEST_FIXTURES_ENABLED',
 
   // ---- SA identity map override ----
   // The chart writes the map to /shared/sa-identity-map.json by default;

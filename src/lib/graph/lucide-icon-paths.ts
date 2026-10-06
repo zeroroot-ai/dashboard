@@ -96,7 +96,7 @@ function polygonPath(points: string): string {
  *
  * PARTIAL on purpose: each entry is a hand-transcribed Lucide path set, so the
  * map covers the entity types that have one and the renderer already guards
- * with `if (iconDef)`. An entity with no glyph still draws, as its coloured
+ * with `if (iconDef)`. An entity with no glyph still draws, as its colored
  * node with its label; the graph legend (which uses the Lucide React
  * components rather than these paths) names it either way. The application
  * lifecycle types added in Taxonomy v2 are in that position today.

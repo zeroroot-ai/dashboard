@@ -26,7 +26,7 @@ import { userClient } from "@/src/lib/gibson-client";
 import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 
 // ---------------------------------------------------------------------------
-// Plain serialisable shapes
+// Plain serializable shapes
 // ---------------------------------------------------------------------------
 
 export interface MissionGraphNodeData {

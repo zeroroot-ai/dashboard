@@ -250,7 +250,7 @@ export const ERROR_CLASS_TABLE: Record<ErrorClass, ErrorClassEntry> = {
 /**
  * Map a `@connectrpc/connect` `Code` to its canonical class.
  *
- * `Code.OK` (and any unrecognised code) is mapped to `internal`
+ * `Code.OK` (and any unrecognized code) is mapped to `internal`
  * defensively so a misuse never returns a 200-shaped error body.
  */
 export function classifyConnectCode(code: Code): ErrorClass {

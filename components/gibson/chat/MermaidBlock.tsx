@@ -37,7 +37,7 @@
  * inside it whatever the profile, so mermaid's default HTML labels would be
  * sanitized away and flowchart nodes would render empty. The fix is to stop
  * mermaid emitting them: `htmlLabels: false` makes it lay labels out with plain
- * SVG `<text>`, which the sanitiser passes through untouched. That is also the
+ * SVG `<text>`, which the sanitizer passes through untouched. That is also the
  * safer configuration outright, since it means no HTML subtree ever exists in
  * the diagram for a payload to hide in. The visible cost is that labels no
  * longer support inline HTML markup, which mermaid already refuses to honor
@@ -52,7 +52,7 @@ interface MermaidBlockProps {
 }
 
 /**
- * Sanitiser configuration for mermaid's SVG output.
+ * Sanitizer configuration for mermaid's SVG output.
  *
  * Profiles keep the markup a diagram legitimately needs. The FORBID lists are
  * belt-and-braces on top of DOMPurify's own defaults: DOMPurify already drops
@@ -101,7 +101,7 @@ export function MermaidBlock({ code }: MermaidBlockProps) {
           // diagram from binding a handler or a javascript: href.
           securityLevel: 'strict',
           // Lay labels out as SVG <text> rather than HTML in a
-          // <foreignObject>. Required for the sanitiser below to be lossless,
+          // <foreignObject>. Required for the sanitizer below to be lossless,
           // and it removes the only HTML subtree a diagram could carry.
           flowchart: { htmlLabels: false },
           class: { htmlLabels: false },

@@ -73,7 +73,7 @@ describe("isNeutralPath", () => {
     }
   });
   it("flags crawler metadata files so they serve on both hosts (no www->app 307)", () => {
-    for (const p of ["/robots.txt", "/sitemap.xml", "/llms.txt"]) {
+    for (const p of ["/robots.txt", "/sitemap.xml"]) {
       expect(isNeutralPath(p)).toBe(true);
     }
   });

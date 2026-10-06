@@ -478,7 +478,7 @@ function main() {
   // present. The host build runs the full regen + drift gate, so trusting
   // the committed file inside the container is safe.
   //
-  // Never honoured in --stdout mode: that mode exists for the drift gate,
+  // Never honored in --stdout mode: that mode exists for the drift gate,
   // which needs real generator output. Returning early there would emit an
   // empty capture and the gate would read it as drift. (gen-plans.mjs guards
   // its SKIP the same way; this one did not, and would have started lying the

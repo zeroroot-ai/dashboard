@@ -50,12 +50,6 @@ vi.mock("next-auth", () => ({
   },
 }));
 
-// Test-fixture helper imported by auth.ts must be stubbed too, it reads
-// process.env at call time but we don't exercise any fault paths here.
-vi.mock("@/src/lib/test-fixtures/fault-injection", () => ({
-  getFaultMode: () => undefined,
-}));
-
 beforeAll(async () => {
   // Importing auth.ts triggers NextAuth(config) which our mock captures.
   await import("@/auth");

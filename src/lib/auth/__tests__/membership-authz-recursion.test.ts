@@ -110,9 +110,6 @@ vi.mock('@/src/lib/metrics/gibson-admin', () => ({
   adminRpcTotal: { inc: vi.fn() },
   adminEnvoyUpstreamErrorsTotal: { inc: vi.fn() },
 }));
-vi.mock('@/src/lib/test-fixtures/fault-injection', () => ({
-  getFaultMode: () => undefined,
-}));
 vi.mock('@/src/lib/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));

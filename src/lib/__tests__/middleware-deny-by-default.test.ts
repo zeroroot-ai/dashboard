@@ -81,7 +81,6 @@ describe('unauthenticated requests', () => {
     '/api/missions',
     '/api/admin/plugins',
     '/api/debug/recent-errors',
-    '/api/test/inject-fault',
   ])('denies %s', async (path) => {
     const res = await run(path, null);
     // The regression: this used to be 200 with `NextResponse.next()`.

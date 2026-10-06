@@ -6,7 +6,7 @@
  *
  * The dashboard only ever redirects to its own origin after auth flows.
  * Any external `redirectTo` parameter (passed by the client, included in
- * social sign-in state, etc.) is validated here before being honoured.
+ * social sign-in state, etc.) is validated here before being honored.
  *
  * Rules:
  *  - Same-origin absolute URL → return the path+search+hash (strip origin).

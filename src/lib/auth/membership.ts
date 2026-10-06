@@ -55,7 +55,6 @@ import { auth } from '@/auth';
 import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
 import { UserService } from '@/src/gen/gibson/tenant/v1/user_pb';
 import { userClient } from '@/src/lib/gibson-client/transport';
-import { getFaultMode } from '@/src/lib/test-fixtures/fault-injection';
 import { logger } from '@/src/lib/logger';
 import { recordMembershipResolution } from '@/src/lib/metrics/auth';
 
@@ -346,25 +345,6 @@ async function resolveMembershipsFromDaemon(): Promise<Membership[]> {
 }
 
 export const getMyMemberships = cache(async (): Promise<Membership[]> => {
-  // ---------------------------------------------------------------------------
-  // TEST FIXTURE: fault injection for the FGA/daemon subsystem.
-  // Only active when TEST_FIXTURES_ENABLED=true. In production this is a
-  // single env-var boolean check that short-circuits immediately.
-  // ---------------------------------------------------------------------------
-  const fgaFault = getFaultMode('fga');
-  if (fgaFault) {
-    fgaFault.decrementIfBounded();
-    if (fgaFault.mode === 'malformed-200') {
-      // Simulate a 200 response whose body fails Zod validation downstream.
-      // We throw MembershipResolutionError('malformed_response') to surface the
-      // same path as a real parse failure without making an actual RPC call.
-      throw new MembershipResolutionError('malformed_response', new Error('[fault-injection] malformed-200'));
-    }
-    // "503", "timeout", or any other mode: surface as fga_unavailable.
-    throw new MembershipResolutionError('fga_unavailable', new Error(`[fault-injection] ${fgaFault.mode}`));
-  }
-  // ---------------------------------------------------------------------------
-
   const session = await auth();
   if (!session?.user?.id) {
     throw new MembershipResolutionError('unauthenticated');

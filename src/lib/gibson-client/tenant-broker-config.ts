@@ -102,7 +102,7 @@ export async function setBrokerConfig(
  * a tenant admin switches broker providers (Spec
  * tenant-secrets-broker-completion R3).
  *
- * Note: the proto field is int64 which @bufbuild deserialises as bigint.
+ * Note: the proto field is int64 which @bufbuild deserializes as bigint.
  * The dashboard treats counts as plain numbers, practical secret counts
  * are well under 2^53. If a tenant ever crosses that, a follow-up spec
  * can switch the form to bigint-aware comparisons.

@@ -56,7 +56,7 @@ function makeProtoMsg(overrides: {
   createdAtUnix?: bigint;
   parts?: ConversationMessage['parts'];
 }): ConversationMessage {
-  // Materialise a ConversationMessage from already-created MessagePart objects.
+  // Materialize a ConversationMessage from already-created MessagePart objects.
   // create() expects MessageInit, but an already-initialized proto message is
   // structurally compatible at runtime. Cast through unknown to satisfy the
   // generic variance constraint.
@@ -221,7 +221,7 @@ describe('uiMessageToProto, save path', () => {
     const fallback = record.parts[0].part;
     expect(fallback?.case).toBe('text');
     if (fallback?.case === 'text') {
-      // Must contain recognisable representation of the unknown part.
+      // Must contain recognizable representation of the unknown part.
       expect(fallback.value.text).toContain('unknown part');
       expect(fallback.value.text).toContain('totally-unknown-future-type');
     }
