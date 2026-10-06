@@ -186,6 +186,7 @@ export const queryKeys = {
   hitlSettle: {
     all: ['hitl-settle'] as const,
     list: (tenantId: string) => ['hitl-settle', tenantId, 'list'] as const,
+    proofReviews: (tenantId: string) => ['hitl-settle', tenantId, 'proof-reviews'] as const,
   },
 
   // Reliability / calibration report (ADR-0122, gibson#284, dashboard#98).
