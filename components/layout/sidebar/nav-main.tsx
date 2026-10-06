@@ -21,11 +21,14 @@ import {
 import { RunningAgentsBadge } from "@/components/gibson/agent-console/RunningAgentsBadge";
 import { ComplianceNavGate } from "@/components/gibson/compliance/ComplianceNavGate";
 import { COMPLIANCE_MENU_TITLE } from "@/components/gibson/compliance/texts";
+import { OntologyNavGate } from "@/components/gibson/ontology-proposals/OntologyNavGate";
+import { ONTOLOGY_TEXT } from "@/components/gibson/ontology-proposals/texts";
 import { RegistrationsNavGate } from "@/components/gibson/registrations/RegistrationsNavGate";
 import { REGISTRATIONS_TEXT } from "@/components/gibson/registrations/texts";
 import {
   ActivityIcon,
   AlertTriangleIcon,
+  BookOpenIcon,
   BotIcon,
   BoxIcon,
   CableIcon,
@@ -66,10 +69,13 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 
+/** A menu gate. Each value names a component that hides its entry. */
+type NavGate = "compliance" | "registrations" | "ontology";
+
 type NavGroup = {
   title: string;
   /** A gate on the whole group, label included. Same values as NavItem.gate. */
-  gate?: "compliance" | "registrations";
+  gate?: NavGate;
   items: NavItem;
 };
 
@@ -87,8 +93,10 @@ type NavItem = {
    * when the tenant enabled a compliance pack (D56).
    * "registrations": the entry shows only for a caller that may read the
    * registration queue, the Platform owner (dashboard#193).
+   * "ontology": the entry shows only for the Owner and the Admin
+   * (dashboard#191).
    */
-  gate?: "compliance" | "registrations";
+  gate?: NavGate;
   newTab?: boolean;
   items?: NavItem;
 }[];
@@ -156,6 +164,14 @@ export const navItems: NavGroup[] = [
         title: "Reliability",
         href: "/dashboard/reliability",
         icon: GaugeIcon
+      },
+      {
+        // The ontology proposals of the agents (ADR-0033 decision 3,
+        // dashboard#191): the Owner approves what agents propose.
+        title: ONTOLOGY_TEXT.menu,
+        href: "/dashboard/organization/ontology-proposals",
+        icon: BookOpenIcon,
+        gate: "ontology"
       },
       {
         title: "Agents",
@@ -292,11 +308,12 @@ function GatedItem({
   gate,
   children,
 }: {
-  gate?: "compliance" | "registrations";
+  gate?: NavGate;
   children: React.ReactNode;
 }) {
   if (gate === "compliance") return <ComplianceNavGate>{children}</ComplianceNavGate>;
   if (gate === "registrations") return <RegistrationsNavGate>{children}</RegistrationsNavGate>;
+  if (gate === "ontology") return <OntologyNavGate>{children}</OntologyNavGate>;
   return <>{children}</>;
 }
 
