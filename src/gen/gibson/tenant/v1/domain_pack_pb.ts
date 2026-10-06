@@ -32,7 +32,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/domain_pack.proto.
  */
 export const file_gibson_tenant_v1_domain_pack: GenFile = /*@__PURE__*/
-  fileDesc("CiJnaWJzb24vdGVuYW50L3YxL2RvbWFpbl9wYWNrLnByb3RvEhBnaWJzb24udGVuYW50LnYxIsUBChZEb21haW5QYWNrQ2F0YWxvZ0VudHJ5EgwKBG5hbWUYASABKAkSDwoHdmVyc2lvbhgCIAEoBRIOCgZhdXRob3IYAyABKAkSEgoKdmlzaWJpbGl0eRgEIAEoCRIcChR0YXhvbm9teV9ub2RlX2xhYmVscxgGIAMoCRIjCht0YXhvbm9teV9yZWxhdGlvbnNoaXBfdHlwZXMYByADKAkSEgoKdGVjaG5pcXVlcxgIIAMoCUoECAUQBlILZW50aXRsZW1lbnQiHgocTGlzdERvbWFpblBhY2tDYXRhbG9nUmVxdWVzdCJaCh1MaXN0RG9tYWluUGFja0NhdGFsb2dSZXNwb25zZRI5CgdlbnRyaWVzGAEgAygLMiguZ2lic29uLnRlbmFudC52MS5Eb21haW5QYWNrQ2F0YWxvZ0VudHJ5IkMKDkRvbWFpblBhY2tWaWV3EgwKBG5hbWUYASABKAkSDwoHdmVyc2lvbhgCIAEoBRISCgp0ZWNobmlxdWVzGAMgAygJIhgKFkxpc3REb21haW5QYWNrc1JlcXVlc3QiSgoXTGlzdERvbWFpblBhY2tzUmVzcG9uc2USLwoFcGFja3MYASADKAsyIC5naWJzb24udGVuYW50LnYxLkRvbWFpblBhY2tWaWV3IjEKF0VuYWJsZURvbWFpblBhY2tSZXF1ZXN0EhYKBG5hbWUYASABKAlCCLpIBXIDGIAIIjkKGEVuYWJsZURvbWFpblBhY2tSZXNwb25zZRIMCgRuYW1lGAEgASgJEg8KB3ZlcnNpb24YAiABKAUiMgoYRGlzYWJsZURvbWFpblBhY2tSZXF1ZXN0EhYKBG5hbWUYASABKAlCCLpIBXIDGIAIIhsKGURpc2FibGVEb21haW5QYWNrUmVzcG9uc2UyiAUKEURvbWFpblBhY2tTZXJ2aWNlEqYBChVMaXN0RG9tYWluUGFja0NhdGFsb2cSLi5naWJzb24udGVuYW50LnYxLkxpc3REb21haW5QYWNrQ2F0YWxvZ1JlcXVlc3QaLy5naWJzb24udGVuYW50LnYxLkxpc3REb21haW5QYWNrQ2F0YWxvZ1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKUAQoPTGlzdERvbWFpblBhY2tzEiguZ2lic29uLnRlbmFudC52MS5MaXN0RG9tYWluUGFja3NSZXF1ZXN0GikuZ2lic29uLnRlbmFudC52MS5MaXN0RG9tYWluUGFja3NSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSlgEKEEVuYWJsZURvbWFpblBhY2sSKS5naWJzb24udGVuYW50LnYxLkVuYWJsZURvbWFpblBhY2tSZXF1ZXN0GiouZ2lic29uLnRlbmFudC52MS5FbmFibGVEb21haW5QYWNrUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSmQEKEURpc2FibGVEb21haW5QYWNrEiouZ2lic29uLnRlbmFudC52MS5EaXNhYmxlRG9tYWluUGFja1JlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkRpc2FibGVEb21haW5QYWNrUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IANCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_gibson_auth_v1_options, file_buf_validate_validate]);
+  fileDesc("CiJnaWJzb24vdGVuYW50L3YxL2RvbWFpbl9wYWNrLnByb3RvEhBnaWJzb24udGVuYW50LnYxIsUBChZEb21haW5QYWNrQ2F0YWxvZ0VudHJ5EgwKBG5hbWUYASABKAkSDwoHdmVyc2lvbhgCIAEoBRIOCgZhdXRob3IYAyABKAkSEgoKdmlzaWJpbGl0eRgEIAEoCRIcChR0YXhvbm9teV9ub2RlX2xhYmVscxgGIAMoCRIjCht0YXhvbm9teV9yZWxhdGlvbnNoaXBfdHlwZXMYByADKAkSEgoKdGVjaG5pcXVlcxgIIAMoCUoECAUQBlILZW50aXRsZW1lbnQiHgocTGlzdERvbWFpblBhY2tDYXRhbG9nUmVxdWVzdCJaCh1MaXN0RG9tYWluUGFja0NhdGFsb2dSZXNwb25zZRI5CgdlbnRyaWVzGAEgAygLMiguZ2lic29uLnRlbmFudC52MS5Eb21haW5QYWNrQ2F0YWxvZ0VudHJ5IkMKDkRvbWFpblBhY2tWaWV3EgwKBG5hbWUYASABKAkSDwoHdmVyc2lvbhgCIAEoBRISCgp0ZWNobmlxdWVzGAMgAygJIhgKFkxpc3REb21haW5QYWNrc1JlcXVlc3QiSgoXTGlzdERvbWFpblBhY2tzUmVzcG9uc2USLwoFcGFja3MYASADKAsyIC5naWJzb24udGVuYW50LnYxLkRvbWFpblBhY2tWaWV3IjEKF0VuYWJsZURvbWFpblBhY2tSZXF1ZXN0EhYKBG5hbWUYASABKAlCCLpIBXIDGIAIIjkKGEVuYWJsZURvbWFpblBhY2tSZXNwb25zZRIMCgRuYW1lGAEgASgJEg8KB3ZlcnNpb24YAiABKAUiMgoYRGlzYWJsZURvbWFpblBhY2tSZXF1ZXN0EhYKBG5hbWUYASABKAlCCLpIBXIDGIAIIhsKGURpc2FibGVEb21haW5QYWNrUmVzcG9uc2UiQgoXRXhwb3J0RG9tYWluUGFja1JlcXVlc3QSFgoEbmFtZRgBIAEoCUIIukgFcgMYgAgSDwoHdmVyc2lvbhgCIAEoBSItChhFeHBvcnREb21haW5QYWNrUmVzcG9uc2USEQoJcGFja19qc29uGAEgASgMIiwKF0ltcG9ydERvbWFpblBhY2tSZXF1ZXN0EhEKCXBhY2tfanNvbhgBIAEoDCI5ChhJbXBvcnREb21haW5QYWNrUmVzcG9uc2USDAoEbmFtZRgBIAEoCRIPCgd2ZXJzaW9uGAIgASgFMsMHChFEb21haW5QYWNrU2VydmljZRKmAQoVTGlzdERvbWFpblBhY2tDYXRhbG9nEi4uZ2lic29uLnRlbmFudC52MS5MaXN0RG9tYWluUGFja0NhdGFsb2dSZXF1ZXN0Gi8uZ2lic29uLnRlbmFudC52MS5MaXN0RG9tYWluUGFja0NhdGFsb2dSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSlAEKD0xpc3REb21haW5QYWNrcxIoLmdpYnNvbi50ZW5hbnQudjEuTGlzdERvbWFpblBhY2tzUmVxdWVzdBopLmdpYnNvbi50ZW5hbnQudjEuTGlzdERvbWFpblBhY2tzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpYBChBFbmFibGVEb21haW5QYWNrEikuZ2lic29uLnRlbmFudC52MS5FbmFibGVEb21haW5QYWNrUmVxdWVzdBoqLmdpYnNvbi50ZW5hbnQudjEuRW5hYmxlRG9tYWluUGFja1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpkBChFEaXNhYmxlRG9tYWluUGFjaxIqLmdpYnNvbi50ZW5hbnQudjEuRGlzYWJsZURvbWFpblBhY2tSZXF1ZXN0GisuZ2lic29uLnRlbmFudC52MS5EaXNhYmxlRG9tYWluUGFja1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpYBChBFeHBvcnREb21haW5QYWNrEikuZ2lic29uLnRlbmFudC52MS5FeHBvcnREb21haW5QYWNrUmVxdWVzdBoqLmdpYnNvbi50ZW5hbnQudjEuRXhwb3J0RG9tYWluUGFja1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEp8BChBJbXBvcnREb21haW5QYWNrEikuZ2lic29uLnRlbmFudC52MS5JbXBvcnREb21haW5QYWNrUmVxdWVzdBoqLmdpYnNvbi50ZW5hbnQudjEuSW1wb3J0RG9tYWluUGFja1Jlc3BvbnNlIjSKtRgwCg5wbGF0Zm9ybV9vd25lchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCABQlRaUmdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi90ZW5hbnQvdjE7dGVuYW50djFiBnByb3RvMw", [file_gibson_auth_v1_options, file_buf_validate_validate]);
 
 /**
  * DomainPackCatalogEntry is one curated Domain Pack the tenant may enable.
@@ -254,6 +254,92 @@ export const DisableDomainPackResponseSchema: GenMessage<DisableDomainPackRespon
   messageDesc(file_gibson_tenant_v1_domain_pack, 9);
 
 /**
+ * @generated from message gibson.tenant.v1.ExportDomainPackRequest
+ */
+export type ExportDomainPackRequest = Message<"gibson.tenant.v1.ExportDomainPackRequest"> & {
+  /**
+   * name is the name of the exported pack, a plain identifier.
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * version is the version of the exported pack, 1 or more.
+   *
+   * @generated from field: int32 version = 2;
+   */
+  version: number;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ExportDomainPackRequest.
+ * Use `create(ExportDomainPackRequestSchema)` to create a new message.
+ */
+export const ExportDomainPackRequestSchema: GenMessage<ExportDomainPackRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_domain_pack, 10);
+
+/**
+ * @generated from message gibson.tenant.v1.ExportDomainPackResponse
+ */
+export type ExportDomainPackResponse = Message<"gibson.tenant.v1.ExportDomainPackResponse"> & {
+  /**
+   * pack_json is the pack, in the JSON shape of the catalog pack files.
+   *
+   * @generated from field: bytes pack_json = 1;
+   */
+  packJson: Uint8Array;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ExportDomainPackResponse.
+ * Use `create(ExportDomainPackResponseSchema)` to create a new message.
+ */
+export const ExportDomainPackResponseSchema: GenMessage<ExportDomainPackResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_domain_pack, 11);
+
+/**
+ * @generated from message gibson.tenant.v1.ImportDomainPackRequest
+ */
+export type ImportDomainPackRequest = Message<"gibson.tenant.v1.ImportDomainPackRequest"> & {
+  /**
+   * pack_json is the pack, in the JSON shape of the catalog pack files.
+   *
+   * @generated from field: bytes pack_json = 1;
+   */
+  packJson: Uint8Array;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ImportDomainPackRequest.
+ * Use `create(ImportDomainPackRequestSchema)` to create a new message.
+ */
+export const ImportDomainPackRequestSchema: GenMessage<ImportDomainPackRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_domain_pack, 12);
+
+/**
+ * @generated from message gibson.tenant.v1.ImportDomainPackResponse
+ */
+export type ImportDomainPackResponse = Message<"gibson.tenant.v1.ImportDomainPackResponse"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: int32 version = 2;
+   */
+  version: number;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ImportDomainPackResponse.
+ * Use `create(ImportDomainPackResponseSchema)` to create a new message.
+ */
+export const ImportDomainPackResponseSchema: GenMessage<ImportDomainPackResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_domain_pack, 13);
+
+/**
  * @generated from service gibson.tenant.v1.DomainPackService
  */
 export const DomainPackService: GenService<{
@@ -309,6 +395,33 @@ export const DomainPackService: GenService<{
     methodKind: "unary";
     input: typeof DisableDomainPackRequestSchema;
     output: typeof DisableDomainPackResponseSchema;
+  },
+  /**
+   * ExportDomainPack returns the live extensions of the tenant of the caller
+   * as the JSON of one Domain Pack (gibson#712): the node labels and
+   * relationship types that the tenant promoted. A second install imports
+   * the JSON with ImportDomainPack. Requires tenant admin.
+   *
+   * @generated from rpc gibson.tenant.v1.DomainPackService.ExportDomainPack
+   */
+  exportDomainPack: {
+    methodKind: "unary";
+    input: typeof ExportDomainPackRequestSchema;
+    output: typeof ExportDomainPackResponseSchema;
+  },
+  /**
+   * ImportDomainPack checks the JSON of one Domain Pack and stores it in this
+   * install (gibson#712). The pack joins the catalog at the next daemon start,
+   * because a catalog never changes under a running daemon (ADR-0133). It
+   * never replaces an embedded catalog pack. Only the Platform owner may call
+   * it.
+   *
+   * @generated from rpc gibson.tenant.v1.DomainPackService.ImportDomainPack
+   */
+  importDomainPack: {
+    methodKind: "unary";
+    input: typeof ImportDomainPackRequestSchema;
+    output: typeof ImportDomainPackResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_tenant_v1_domain_pack, 0);
