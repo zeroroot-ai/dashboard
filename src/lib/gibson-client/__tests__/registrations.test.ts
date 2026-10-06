@@ -5,7 +5,7 @@
  * @vitest-environment node
  *
  * The registration queue client (dashboard#193, gibson#620): it reads
- * registration_id and registered_at, and names the id in each decision.
+ * registration_id, and names the id in each decision.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -38,7 +38,7 @@ beforeEach(() => {
 });
 
 describe('registrations client', () => {
-  it('maps each pending registration, the id and the time included', async () => {
+  it('maps each pending registration, the id included', async () => {
     list.mockResolvedValue({
       registrations: [
         {
@@ -48,7 +48,6 @@ describe('registrations client', () => {
           tier: 'team',
           ownerFirstName: 'Ada',
           ownerLastName: 'Lovelace',
-          registeredAt: '2026-10-01T09:30:00Z',
         },
       ],
     });
@@ -60,7 +59,6 @@ describe('registrations client', () => {
         tier: 'team',
         ownerFirstName: 'Ada',
         ownerLastName: 'Lovelace',
-        registeredAt: '2026-10-01T09:30:00Z',
       },
     ]);
     expect(list).toHaveBeenCalledWith({ limit: 200 });

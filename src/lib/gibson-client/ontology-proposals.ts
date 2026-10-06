@@ -76,17 +76,17 @@ function statusOf(s: OntologyProposalStatus): ProposalStatus {
 /** Every proposal of the tenant, pending and decided. */
 export async function daemonListOntologyProposals(): Promise<OntologyProposalDTO[]> {
   const resp = await userClient(OntologyExtensionService).listOntologyExtensionProposals({});
-  return resp.proposals.map((p) => ({
+  return resp.ontologyProposals.map((p) => ({
     kind: kindOf(p.kind),
     label: p.label,
-    recurrence: p.recurrence,
-    lastProposer: p.lastProposer,
-    lastClaim: p.lastClaim,
+    recurrence: p.sightingCount,
+    lastProposer: p.latestProposer,
+    lastClaim: p.latestClaim,
     status: statusOf(p.status),
     reviewer: p.reviewer,
-    rejectReason: p.rejectReason,
-    promoted: p.promoted,
-    promotedTaxonomyVersion: p.promotedTaxonomyVersion,
+    rejectReason: p.rejectionReason,
+    promoted: p.isPromoted,
+    promotedTaxonomyVersion: p.taxonomyVersion,
   }));
 }
 
@@ -122,9 +122,9 @@ export async function daemonSubmitOntologyUpstream(
   });
   return {
     auditRecordId: resp.auditRecordId,
-    packJson: new TextDecoder().decode(resp.packJson),
-    suggestedFilePath: resp.suggestedFilePath,
-    suggestedPrTitle: resp.suggestedPrTitle,
-    suggestedPrBody: resp.suggestedPrBody,
+    packJson: new TextDecoder().decode(resp.fragmentJson),
+    suggestedFilePath: resp.packFilePath,
+    suggestedPrTitle: resp.pullRequestTitle,
+    suggestedPrBody: resp.pullRequestBody,
   };
 }

@@ -45,8 +45,8 @@ export async function GET(req: NextRequest) {
     const body: TrackRecord = {
       technique,
       scopeId,
-      priorStrength: resp.priorStrength,
-      hasTrackRecord: resp.hasTrackRecord,
+      priorStrength: resp.prior,
+      hasTrackRecord: resp.hasRecord,
     };
     return NextResponse.json(body);
   } catch (error) {

@@ -8,8 +8,7 @@
  * (dashboard#193, gibson#620, ADR-0074).
  *
  * One row for each registration that waits for a decision, oldest first:
- * the email, the name, the workspace, the plan and the time of the
- * registration. Approve activates the account and queues the workspace.
+ * the email, the name, the workspace and the plan. Approve activates the account and queues the workspace.
  * Reject keeps the account inactive and records a reason in the audit log.
  * Every visible text is in ./texts.ts or is data from the daemon.
  */
@@ -52,12 +51,6 @@ import {
   rejectTitle,
 } from "./texts";
 import { REGISTRATIONS_QUERY_KEY } from "./query-key";
-
-function localTime(iso: string): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "" : d.toLocaleString();
-}
 
 function fullName(r: PendingRegistrationDTO): string {
   return [r.ownerFirstName, r.ownerLastName].filter(Boolean).join(" ");
@@ -125,7 +118,6 @@ export function RegistrationsContent() {
               <TableHead>{REGISTRATIONS_TEXT.columnName}</TableHead>
               <TableHead>{REGISTRATIONS_TEXT.columnWorkspace}</TableHead>
               <TableHead>{REGISTRATIONS_TEXT.columnPlan}</TableHead>
-              <TableHead>{REGISTRATIONS_TEXT.columnRegistered}</TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>
@@ -136,9 +128,6 @@ export function RegistrationsContent() {
                 <TableCell>{fullName(r)}</TableCell>
                 <TableCell>{r.workspaceName}</TableCell>
                 <TableCell>{r.tier}</TableCell>
-                <TableCell>
-                  <time dateTime={r.registeredAt}>{localTime(r.registeredAt)}</time>
-                </TableCell>
                 <TableCell className="space-x-2 text-right">
                   <Button
                     size="sm"

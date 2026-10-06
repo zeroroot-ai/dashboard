@@ -3,7 +3,7 @@
 
 /**
  * Route contract for /api/world/reputation (dashboard#192, gibson#619): GET
- * reads prior_strength and has_track_record, refuses a request with no
+ * reads prior and has_record, refuses a request with no
  * technique, and answers 401 with no session.
  */
 
@@ -38,7 +38,7 @@ beforeEach(() => {
 
 describe('GET /api/world/reputation', () => {
   it('returns the prior strength and whether a track record exists', async () => {
-    mockGetReputation.mockResolvedValue({ priorStrength: 0.72, hasTrackRecord: true });
+    mockGetReputation.mockResolvedValue({ prior: 0.72, hasRecord: true });
     const res = await GET(getReq('?technique=T1190&scope=scope-a'));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({

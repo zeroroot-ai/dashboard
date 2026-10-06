@@ -19,7 +19,6 @@ export const REGISTRATIONS_TEXT = {
   columnName: "Name",
   columnWorkspace: "Workspace",
   columnPlan: "Plan",
-  columnRegistered: "Registered",
   approve: "Approve",
   reject: "Reject",
   rejectBody:

@@ -48,18 +48,18 @@ beforeEach(() => {
 describe('ontology proposal client', () => {
   it('maps every proposal field', async () => {
     list.mockResolvedValue({
-      proposals: [
+      ontologyProposals: [
         {
           kind: OntologyProposalKind.RELATIONSHIP_TYPE,
           label: 'MANAGES',
-          recurrence: 5,
-          lastProposer: 'agent/recon',
-          lastClaim: 'claim',
+          sightingCount: 5,
+          latestProposer: 'agent/recon',
+          latestClaim: 'claim',
           status: OntologyProposalStatus.REJECTED,
           reviewer: 'owner',
-          rejectReason: 'why',
-          promoted: true,
-          promotedTaxonomyVersion: 7,
+          rejectionReason: 'why',
+          isPromoted: true,
+          taxonomyVersion: 7,
         },
       ],
     });
@@ -95,10 +95,10 @@ describe('ontology proposal client', () => {
   it('decodes the contribution', async () => {
     submit.mockResolvedValue({
       auditRecordId: '42',
-      packJson: new TextEncoder().encode('{"name":"MANAGES"}'),
-      suggestedFilePath: 'packs/manages.json',
-      suggestedPrTitle: 'title',
-      suggestedPrBody: 'body',
+      fragmentJson: new TextEncoder().encode('{"name":"MANAGES"}'),
+      packFilePath: 'packs/manages.json',
+      pullRequestTitle: 'title',
+      pullRequestBody: 'body',
     });
     await expect(daemonSubmitOntologyUpstream('relationship_type', 'MANAGES', 'k1')).resolves.toEqual({
       auditRecordId: '42',

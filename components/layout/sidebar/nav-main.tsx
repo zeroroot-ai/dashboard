@@ -21,7 +21,8 @@ import {
 import { RunningAgentsBadge } from "@/components/gibson/agent-console/RunningAgentsBadge";
 import { ComplianceNavGate } from "@/components/gibson/compliance/ComplianceNavGate";
 import { COMPLIANCE_MENU_TITLE } from "@/components/gibson/compliance/texts";
-import { OntologyNavGate } from "@/components/gibson/ontology-proposals/OntologyNavGate";
+import { AuthorizedNavGate } from "@/components/gibson/auth/AuthorizedNavGate";
+import { AUDIT_TEXT } from "@/components/gibson/audit-log/texts";
 import { ONTOLOGY_TEXT } from "@/components/gibson/ontology-proposals/texts";
 import { RegistrationsNavGate } from "@/components/gibson/registrations/RegistrationsNavGate";
 import { REGISTRATIONS_TEXT } from "@/components/gibson/registrations/texts";
@@ -48,6 +49,7 @@ import {
   NetworkIcon,
   Plug2Icon,
   RocketIcon,
+  ScrollTextIcon,
   ServerIcon,
   SettingsIcon,
   ShieldAlertIcon,
@@ -70,7 +72,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 /** A menu gate. Each value names a component that hides its entry. */
-type NavGate = "compliance" | "registrations" | "ontology";
+type NavGate = "compliance" | "registrations" | "ontology" | "audit";
 
 type NavGroup = {
   title: string;
@@ -93,8 +95,8 @@ type NavItem = {
    * when the tenant enabled a compliance pack (D56).
    * "registrations": the entry shows only for a caller that may read the
    * registration queue, the Platform owner (dashboard#193).
-   * "ontology": the entry shows only for the Owner and the Admin
-   * (dashboard#191).
+   * "ontology" and "audit": the entry shows only for the Owner and the
+   * Admin, the roles that may call the page's RPC (dashboard#191, G23).
    */
   gate?: NavGate;
   newTab?: boolean;
@@ -270,6 +272,14 @@ export const navItems: NavGroup[] = [
         href: "/dashboard/organization/security-policy",
         icon: ShieldCheckIcon,
       },
+      {
+        // The audit log of the organization (lane 11 row G23): who did
+        // what, as which kind of actor, to which object.
+        title: AUDIT_TEXT.menu,
+        href: "/dashboard/organization/audit-log",
+        icon: ScrollTextIcon,
+        gate: "audit",
+      },
     ],
   },
   {
@@ -304,6 +314,12 @@ export const navItems: NavGroup[] = [
   },
 ];
 
+/** The RPC that each RPC-gated entry needs. */
+const GATE_METHOD = {
+  ontology: "/gibson.tenant.v1.OntologyExtensionService/ListOntologyExtensionProposals",
+  audit: "/gibson.tenant.v1.TenantService/ListAuditEvents",
+} as const;
+
 function GatedItem({
   gate,
   children,
@@ -313,7 +329,9 @@ function GatedItem({
 }) {
   if (gate === "compliance") return <ComplianceNavGate>{children}</ComplianceNavGate>;
   if (gate === "registrations") return <RegistrationsNavGate>{children}</RegistrationsNavGate>;
-  if (gate === "ontology") return <OntologyNavGate>{children}</OntologyNavGate>;
+  if (gate === "ontology" || gate === "audit") {
+    return <AuthorizedNavGate method={GATE_METHOD[gate]}>{children}</AuthorizedNavGate>;
+  }
   return <>{children}</>;
 }
 

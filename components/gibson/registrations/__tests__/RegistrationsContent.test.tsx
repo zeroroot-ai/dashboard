@@ -2,8 +2,8 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * The registration queue (dashboard#193, gibson#620): the rows with the time
- * of each registration, the empty queue, an approval, a rejection with a
+ * The registration queue (dashboard#193, gibson#620): the rows, the empty
+ * queue, an approval, a rejection with a
  * reason, a decision that another administrator already made, and the menu
  * gate.
  */
@@ -39,7 +39,6 @@ const ROWS = [
     tier: "team",
     ownerFirstName: "Ada",
     ownerLastName: "Lovelace",
-    registeredAt: "2026-10-01T09:30:00Z",
   },
   {
     registrationId: "reg-2",
@@ -48,7 +47,6 @@ const ROWS = [
     tier: "org",
     ownerFirstName: "",
     ownerLastName: "",
-    registeredAt: "2026-10-02T10:00:00Z",
   },
 ];
 
@@ -66,14 +64,13 @@ beforeEach(() => {
 });
 
 describe("RegistrationsContent", () => {
-  it("shows one row for each registration, with the time it arrived", async () => {
+  it("shows one row for each registration", async () => {
     wrap(<RegistrationsContent />);
     const rows = await screen.findAllByTestId("registration-row");
     expect(rows).toHaveLength(2);
     expect(within(rows[0]!).getByText("ada@example.test")).toBeTruthy();
     expect(within(rows[0]!).getByText("Ada Lovelace")).toBeTruthy();
     expect(within(rows[0]!).getByText("Analytical")).toBeTruthy();
-    expect(rows[0]!.querySelector("time")?.getAttribute("dateTime")).toBe("2026-10-01T09:30:00Z");
     expect(screen.getByText(REGISTRATIONS_TEXT.title)).toBeTruthy();
     expect(screen.getByText(REGISTRATIONS_TEXT.intro)).toBeTruthy();
   });

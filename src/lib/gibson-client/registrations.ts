@@ -25,8 +25,6 @@ export interface PendingRegistrationDTO {
   tier: string;
   ownerFirstName: string;
   ownerLastName: string;
-  /** RFC 3339 time of the registration. Empty when the daemon sent none. */
-  registeredAt: string;
 }
 
 export interface ApprovedRegistrationDTO {
@@ -50,7 +48,6 @@ export async function daemonListPendingRegistrations(): Promise<PendingRegistrat
     tier: r.tier,
     ownerFirstName: r.ownerFirstName,
     ownerLastName: r.ownerLastName,
-    registeredAt: r.registeredAt,
   }));
 }
 
