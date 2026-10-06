@@ -266,6 +266,10 @@ export const CRD_PERMISSIONS: Record<
   inviteMemberAction: { relation: "admin", rateLimit: "inviteMember" },
   acceptInvitationAction: { relation: "__self__" },
   revokeMemberAction: { relation: "admin" },
+  // admin: hand an agent, tool or plugin identity of a removed user to
+  // another tenant user, or revoke it (gibson#568, dashboard#178).
+  reassignAgentIdentityAction: { relation: "admin" },
+  retireAgentIdentityAction: { relation: "admin" },
   // member: Removal's self-service half (ADR-0093 §11) — any tenant member
   // may leave their own tenant. The daemon's LeaveTenant refuses the Owner
   // (transfer ownership first); this gate only controls visibility.

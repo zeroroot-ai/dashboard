@@ -32,7 +32,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/tenant.proto.
  */
 export const file_gibson_tenant_v1_tenant: GenFile = /*@__PURE__*/
-  fileDesc("Ch1naWJzb24vdGVuYW50L3YxL3RlbmFudC5wcm90bxIQZ2lic29uLnRlbmFudC52MSI6ChlHZXRPbmJvYXJkaW5nU3RhdGVSZXF1ZXN0Eh0KCXRlbmFudF9pZBgBIAEoCUIKukgHcgUQARiACCLnAQoaR2V0T25ib2FyZGluZ1N0YXRlUmVzcG9uc2USFAoMY3VycmVudF9zdGVwGAEgASgJEhcKD2NvbXBsZXRlZF9zdGVwcxgCIAMoCRJRCgtzZXR1cF90YXNrcxgDIAMoCzI8LmdpYnNvbi50ZW5hbnQudjEuR2V0T25ib2FyZGluZ1N0YXRlUmVzcG9uc2UuU2V0dXBUYXNrc0VudHJ5EhQKDGNvbXBsZXRlZF9hdBgEIAEoCRoxCg9TZXR1cFRhc2tzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASL+AQocVXBkYXRlT25ib2FyZGluZ1N0YXRlUmVxdWVzdBIdCgl0ZW5hbnRfaWQYASABKAlCCrpIB3IFEAEYgAgSHgoMY3VycmVudF9zdGVwGAIgASgJQgi6SAVyAxiAIBIXCg9jb21wbGV0ZWRfc3RlcHMYAyADKAkSUwoLc2V0dXBfdGFza3MYBCADKAsyPi5naWJzb24udGVuYW50LnYxLlVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlcXVlc3QuU2V0dXBUYXNrc0VudHJ5GjEKD1NldHVwVGFza3NFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIh8KHVVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlc3BvbnNlIjQKFUdldFRlbmFudFF1b3RhUmVxdWVzdBIbCgl0ZW5hbnRfaWQYASABKAlCCLpIBXIDGIAIItQCChZHZXRUZW5hbnRRdW90YVJlc3BvbnNlEhsKE2NvbmN1cnJlbnRfbWlzc2lvbnMYDCABKAUSGQoRY29uY3VycmVudF9hZ2VudHMYAyABKAUSEgoKdXBkYXRlZF9hdBgHIAEoCRIPCgdwbGFuX2lkGA0gASgJSgQIARACSgQIAhADSgQIBBAFSgQIBRAGSgQIBhAHSgQICBAJSgQICRAKSgQIChALSgQICxAMUgVxdW90YVIFc2VhdHNSCnN0b3JhZ2VfZ2JSDnJldGVudGlvbl9kYXlzUhpzYW5kYm94X2xhdW5jaGVzX3Blcl9tb250aFINY3VycmVudF9zZWF0c1IZY3VycmVudF9jb25jdXJyZW50X2FnZW50c1ISY3VycmVudF9zdG9yYWdlX2diUiNjdXJyZW50X3NhbmRib3hfbGF1bmNoZXNfdGhpc19tb250aCI5ChpHZXRUZW5hbnRRdW90YVVzYWdlUmVxdWVzdBIbCgl0ZW5hbnRfaWQYASABKAlCCLpIBXIDGIAIIk0KG0dldFRlbmFudFF1b3RhVXNhZ2VSZXNwb25zZRIXCg9taXNzaW9uc19hY3RpdmUYASABKAMSFQoNYWdlbnRzX2FjdGl2ZRgCIAEoAyKdAgoKQXVkaXRFdmVudBISCgpldmVudF90eXBlGAEgASgJEhEKCXRpbWVzdGFtcBgCIAEoCRITCgthY3Rvcl9lbWFpbBgEIAEoCRIRCgl0ZW5hbnRfaWQYBSABKAkSFgoOdGFyZ2V0X3VzZXJfaWQYBiABKAkSOgoHZGV0YWlscxgIIAMoCzIpLmdpYnNvbi50ZW5hbnQudjEuQXVkaXRFdmVudC5EZXRhaWxzRW50cnkSEAoIdHJhY2VfaWQYCSABKAkaLgoMRGV0YWlsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFKBAgDEARKBAgHEAhSDWFjdG9yX3VzZXJfaWRSD3RhcmdldF9yZXNvdXJjZSLuAQoWTGlzdEF1ZGl0RXZlbnRzUmVxdWVzdBIbCgl0ZW5hbnRfaWQYASABKAlCCLpIBXIDGIAIEhMKC2V2ZW50X3R5cGVzGAIgAygJEh8KDWFjdG9yX3VzZXJfaWQYAyABKAlCCLpIBXIDGIAIEh4KDHRhcmdldF9tYXRjaBgEIAEoCUIIukgFcgMYgCASGwoJZnJvbV90aW1lGAUgASgJQgi6SAVyAxiAIBIZCgd0b190aW1lGAYgASgJQgi6SAVyAxiAIBINCgVsaW1pdBgHIAEoBRIaCgZjdXJzb3IYCCABKAlCCrpIB3IFGICAgAgiXAoXTGlzdEF1ZGl0RXZlbnRzUmVzcG9uc2USLAoGZXZlbnRzGAEgAygLMhwuZ2lic29uLnRlbmFudC52MS5BdWRpdEV2ZW50EhMKC25leHRfY3Vyc29yGAIgASgJIlQKDkZpbmRpbmdGaWx0ZXJzEhAKCHNldmVyaXR5GAEgAygJEgwKBHR5cGUYAiADKAkSEgoKbWlzc2lvbl9pZBgDIAEoCRIOCgZzZWFyY2gYBCABKAkizQEKFUV4cG9ydEZpbmRpbmdzUmVxdWVzdBIbCgl0ZW5hbnRfaWQYASABKAlCCLpIBXIDGIAIEhgKBmZvcm1hdBgCIAEoCUIIukgFcgMYgCASEwoLZmluZGluZ19pZHMYAyADKAkSMQoHZmlsdGVycxgEIAEoCzIgLmdpYnNvbi50ZW5hbnQudjEuRmluZGluZ0ZpbHRlcnMSGwoTaW5jbHVkZV9yZW1lZGlhdGlvbhgFIAEoCBIYChBpbmNsdWRlX2V2aWRlbmNlGAYgASgIIlcKFkV4cG9ydEZpbmRpbmdzUmVzcG9uc2USDAoEZGF0YRgBIAEoDBIOCgZmb3JtYXQYAiABKAkSEAoIZmlsZW5hbWUYAyABKAkSDQoFY291bnQYBCABKAUiuQEKF1NhdmVNaXNzaW9uRHJhZnRSZXF1ZXN0EhsKCXRlbmFudF9pZBgBIAEoCUIIukgFcgMYgAgSFgoEbmFtZRgCIAEoCUIIukgFcgMYgAgSHgoKY3VlX3NvdXJjZRgDIAEoCUIKukgHcgUYgICACBIaCghkcmFmdF9pZBgEIAEoCUIIukgFcgMYgAgSJwoVbWlzc2lvbl9kZWZpbml0aW9uX2lkGAUgASgJQgi6SAVyAxiACFIEeWFtbCIsChhTYXZlTWlzc2lvbkRyYWZ0UmVzcG9uc2USEAoIZHJhZnRfaWQYASABKAkiNwoYTGlzdE1pc3Npb25EcmFmdHNSZXF1ZXN0EhsKCXRlbmFudF9pZBgBIAEoCUIIukgFcgMYgAgibwoMTWlzc2lvbkRyYWZ0EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEgoKY3JlYXRlZF9hdBgDIAEoCRISCgp1cGRhdGVkX2F0GAQgASgJEh0KFW1pc3Npb25fZGVmaW5pdGlvbl9pZBgFIAEoCSJLChlMaXN0TWlzc2lvbkRyYWZ0c1Jlc3BvbnNlEi4KBmRyYWZ0cxgBIAMoCzIeLmdpYnNvbi50ZW5hbnQudjEuTWlzc2lvbkRyYWZ0IlMKFkdldE1pc3Npb25EcmFmdFJlcXVlc3QSGwoJdGVuYW50X2lkGAEgASgJQgi6SAVyAxiACBIcCghkcmFmdF9pZBgCIAEoCUIKukgHcgUQARiACCJMChdHZXRNaXNzaW9uRHJhZnRSZXNwb25zZRIxCgVkcmFmdBgBIAEoCzIiLmdpYnNvbi50ZW5hbnQudjEuTWlzc2lvbkRyYWZ0RnVsbCKNAQoQTWlzc2lvbkRyYWZ0RnVsbBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhIKCmNyZWF0ZWRfYXQYAyABKAkSEgoKdXBkYXRlZF9hdBgEIAEoCRISCgpjdWVfc291cmNlGAUgASgJEh0KFW1pc3Npb25fZGVmaW5pdGlvbl9pZBgGIAEoCVIEeWFtbCJWChlEZWxldGVNaXNzaW9uRHJhZnRSZXF1ZXN0EhsKCXRlbmFudF9pZBgBIAEoCUIIukgFcgMYgAgSHAoIZHJhZnRfaWQYAiABKAlCCrpIB3IFEAEYgAgiHAoaRGVsZXRlTWlzc2lvbkRyYWZ0UmVzcG9uc2UypgwKDVRlbmFudFNlcnZpY2USnQEKEkdldE9uYm9hcmRpbmdTdGF0ZRIrLmdpYnNvbi50ZW5hbnQudjEuR2V0T25ib2FyZGluZ1N0YXRlUmVxdWVzdBosLmdpYnNvbi50ZW5hbnQudjEuR2V0T25ib2FyZGluZ1N0YXRlUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEqYBChVVcGRhdGVPbmJvYXJkaW5nU3RhdGUSLi5naWJzb24udGVuYW50LnYxLlVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlcXVlc3QaLy5naWJzb24udGVuYW50LnYxLlVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKQAQoOR2V0VGVuYW50UXVvdGESJy5naWJzb24udGVuYW50LnYxLkdldFRlbmFudFF1b3RhUmVxdWVzdBooLmdpYnNvbi50ZW5hbnQudjEuR2V0VGVuYW50UXVvdGFSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKgAQoTR2V0VGVuYW50UXVvdGFVc2FnZRIsLmdpYnNvbi50ZW5hbnQudjEuR2V0VGVuYW50UXVvdGFVc2FnZVJlcXVlc3QaLS5naWJzb24udGVuYW50LnYxLkdldFRlbmFudFF1b3RhVXNhZ2VSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkwEKD0xpc3RBdWRpdEV2ZW50cxIoLmdpYnNvbi50ZW5hbnQudjEuTGlzdEF1ZGl0RXZlbnRzUmVxdWVzdBopLmdpYnNvbi50ZW5hbnQudjEuTGlzdEF1ZGl0RXZlbnRzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkQEKDkV4cG9ydEZpbmRpbmdzEicuZ2lic29uLnRlbmFudC52MS5FeHBvcnRGaW5kaW5nc1JlcXVlc3QaKC5naWJzb24udGVuYW50LnYxLkV4cG9ydEZpbmRpbmdzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpcBChBTYXZlTWlzc2lvbkRyYWZ0EikuZ2lic29uLnRlbmFudC52MS5TYXZlTWlzc2lvbkRyYWZ0UmVxdWVzdBoqLmdpYnNvbi50ZW5hbnQudjEuU2F2ZU1pc3Npb25EcmFmdFJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKaAQoRTGlzdE1pc3Npb25EcmFmdHMSKi5naWJzb24udGVuYW50LnYxLkxpc3RNaXNzaW9uRHJhZnRzUmVxdWVzdBorLmdpYnNvbi50ZW5hbnQudjEuTGlzdE1pc3Npb25EcmFmdHNSZXNwb25zZSIsirUYKAoGd3JpdGVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSlAEKD0dldE1pc3Npb25EcmFmdBIoLmdpYnNvbi50ZW5hbnQudjEuR2V0TWlzc2lvbkRyYWZ0UmVxdWVzdBopLmdpYnNvbi50ZW5hbnQudjEuR2V0TWlzc2lvbkRyYWZ0UmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEp0BChJEZWxldGVNaXNzaW9uRHJhZnQSKy5naWJzb24udGVuYW50LnYxLkRlbGV0ZU1pc3Npb25EcmFmdFJlcXVlc3QaLC5naWJzb24udGVuYW50LnYxLkRlbGV0ZU1pc3Npb25EcmFmdFJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgA0JUWlJnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vdGVuYW50L3YxO3RlbmFudHYxYgZwcm90bzM", [file_google_protobuf_timestamp, file_gibson_auth_v1_options, file_buf_validate_validate]);
+  fileDesc("Ch1naWJzb24vdGVuYW50L3YxL3RlbmFudC5wcm90bxIQZ2lic29uLnRlbmFudC52MSI6ChlHZXRPbmJvYXJkaW5nU3RhdGVSZXF1ZXN0Eh0KCXRlbmFudF9pZBgBIAEoCUIKukgHcgUQARiACCLnAQoaR2V0T25ib2FyZGluZ1N0YXRlUmVzcG9uc2USFAoMY3VycmVudF9zdGVwGAEgASgJEhcKD2NvbXBsZXRlZF9zdGVwcxgCIAMoCRJRCgtzZXR1cF90YXNrcxgDIAMoCzI8LmdpYnNvbi50ZW5hbnQudjEuR2V0T25ib2FyZGluZ1N0YXRlUmVzcG9uc2UuU2V0dXBUYXNrc0VudHJ5EhQKDGNvbXBsZXRlZF9hdBgEIAEoCRoxCg9TZXR1cFRhc2tzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASL+AQocVXBkYXRlT25ib2FyZGluZ1N0YXRlUmVxdWVzdBIdCgl0ZW5hbnRfaWQYASABKAlCCrpIB3IFEAEYgAgSHgoMY3VycmVudF9zdGVwGAIgASgJQgi6SAVyAxiAIBIXCg9jb21wbGV0ZWRfc3RlcHMYAyADKAkSUwoLc2V0dXBfdGFza3MYBCADKAsyPi5naWJzb24udGVuYW50LnYxLlVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlcXVlc3QuU2V0dXBUYXNrc0VudHJ5GjEKD1NldHVwVGFza3NFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIh8KHVVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlc3BvbnNlIjQKFUdldFRlbmFudFF1b3RhUmVxdWVzdBIbCgl0ZW5hbnRfaWQYASABKAlCCLpIBXIDGIAIItQCChZHZXRUZW5hbnRRdW90YVJlc3BvbnNlEhsKE2NvbmN1cnJlbnRfbWlzc2lvbnMYDCABKAUSGQoRY29uY3VycmVudF9hZ2VudHMYAyABKAUSEgoKdXBkYXRlZF9hdBgHIAEoCRIPCgdwbGFuX2lkGA0gASgJSgQIARACSgQIAhADSgQIBBAFSgQIBRAGSgQIBhAHSgQICBAJSgQICRAKSgQIChALSgQICxAMUgVxdW90YVIFc2VhdHNSCnN0b3JhZ2VfZ2JSDnJldGVudGlvbl9kYXlzUhpzYW5kYm94X2xhdW5jaGVzX3Blcl9tb250aFINY3VycmVudF9zZWF0c1IZY3VycmVudF9jb25jdXJyZW50X2FnZW50c1ISY3VycmVudF9zdG9yYWdlX2diUiNjdXJyZW50X3NhbmRib3hfbGF1bmNoZXNfdGhpc19tb250aCI5ChpHZXRUZW5hbnRRdW90YVVzYWdlUmVxdWVzdBIbCgl0ZW5hbnRfaWQYASABKAlCCLpIBXIDGIAIIk0KG0dldFRlbmFudFF1b3RhVXNhZ2VSZXNwb25zZRIXCg9taXNzaW9uc19hY3RpdmUYASABKAMSFQoNYWdlbnRzX2FjdGl2ZRgCIAEoAyKdAgoKQXVkaXRFdmVudBISCgpldmVudF90eXBlGAEgASgJEhEKCXRpbWVzdGFtcBgCIAEoCRITCgthY3Rvcl9lbWFpbBgEIAEoCRIRCgl0ZW5hbnRfaWQYBSABKAkSFgoOdGFyZ2V0X3VzZXJfaWQYBiABKAkSOgoHZGV0YWlscxgIIAMoCzIpLmdpYnNvbi50ZW5hbnQudjEuQXVkaXRFdmVudC5EZXRhaWxzRW50cnkSEAoIdHJhY2VfaWQYCSABKAkaLgoMRGV0YWlsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFKBAgDEARKBAgHEAhSDWFjdG9yX3VzZXJfaWRSD3RhcmdldF9yZXNvdXJjZSLuAQoWTGlzdEF1ZGl0RXZlbnRzUmVxdWVzdBIbCgl0ZW5hbnRfaWQYASABKAlCCLpIBXIDGIAIEhMKC2V2ZW50X3R5cGVzGAIgAygJEh8KDWFjdG9yX3VzZXJfaWQYAyABKAlCCLpIBXIDGIAIEh4KDHRhcmdldF9tYXRjaBgEIAEoCUIIukgFcgMYgCASGwoJZnJvbV90aW1lGAUgASgJQgi6SAVyAxiAIBIZCgd0b190aW1lGAYgASgJQgi6SAVyAxiAIBINCgVsaW1pdBgHIAEoBRIaCgZjdXJzb3IYCCABKAlCCrpIB3IFGICAgAgiXAoXTGlzdEF1ZGl0RXZlbnRzUmVzcG9uc2USLAoGZXZlbnRzGAEgAygLMhwuZ2lic29uLnRlbmFudC52MS5BdWRpdEV2ZW50EhMKC25leHRfY3Vyc29yGAIgASgJIhoKGEdldEF1ZGl0UmV0ZW50aW9uUmVxdWVzdCJZCg5BdWRpdFJldGVudGlvbhIWCg5pbnN0YWxsX21vbnRocxgBIAEoBRIVCg10ZW5hbnRfbW9udGhzGAIgASgFEhgKEGVmZmVjdGl2ZV9tb250aHMYAyABKAUiUAoZR2V0QXVkaXRSZXRlbnRpb25SZXNwb25zZRIzCglyZXRlbnRpb24YASABKAsyIC5naWJzb24udGVuYW50LnYxLkF1ZGl0UmV0ZW50aW9uIjYKGFNldEF1ZGl0UmV0ZW50aW9uUmVxdWVzdBIaCgZtb250aHMYASABKAVCCrpIBxoFGLAJKAAiUAoZU2V0QXVkaXRSZXRlbnRpb25SZXNwb25zZRIzCglyZXRlbnRpb24YASABKAsyIC5naWJzb24udGVuYW50LnYxLkF1ZGl0UmV0ZW50aW9uIlQKDkZpbmRpbmdGaWx0ZXJzEhAKCHNldmVyaXR5GAEgAygJEgwKBHR5cGUYAiADKAkSEgoKbWlzc2lvbl9pZBgDIAEoCRIOCgZzZWFyY2gYBCABKAkizQEKFUV4cG9ydEZpbmRpbmdzUmVxdWVzdBIbCgl0ZW5hbnRfaWQYASABKAlCCLpIBXIDGIAIEhgKBmZvcm1hdBgCIAEoCUIIukgFcgMYgCASEwoLZmluZGluZ19pZHMYAyADKAkSMQoHZmlsdGVycxgEIAEoCzIgLmdpYnNvbi50ZW5hbnQudjEuRmluZGluZ0ZpbHRlcnMSGwoTaW5jbHVkZV9yZW1lZGlhdGlvbhgFIAEoCBIYChBpbmNsdWRlX2V2aWRlbmNlGAYgASgIIlcKFkV4cG9ydEZpbmRpbmdzUmVzcG9uc2USDAoEZGF0YRgBIAEoDBIOCgZmb3JtYXQYAiABKAkSEAoIZmlsZW5hbWUYAyABKAkSDQoFY291bnQYBCABKAUiuQEKF1NhdmVNaXNzaW9uRHJhZnRSZXF1ZXN0EhsKCXRlbmFudF9pZBgBIAEoCUIIukgFcgMYgAgSFgoEbmFtZRgCIAEoCUIIukgFcgMYgAgSHgoKY3VlX3NvdXJjZRgDIAEoCUIKukgHcgUYgICACBIaCghkcmFmdF9pZBgEIAEoCUIIukgFcgMYgAgSJwoVbWlzc2lvbl9kZWZpbml0aW9uX2lkGAUgASgJQgi6SAVyAxiACFIEeWFtbCIsChhTYXZlTWlzc2lvbkRyYWZ0UmVzcG9uc2USEAoIZHJhZnRfaWQYASABKAkiNwoYTGlzdE1pc3Npb25EcmFmdHNSZXF1ZXN0EhsKCXRlbmFudF9pZBgBIAEoCUIIukgFcgMYgAgibwoMTWlzc2lvbkRyYWZ0EgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEgoKY3JlYXRlZF9hdBgDIAEoCRISCgp1cGRhdGVkX2F0GAQgASgJEh0KFW1pc3Npb25fZGVmaW5pdGlvbl9pZBgFIAEoCSJLChlMaXN0TWlzc2lvbkRyYWZ0c1Jlc3BvbnNlEi4KBmRyYWZ0cxgBIAMoCzIeLmdpYnNvbi50ZW5hbnQudjEuTWlzc2lvbkRyYWZ0IlMKFkdldE1pc3Npb25EcmFmdFJlcXVlc3QSGwoJdGVuYW50X2lkGAEgASgJQgi6SAVyAxiACBIcCghkcmFmdF9pZBgCIAEoCUIKukgHcgUQARiACCJMChdHZXRNaXNzaW9uRHJhZnRSZXNwb25zZRIxCgVkcmFmdBgBIAEoCzIiLmdpYnNvbi50ZW5hbnQudjEuTWlzc2lvbkRyYWZ0RnVsbCKNAQoQTWlzc2lvbkRyYWZ0RnVsbBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhIKCmNyZWF0ZWRfYXQYAyABKAkSEgoKdXBkYXRlZF9hdBgEIAEoCRISCgpjdWVfc291cmNlGAUgASgJEh0KFW1pc3Npb25fZGVmaW5pdGlvbl9pZBgGIAEoCVIEeWFtbCJWChlEZWxldGVNaXNzaW9uRHJhZnRSZXF1ZXN0EhsKCXRlbmFudF9pZBgBIAEoCUIIukgFcgMYgAgSHAoIZHJhZnRfaWQYAiABKAlCCrpIB3IFEAEYgAgiHAoaRGVsZXRlTWlzc2lvbkRyYWZ0UmVzcG9uc2Uy3g4KDVRlbmFudFNlcnZpY2USnQEKEkdldE9uYm9hcmRpbmdTdGF0ZRIrLmdpYnNvbi50ZW5hbnQudjEuR2V0T25ib2FyZGluZ1N0YXRlUmVxdWVzdBosLmdpYnNvbi50ZW5hbnQudjEuR2V0T25ib2FyZGluZ1N0YXRlUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEqYBChVVcGRhdGVPbmJvYXJkaW5nU3RhdGUSLi5naWJzb24udGVuYW50LnYxLlVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlcXVlc3QaLy5naWJzb24udGVuYW50LnYxLlVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKQAQoOR2V0VGVuYW50UXVvdGESJy5naWJzb24udGVuYW50LnYxLkdldFRlbmFudFF1b3RhUmVxdWVzdBooLmdpYnNvbi50ZW5hbnQudjEuR2V0VGVuYW50UXVvdGFSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKgAQoTR2V0VGVuYW50UXVvdGFVc2FnZRIsLmdpYnNvbi50ZW5hbnQudjEuR2V0VGVuYW50UXVvdGFVc2FnZVJlcXVlc3QaLS5naWJzb24udGVuYW50LnYxLkdldFRlbmFudFF1b3RhVXNhZ2VSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkwEKD0xpc3RBdWRpdEV2ZW50cxIoLmdpYnNvbi50ZW5hbnQudjEuTGlzdEF1ZGl0RXZlbnRzUmVxdWVzdBopLmdpYnNvbi50ZW5hbnQudjEuTGlzdEF1ZGl0RXZlbnRzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSmQEKEUdldEF1ZGl0UmV0ZW50aW9uEiouZ2lic29uLnRlbmFudC52MS5HZXRBdWRpdFJldGVudGlvblJlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkdldEF1ZGl0UmV0ZW50aW9uUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSmQEKEVNldEF1ZGl0UmV0ZW50aW9uEiouZ2lic29uLnRlbmFudC52MS5TZXRBdWRpdFJldGVudGlvblJlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLlNldEF1ZGl0UmV0ZW50aW9uUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkQEKDkV4cG9ydEZpbmRpbmdzEicuZ2lic29uLnRlbmFudC52MS5FeHBvcnRGaW5kaW5nc1JlcXVlc3QaKC5naWJzb24udGVuYW50LnYxLkV4cG9ydEZpbmRpbmdzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpcBChBTYXZlTWlzc2lvbkRyYWZ0EikuZ2lic29uLnRlbmFudC52MS5TYXZlTWlzc2lvbkRyYWZ0UmVxdWVzdBoqLmdpYnNvbi50ZW5hbnQudjEuU2F2ZU1pc3Npb25EcmFmdFJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKaAQoRTGlzdE1pc3Npb25EcmFmdHMSKi5naWJzb24udGVuYW50LnYxLkxpc3RNaXNzaW9uRHJhZnRzUmVxdWVzdBorLmdpYnNvbi50ZW5hbnQudjEuTGlzdE1pc3Npb25EcmFmdHNSZXNwb25zZSIsirUYKAoGd3JpdGVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSlAEKD0dldE1pc3Npb25EcmFmdBIoLmdpYnNvbi50ZW5hbnQudjEuR2V0TWlzc2lvbkRyYWZ0UmVxdWVzdBopLmdpYnNvbi50ZW5hbnQudjEuR2V0TWlzc2lvbkRyYWZ0UmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEp0BChJEZWxldGVNaXNzaW9uRHJhZnQSKy5naWJzb24udGVuYW50LnYxLkRlbGV0ZU1pc3Npb25EcmFmdFJlcXVlc3QaLC5naWJzb24udGVuYW50LnYxLkRlbGV0ZU1pc3Npb25EcmFmdFJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgA0JUWlJnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vdGVuYW50L3YxO3RlbmFudHYxYgZwcm90bzM", [file_google_protobuf_timestamp, file_gibson_auth_v1_options, file_buf_validate_validate]);
 
 /**
  * GetOnboardingStateRequest queries the onboarding progress for a tenant.
@@ -360,6 +360,121 @@ export const ListAuditEventsResponseSchema: GenMessage<ListAuditEventsResponse> 
   messageDesc(file_gibson_tenant_v1_tenant, 10);
 
 /**
+ * GetAuditRetentionRequest reads the audit retention period of the caller's
+ * tenant. The tenant comes from the identity of the caller.
+ *
+ * @generated from message gibson.tenant.v1.GetAuditRetentionRequest
+ */
+export type GetAuditRetentionRequest = Message<"gibson.tenant.v1.GetAuditRetentionRequest"> & {
+};
+
+/**
+ * Describes the message gibson.tenant.v1.GetAuditRetentionRequest.
+ * Use `create(GetAuditRetentionRequestSchema)` to create a new message.
+ */
+export const GetAuditRetentionRequestSchema: GenMessage<GetAuditRetentionRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant, 11);
+
+/**
+ * AuditRetention is the audit retention period of one tenant, in months.
+ *
+ * @generated from message gibson.tenant.v1.AuditRetention
+ */
+export type AuditRetention = Message<"gibson.tenant.v1.AuditRetention"> & {
+  /**
+   * install_months is the period of the install (13 months or more).
+   *
+   * @generated from field: int32 install_months = 1;
+   */
+  installMonths: number;
+
+  /**
+   * tenant_months is the period that a tenant admin set. Zero means that the
+   * tenant uses the period of the install.
+   *
+   * @generated from field: int32 tenant_months = 2;
+   */
+  tenantMonths: number;
+
+  /**
+   * effective_months is the period that retention uses: the longer of the
+   * two.
+   *
+   * @generated from field: int32 effective_months = 3;
+   */
+  effectiveMonths: number;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.AuditRetention.
+ * Use `create(AuditRetentionSchema)` to create a new message.
+ */
+export const AuditRetentionSchema: GenMessage<AuditRetention> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant, 12);
+
+/**
+ * GetAuditRetentionResponse carries the audit retention period.
+ *
+ * @generated from message gibson.tenant.v1.GetAuditRetentionResponse
+ */
+export type GetAuditRetentionResponse = Message<"gibson.tenant.v1.GetAuditRetentionResponse"> & {
+  /**
+   * @generated from field: gibson.tenant.v1.AuditRetention retention = 1;
+   */
+  retention?: AuditRetention | undefined;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.GetAuditRetentionResponse.
+ * Use `create(GetAuditRetentionResponseSchema)` to create a new message.
+ */
+export const GetAuditRetentionResponseSchema: GenMessage<GetAuditRetentionResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant, 13);
+
+/**
+ * SetAuditRetentionRequest sets the audit retention period of the caller's
+ * tenant.
+ *
+ * @generated from message gibson.tenant.v1.SetAuditRetentionRequest
+ */
+export type SetAuditRetentionRequest = Message<"gibson.tenant.v1.SetAuditRetentionRequest"> & {
+  /**
+   * months is the new period. It must not be shorter than the period of the
+   * install. Zero removes the setting. 1200 months is the upper limit.
+   *
+   * @generated from field: int32 months = 1;
+   */
+  months: number;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.SetAuditRetentionRequest.
+ * Use `create(SetAuditRetentionRequestSchema)` to create a new message.
+ */
+export const SetAuditRetentionRequestSchema: GenMessage<SetAuditRetentionRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant, 14);
+
+/**
+ * SetAuditRetentionResponse carries the audit retention period after the
+ * change.
+ *
+ * @generated from message gibson.tenant.v1.SetAuditRetentionResponse
+ */
+export type SetAuditRetentionResponse = Message<"gibson.tenant.v1.SetAuditRetentionResponse"> & {
+  /**
+   * @generated from field: gibson.tenant.v1.AuditRetention retention = 1;
+   */
+  retention?: AuditRetention | undefined;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.SetAuditRetentionResponse.
+ * Use `create(SetAuditRetentionResponseSchema)` to create a new message.
+ */
+export const SetAuditRetentionResponseSchema: GenMessage<SetAuditRetentionResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_tenant, 15);
+
+/**
  * FindingFilters allows filtering the findings included in an export.
  *
  * @generated from message gibson.tenant.v1.FindingFilters
@@ -391,7 +506,7 @@ export type FindingFilters = Message<"gibson.tenant.v1.FindingFilters"> & {
  * Use `create(FindingFiltersSchema)` to create a new message.
  */
 export const FindingFiltersSchema: GenMessage<FindingFilters> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 11);
+  messageDesc(file_gibson_tenant_v1_tenant, 16);
 
 /**
  * ExportFindingsRequest specifies the format and scope of a findings export.
@@ -435,7 +550,7 @@ export type ExportFindingsRequest = Message<"gibson.tenant.v1.ExportFindingsRequ
  * Use `create(ExportFindingsRequestSchema)` to create a new message.
  */
 export const ExportFindingsRequestSchema: GenMessage<ExportFindingsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 12);
+  messageDesc(file_gibson_tenant_v1_tenant, 17);
 
 /**
  * ExportFindingsResponse carries the serialized export content.
@@ -469,7 +584,7 @@ export type ExportFindingsResponse = Message<"gibson.tenant.v1.ExportFindingsRes
  * Use `create(ExportFindingsResponseSchema)` to create a new message.
  */
 export const ExportFindingsResponseSchema: GenMessage<ExportFindingsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 13);
+  messageDesc(file_gibson_tenant_v1_tenant, 18);
 
 /**
  * SaveMissionDraftRequest persists a mission CUE draft.
@@ -508,7 +623,7 @@ export type SaveMissionDraftRequest = Message<"gibson.tenant.v1.SaveMissionDraft
  * Use `create(SaveMissionDraftRequestSchema)` to create a new message.
  */
 export const SaveMissionDraftRequestSchema: GenMessage<SaveMissionDraftRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 14);
+  messageDesc(file_gibson_tenant_v1_tenant, 19);
 
 /**
  * SaveMissionDraftResponse returns the ID of the saved or updated draft.
@@ -527,7 +642,7 @@ export type SaveMissionDraftResponse = Message<"gibson.tenant.v1.SaveMissionDraf
  * Use `create(SaveMissionDraftResponseSchema)` to create a new message.
  */
 export const SaveMissionDraftResponseSchema: GenMessage<SaveMissionDraftResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 15);
+  messageDesc(file_gibson_tenant_v1_tenant, 20);
 
 /**
  * ListMissionDraftsRequest queries the saved drafts for a tenant.
@@ -546,7 +661,7 @@ export type ListMissionDraftsRequest = Message<"gibson.tenant.v1.ListMissionDraf
  * Use `create(ListMissionDraftsRequestSchema)` to create a new message.
  */
 export const ListMissionDraftsRequestSchema: GenMessage<ListMissionDraftsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 16);
+  messageDesc(file_gibson_tenant_v1_tenant, 21);
 
 /**
  * MissionDraft carries the metadata for a saved mission draft.
@@ -585,7 +700,7 @@ export type MissionDraft = Message<"gibson.tenant.v1.MissionDraft"> & {
  * Use `create(MissionDraftSchema)` to create a new message.
  */
 export const MissionDraftSchema: GenMessage<MissionDraft> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 17);
+  messageDesc(file_gibson_tenant_v1_tenant, 22);
 
 /**
  * ListMissionDraftsResponse carries the list of mission drafts for a tenant.
@@ -604,7 +719,7 @@ export type ListMissionDraftsResponse = Message<"gibson.tenant.v1.ListMissionDra
  * Use `create(ListMissionDraftsResponseSchema)` to create a new message.
  */
 export const ListMissionDraftsResponseSchema: GenMessage<ListMissionDraftsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 18);
+  messageDesc(file_gibson_tenant_v1_tenant, 23);
 
 /**
  * GetMissionDraftRequest fetches a single draft's full content.
@@ -628,7 +743,7 @@ export type GetMissionDraftRequest = Message<"gibson.tenant.v1.GetMissionDraftRe
  * Use `create(GetMissionDraftRequestSchema)` to create a new message.
  */
 export const GetMissionDraftRequestSchema: GenMessage<GetMissionDraftRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 19);
+  messageDesc(file_gibson_tenant_v1_tenant, 24);
 
 /**
  * GetMissionDraftResponse returns a single draft including its CUE content.
@@ -647,7 +762,7 @@ export type GetMissionDraftResponse = Message<"gibson.tenant.v1.GetMissionDraftR
  * Use `create(GetMissionDraftResponseSchema)` to create a new message.
  */
 export const GetMissionDraftResponseSchema: GenMessage<GetMissionDraftResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 20);
+  messageDesc(file_gibson_tenant_v1_tenant, 25);
 
 /**
  * MissionDraftFull is MissionDraft plus the CUE source content.
@@ -691,7 +806,7 @@ export type MissionDraftFull = Message<"gibson.tenant.v1.MissionDraftFull"> & {
  * Use `create(MissionDraftFullSchema)` to create a new message.
  */
 export const MissionDraftFullSchema: GenMessage<MissionDraftFull> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 21);
+  messageDesc(file_gibson_tenant_v1_tenant, 26);
 
 /**
  * DeleteMissionDraftRequest removes a saved draft.
@@ -715,7 +830,7 @@ export type DeleteMissionDraftRequest = Message<"gibson.tenant.v1.DeleteMissionD
  * Use `create(DeleteMissionDraftRequestSchema)` to create a new message.
  */
 export const DeleteMissionDraftRequestSchema: GenMessage<DeleteMissionDraftRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 22);
+  messageDesc(file_gibson_tenant_v1_tenant, 27);
 
 /**
  * DeleteMissionDraftResponse is empty — Delete is idempotent.
@@ -730,7 +845,7 @@ export type DeleteMissionDraftResponse = Message<"gibson.tenant.v1.DeleteMission
  * Use `create(DeleteMissionDraftResponseSchema)` to create a new message.
  */
 export const DeleteMissionDraftResponseSchema: GenMessage<DeleteMissionDraftResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 23);
+  messageDesc(file_gibson_tenant_v1_tenant, 28);
 
 /**
  * TenantService provides the core tenant-management operations: onboarding
@@ -794,6 +909,30 @@ export const TenantService: GenService<{
     methodKind: "unary";
     input: typeof ListAuditEventsRequestSchema;
     output: typeof ListAuditEventsResponseSchema;
+  },
+  /**
+   * GetAuditRetention returns the audit retention period of the caller's
+   * tenant: the period of the install, the period that a tenant admin set,
+   * and the period that retention uses.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantService.GetAuditRetention
+   */
+  getAuditRetention: {
+    methodKind: "unary";
+    input: typeof GetAuditRetentionRequestSchema;
+    output: typeof GetAuditRetentionResponseSchema;
+  },
+  /**
+   * SetAuditRetention sets the audit retention period of the caller's tenant.
+   * The period must not be shorter than the period of the install. Zero
+   * removes the setting, and the tenant uses the period of the install.
+   *
+   * @generated from rpc gibson.tenant.v1.TenantService.SetAuditRetention
+   */
+  setAuditRetention: {
+    methodKind: "unary";
+    input: typeof SetAuditRetentionRequestSchema;
+    output: typeof SetAuditRetentionResponseSchema;
   },
   /**
    * ExportFindings exports findings to the requested format (json, csv, sarif).

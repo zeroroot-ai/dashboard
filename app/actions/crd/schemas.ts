@@ -165,6 +165,19 @@ export const revokeMemberInput = z
   })
   .strict();
 
+export const reassignAgentIdentityInput = z
+  .object({
+    principalId: z.string().regex(/^(agent|tool|plugin)_principal:.+$/, 'Invalid identity'),
+    newOwnerUserId: z.string().min(1, 'Choose a user'),
+  })
+  .strict();
+
+export const retireAgentIdentityInput = z
+  .object({
+    principalId: z.string().regex(/^(agent|tool|plugin)_principal:.+$/, 'Invalid identity'),
+  })
+  .strict();
+
 export const resendInvitationInput = z
   .object({
     email: emailSchema,

@@ -12,6 +12,13 @@
  *                            invitation + emails the accept link, gibson#632).
  *   revokeMemberAction    , active member  → MembershipService.RemoveMember
  *                            pending invite  → CancelInvitation
+ *   reassignAgentIdentityAction, MembershipService.ReassignAgentIdentity
+ *   retireAgentIdentityAction  , AgentIdentityService.RevokeAgentIdentity
+ *
+ * The identities of a removed user (gibson#568, dashboard#178): RemoveMember
+ * moves each agent, tool and plugin identity that the removed user owned to
+ * the caller, and returns them. The users page lists them, so the admin can
+ * hand each one to the right person or revoke it.
  *   leaveTenantAction     , MembershipService.LeaveTenant (self-service half
  *                            of Removal, ADR-0093 §11, hosted#205)
  *   resendInvitationAction, MembershipService.ResendInvitation
@@ -32,6 +39,7 @@
 import { ConnectError, Code } from '@connectrpc/connect';
 
 import { MembershipService } from '@/src/gen/gibson/tenant/v1/membership_pb';
+import { AgentIdentityService } from '@/src/gen/gibson/agentidentity/v1/agent_identity_pb';
 import { userClient, serviceClient } from '@/src/lib/gibson-client';
 import {
   requireActiveTenant,
@@ -48,6 +56,8 @@ import {
   acceptInvitationInput,
   revokeMemberInput,
   resendInvitationInput,
+  reassignAgentIdentityInput,
+  retireAgentIdentityInput,
 } from './schemas';
 
 /** Map a daemon RPC error to the dashboard ActionResult error shape. */
@@ -174,13 +184,20 @@ function removalRpcError<T>(e: unknown, ownerMessage: string): ActionResult<T> {
  * Zitadel account; a pending invitation is canceled by email instead. The
  * tenant's Owner can never be removed this way, only transferred out first.
  */
+/** The identities that a removal moved to the caller (gibson#568). Empty for
+ * a canceled invitation. */
+export interface RemovalResult {
+  reassignedPrincipalIds: string[];
+  newOwnerUserId: string;
+}
+
 export async function revokeMemberAction(input: {
   userId: string;
   email: string;
   status: string;
-}): Promise<ActionResult> {
+}): Promise<ActionResult<RemovalResult>> {
   const inputKeys = ['userId', 'email', 'status'];
-  const gate = await requireCrdSession({ action: 'revokeMemberAction', inputKeys });
+  const gate = await requireCrdSession<RemovalResult>({ action: 'revokeMemberAction', inputKeys });
   if (!gate.ok) return gate.result;
 
   const parsed = revokeMemberInput.safeParse(input);
@@ -188,7 +205,7 @@ export async function revokeMemberAction(input: {
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'BAD_INPUT' };
   }
 
-  const t = await activeTenantOr<void>();
+  const t = await activeTenantOr<RemovalResult>();
   if ('result' in t) return t.result;
 
   const isInvited = parsed.data.status === 'invited';
@@ -213,10 +230,13 @@ export async function revokeMemberAction(input: {
 
   try {
     const client = userClient(MembershipService);
+    const result: RemovalResult = { reassignedPrincipalIds: [], newOwnerUserId: '' };
     if (isInvited) {
       await client.cancelInvitation({ tenantId: t.tenantId, email: parsed.data.email });
     } else {
-      await client.removeMember({ tenantId: t.tenantId, userId: parsed.data.userId });
+      const res = await client.removeMember({ tenantId: t.tenantId, userId: parsed.data.userId });
+      result.reassignedPrincipalIds = [...(res.reassignedPrincipalIds ?? [])];
+      result.newOwnerUserId = res.newOwnerUserId ?? '';
     }
     emitCrdAuditFromGate({
       session: gate.session,
@@ -227,7 +247,7 @@ export async function revokeMemberAction(input: {
       inputKeys,
       resourceRef: parsed.data.userId || parsed.data.email,
     });
-    return { ok: true, data: undefined };
+    return { ok: true, data: result };
   } catch (e) {
     return removalRpcError(e, "Cannot remove the tenant's Owner. Transfer ownership first.");
   }
@@ -288,6 +308,83 @@ export async function resendInvitationAction(input: { email: string }): Promise<
       targetTenant: t.tenantId,
       inputKeys,
       resourceRef: parsed.data.email,
+    });
+    return { ok: true, data: undefined };
+  } catch (e) {
+    return rpcError(e);
+  }
+}
+
+/**
+ * Hand an agent, tool or plugin identity to another user of the tenant
+ * (gibson#568, dashboard#178). The new owner is the accountable person for
+ * the identity.
+ */
+export async function reassignAgentIdentityAction(input: {
+  principalId: string;
+  newOwnerUserId: string;
+}): Promise<ActionResult> {
+  const inputKeys = ['principalId', 'newOwnerUserId'];
+  const gate = await requireCrdSession({ action: 'reassignAgentIdentityAction', inputKeys });
+  if (!gate.ok) return gate.result;
+
+  const parsed = reassignAgentIdentityInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'BAD_INPUT' };
+  }
+
+  const t = await activeTenantOr<void>();
+  if ('result' in t) return t.result;
+
+  try {
+    const client = userClient(MembershipService);
+    await client.reassignAgentIdentity({
+      principalId: parsed.data.principalId,
+      newOwnerUserId: parsed.data.newOwnerUserId,
+    });
+    emitCrdAuditFromGate({
+      session: gate.session,
+      userId: gate.userId,
+      action: 'reassignAgentIdentityAction',
+      outcome: 'ok',
+      targetTenant: t.tenantId,
+      inputKeys,
+      resourceRef: parsed.data.principalId,
+    });
+    return { ok: true, data: undefined };
+  } catch (e) {
+    return rpcError(e);
+  }
+}
+
+/**
+ * Revoke an agent, tool or plugin identity of the tenant for good
+ * (gibson#568, dashboard#178). Its credentials stop working.
+ */
+export async function retireAgentIdentityAction(input: { principalId: string }): Promise<ActionResult> {
+  const inputKeys = ['principalId'];
+  const gate = await requireCrdSession({ action: 'retireAgentIdentityAction', inputKeys });
+  if (!gate.ok) return gate.result;
+
+  const parsed = retireAgentIdentityInput.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'BAD_INPUT' };
+  }
+
+  const t = await activeTenantOr<void>();
+  if ('result' in t) return t.result;
+
+  try {
+    const client = userClient(AgentIdentityService);
+    await client.revokeAgentIdentity({ principalId: parsed.data.principalId });
+    emitCrdAuditFromGate({
+      session: gate.session,
+      userId: gate.userId,
+      action: 'retireAgentIdentityAction',
+      outcome: 'ok',
+      targetTenant: t.tenantId,
+      inputKeys,
+      resourceRef: parsed.data.principalId,
     });
     return { ok: true, data: undefined };
   } catch (e) {
