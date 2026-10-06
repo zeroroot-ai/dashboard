@@ -2,6 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 import 'server-only';
+import { randomUUID } from 'node:crypto';
 import { principalView } from '@/src/lib/gibson-client/principal';
 import type { PrincipalView } from '@/src/lib/banks/view';
 import { ConnectError, Code } from '@connectrpc/connect';
@@ -194,6 +195,7 @@ export async function runMission(
     targetId,
     variables,
     memoryContinuity,
+    idempotencyKey: randomUUID(),
   });
   for await (const event of stream) {
     return { success: true, missionId: event.missionId, event };

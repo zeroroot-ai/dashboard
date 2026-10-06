@@ -15,6 +15,8 @@
 
 import "server-only";
 
+import { randomUUID } from "node:crypto";
+
 import { ConnectError } from "@connectrpc/connect";
 
 import { authzDenial } from "@/src/lib/auth/assert-authorized";
@@ -153,7 +155,9 @@ export async function createTargetAction(
   }
   try {
     const client = userClient(DaemonService);
-    const resp = await client.createTarget({ target: targetMsg(input) });
+    // One key for this action. A transport retry sends the same key, so
+    // the daemon makes the target once.
+    const resp = await client.createTarget({ target: targetMsg(input), idempotencyKey: randomUUID() });
     if (!resp.target?.id && !resp.targetId) {
       return { ok: false, error: "Daemon did not return a target", code: "rpc_failed" };
     }

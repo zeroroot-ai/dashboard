@@ -22,6 +22,7 @@
 
 import "server-only";
 
+import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
@@ -75,6 +76,10 @@ export async function createMissionFromCUEAction(input: {
   // (dashboard#904).
   try {
     const client = userClient(DaemonService);
+    // One idempotency key for this user action. The daemon scopes a key by
+    // tenant and method, so the create and run calls below share it, and a
+    // retry of one call makes its object once.
+    const idempotencyKey = randomUUID();
 
     // Step 1: Validate and compile. Diagnostics (including missing 'mission'
     // field) abort submission. compiledDefinition is populated on success.
@@ -109,6 +114,7 @@ export async function createMissionFromCUEAction(input: {
       const defResp = await client.createMissionDefinition({
         definition: compiledDefinition,
         cueSource,
+        idempotencyKey,
       });
       if (!defResp.missionDefinitionId) {
         return {
@@ -160,6 +166,7 @@ export async function createMissionFromCUEAction(input: {
     } else {
       const targetResp = await client.createTarget({
         target: { name: targetRef, url: targetRef },
+        idempotencyKey,
       });
       if (!targetResp.targetId) {
         return {
@@ -183,6 +190,7 @@ export async function createMissionFromCUEAction(input: {
       missionDefinitionId,
       targetId,
       memoryContinuity: "isolated",
+      idempotencyKey,
     })) {
       runMissionId = event.missionId;
       break;

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright 2026 Zero Root AI
 
+import { randomUUID } from 'node:crypto';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { create } from '@bufbuild/protobuf';
 import { getServerSession } from '@/src/lib/auth';
@@ -96,12 +98,15 @@ export async function POST(request: NextRequest) {
 
     const client = userClient(DaemonService);
     const definition = buildDemoMissionDefinition();
+    // One idempotency key for this request. The daemon scopes a key by tenant
+    // and method, so the two create calls share it.
+    const idempotencyKey = randomUUID();
 
     // Step 1: register the mission definition.
     // DaemonService.CreateMissionDefinition (OSS SDK, ADR-0058) accepts a
     // fully-formed MissionDefinition proto in the `definition` field, no
     // source oneof. Pass the in-process proto directly.
-    const defResp = await client.createMissionDefinition({ definition });
+    const defResp = await client.createMissionDefinition({ definition, idempotencyKey });
     const missionDefinitionId = defResp.missionDefinitionId;
     if (!missionDefinitionId) {
       return NextResponse.json(
@@ -123,6 +128,7 @@ export async function POST(request: NextRequest) {
       missionDefinitionId,
       variables: {},
       memoryContinuity: 'isolated',
+      idempotencyKey,
     });
     if (!createResp.success || !createResp.mission?.id) {
       return NextResponse.json(

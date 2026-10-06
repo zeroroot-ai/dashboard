@@ -108,7 +108,10 @@ describe('POST /api/missions/demo', () => {
       missionDefinitionId: 'def-demo-1',
       variables: {},
       memoryContinuity: 'isolated',
+      idempotencyKey: defArg.idempotencyKey,
     });
+    // One key covers the create calls of this request.
+    expect(defArg.idempotencyKey).toMatch(/^[0-9a-f-]{36}$/);
 
     // RunMission step uses the definition + target, isolated memory, user id.
     expect(mockRunMission).toHaveBeenCalledWith(

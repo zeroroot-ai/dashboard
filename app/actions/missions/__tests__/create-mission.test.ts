@@ -102,6 +102,22 @@ describe("createMissionFromCUEAction", () => {
     );
   });
 
+  it("sends one UUID idempotency key on each create and run call of one action", async () => {
+    mockCreateMissionDefinition.mockResolvedValue({ missionDefinitionId: "def-001" });
+
+    await createMissionFromCUEAction({ cueSource: VALID_CUE });
+
+    const key = mockCreateMissionDefinition.mock.calls[0][0].idempotencyKey;
+    expect(key).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+    expect(mockCreateTarget.mock.calls[0][0].idempotencyKey).toBe(key);
+    expect(mockRunMission.mock.calls[0][0].idempotencyKey).toBe(key);
+
+    // A second user action gets a new key.
+    mockRunMission.mockReturnValue(runStream("run-003"));
+    await createMissionFromCUEAction({ cueSource: VALID_CUE });
+    expect(mockCreateMissionDefinition.mock.calls[1][0].idempotencyKey).not.toBe(key);
+  });
+
   it("passes the raw cueSource to CreateMissionDefinition so the daemon persists it", async () => {
     mockCreateMissionDefinition.mockResolvedValue({ missionDefinitionId: "def-001" });
 
