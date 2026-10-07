@@ -305,12 +305,12 @@ File: `src/lib/auth/use-authorize.ts`
 ```ts
 import { useAuthorize } from "@/lib/auth/use-authorize";
 
-function AddPluginButton() {
+function RevokeGrantButton() {
   const { allowed, loading } = useAuthorize(
-    "/gibson.pluginadmin.v1.PluginAdminService/RegisterPlugin"
+    "/gibson.pluginadmin.v1.PluginAdminService/RevokePluginSecretBinding"
   );
   if (loading || !allowed) return null;         // hide on loading, no FOUC
-  return <Button onClick={openWizard}>Add Plugin</Button>;
+  return <Button onClick={revoke}>Revoke</Button>;
 }
 ```
 
