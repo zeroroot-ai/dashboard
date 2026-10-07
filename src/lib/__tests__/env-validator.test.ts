@@ -66,8 +66,6 @@ const VALID_ENV: Record<string, string> = {
 
   // Stores
   DATABASE_URL: 'postgres://user:pass@db:5432/gibson_dashboard',
-  NEO4J_URI: 'bolt://neo4j:7687',
-  NEO4J_PASSWORD: 'neo4j-pw',
 
   // Feature switches
   DASHBOARD_CAPTCHA_PROVIDER: 'disabled',

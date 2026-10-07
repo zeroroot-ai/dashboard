@@ -381,8 +381,6 @@
     "NAME",
     "NEEDS_SIGN_IN",
     "NEO4J_PASSWORD",
-    "NEO4J_URI",
-    "NEO4J_USER",
     "NEVER",
     "NEXTAUTH_SECRET",
     "NEXT_PHASE",

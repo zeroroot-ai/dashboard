@@ -19,7 +19,6 @@ import { vi } from 'vitest';
 
 const REQUIRED_VARS = [
   'GIBSON_PLATFORM_PUBLIC_URL',
-  'NEO4J_URI',
 ] as const;
 
 const AUTH_URL_VARS = ['AUTH_URL'] as const;
@@ -27,7 +26,6 @@ const AUTH_URL_VARS = ['AUTH_URL'] as const;
 // Safe baseline values that satisfy all required vars.
 const BASELINE_ENV: Record<string, string> = {
   GIBSON_PLATFORM_PUBLIC_URL: 'https://api.zeroroot.local:30443',
-  NEO4J_URI: 'bolt://neo4j-service:7687',
   AUTH_URL: 'http://localhost:3000',
 };
 
@@ -63,12 +61,6 @@ describe('validateEnvConfig', () => {
     delete process.env['GIBSON_PLATFORM_PUBLIC_URL'];
     const { validateEnvConfig } = await import('../config');
     expect(() => validateEnvConfig()).toThrowError('GIBSON_PLATFORM_PUBLIC_URL');
-  });
-
-  it('throws when NEO4J_URI is unset', async () => {
-    delete process.env['NEO4J_URI'];
-    const { validateEnvConfig } = await import('../config');
-    expect(() => validateEnvConfig()).toThrowError('NEO4J_URI');
   });
 
   it('throws when AUTH_URL is unset', async () => {

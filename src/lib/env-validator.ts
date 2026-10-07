@@ -223,19 +223,6 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
       'Postgres connection string for the dashboard control-plane DB ' +
       '(auth nonces). e.g. postgres://gibson_dashboard:...@cnpg-rw:5432/gibson_dashboard',
   },
-  {
-    name: 'NEO4J_URI',
-    kind: 'string',
-    hint:
-      'Neo4j bolt endpoint for the knowledge graph (e.g. bolt://neo4j-service:7687).',
-  },
-  {
-    name: 'NEO4J_PASSWORD',
-    kind: 'string',
-    hint:
-      'Neo4j password mounted from the gibson-neo4j-auth secret. ' +
-      'No default, fail-fast per one-code-path.',
-  },
 
   // ---- Feature switches ----
   {
