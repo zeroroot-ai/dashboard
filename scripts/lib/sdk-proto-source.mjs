@@ -17,6 +17,6 @@
  */
 
 const SDK_BSR_MODULE = 'buf.build/zeroroot-ai/sdk';
-const SDK_BSR_VERSION = 'v0.196.0';
+const SDK_BSR_VERSION = 'v0.202.0';
 
 export const SDK_BSR_REF = `${SDK_BSR_MODULE}:${SDK_BSR_VERSION}`;

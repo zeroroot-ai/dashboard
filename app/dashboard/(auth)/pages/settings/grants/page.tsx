@@ -56,7 +56,7 @@ export default async function GrantsPage() {
   let loadError: string | null = null;
 
   try {
-    const resp = await listActiveGrants({ limit: 100 });
+    const resp = await listActiveGrants({ pageSize: 100 });
     grants = resp.grants ?? [];
   } catch (err) {
     loadError =

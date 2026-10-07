@@ -22,8 +22,7 @@ const REQUIRED_VARS = [
   'NEO4J_URI',
 ] as const;
 
-// AUTH_URL or NEXTAUTH_URL, either satisfies the requirement.
-const AUTH_URL_VARS = ['AUTH_URL', 'NEXTAUTH_URL'] as const;
+const AUTH_URL_VARS = ['AUTH_URL'] as const;
 
 // Safe baseline values that satisfy all required vars.
 const BASELINE_ENV: Record<string, string> = {
@@ -72,18 +71,10 @@ describe('validateEnvConfig', () => {
     expect(() => validateEnvConfig()).toThrowError('NEO4J_URI');
   });
 
-  it('throws when both AUTH_URL and NEXTAUTH_URL are unset', async () => {
+  it('throws when AUTH_URL is unset', async () => {
     delete process.env['AUTH_URL'];
-    delete process.env['NEXTAUTH_URL'];
     const { validateEnvConfig } = await import('../config');
     expect(() => validateEnvConfig()).toThrowError('AUTH_URL');
-  });
-
-  it('does not throw when only NEXTAUTH_URL is set (AUTH_URL unset)', async () => {
-    delete process.env['AUTH_URL'];
-    process.env['NEXTAUTH_URL'] = 'http://localhost:3000';
-    const { validateEnvConfig } = await import('../config');
-    expect(() => validateEnvConfig()).not.toThrow();
   });
 
   it('returns null for langfuseHost when LANGFUSE_HOST is unset', async () => {

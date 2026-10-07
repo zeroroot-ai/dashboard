@@ -51,8 +51,6 @@ const AUDITED_EXEMPT: Record<string, string> = {
     'Auth.js validates its own CSRF token on its own action routes',
   'app/api/auth/federated-signout/route.ts:POST':
     'top-level navigation / form post cannot set a header; uses Sec-Fetch-* instead',
-  'app/api/test/inject-fault/route.ts:POST': '404 unless TEST_FIXTURES_ENABLED; e2e-only',
-  'app/api/test/fga-revoke/route.ts:POST': '404 unless TEST_FIXTURES_ENABLED; e2e-only',
 };
 
 function walk(dir: string, out: string[] = []): string[] {

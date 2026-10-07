@@ -45,9 +45,6 @@ import NextAuth from "next-auth";
 import type { NextAuthConfig } from "next-auth";
 import { cookies } from "next/headers";
 
-// TEST FIXTURE: fault-injection import, no-ops in production
-// (single process.env check per call; zero overhead when not enabled).
-import { getFaultMode } from "@/src/lib/test-fixtures/fault-injection";
 
 import { resolvePostSignInRedirect } from "@/src/lib/auth/post-signin-redirect";
 import { evaluateMfaGate } from "@/src/lib/auth/mfa-gate";
@@ -189,7 +186,7 @@ requireEnv("ZITADEL_EXTERNAL_DOMAIN");
  * set.
  */
 const useSecureCookies: boolean = (() => {
-  const rawAuthUrl = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL;
+  const rawAuthUrl = process.env.AUTH_URL;
   if (!rawAuthUrl) return process.env.NODE_ENV === "production";
   try {
     return new URL(rawAuthUrl).protocol === "https:";
@@ -258,41 +255,6 @@ const config: NextAuthConfig = {
      * is never consulted for it, only the stored access token is.
      */
     async jwt({ token, account, trigger }) {
-      // -----------------------------------------------------------------------
-      // TEST FIXTURES: JWKS and token-exchange fault injection.
-      // Only active when TEST_FIXTURES_ENABLED=true. These checks happen at
-      // the start of the jwt callback, which Auth.js calls both on initial
-      // sign-in (account is set) and on subsequent JWT refreshes (account is
-      // undefined). We gate the fault checks on `account` being present so we
-      // only intercept the initial sign-in flow, not every request that calls
-      // auth() (which would break the session after fault arms).
-      //
-      // Fault effects:
-      //   "token-exchange" fault → throw error that Auth.js maps to /login?error=...
-      //     The middleware then intercepts the /login?error= URL and redirects
-      //     to /login/error?reason=oidc_token_exchange_failed.
-      //   "jwks" fault → same mechanism but with jwks_unavailable reason.
-      //
-      // In production: getFaultMode always returns undefined (env guard).
-      // -----------------------------------------------------------------------
-      if (account) {
-        const tokenExchangeFault = getFaultMode("token-exchange");
-        if (tokenExchangeFault) {
-          tokenExchangeFault.decrementIfBounded();
-          // Throwing in the jwt callback causes Auth.js to redirect to
-          // pages.error (/login?error=Callback). The middleware or /login page
-          // then redirects to /login/error?reason=oidc_token_exchange_failed.
-          throw new Error("[fault-injection] token-exchange 503");
-        }
-
-        const jwksFault = getFaultMode("jwks");
-        if (jwksFault) {
-          jwksFault.decrementIfBounded();
-          throw new Error("[fault-injection] jwks unavailable");
-        }
-      }
-      // -----------------------------------------------------------------------
-
       const signinStartedAt = Date.now();
       if (account) {
         // Stamp the start of this login. Written ONCE, on the initial sign-in
@@ -348,8 +310,7 @@ const config: NextAuthConfig = {
         // the gibson-client transport, which pulls in this module's own
         // session helpers. A sign-in that cannot resolve its tenant (a
         // transport error, or more than one membership) throws here, which
-        // Auth.js maps to pages.error, the same fail-closed path the
-        // fault-injection checks above use.
+        // Auth.js maps to pages.error, a fail-closed path.
         if (typeof token["accessToken"] === "string") {
           const { stampSessionTenant } = await import("@/src/lib/auth/session-tenant");
           const { observeSignin } = await import("@/src/lib/metrics/auth");

@@ -393,7 +393,7 @@ function ComponentCards() {
     },
     {
       title: 'Plugins',
-      href: '/dashboard/plugins',
+      href: '/dashboard/integrations?tab=plugins',
       icon: Plug,
       total: plugins?.length ?? 0,
       healthy: (plugins ?? []).filter((p) => p.status === 'healthy').length,

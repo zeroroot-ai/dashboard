@@ -173,7 +173,7 @@ export function AddPluginGuide({
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             <Link
-              href="/dashboard/connectors"
+              href="/dashboard/integrations?tab=connectors"
               className="text-primary inline-flex items-center gap-1 text-xs underline underline-offset-2"
             >
               Add a connector instead
@@ -281,7 +281,7 @@ export function AddPluginGuide({
           Back
         </Button>
         <Button asChild variant="outline">
-          <Link href="/dashboard/plugins">View plugins</Link>
+          <Link href="/dashboard/integrations?tab=plugins">View plugins</Link>
         </Button>
       </div>
     </div>

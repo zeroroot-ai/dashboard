@@ -4,7 +4,7 @@
 "use server";
 
 /**
- * Server Actions for the /dashboard/connectors page (ADR-0067, UI slice 1).
+ * Server Actions for the Connectors tab of /dashboard/integrations (ADR-0067, UI slice 1).
  *
  * Replaces the deleted delegation routes at app/api/settings/connectors/*.
  * Each action wraps the typed gibson-client functions in

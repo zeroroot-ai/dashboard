@@ -85,7 +85,7 @@ function loadSpiffe(): SpiffeMod | null {
   try {
     // Use `node:module` createRequire so the require runs at call time in
     // the Node.js runtime. The path argument is built from a runtime
-    // expression so Turbopack's static analyser cannot fold it back to a
+    // expression so Turbopack's static analyzer cannot fold it back to a
     // literal it would trace into the module graph. Variable-string
     // require() and `typeof import()` were both still traced (Next.js 16
     // Turbopack pulls grpc-js into the bundle and fails to resolve its
@@ -114,7 +114,7 @@ function loadSpiffe(): SpiffeMod | null {
 /**
  * Buckets a thrown gRPC error into the {@link AdminRpcStatus} label set.
  * Connect-RPC maps every transport / gRPC error to a `ConnectError` with
- * a `.code` property; we partition on that code. Anything unrecognised
+ * a `.code` property; we partition on that code. Anything unrecognized
  * collapses to `error` to keep label cardinality bounded.
  */
 function classifyError(err: unknown): AdminRpcStatus {
@@ -161,7 +161,7 @@ function envoyStatusFrom(err: unknown): string | null {
  * stream, only 3 `Http2Stream` objects existed against 6,244 pending
  * `unary` closures. The calls were stuck earlier in the interceptor chain
  * (most likely resolving the bearer token or the authz registry check),
- * not on the wire, and nothing ever cancelled them, so every pending call's
+ * not on the wire, and nothing ever canceled them, so every pending call's
  * full closure graph stayed reachable and grew the heap until the pod OOMed.
  *
  * No interceptor, wire-level failure, or backend condition should be able

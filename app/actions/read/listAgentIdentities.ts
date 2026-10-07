@@ -74,3 +74,67 @@ export async function listAgentIdentitiesAction(): Promise<
     };
   }
 }
+
+/** Dashboard-safe shape for an identity of any kind. */
+interface IdentitySummary {
+  /** principal_id, for example "agent_principal:<id>". */
+  id: string;
+  /** Human-readable name. */
+  name: string;
+  /** "agent", "tool" or "plugin". */
+  kind: "agent" | "tool" | "plugin";
+}
+
+function kindLabel(kind: PrincipalKind): IdentitySummary["kind"] {
+  switch (kind) {
+    case PrincipalKind.TOOL:
+      return "tool";
+    case PrincipalKind.PLUGIN:
+      return "plugin";
+    default:
+      return "agent";
+  }
+}
+
+/**
+ * Fetch the name and kind of the given identities of the active tenant. The
+ * users page uses it after a removal, to show the identities that moved to
+ * the caller (gibson#568, dashboard#178). An identity the daemon does not
+ * list keeps its id as its name.
+ */
+export async function describeIdentitiesAction(
+  principalIds: string[],
+): Promise<ActionResult<IdentitySummary[]>> {
+  const session = await auth();
+  if (!session?.user) {
+    return { ok: false, error: "unauthenticated" };
+  }
+  if (principalIds.length === 0) {
+    return { ok: true, data: [] };
+  }
+  try {
+    const client = userClient(AgentIdentityService);
+    const resp = await client.listAgentIdentities({ pageSize: 200 });
+    const byId = new Map((resp.identities ?? []).map((i) => [i.principalId, i]));
+    const rows: IdentitySummary[] = principalIds.map((id) => {
+      const found = byId.get(id);
+      const prefix = id.split(":")[0] ?? "";
+      const fallbackKind: IdentitySummary["kind"] = prefix.startsWith("tool")
+        ? "tool"
+        : prefix.startsWith("plugin")
+          ? "plugin"
+          : "agent";
+      return {
+        id,
+        name: found?.name || id,
+        kind: found ? kindLabel(found.kind) : fallbackKind,
+      };
+    });
+    return { ok: true, data: rows };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}

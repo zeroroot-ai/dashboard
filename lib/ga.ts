@@ -23,7 +23,7 @@ export default function GoogleAnalyticsInit() {
     ReactGA.initialize(GA_KEY);
     ReactGA.send("pageview");
     // Once per mount. Without the dependency array this effect ran on every
-    // render of the root layout, re-initialised the tracker and sent a
+    // render of the root layout, re-initialized the tracker and sent a
     // pageview each time.
   }, []);
 

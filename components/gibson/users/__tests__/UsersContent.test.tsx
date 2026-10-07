@@ -51,6 +51,15 @@ vi.mock("@/app/actions/crd/member", () => ({
   revokeMemberAction: vi.fn(),
   resendInvitationAction: vi.fn(),
   leaveTenantAction: vi.fn(async () => ({ ok: true, data: undefined })),
+  reassignAgentIdentityAction: vi.fn(),
+  retireAgentIdentityAction: vi.fn(),
+}));
+
+vi.mock("@/app/actions/read/listAgentIdentities", () => ({
+  describeIdentitiesAction: vi.fn(async (ids: string[]) => ({
+    ok: true,
+    data: ids.map((id) => ({ id, name: `name-of-${id}`, kind: "agent" })),
+  })),
 }));
 
 vi.mock("@/app/actions/crd/role", () => ({

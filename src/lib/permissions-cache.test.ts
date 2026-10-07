@@ -34,7 +34,6 @@ function makeResponse(role: string) {
     role,
     isAdmin: role === 'admin',
     componentGrants: [],
-    teamMemberships: [],
   });
 }
 

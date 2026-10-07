@@ -119,7 +119,7 @@ function getAllowedSubjects(): ReadonlySet<string> {
   // ALLOWED_SERVICE_SUBJECTS is prodOnly in REQUIRED_ENV, outside production
   // it may legitimately be undefined. verifyZitadelBearer() raises the
   // `subject-not-allowed` ZitadelBearerError on its own when the parsed
-  // set is empty + a token presents an unrecognised sub, so we don't need
+  // set is empty + a token presents an unrecognized sub, so we don't need
   // to throw at parse time here.
   const raw = process.env.ALLOWED_SERVICE_SUBJECTS ?? '';
   return new Set(

@@ -211,7 +211,7 @@ const nextConfig: NextConfig = {
   // current bundle), see src/lib/server-action-skew.ts. Do not assume this
   // env var alone prevents the "Something went wrong" signup error.
   images: {
-    // `remotePatterns` is an allowlist for the /_next/image optimiser: any
+    // `remotePatterns` is an allowlist for the /_next/image optimizer: any
     // origin listed here can be fetched by the server on behalf of an
     // unauthenticated caller who controls the `url` query parameter. The
     // `http` + `localhost` entry carried no port, so it allowed every port on

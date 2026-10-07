@@ -20,6 +20,8 @@ export type CrdActionName =
   | "inviteMemberAction"
   | "acceptInvitationAction"
   | "revokeMemberAction"
+  | "reassignAgentIdentityAction"
+  | "retireAgentIdentityAction"
   | "leaveTenantAction"
   | "resendInvitationAction"
   | "revokeUserSessionsAction"

@@ -15,13 +15,17 @@ import { tmpdir } from "node:os";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ENTRYPOINT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "docker", "entrypoint.sh");
+// The script runs by a fixed relative path from the repository root, so the
+// command line holds no path that comes from the environment.
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const ENTRYPOINT = "./docker/entrypoint.sh";
 
 function runWithLimit(contents, extraEnv = {}) {
   const dir = mkdtempSync(join(tmpdir(), "entrypoint-heap-"));
   const file = join(dir, "memory.max");
   if (contents !== null) writeFileSync(file, contents);
   const result = spawnSync("sh", [ENTRYPOINT, "sh", "-c", 'printf "%s" "${NODE_OPTIONS:-}"'], {
+    cwd: REPO_ROOT,
     env: { PATH: process.env.PATH, CGROUP_MEMORY_MAX: file, ...extraEnv },
     encoding: "utf8",
   });

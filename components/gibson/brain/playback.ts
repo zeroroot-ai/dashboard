@@ -14,7 +14,7 @@ import { useEffect, useMemo, useReducer, useRef } from "react";
  * exact shape the Scroller's slider and `/api/world/frame` fetch already consume
  * (see BrainView). Because it does no network and no timer work, the controller
  * is unit-testable in isolation (prior art: WorldGraph's `worldToGraph`, the
- * scrubber behavioural test dashboard#675).
+ * scrubber behavioral test dashboard#675).
  *
  * The only side-effecting piece is `usePlayback`, a thin hook that wires a
  * wall-clock timer to the reducer's `tick` action; the timer measures elapsed
@@ -87,7 +87,7 @@ export function createInitialPlaybackState(opts?: {
  * The pure playback reducer. Every transition keeps `position` an integer within
  * [0, total]; manual moves (step/jump) take control by pausing and dropping the
  * follow-tail pin, while `followTail` re-pins to the live end. Advancement is
- * driven solely by `tick` from elapsed wall-clock time, so speed is honoured
+ * driven solely by `tick` from elapsed wall-clock time, so speed is honored
  * deterministically and the result is fully testable without a timer.
  */
 export function playbackReducer(

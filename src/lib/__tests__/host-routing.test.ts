@@ -73,7 +73,7 @@ describe("isNeutralPath", () => {
     }
   });
   it("flags crawler metadata files so they serve on both hosts (no www->app 307)", () => {
-    for (const p of ["/robots.txt", "/sitemap.xml", "/llms.txt"]) {
+    for (const p of ["/robots.txt", "/sitemap.xml"]) {
       expect(isNeutralPath(p)).toBe(true);
     }
   });
@@ -111,15 +111,6 @@ describe("loadHostSplitConfig", () => {
       DOCS_URL: "https://docs.example.test/",
     });
     expect(c?.docsOrigin).toBe("https://docs.example.test");
-  });
-
-  it("prefers NEXTAUTH_URL over AUTH_URL for the app origin", () => {
-    const c = loadHostSplitConfig({
-      NEXTAUTH_URL: "https://app.zeroroot.ai",
-      AUTH_URL: "https://ignored.example",
-      WWW_URL: "https://www.zeroroot.ai",
-    });
-    expect(c?.appOrigin).toBe("https://app.zeroroot.ai");
   });
 
   it("returns null when WWW_URL is unset (single-origin dev)", () => {

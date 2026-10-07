@@ -499,7 +499,7 @@ export function daemonResponseToVercelStreamParts(
 // ---------------------------------------------------------------------------
 
 /**
- * JSON.stringify wrapped so circular or otherwise non-serialisable
+ * JSON.stringify wrapped so circular or otherwise non-serializable
  * inputs surface as a clear string rather than breaking the adapter.
  */
 function safeStringify(value: unknown): string {

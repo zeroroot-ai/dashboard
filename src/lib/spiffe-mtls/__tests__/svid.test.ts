@@ -8,7 +8,7 @@
  *
  * What we cover (without a real SPIRE agent):
  *   - isSpiffeAvailable() reads the configured socket path.
- *   - SPIFFE_ENDPOINT_SOCKET env override is honoured.
+ *   - SPIFFE_ENDPOINT_SOCKET env override is honored.
  *   - getX509SvidContext() throws NoSpiffeAvailableError when the socket
  *     does not exist.
  *   - buildContext() rejects malformed (zero-length) SVID payloads.
@@ -16,7 +16,7 @@
  *     the leaf cert's lifetime.
  *   - tryGetCachedX509SvidContext() returns null when nothing has been
  *     warmed.
- *   - The cache TTL is honoured: a second call within the window returns
+ *   - The cache TTL is honored: a second call within the window returns
  *     the same context; a call past the window does NOT (we drive this
  *     through buildContext + manual cache poke since fetching is mocked).
  *

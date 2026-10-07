@@ -51,8 +51,8 @@ export type TenantRole = 'owner' | 'admin' | 'member';
  *
  * owner (3) >= admin (2) >= member (1)
  *
- * Unknown or unrecognised role strings default to rank 0, which fails every
- * hasRoleAtLeast check, default-deny for unrecognised roles.
+ * Unknown or unrecognized role strings default to rank 0, which fails every
+ * hasRoleAtLeast check, default-deny for unrecognized roles.
  */
 export const ROLE_RANK: Record<TenantRole, number> = {
   owner: 3,

@@ -36,7 +36,7 @@ test.describe("Admin-only chrome via usePermitted (Owner or Admin)", () => {
   for (const [type, path] of [
     ["agent", "/dashboard/agents"],
     ["tool", "/dashboard/tools"],
-    ["plugin", "/dashboard/plugins"],
+    ["plugin", "/dashboard/integrations?tab=plugins"],
   ] as const) {
     test(`${type}s page shows the Deploy ${type} CTA`, async ({ page }) => {
       await page.goto(`${BASE_URL}${path}`);

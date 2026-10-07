@@ -318,7 +318,7 @@ export function resolveClientIp(
   }
 
   // x-real-ip is set by proxies but is equally forgeable by a direct caller,
-  // so it is only honoured when we are NOT behind a proxy at all (hops === 0),
+  // so it is only honored when we are NOT behind a proxy at all (hops === 0),
   // i.e. a local `next dev` run.
   if (hops === 0) {
     const realIp = headers.get('x-real-ip');

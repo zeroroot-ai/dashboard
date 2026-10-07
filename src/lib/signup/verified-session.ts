@@ -137,7 +137,7 @@ export function signupCookieOptions(): {
  * silently signs with the empty string is worse than one that does not start.
  */
 function signingKey(): Buffer {
-  const s = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  const s = process.env.AUTH_SECRET;
   if (!s || s.length < 16) {
     throw new Error('AUTH_SECRET is missing or too short to sign cookies');
   }

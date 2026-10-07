@@ -34,7 +34,7 @@
  * Exit codes: 0 = every declared name has a reader, 1 = at least one has none.
  */
 
-import { readdirSync, readFileSync, statSync, writeFileSync, unlinkSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -133,7 +133,10 @@ function report(result) {
 
 function selftest() {
   // One name nothing reads, one name the tree reads on every request.
-  const fixture = join(tmpdir(), `env-validator-selftest-${process.pid}.ts`);
+  // A private directory that mkdtemp makes, not a guessable name in the
+  // shared temp directory.
+  const fixtureDir = mkdtempSync(join(tmpdir(), "env-validator-selftest-"));
+  const fixture = join(fixtureDir, "env-validator.ts");
   let failures = 0;
   try {
     writeFileSync(
@@ -155,11 +158,7 @@ function selftest() {
       process.stderr.write(`${SCRIPT_NAME} --selftest: FAIL, the fixture declares 2 names and the scan saw ${r.declared.length}.\n`);
     }
   } finally {
-    try {
-      unlinkSync(fixture);
-    } catch {
-      // already removed
-    }
+    rmSync(fixtureDir, { recursive: true, force: true });
   }
   if (failures === 0) {
     process.stdout.write(`${SCRIPT_NAME} --selftest: PASS, the guard rejects an unread name and accepts a read one.\n`);

@@ -13,7 +13,7 @@
  *  - data: scheme → returns "/"
  *  - Empty / null / undefined → returns "/"
  *  - Relative path with backslash ("//\\evil.com") style → returns "/"
- *  - No NEXTAUTH_URL configured → absolute URLs rejected, relative accepted
+ *  - No AUTH_URL configured → absolute URLs rejected, relative accepted
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -87,43 +87,43 @@ describe("validateRedirectTo, forbidden schemes", () => {
   });
 });
 
-describe("validateRedirectTo, same-origin absolute URL (NEXTAUTH_URL set)", () => {
+describe("validateRedirectTo, same-origin absolute URL (AUTH_URL set)", () => {
   it("accepts a same-origin URL and returns only the path", () => {
-    vi.stubEnv("NEXTAUTH_URL", "https://dashboard.example.com");
+    vi.stubEnv("AUTH_URL", "https://dashboard.example.com");
     expect(validateRedirectTo("https://dashboard.example.com/settings")).toBe("/settings");
   });
 
   it("accepts a same-origin URL with a query string, returns path+query", () => {
-    vi.stubEnv("NEXTAUTH_URL", "https://dashboard.example.com");
+    vi.stubEnv("AUTH_URL", "https://dashboard.example.com");
     expect(validateRedirectTo("https://dashboard.example.com/page?x=1")).toBe("/page?x=1");
   });
 
   it("accepts a same-origin URL with a fragment, returns path+hash", () => {
-    vi.stubEnv("NEXTAUTH_URL", "https://dashboard.example.com");
+    vi.stubEnv("AUTH_URL", "https://dashboard.example.com");
     expect(validateRedirectTo("https://dashboard.example.com/page#section")).toBe("/page#section");
   });
 });
 
-describe("validateRedirectTo, cross-origin rejection (NEXTAUTH_URL set)", () => {
+describe("validateRedirectTo, cross-origin rejection (AUTH_URL set)", () => {
   it("rejects a different-domain absolute URL", () => {
-    vi.stubEnv("NEXTAUTH_URL", "https://dashboard.example.com");
+    vi.stubEnv("AUTH_URL", "https://dashboard.example.com");
     expect(validateRedirectTo("https://evil.com/steal")).toBe("/");
   });
 
   it("rejects a different subdomain", () => {
-    vi.stubEnv("NEXTAUTH_URL", "https://dashboard.example.com");
+    vi.stubEnv("AUTH_URL", "https://dashboard.example.com");
     expect(validateRedirectTo("https://evil.dashboard.example.com/")).toBe("/");
   });
 
   it("rejects same-host but different scheme (http vs https)", () => {
-    vi.stubEnv("NEXTAUTH_URL", "https://dashboard.example.com");
+    vi.stubEnv("AUTH_URL", "https://dashboard.example.com");
     expect(validateRedirectTo("http://dashboard.example.com/page")).toBe("/");
   });
 });
 
-describe("validateRedirectTo, no NEXTAUTH_URL configured", () => {
+describe("validateRedirectTo, no AUTH_URL configured", () => {
   beforeEach(() => {
-    vi.stubEnv("NEXTAUTH_URL", "");
+    vi.stubEnv("AUTH_URL", "");
   });
 
   it("still accepts relative paths", () => {

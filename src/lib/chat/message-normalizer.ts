@@ -353,7 +353,7 @@ export function protoToUiMessage(msg: ConversationMessage): UIMessage {
   for (const protoPart of msg.parts) {
     const cas = protoPart.part;
     if (!cas || cas.case === undefined) {
-      // Empty or unrecognised oneof, preserve as text fallback.
+      // Empty or unrecognized oneof, preserve as text fallback.
       parts.push({ type: 'text', text: '[unknown proto part]' });
       continue;
     }

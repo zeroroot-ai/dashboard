@@ -37,6 +37,8 @@
 
 import 'server-only';
 
+import { randomUUID } from 'node:crypto';
+
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { ConnectError, Code } from '@connectrpc/connect';
@@ -51,6 +53,7 @@ import {
   PrincipalKind,
 } from '@/src/gen/gibson/agentidentity/v1/agent_identity_pb';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
+import { GrantsService } from '@/src/gen/gibson/tenant/v1/grants_pb';
 
 // ---------------------------------------------------------------------------
 // Request validation
@@ -87,7 +90,7 @@ const RegisterAgentSchema = z.object({
    * the original /api/agents/register caller (RegisterAgentForm).
    * Spec: component-bootstrap-e2e Requirement 5.
    */
-  kind: z.enum(['agent', 'tool']).optional().default('agent'),
+  kind: z.enum(['agent', 'tool', 'plugin']).optional().default('agent'),
   /**
    * Optional per-action FGA grants applied at creation time. Each
    * entry is forwarded to AgentIdentityService.CreateAgentIdentity as
@@ -97,6 +100,17 @@ const RegisterAgentSchema = z.object({
    * Spec: component-bootstrap-e2e Requirement 8.
    */
   componentGrants: z.array(ComponentGrantSchema).max(64).optional().default([]),
+  /**
+   * Names of tenant secrets the component may resolve (ADR-0097,
+   * dashboard#174). A tenant admin assigns secret access here; the
+   * component never declares it (gibson#554). Only a plugin can resolve a
+   * secret, so the list is refused for an agent or a tool. An empty list is
+   * valid: the component then resolves nothing.
+   */
+  secretGrants: z.array(z.string().min(1).max(1024)).max(64).optional().default([]),
+}).refine((b) => b.kind === 'plugin' || b.secretGrants.length === 0, {
+  message: 'only a plugin can be granted secret access; an agent or a tool reaches a secret through a plugin',
+  path: ['secretGrants'],
 });
 
 export type RegisterAgentRequestBody = z.infer<typeof RegisterAgentSchema>;
@@ -215,6 +229,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     bootstrapToken: string;
     gibsonUrl: string;
   };
+  let principalId: string;
   try {
     const client = userClient(AgentIdentityService);
     const resp = await client.createAgentIdentity({
@@ -225,13 +240,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         componentRef: g.componentRef,
         relation: g.relation,
       })),
+      idempotencyKey: randomUUID(),
     });
     daemonResp = {
       bootstrapToken: resp.bootstrapToken,
       gibsonUrl: resp.gibsonUrl,
     };
+    principalId = resp.principalId;
   } catch (err) {
     return daemonErrorResponse(err);
+  }
+
+  // Step 4b, write the secret grants BEFORE the bootstrap token leaves the
+  // server. The component cannot start without the token, so it never
+  // starts before its access exists. When the grant fails the token is not
+  // returned, and the new identity holds no secret access (fail closed).
+  if (parsedBody.secretGrants.length > 0) {
+    try {
+      await userClient(GrantsService).writeSecretGrants({
+        targetPrincipalId: principalId,
+        secretNames: parsedBody.secretGrants,
+      });
+    } catch (err) {
+      return secretGrantErrorResponse(err);
+    }
   }
 
   // Step 5, return credentials to the browser.
@@ -249,13 +281,51 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
  *
  * Spec: component-bootstrap-e2e Requirement 5.
  */
-function principalKindFromString(kind: 'agent' | 'tool'): PrincipalKind {
+function principalKindFromString(kind: 'agent' | 'tool' | 'plugin'): PrincipalKind {
   switch (kind) {
     case 'agent':
       return PrincipalKind.AGENT;
     case 'tool':
       return PrincipalKind.TOOL;
+    case 'plugin':
+      return PrincipalKind.PLUGIN;
   }
+}
+
+/**
+ * The answer when the secret grant of a new component fails. The identity
+ * exists but holds no secret access, and its token is not returned. A
+ * secret the tenant does not own is a 400 that names the cause.
+ */
+function secretGrantErrorResponse(err: unknown): NextResponse {
+  const code = err instanceof ConnectError ? err.code : undefined;
+  console.error('[agents/register] secret grant failed:', code ?? (err as Error)?.name);
+  if (code === Code.NotFound || code === Code.InvalidArgument) {
+    return NextResponse.json(
+      {
+        error: {
+          code: 'SECRET_GRANT_REFUSED',
+          message: 'A selected secret is not a secret of this workspace. Nothing was granted.',
+        },
+      },
+      { status: 400 },
+    );
+  }
+  if (code === Code.PermissionDenied) {
+    return NextResponse.json(
+      { error: { code: 'FORBIDDEN', message: 'Permission denied' } },
+      { status: 403 },
+    );
+  }
+  return NextResponse.json(
+    {
+      error: {
+        code: 'SECRET_GRANT_FAILED',
+        message: 'The secret access could not be written. The component was not handed a credential.',
+      },
+    },
+    { status: 502 },
+  );
 }
 
 // ---------------------------------------------------------------------------

@@ -5,11 +5,12 @@
 /**
  * Build guard: no committed config may *enable* a test/debug escape hatch.
  *
- * The dashboard ships three sensitive routes that are fail-closed behind a
+ * The dashboard ships one sensitive route that is fail-closed behind a
  * single explicit env flag (404 unless the flag is set):
- *   - /api/test/fga-revoke        TEST_FIXTURES_ENABLED=true   (revokes authz)
- *   - /api/test/inject-fault      TEST_FIXTURES_ENABLED=true
  *   - /api/debug/recent-errors    DASHBOARD_DEBUG=1            (error ring buffer)
+ *
+ * TEST_FIXTURES_ENABLED gated two fault-injection routes under /api/test.
+ * Nothing used them, so the routes and the flag are gone (D78).
  *
  * TEST_AUTH_BYPASS was a fourth entry here. It gated a module that forged an
  * Auth.js session JWE, and it is gone: the module is deleted and the flag is
@@ -38,7 +39,6 @@ const ROOT = resolve(new URL("..", import.meta.url).pathname);
 
 // flag -> regex matching an *enabling* assignment
 const DANGEROUS = [
-  { flag: "TEST_FIXTURES_ENABLED", enable: /TEST_FIXTURES_ENABLED\s*[:=]\s*["']?true["']?/i },
   { flag: "DASHBOARD_DEBUG", enable: /\bDASHBOARD_DEBUG\s*[:=]\s*["']?1["']?/ },
   { flag: "NEXT_PUBLIC_DASHBOARD_DEBUG", enable: /NEXT_PUBLIC_DASHBOARD_DEBUG\s*[:=]\s*["']?1["']?/ },
 ];

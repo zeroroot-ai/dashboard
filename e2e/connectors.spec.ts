@@ -62,7 +62,7 @@ test.describe("connectors, integration (live platform)", () => {
   }) => {
     test.setTimeout(180_000);
     await signIn(page, context, requireAdmin());
-    await page.goto(`${BASE_URL}/dashboard/connectors`);
+    await page.goto(`${BASE_URL}/dashboard/integrations?tab=connectors`);
     await expect(page.getByRole("heading", { name: /^catalog$/i })).toBeVisible({
       timeout: 20_000,
     });
@@ -90,7 +90,7 @@ test.describe("connectors, integration (live platform)", () => {
   }) => {
     test.setTimeout(180_000);
     await signIn(page, context, requireMember());
-    await page.goto(`${BASE_URL}/dashboard/connectors`);
+    await page.goto(`${BASE_URL}/dashboard/integrations?tab=connectors`);
     await expect(page.getByRole("heading", { name: /^catalog$/i })).toBeVisible({
       timeout: 20_000,
     });

@@ -85,7 +85,7 @@ test.describe("Authz gating, Viewer visibility", () => {
 
   for (const [type, path] of [
     ["agent", "/dashboard/agents"],
-    ["plugin", "/dashboard/plugins"],
+    ["plugin", "/dashboard/integrations?tab=plugins"],
     ["tool", "/dashboard/tools"],
   ] as const) {
     test(`the Deploy ${type} CTA renders disabled with a tooltip for a Viewer`, async ({

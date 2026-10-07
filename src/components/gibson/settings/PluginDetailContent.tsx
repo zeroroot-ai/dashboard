@@ -7,7 +7,7 @@
  * PluginDetailContent
  *
  * Client component rendering the full plugin install detail page:
- *   - Manifest summary (name, version, runtime mode, methods, policy)
+ *   - Install summary (name, version, methods)
  *   - Live status badge (SERVING / UNREACHABLE / DEGRADED / PENDING)
  *   - Secret bindings table with per-row Edit and Revoke actions
  *   - Recent invocations widget (TODO: wire when invocation data source is available)
@@ -323,26 +323,18 @@ export function PluginDetailContent({ install }: PluginDetailContentProps) {
         <StatusBadge status={install.status} />
       </div>
 
-      {/* Manifest summary */}
+      {/* Install summary */}
       <Card className="border-border/60 bg-card/60">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">
             <ServerIcon className="size-4" aria-hidden="true" />
-            Manifest summary
+            Install summary
           </CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-3 pb-4 text-xs sm:grid-cols-3">
           <div>
             <p className="text-muted-foreground mb-0.5 font-medium">Version</p>
             <p className="font-mono">{install.version || "-"}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground mb-0.5 font-medium">Runtime</p>
-            <p className="font-mono">{install.runtimeMode || "process"}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground mb-0.5 font-medium">Setec</p>
-            <p>{install.setecRequired ? "Required" : "Not required"}</p>
           </div>
           <div>
             <p className="text-muted-foreground mb-0.5 font-medium">Registered</p>

@@ -56,6 +56,7 @@ import {
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
 import { EmptyState } from "@/components/gibson/shared/EmptyState";
 import { InviteUserDialog } from "./InviteUserDialog";
+import { RemovedUserIdentitiesDialog } from "./RemovedUserIdentitiesDialog";
 import { TeamMembershipChips } from "./TeamMembershipChips";
 import { useOrgGraph } from "@/src/hooks/use-org-graph";
 import { revokeMemberAction, resendInvitationAction, leaveTenantAction } from "@/app/actions/crd/member";
@@ -226,6 +227,11 @@ export function UsersContent() {
   const [inviteOpen, setInviteOpen] = React.useState(false);
   const [memberToRemove, setMemberToRemove] = React.useState<MemberRow | null>(null);
   const [removing, setRemoving] = React.useState(false);
+  const [handover, setHandover] = React.useState<{
+    email: string;
+    principalIds: string[];
+    newOwnerUserId: string;
+  } | null>(null);
   const [memberToCancel, setMemberToCancel] = React.useState<MemberRow | null>(null);
   const [cancelling, setCancelling] = React.useState(false);
   const [leaveOpen, setLeaveOpen] = React.useState(false);
@@ -270,6 +276,13 @@ export function UsersContent() {
       });
       if (!res.ok) throw new Error(res.error);
       toast.success(`${memberToRemove.email} has been removed.`);
+      if (res.data.reassignedPrincipalIds.length > 0) {
+        setHandover({
+          email: memberToRemove.email,
+          principalIds: res.data.reassignedPrincipalIds,
+          newOwnerUserId: res.data.newOwnerUserId,
+        });
+      }
       await refetch();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to remove user.");
@@ -511,7 +524,8 @@ export function UsersContent() {
             <AlertDialogDescription>
               This will remove{" "}
               <strong>{memberToRemove?.email}</strong> from this workspace.
-              They will lose access immediately.
+              They will lose access immediately. Their agents, tools and
+              plugins move to you.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -528,6 +542,15 @@ export function UsersContent() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* The identities of the removed user (gibson#568, dashboard#178) */}
+      <RemovedUserIdentitiesDialog
+        removedEmail={handover?.email ?? null}
+        principalIds={handover?.principalIds ?? []}
+        currentOwnerUserId={handover?.newOwnerUserId ?? ""}
+        members={items}
+        onClose={() => setHandover(null)}
+      />
 
       {/* Cancel invitation confirmation dialog */}
       <AlertDialog

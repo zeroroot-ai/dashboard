@@ -1,22 +1,13 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright 2026 Zero Root AI
 
-import { type Metadata } from "next";
-import { generateMeta } from "@/lib/utils";
+import { redirect } from "next/navigation";
 
-import { ConnectorsContent } from "@/components/gibson/settings/ConnectorsContent";
-import { docsUrl } from "@/src/lib/docs-url";
-
-export async function generateMetadata(): Promise<Metadata> {
-  return generateMeta({
-    title: "Connectors",
-    description: "Enable third-party connectors and give your agents their tools.",
-    canonical: "/connectors",
-  });
-}
-
-export default function ConnectorsPage() {
-  // Computed server-side: docsUrl reads the chart-provided DOCS_URL, which a
-  // client component cannot (dashboard#1036).
-  return <ConnectorsContent docsHref={docsUrl("connectors")} />;
+/**
+ * /dashboard/connectors is the Connectors tab of the one Integrations page
+ * (dashboard#86). This route redirects there, so links and bookmarks keep
+ * working.
+ */
+export default function ConnectorsRedirect(): never {
+  redirect("/dashboard/integrations?tab=connectors");
 }

@@ -22,6 +22,8 @@ const mocks = vi.hoisted(() => ({
   removeMember: vi.fn(async (_req: Record<string, unknown>) => ({})),
   leaveTenant: vi.fn(async (_req: Record<string, unknown>) => ({})),
   cancelInvitation: vi.fn(async (_req: Record<string, unknown>) => ({})),
+  reassignAgentIdentity: vi.fn(async (_req: Record<string, unknown>) => ({})),
+  revokeAgentIdentity: vi.fn(async (_req: Record<string, unknown>) => ({})),
   requireCrdSession: vi.fn(),
 }));
 
@@ -34,6 +36,8 @@ vi.mock("@/src/lib/gibson-client", () => ({
     removeMember: mocks.removeMember,
     leaveTenant: mocks.leaveTenant,
     cancelInvitation: mocks.cancelInvitation,
+    reassignAgentIdentity: mocks.reassignAgentIdentity,
+    revokeAgentIdentity: mocks.revokeAgentIdentity,
   }),
 }));
 
@@ -48,7 +52,12 @@ vi.mock("@/src/lib/auth/active-tenant", async (importOriginal) => {
 
 vi.mock("@/src/lib/audit/crd", () => ({ emitCrdAuditFromGate: vi.fn() }));
 
-import { revokeMemberAction, leaveTenantAction } from "../member";
+import {
+  revokeMemberAction,
+  leaveTenantAction,
+  reassignAgentIdentityAction,
+  retireAgentIdentityAction,
+} from "../member";
 
 function member(over: { userId?: string; email?: string; role: string; status?: string }) {
   return {
@@ -69,6 +78,10 @@ beforeEach(() => {
   mocks.leaveTenant.mockResolvedValue({});
   mocks.cancelInvitation.mockReset();
   mocks.cancelInvitation.mockResolvedValue({});
+  mocks.reassignAgentIdentity.mockReset();
+  mocks.reassignAgentIdentity.mockResolvedValue({});
+  mocks.revokeAgentIdentity.mockReset();
+  mocks.revokeAgentIdentity.mockResolvedValue({});
   // Authz gate: allow.
   mocks.requireCrdSession.mockResolvedValue({
     ok: true,
@@ -151,5 +164,50 @@ describe("leaveTenantAction", () => {
     const r = await leaveTenantAction();
     expect(r.ok).toBe(false);
     expect(mocks.leaveTenant).not.toHaveBeenCalled();
+  });
+});
+
+describe("the identities of a removed user (gibson#568, dashboard#178)", () => {
+  it("returns the identities that RemoveMember moved to the caller", async () => {
+    mocks.listMembers.mockResolvedValue({ ok: true, data: [member({ userId: "a1", role: "admin" })] });
+    mocks.removeMember.mockResolvedValue({
+      reassignedPrincipalIds: ["agent_principal:sa-1"],
+      newOwnerUserId: "caller",
+    });
+    const r = await revokeMemberAction({ userId: "a1", email: "a1@example.com", status: "active" });
+    expect(r.ok).toBe(true);
+    expect((r as { data: { reassignedPrincipalIds: string[] } }).data.reassignedPrincipalIds).toEqual([
+      "agent_principal:sa-1",
+    ]);
+    expect((r as { data: { newOwnerUserId: string } }).data.newOwnerUserId).toBe("caller");
+  });
+
+  it("hands an identity to another user", async () => {
+    const r = await reassignAgentIdentityAction({ principalId: "agent_principal:sa-1", newOwnerUserId: "u2" });
+    expect(r.ok).toBe(true);
+    expect(mocks.reassignAgentIdentity).toHaveBeenCalledWith({
+      principalId: "agent_principal:sa-1",
+      newOwnerUserId: "u2",
+    });
+  });
+
+  it("refuses a value that is not an identity", async () => {
+    const r = await reassignAgentIdentityAction({ principalId: "tenant:acme", newOwnerUserId: "u2" });
+    expect(r.ok).toBe(false);
+    expect((r as { code: string }).code).toBe("BAD_INPUT");
+    expect(mocks.reassignAgentIdentity).not.toHaveBeenCalled();
+  });
+
+  it("revokes an identity", async () => {
+    const r = await retireAgentIdentityAction({ principalId: "tool_principal:t-1" });
+    expect(r.ok).toBe(true);
+    expect(mocks.revokeAgentIdentity).toHaveBeenCalledWith({ principalId: "tool_principal:t-1" });
+  });
+
+  it("maps a daemon denial to FORBIDDEN", async () => {
+    mocks.reassignAgentIdentity.mockRejectedValueOnce(new ConnectError("denied", Code.PermissionDenied));
+    const r = await reassignAgentIdentityAction({ principalId: "agent_principal:sa-1", newOwnerUserId: "u2" });
+    expect(r.ok).toBe(false);
+    expect((r as { code: string }).code).toBe("FORBIDDEN");
   });
 });

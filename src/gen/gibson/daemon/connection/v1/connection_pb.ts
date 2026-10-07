@@ -27,7 +27,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/daemon/connection/v1/connection.proto.
  */
 export const file_gibson_daemon_connection_v1_connection: GenFile = /*@__PURE__*/
-  fileDesc("CixnaWJzb24vZGFlbW9uL2Nvbm5lY3Rpb24vdjEvY29ubmVjdGlvbi5wcm90bxIbZ2lic29uLmRhZW1vbi5jb25uZWN0aW9uLnYxIoYBChlDb21wbGV0ZVNpZ251cFN0ZXBSZXF1ZXN0Eh4KCnN0ZXBfdG9rZW4YASABKAlCCrpIB3IFEAEYgAgSSQoHb3V0Y29tZRgCIAEoDjIuLmdpYnNvbi5kYWVtb24uY29ubmVjdGlvbi52MS5TaWdudXBTdGVwT3V0Y29tZUIIukgFggECEAEiHAoaQ29tcGxldGVTaWdudXBTdGVwUmVzcG9uc2UiiAEKGlNldFRlbmFudEFjdGl2YXRpb25SZXF1ZXN0Eh0KCXRlbmFudF9pZBgBIAEoCUIKukgHcgUQARiACBJLCgVzdGF0ZRgCIAEoDjIyLmdpYnNvbi5kYWVtb24uY29ubmVjdGlvbi52MS5UZW5hbnRBY3RpdmF0aW9uU3RhdGVCCLpIBYIBAhABIi4KG1NldFRlbmFudEFjdGl2YXRpb25SZXNwb25zZRIPCgdjaGFuZ2VkGAEgASgIIhgKFkxpc3RUZW5hbnRVc2FnZVJlcXVlc3QiSAoLVGVuYW50VXNhZ2USEQoJdGVuYW50X2lkGAEgASgJEg4KBnRva2VucxgCIAEoAxIWCg5jb3N0X3VzZF9jZW50cxgDIAEoAyKIAQoXTGlzdFRlbmFudFVzYWdlUmVzcG9uc2USOQoHdGVuYW50cxgBIAMoCzIoLmdpYnNvbi5kYWVtb24uY29ubmVjdGlvbi52MS5UZW5hbnRVc2FnZRIZChFwZXJpb2Rfc3RhcnRfdW5peBgCIAEoAxIXCg9wZXJpb2RfZW5kX3VuaXgYAyABKAMqdgoRU2lnbnVwU3RlcE91dGNvbWUSIwofU0lHTlVQX1NURVBfT1VUQ09NRV9VTlNQRUNJRklFRBAAEhwKGFNJR05VUF9TVEVQX09VVENPTUVfRE9ORRABEh4KGlNJR05VUF9TVEVQX09VVENPTUVfRkFJTEVEEAIqiwEKFVRlbmFudEFjdGl2YXRpb25TdGF0ZRInCiNURU5BTlRfQUNUSVZBVElPTl9TVEFURV9VTlNQRUNJRklFRBAAEiIKHlRFTkFOVF9BQ1RJVkFUSU9OX1NUQVRFX0FDVElWRRABEiUKIVRFTkFOVF9BQ1RJVkFUSU9OX1NUQVRFX1NVU1BFTkRFRBACMtUEChZDb25uZWN0aW9uUG9pbnRTZXJ2aWNlEr4BChJDb21wbGV0ZVNpZ251cFN0ZXASNi5naWJzb24uZGFlbW9uLmNvbm5lY3Rpb24udjEuQ29tcGxldGVTaWdudXBTdGVwUmVxdWVzdBo3LmdpYnNvbi5kYWVtb24uY29ubmVjdGlvbi52MS5Db21wbGV0ZVNpZ251cFN0ZXBSZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAhLBAQoTU2V0VGVuYW50QWN0aXZhdGlvbhI3LmdpYnNvbi5kYWVtb24uY29ubmVjdGlvbi52MS5TZXRUZW5hbnRBY3RpdmF0aW9uUmVxdWVzdBo4LmdpYnNvbi5kYWVtb24uY29ubmVjdGlvbi52MS5TZXRUZW5hbnRBY3RpdmF0aW9uUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAIStQEKD0xpc3RUZW5hbnRVc2FnZRIzLmdpYnNvbi5kYWVtb24uY29ubmVjdGlvbi52MS5MaXN0VGVuYW50VXNhZ2VSZXF1ZXN0GjQuZ2lic29uLmRhZW1vbi5jb25uZWN0aW9uLnYxLkxpc3RUZW5hbnRVc2FnZVJlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCACQmNaYWdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi9kYWVtb24vY29ubmVjdGlvbi92MTtjb25uZWN0aW9udjFiBnByb3RvMw", [file_buf_validate_validate, file_gibson_auth_v1_options]);
+  fileDesc("CixnaWJzb24vZGFlbW9uL2Nvbm5lY3Rpb24vdjEvY29ubmVjdGlvbi5wcm90bxIbZ2lic29uLmRhZW1vbi5jb25uZWN0aW9uLnYxIoYBChlDb21wbGV0ZVNpZ251cFN0ZXBSZXF1ZXN0Eh4KCnN0ZXBfdG9rZW4YASABKAlCCrpIB3IFEAEYgAgSSQoHb3V0Y29tZRgCIAEoDjIuLmdpYnNvbi5kYWVtb24uY29ubmVjdGlvbi52MS5TaWdudXBTdGVwT3V0Y29tZUIIukgFggECEAEiHAoaQ29tcGxldGVTaWdudXBTdGVwUmVzcG9uc2UiOwoZRGVzY3JpYmVTaWdudXBTdGVwUmVxdWVzdBIeCgpzdGVwX3Rva2VuGAEgASgJQgq6SAdyBRABGIAIIlUKGkRlc2NyaWJlU2lnbnVwU3RlcFJlc3BvbnNlEhEKCXRlbmFudF9pZBgBIAEoCRIPCgdwbGFuX2lkGAIgASgJEhMKC293bmVyX2VtYWlsGAMgASgJIogBChpTZXRUZW5hbnRBY3RpdmF0aW9uUmVxdWVzdBIdCgl0ZW5hbnRfaWQYASABKAlCCrpIB3IFEAEYgAgSSwoFc3RhdGUYAiABKA4yMi5naWJzb24uZGFlbW9uLmNvbm5lY3Rpb24udjEuVGVuYW50QWN0aXZhdGlvblN0YXRlQgi6SAWCAQIQASIuChtTZXRUZW5hbnRBY3RpdmF0aW9uUmVzcG9uc2USDwoHY2hhbmdlZBgBIAEoCCIYChZMaXN0VGVuYW50VXNhZ2VSZXF1ZXN0IkgKC1RlbmFudFVzYWdlEhEKCXRlbmFudF9pZBgBIAEoCRIOCgZ0b2tlbnMYAiABKAMSFgoOY29zdF91c2RfY2VudHMYAyABKAMiiAEKF0xpc3RUZW5hbnRVc2FnZVJlc3BvbnNlEjkKB3RlbmFudHMYASADKAsyKC5naWJzb24uZGFlbW9uLmNvbm5lY3Rpb24udjEuVGVuYW50VXNhZ2USGQoRcGVyaW9kX3N0YXJ0X3VuaXgYAiABKAMSFwoPcGVyaW9kX2VuZF91bml4GAMgASgDKnYKEVNpZ251cFN0ZXBPdXRjb21lEiMKH1NJR05VUF9TVEVQX09VVENPTUVfVU5TUEVDSUZJRUQQABIcChhTSUdOVVBfU1RFUF9PVVRDT01FX0RPTkUQARIeChpTSUdOVVBfU1RFUF9PVVRDT01FX0ZBSUxFRBACKosBChVUZW5hbnRBY3RpdmF0aW9uU3RhdGUSJwojVEVOQU5UX0FDVElWQVRJT05fU1RBVEVfVU5TUEVDSUZJRUQQABIiCh5URU5BTlRfQUNUSVZBVElPTl9TVEFURV9BQ1RJVkUQARIlCiFURU5BTlRfQUNUSVZBVElPTl9TVEFURV9TVVNQRU5ERUQQAjKWBgoWQ29ubmVjdGlvblBvaW50U2VydmljZRK+AQoSQ29tcGxldGVTaWdudXBTdGVwEjYuZ2lic29uLmRhZW1vbi5jb25uZWN0aW9uLnYxLkNvbXBsZXRlU2lnbnVwU3RlcFJlcXVlc3QaNy5naWJzb24uZGFlbW9uLmNvbm5lY3Rpb24udjEuQ29tcGxldGVTaWdudXBTdGVwUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAISvgEKEkRlc2NyaWJlU2lnbnVwU3RlcBI2LmdpYnNvbi5kYWVtb24uY29ubmVjdGlvbi52MS5EZXNjcmliZVNpZ251cFN0ZXBSZXF1ZXN0GjcuZ2lic29uLmRhZW1vbi5jb25uZWN0aW9uLnYxLkRlc2NyaWJlU2lnbnVwU3RlcFJlc3BvbnNlIjeKtRgzChFwbGF0Zm9ybV9vcGVyYXRvchINc3lzdGVtX3RlbmFudBoNc3lzdGVtX3RlbmFudCACEsEBChNTZXRUZW5hbnRBY3RpdmF0aW9uEjcuZ2lic29uLmRhZW1vbi5jb25uZWN0aW9uLnYxLlNldFRlbmFudEFjdGl2YXRpb25SZXF1ZXN0GjguZ2lic29uLmRhZW1vbi5jb25uZWN0aW9uLnYxLlNldFRlbmFudEFjdGl2YXRpb25SZXNwb25zZSI3irUYMwoRcGxhdGZvcm1fb3BlcmF0b3ISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAhK1AQoPTGlzdFRlbmFudFVzYWdlEjMuZ2lic29uLmRhZW1vbi5jb25uZWN0aW9uLnYxLkxpc3RUZW5hbnRVc2FnZVJlcXVlc3QaNC5naWJzb24uZGFlbW9uLmNvbm5lY3Rpb24udjEuTGlzdFRlbmFudFVzYWdlUmVzcG9uc2UiN4q1GDMKEXBsYXRmb3JtX29wZXJhdG9yEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAJCY1phZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL2RhZW1vbi9jb25uZWN0aW9uL3YxO2Nvbm5lY3Rpb252MWIGcHJvdG8z", [file_buf_validate_validate, file_gibson_auth_v1_options]);
 
 /**
  * CompleteSignupStepRequest carries the opaque token and the outcome.
@@ -73,6 +73,63 @@ export const CompleteSignupStepResponseSchema: GenMessage<CompleteSignupStepResp
   messageDesc(file_gibson_daemon_connection_v1_connection, 1);
 
 /**
+ * DescribeSignupStepRequest names a signup by its step token.
+ *
+ * @generated from message gibson.daemon.connection.v1.DescribeSignupStepRequest
+ */
+export type DescribeSignupStepRequest = Message<"gibson.daemon.connection.v1.DescribeSignupStepRequest"> & {
+  /**
+   * step_token is the token that SignupResponse.step_token returned.
+   *
+   * @generated from field: string step_token = 1;
+   */
+  stepToken: string;
+};
+
+/**
+ * Describes the message gibson.daemon.connection.v1.DescribeSignupStepRequest.
+ * Use `create(DescribeSignupStepRequestSchema)` to create a new message.
+ */
+export const DescribeSignupStepRequestSchema: GenMessage<DescribeSignupStepRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_connection_v1_connection, 2);
+
+/**
+ * DescribeSignupStepResponse holds the facts of the signup that the step
+ * needs.
+ *
+ * @generated from message gibson.daemon.connection.v1.DescribeSignupStepResponse
+ */
+export type DescribeSignupStepResponse = Message<"gibson.daemon.connection.v1.DescribeSignupStepResponse"> & {
+  /**
+   * tenant_id is the slug of the new tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * plan_id is the plan that the owner chose at signup.
+   *
+   * @generated from field: string plan_id = 2;
+   */
+  planId: string;
+
+  /**
+   * owner_email is the address of the owner of the new tenant.
+   *
+   * @generated from field: string owner_email = 3;
+   */
+  ownerEmail: string;
+};
+
+/**
+ * Describes the message gibson.daemon.connection.v1.DescribeSignupStepResponse.
+ * Use `create(DescribeSignupStepResponseSchema)` to create a new message.
+ */
+export const DescribeSignupStepResponseSchema: GenMessage<DescribeSignupStepResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_daemon_connection_v1_connection, 3);
+
+/**
  * SetTenantActivationRequest names a tenant and its new state.
  *
  * @generated from message gibson.daemon.connection.v1.SetTenantActivationRequest
@@ -98,7 +155,7 @@ export type SetTenantActivationRequest = Message<"gibson.daemon.connection.v1.Se
  * Use `create(SetTenantActivationRequestSchema)` to create a new message.
  */
 export const SetTenantActivationRequestSchema: GenMessage<SetTenantActivationRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_connection_v1_connection, 2);
+  messageDesc(file_gibson_daemon_connection_v1_connection, 4);
 
 /**
  * SetTenantActivationResponse reports whether the state changed.
@@ -119,7 +176,7 @@ export type SetTenantActivationResponse = Message<"gibson.daemon.connection.v1.S
  * Use `create(SetTenantActivationResponseSchema)` to create a new message.
  */
 export const SetTenantActivationResponseSchema: GenMessage<SetTenantActivationResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_connection_v1_connection, 3);
+  messageDesc(file_gibson_daemon_connection_v1_connection, 5);
 
 /**
  * ListTenantUsageRequest carries no fields.
@@ -134,7 +191,7 @@ export type ListTenantUsageRequest = Message<"gibson.daemon.connection.v1.ListTe
  * Use `create(ListTenantUsageRequestSchema)` to create a new message.
  */
 export const ListTenantUsageRequestSchema: GenMessage<ListTenantUsageRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_connection_v1_connection, 4);
+  messageDesc(file_gibson_daemon_connection_v1_connection, 6);
 
 /**
  * TenantUsage is the usage of one tenant in the current budget period.
@@ -163,7 +220,7 @@ export type TenantUsage = Message<"gibson.daemon.connection.v1.TenantUsage"> & {
  * Use `create(TenantUsageSchema)` to create a new message.
  */
 export const TenantUsageSchema: GenMessage<TenantUsage> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_connection_v1_connection, 5);
+  messageDesc(file_gibson_daemon_connection_v1_connection, 7);
 
 /**
  * ListTenantUsageResponse carries one row for each tenant.
@@ -194,7 +251,7 @@ export type ListTenantUsageResponse = Message<"gibson.daemon.connection.v1.ListT
  * Use `create(ListTenantUsageResponseSchema)` to create a new message.
  */
 export const ListTenantUsageResponseSchema: GenMessage<ListTenantUsageResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_daemon_connection_v1_connection, 6);
+  messageDesc(file_gibson_daemon_connection_v1_connection, 8);
 
 /**
  * SignupStepOutcome is the result of the external signup step.
@@ -285,6 +342,23 @@ export const ConnectionPointService: GenService<{
     methodKind: "unary";
     input: typeof CompleteSignupStepRequestSchema;
     output: typeof CompleteSignupStepResponseSchema;
+  },
+  /**
+   * DescribeSignupStep returns the tenant, the plan and the owner address of
+   * the signup that a step token names (gibson#943). The component that runs
+   * the step reads them here, never from the browser, because the browser
+   * carries the step link and could change a value in it. Only the configured
+   * step completer identity may call it, as for CompleteSignupStep.
+   *
+   * Errors: NotFound (unknown or expired token), PermissionDenied (the caller
+   * is not the configured SPIFFE identity), InvalidArgument.
+   *
+   * @generated from rpc gibson.daemon.connection.v1.ConnectionPointService.DescribeSignupStep
+   */
+  describeSignupStep: {
+    methodKind: "unary";
+    input: typeof DescribeSignupStepRequestSchema;
+    output: typeof DescribeSignupStepResponseSchema;
   },
   /**
    * SetTenantActivation tells the platform that a tenant is active or
