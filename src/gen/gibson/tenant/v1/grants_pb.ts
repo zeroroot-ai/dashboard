@@ -21,7 +21,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/grants.proto.
  */
 export const file_gibson_tenant_v1_grants: GenFile = /*@__PURE__*/
-  fileDesc("Ch1naWJzb24vdGVuYW50L3YxL2dyYW50cy5wcm90bxIQZ2lic29uLnRlbmFudC52MSLIAQoXTGlzdEFjdGl2ZUdyYW50c1JlcXVlc3QSTgoWcmVjaXBpZW50X2NsYXNzX2ZpbHRlchgBIAEoDjIkLmdpYnNvbi5jYXBhYmlsaXR5LnYxLlJlY2lwaWVudENsYXNzQgi6SAWCAQIQARIcCgpycGNfZmlsdGVyGAIgASgJQgi6SAVyAxiAIBIgChhpbmNsdWRlX25lYXJfZXhwaXJ5X29ubHkYAyABKAgSDQoFbGltaXQYBCABKAUSDgoGb2Zmc2V0GAUgASgFImQKGExpc3RBY3RpdmVHcmFudHNSZXNwb25zZRI5CgZncmFudHMYASADKAsyKS5naWJzb24uY2FwYWJpbGl0eS52MS5DYXBhYmlsaXR5R3JhbnRJbmZvEg0KBXRvdGFsGAIgASgFIi4KCkdyYW50VHVwbGUSDgoGb2JqZWN0GAEgASgJEhAKCHJlbGF0aW9uGAIgASgJIm4KF1dyaXRlQWdlbnRHcmFudHNSZXF1ZXN0EiUKE3RhcmdldF9wcmluY2lwYWxfaWQYASABKAlCCLpIBXIDGIAIEiwKBmdyYW50cxgCIAMoCzIcLmdpYnNvbi50ZW5hbnQudjEuR3JhbnRUdXBsZSJEChhXcml0ZUFnZW50R3JhbnRzUmVzcG9uc2USDwoHd3JpdHRlbhgBIAEoBRIXCg9hbHJlYWR5X3ByZXNlbnQYAiABKAUibwoYRGVsZXRlQWdlbnRHcmFudHNSZXF1ZXN0EiUKE3RhcmdldF9wcmluY2lwYWxfaWQYASABKAlCCLpIBXIDGIAIEiwKBmdyYW50cxgCIAMoCzIcLmdpYnNvbi50ZW5hbnQudjEuR3JhbnRUdXBsZSJBChlEZWxldGVBZ2VudEdyYW50c1Jlc3BvbnNlEg8KB2RlbGV0ZWQYASABKAUSEwoLbm90X3ByZXNlbnQYAiABKAUy3QMKDUdyYW50c1NlcnZpY2USlgEKEExpc3RBY3RpdmVHcmFudHMSKS5naWJzb24udGVuYW50LnYxLkxpc3RBY3RpdmVHcmFudHNSZXF1ZXN0GiouZ2lic29uLnRlbmFudC52MS5MaXN0QWN0aXZlR3JhbnRzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESlgEKEFdyaXRlQWdlbnRHcmFudHMSKS5naWJzb24udGVuYW50LnYxLldyaXRlQWdlbnRHcmFudHNSZXF1ZXN0GiouZ2lic29uLnRlbmFudC52MS5Xcml0ZUFnZW50R3JhbnRzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESmQEKEURlbGV0ZUFnZW50R3JhbnRzEiouZ2lic29uLnRlbmFudC52MS5EZWxldGVBZ2VudEdyYW50c1JlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkRlbGV0ZUFnZW50R3JhbnRzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAFCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_gibson_auth_v1_options, file_gibson_capability_v1_capability, file_buf_validate_validate]);
+  fileDesc("Ch1naWJzb24vdGVuYW50L3YxL2dyYW50cy5wcm90bxIQZ2lic29uLnRlbmFudC52MSLIAQoXTGlzdEFjdGl2ZUdyYW50c1JlcXVlc3QSTgoWcmVjaXBpZW50X2NsYXNzX2ZpbHRlchgBIAEoDjIkLmdpYnNvbi5jYXBhYmlsaXR5LnYxLlJlY2lwaWVudENsYXNzQgi6SAWCAQIQARIcCgpycGNfZmlsdGVyGAIgASgJQgi6SAVyAxiAIBIgChhpbmNsdWRlX25lYXJfZXhwaXJ5X29ubHkYAyABKAgSDQoFbGltaXQYBCABKAUSDgoGb2Zmc2V0GAUgASgFImQKGExpc3RBY3RpdmVHcmFudHNSZXNwb25zZRI5CgZncmFudHMYASADKAsyKS5naWJzb24uY2FwYWJpbGl0eS52MS5DYXBhYmlsaXR5R3JhbnRJbmZvEg0KBXRvdGFsGAIgASgFIi4KCkdyYW50VHVwbGUSDgoGb2JqZWN0GAEgASgJEhAKCHJlbGF0aW9uGAIgASgJIm4KF1dyaXRlQWdlbnRHcmFudHNSZXF1ZXN0EiUKE3RhcmdldF9wcmluY2lwYWxfaWQYASABKAlCCLpIBXIDGIAIEiwKBmdyYW50cxgCIAMoCzIcLmdpYnNvbi50ZW5hbnQudjEuR3JhbnRUdXBsZSJEChhXcml0ZUFnZW50R3JhbnRzUmVzcG9uc2USDwoHd3JpdHRlbhgBIAEoBRIXCg9hbHJlYWR5X3ByZXNlbnQYAiABKAUibwoYRGVsZXRlQWdlbnRHcmFudHNSZXF1ZXN0EiUKE3RhcmdldF9wcmluY2lwYWxfaWQYASABKAlCCLpIBXIDGIAIEiwKBmdyYW50cxgCIAMoCzIcLmdpYnNvbi50ZW5hbnQudjEuR3JhbnRUdXBsZSJBChlEZWxldGVBZ2VudEdyYW50c1Jlc3BvbnNlEg8KB2RlbGV0ZWQYASABKAUSEwoLbm90X3ByZXNlbnQYAiABKAUibAoYV3JpdGVTZWNyZXRHcmFudHNSZXF1ZXN0EicKE3RhcmdldF9wcmluY2lwYWxfaWQYASABKAlCCrpIB3IFEAEYgAgSJwoMc2VjcmV0X25hbWVzGAIgAygJQhG6SA6SAQsQQCIHcgUQARiACCJFChlXcml0ZVNlY3JldEdyYW50c1Jlc3BvbnNlEg8KB3dyaXR0ZW4YASABKAUSFwoPYWxyZWFkeV9wcmVzZW50GAIgASgFMvkECg1HcmFudHNTZXJ2aWNlEpYBChBMaXN0QWN0aXZlR3JhbnRzEikuZ2lic29uLnRlbmFudC52MS5MaXN0QWN0aXZlR3JhbnRzUmVxdWVzdBoqLmdpYnNvbi50ZW5hbnQudjEuTGlzdEFjdGl2ZUdyYW50c1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEpYBChBXcml0ZUFnZW50R3JhbnRzEikuZ2lic29uLnRlbmFudC52MS5Xcml0ZUFnZW50R3JhbnRzUmVxdWVzdBoqLmdpYnNvbi50ZW5hbnQudjEuV3JpdGVBZ2VudEdyYW50c1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEpkBChFEZWxldGVBZ2VudEdyYW50cxIqLmdpYnNvbi50ZW5hbnQudjEuRGVsZXRlQWdlbnRHcmFudHNSZXF1ZXN0GisuZ2lic29uLnRlbmFudC52MS5EZWxldGVBZ2VudEdyYW50c1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEpkBChFXcml0ZVNlY3JldEdyYW50cxIqLmdpYnNvbi50ZW5hbnQudjEuV3JpdGVTZWNyZXRHcmFudHNSZXF1ZXN0GisuZ2lic29uLnRlbmFudC52MS5Xcml0ZVNlY3JldEdyYW50c1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABQlRaUmdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi90ZW5hbnQvdjE7dGVuYW50djFiBnByb3RvMw", [file_gibson_auth_v1_options, file_gibson_capability_v1_capability, file_buf_validate_validate]);
 
 /**
  * @generated from message gibson.tenant.v1.ListActiveGrantsRequest
@@ -216,6 +216,57 @@ export const DeleteAgentGrantsResponseSchema: GenMessage<DeleteAgentGrantsRespon
   messageDesc(file_gibson_tenant_v1_grants, 6);
 
 /**
+ * WriteSecretGrantsRequest names a plugin principal and the secrets it may
+ * resolve. An empty secret_names is valid and writes nothing.
+ *
+ * @generated from message gibson.tenant.v1.WriteSecretGrantsRequest
+ */
+export type WriteSecretGrantsRequest = Message<"gibson.tenant.v1.WriteSecretGrantsRequest"> & {
+  /**
+   * target_principal_id is "plugin_principal:<id>" in the caller's tenant.
+   *
+   * @generated from field: string target_principal_id = 1;
+   */
+  targetPrincipalId: string;
+
+  /**
+   * secret_names are names of secrets that the caller's tenant owns.
+   *
+   * @generated from field: repeated string secret_names = 2;
+   */
+  secretNames: string[];
+};
+
+/**
+ * Describes the message gibson.tenant.v1.WriteSecretGrantsRequest.
+ * Use `create(WriteSecretGrantsRequestSchema)` to create a new message.
+ */
+export const WriteSecretGrantsRequestSchema: GenMessage<WriteSecretGrantsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_grants, 7);
+
+/**
+ * @generated from message gibson.tenant.v1.WriteSecretGrantsResponse
+ */
+export type WriteSecretGrantsResponse = Message<"gibson.tenant.v1.WriteSecretGrantsResponse"> & {
+  /**
+   * @generated from field: int32 written = 1;
+   */
+  written: number;
+
+  /**
+   * @generated from field: int32 already_present = 2;
+   */
+  alreadyPresent: number;
+};
+
+/**
+ * Describes the message gibson.tenant.v1.WriteSecretGrantsResponse.
+ * Use `create(WriteSecretGrantsResponseSchema)` to create a new message.
+ */
+export const WriteSecretGrantsResponseSchema: GenMessage<WriteSecretGrantsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_grants, 8);
+
+/**
  * GrantsService is the grants surface — both the CG-JWT inspector
  * (ListActiveGrants) and the per-agent FGA-grant editor
  * (WriteAgentGrants / DeleteAgentGrants).
@@ -259,6 +310,22 @@ export const GrantsService: GenService<{
     methodKind: "unary";
     input: typeof DeleteAgentGrantsRequestSchema;
     output: typeof DeleteAgentGrantsResponseSchema;
+  },
+  /**
+   * WriteSecretGrants grants a plugin principal can_resolve on named secrets
+   * of the caller's tenant (ADR-0097, dashboard#174). Secret access is
+   * assigned by a tenant admin, never declared by the component
+   * (gibson#554). Only a plugin_principal can hold can_resolve (model.fga),
+   * so an agent or tool target is refused. Each secret must exist in the
+   * caller's tenant. Idempotent, and each new grant emits a
+   * `secret_grant_added` audit event before it takes effect.
+   *
+   * @generated from rpc gibson.tenant.v1.GrantsService.WriteSecretGrants
+   */
+  writeSecretGrants: {
+    methodKind: "unary";
+    input: typeof WriteSecretGrantsRequestSchema;
+    output: typeof WriteSecretGrantsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_tenant_v1_grants, 0);
