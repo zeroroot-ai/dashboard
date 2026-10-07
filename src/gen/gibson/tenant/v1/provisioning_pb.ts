@@ -39,7 +39,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/provisioning.proto.
  */
 export const file_gibson_tenant_v1_provisioning: GenFile = /*@__PURE__*/
-  fileDesc("CiNnaWJzb24vdGVuYW50L3YxL3Byb3Zpc2lvbmluZy5wcm90bxIQZ2lic29uLnRlbmFudC52MSJMChpUZW5hbnREYXRhUGxhbmVTdG9yZVN0YXR1cxIQCghwb3N0Z3JlcxgBIAEoCRINCgVyZWRpcxgCIAEoCRINCgVuZW80ahgDIAEoCSJDCiJHZXRUZW5hbnRQcm92aXNpb25pbmdTdGF0dXNSZXF1ZXN0Eh0KCXRlbmFudF9pZBgBIAEoCUIKukgHcgUQARiACCKAAgojR2V0VGVuYW50UHJvdmlzaW9uaW5nU3RhdHVzUmVzcG9uc2USDQoFZm91bmQYASABKAgSDQoFcGhhc2UYAiABKAkSGAoQZGF0YV9wbGFuZV9yZWFkeRgDIAEoCBI8CgZzdG9yZXMYBCABKAsyLC5naWJzb24udGVuYW50LnYxLlRlbmFudERhdGFQbGFuZVN0b3JlU3RhdHVzEhgKEHppdGFkZWxfb3JnX3NsdWcYBSABKAkSGQoReml0YWRlbF9vcmdfcmVhZHkYCCABKAhKBAgGEAdKBAgHEAhSEnN0cmlwZV9jdXN0b21lcl9pZFIOYmlsbGluZ19hY3RpdmUysAEKGVRlbmFudFByb3Zpc2lvbmluZ1NlcnZpY2USkgEKG0dldFRlbmFudFByb3Zpc2lvbmluZ1N0YXR1cxI0LmdpYnNvbi50ZW5hbnQudjEuR2V0VGVuYW50UHJvdmlzaW9uaW5nU3RhdHVzUmVxdWVzdBo1LmdpYnNvbi50ZW5hbnQudjEuR2V0VGVuYW50UHJvdmlzaW9uaW5nU3RhdHVzUmVzcG9uc2UiBoq1GAIoAUJUWlJnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vdGVuYW50L3YxO3RlbmFudHYxYgZwcm90bzM", [file_gibson_auth_v1_options, file_buf_validate_validate]);
+  fileDesc("CiNnaWJzb24vdGVuYW50L3YxL3Byb3Zpc2lvbmluZy5wcm90bxIQZ2lic29uLnRlbmFudC52MSJMChpUZW5hbnREYXRhUGxhbmVTdG9yZVN0YXR1cxIQCghwb3N0Z3JlcxgBIAEoCRINCgVyZWRpcxgCIAEoCRINCgVuZW80ahgDIAEoCSJDCiJHZXRUZW5hbnRQcm92aXNpb25pbmdTdGF0dXNSZXF1ZXN0Eh0KCXRlbmFudF9pZBgBIAEoCUIKukgHcgUQARiACCL+AQojR2V0VGVuYW50UHJvdmlzaW9uaW5nU3RhdHVzUmVzcG9uc2USDQoFZm91bmQYASABKAgSDQoFcGhhc2UYAiABKAkSGAoQZGF0YV9wbGFuZV9yZWFkeRgDIAEoCBI8CgZzdG9yZXMYBCABKAsyLC5naWJzb24udGVuYW50LnYxLlRlbmFudERhdGFQbGFuZVN0b3JlU3RhdHVzEhkKEXppdGFkZWxfb3JnX3JlYWR5GAggASgISgQIBRAGSgQIBhAHSgQIBxAIUhB6aXRhZGVsX29yZ19zbHVnUhJzdHJpcGVfY3VzdG9tZXJfaWRSDmJpbGxpbmdfYWN0aXZlMrABChlUZW5hbnRQcm92aXNpb25pbmdTZXJ2aWNlEpIBChtHZXRUZW5hbnRQcm92aXNpb25pbmdTdGF0dXMSNC5naWJzb24udGVuYW50LnYxLkdldFRlbmFudFByb3Zpc2lvbmluZ1N0YXR1c1JlcXVlc3QaNS5naWJzb24udGVuYW50LnYxLkdldFRlbmFudFByb3Zpc2lvbmluZ1N0YXR1c1Jlc3BvbnNlIgaKtRgCKAFCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_gibson_auth_v1_options, file_buf_validate_validate]);
 
 /**
  * TenantDataPlaneStoreStatus mirrors the Tenant CR's
@@ -132,16 +132,6 @@ export type GetTenantProvisioningStatusResponse = Message<"gibson.tenant.v1.GetT
   stores?: TenantDataPlaneStoreStatus | undefined;
 
   /**
-   * zitadel_org_slug mirrors status.zitadelOrgSlug (the per-tenant org login
-   * slug). RETAINED for wire compatibility but NO LONGER POPULATED by this
-   * unauthenticated RPC (gibson#1339). Use zitadel_org_ready (field 8) for the
-   * org-created edge.
-   *
-   * @generated from field: string zitadel_org_slug = 5;
-   */
-  zitadelOrgSlug: string;
-
-  /**
    * zitadel_org_ready reports WHETHER the per-tenant Zitadel org exists, without
    * disclosing its slug. It is the readiness edge the signup poller waits on:
    * the org is created well before the Tenant CR reaches phase Ready, so a
@@ -154,7 +144,7 @@ export type GetTenantProvisioningStatusResponse = Message<"gibson.tenant.v1.GetT
    * caller — a bare "has this step completed" bit. What was withheld in
    * gibson#1230 was the cross-tenant IDENTIFIERS and the billing state, and a
    * boolean carries neither: it names nothing and cannot be replayed into any
-   * other system. zitadel_org_slug itself stays redacted.
+   * other system. The response has no field for the slug itself.
    *
    * @generated from field: bool zitadel_org_ready = 8;
    */

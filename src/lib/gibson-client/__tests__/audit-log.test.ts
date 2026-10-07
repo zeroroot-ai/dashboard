@@ -34,7 +34,7 @@ describe('daemonListAuditRecords', () => {
           targetObject: 'secret:db',
         },
       ],
-      nextCursor: 'c2',
+      nextPageToken: 'c2',
     });
     await expect(daemonListAuditRecords('c1')).resolves.toEqual({
       records: [
@@ -50,6 +50,6 @@ describe('daemonListAuditRecords', () => {
       ],
       nextCursor: 'c2',
     });
-    expect(list).toHaveBeenCalledWith({ limit: 100, cursor: 'c1' });
+    expect(list).toHaveBeenCalledWith({ pageSize: 100, pageToken: 'c1' });
   });
 });

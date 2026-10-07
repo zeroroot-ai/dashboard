@@ -17,14 +17,14 @@ import type { ProofReviewItem, ProofReviewPage } from "@/src/types/proof-review"
  */
 
 /** The page size that the dashboard asks for. */
-export const PROOF_REVIEW_PAGE_SIZE = 50;
+const PROOF_REVIEW_PAGE_SIZE = 50;
 
 function submittedAt(unixNano: bigint): string {
   if (unixNano <= BigInt(0)) return "";
   return new Date(Number(unixNano / BigInt(1_000_000))).toISOString();
 }
 
-export function mapProofReview(r: ProofReview): ProofReviewItem {
+function mapProofReview(r: ProofReview): ProofReviewItem {
   return {
     hypothesisId: r.hypothesisId,
     missionId: r.missionId,

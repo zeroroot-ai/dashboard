@@ -8,9 +8,10 @@
 // This service has moved three times, which is worth recording so a fourth move
 // is argued rather than assumed:
 //
-//   ADR-0039  gibson.admin.v1.SecretsAdminService (platform-sdk) -> the OSS SDK
-//   ADR-0058  out of the SDK to the gibson platform protos, as tenant admin
-//   ADR-0096  back into the SDK, here, as its own wire package
+//   1. gibson.admin.v1.SecretsAdminService (platform-sdk) -> the OSS SDK
+//      (a retired ADR that ADR-0058 replaced)
+//   2. ADR-0058: out of the SDK to the gibson platform protos, as tenant admin
+//   3. ADR-0096: back into the SDK, here, as its own wire package
 //
 // The 2026-10-01 amendment to ADR-0058 is the current authority. ADR-0096
 // removed the credential reference from a Target, which left the command line as

@@ -39,7 +39,7 @@ const PAGE_SIZE = 100;
 
 /** One page of the audit log of the caller's tenant. */
 export async function daemonListAuditRecords(cursor: string): Promise<AuditPageDTO> {
-  const resp = await userClient(TenantService).listAuditEvents({ limit: PAGE_SIZE, cursor });
+  const resp = await userClient(TenantService).listAuditEvents({ pageSize: PAGE_SIZE, pageToken: cursor });
   return {
     records: resp.events.map((e) => ({
       eventType: e.eventType,
@@ -50,6 +50,6 @@ export async function daemonListAuditRecords(cursor: string): Promise<AuditPageD
       targetObject: e.targetObject,
       traceId: e.traceId,
     })),
-    nextCursor: resp.nextCursor,
+    nextCursor: resp.nextPageToken,
   };
 }

@@ -13,7 +13,7 @@
  */
 
 /** One item of evidence as the agent typed it. */
-export interface ProofEvidenceItem {
+interface ProofEvidenceItem {
   type: string;
   title: string;
   /** Redacted by the flight recorder policy of the tenant. */

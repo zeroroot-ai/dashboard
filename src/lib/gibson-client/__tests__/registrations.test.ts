@@ -61,7 +61,7 @@ describe('registrations client', () => {
         ownerLastName: 'Lovelace',
       },
     ]);
-    expect(list).toHaveBeenCalledWith({ limit: 200 });
+    expect(list).toHaveBeenCalledWith({ pageSize: 200 });
   });
 
   it('names the registration in an approval and returns the queued tenant', async () => {

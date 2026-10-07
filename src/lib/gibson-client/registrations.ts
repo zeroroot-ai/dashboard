@@ -39,7 +39,7 @@ const QUEUE_LIMIT = 200;
 /** The registrations that wait for a decision, oldest first. */
 export async function daemonListPendingRegistrations(): Promise<PendingRegistrationDTO[]> {
   const resp = await userClient(AdminTenantService).adminListPendingRegistrations({
-    limit: QUEUE_LIMIT,
+    pageSize: QUEUE_LIMIT,
   });
   return resp.registrations.map((r) => ({
     registrationId: r.registrationId,
