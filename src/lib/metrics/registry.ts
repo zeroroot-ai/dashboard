@@ -27,7 +27,7 @@
  * `fs`, `v8`) and any [Client Component SSR] context that transitively
  * reaches this module fails the build with `Module not found: Can't
  * resolve 'cluster'`. Even `serverExternalPackages: ["prom-client"]` was
- * insufficient, Turbopack's analyser still walked into prom-client's
+ * insufficient, Turbopack's analyzer still walked into prom-client's
  * internal files. The `node:module.createRequire` + path-concat pattern
  * keeps prom-client out of the static graph entirely; it loads at runtime
  * in the Node bundle where the primitives exist.
@@ -53,7 +53,7 @@ let cachedFailed = false;
 function loadRegistryClass(): { Registry: new () => Registry } | null {
   if (cachedFailed) return null;
   try {
-    // String concat hides the path from Turbopack's static analyser.
+    // String concat hides the path from Turbopack's static analyzer.
     const segments = ["prom", "client"];
     const modName = segments.join("-");
     const reqFromHere = createRequire(__filename);

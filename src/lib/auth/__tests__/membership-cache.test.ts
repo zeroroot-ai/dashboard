@@ -72,11 +72,6 @@ vi.mock('@/src/lib/auth/user-token', () => ({
   requireUserToken: vi.fn(async () => 'fake-token'),
 }));
 
-// Test-fixture fault injection, disabled.
-vi.mock('@/src/lib/test-fixtures/fault-injection', () => ({
-  getFaultMode: () => undefined,
-}));
-
 // Logger, silence during tests.
 vi.mock('@/src/lib/logger', () => ({
   logger: {

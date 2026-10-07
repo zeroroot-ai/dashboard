@@ -83,7 +83,6 @@ const NEUTRAL_PREFIXES = [
   "/favicon",
   "/robots.txt",
   "/sitemap.xml",
-  "/llms.txt",
 ] as const;
 
 function bareHost(h: string): string {

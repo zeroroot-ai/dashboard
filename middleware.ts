@@ -41,7 +41,6 @@ import {
 import { membershipReasonToLoginErrorReason } from "@/src/lib/auth/login-error-mapping";
 import { decideHostSplit, loadHostSplitConfig } from "@/src/lib/host-routing";
 import { CORRELATION_HEADER, generateCorrelationId } from "@/src/lib/auth/correlation";
-import { popLastFiredSubsystem } from "@/src/lib/test-fixtures/fault-injection";
 import { ensureCsrfCookie } from "@/src/lib/csrf";
 import { logger } from "@/src/lib/logger";
 
@@ -217,25 +216,14 @@ export default auth(async (req) => {
   //     redirects to pages.error (/login) with ?error=Callback or ?error=<name>.
   //     Intercept those and reroute to /login/error?reason=<machine-readable>
   //     so the user sees a deterministic error page rather than the login form
-  //     with an error query param that the form doesn't surface. This covers
-  //     the fault-injection paths for "token-exchange" and "jwks" faults.
+  //     with an error query param that the form doesn't surface.
   if (pathname === "/login") {
     const authError = req.nextUrl.searchParams.get("error");
     if (authError) {
       // Map Auth.js error names to our LoginErrorReason codes.
       let reason: string;
-      if (authError === "Callback") {
-        // jwt callback threw, could be token-exchange or jwks fault.
-        // popLastFiredSubsystem() returns which fault subsystem last fired,
-        // letting us pick the right reason code. Falls back to
-        // oidc_token_exchange_failed for non-fixture causes.
-        const lastFired = popLastFiredSubsystem();
-        if (lastFired === "jwks") {
-          reason = "jwks_unavailable";
-        } else {
-          reason = "oidc_token_exchange_failed";
-        }
-      } else if (authError === "OAuthCallbackError") {
+      if (authError === "Callback" || authError === "OAuthCallbackError") {
+        // The jwt callback threw during the token exchange.
         reason = "oidc_token_exchange_failed";
       } else if (authError === "JWTSessionError") {
         reason = "session_invalid";
@@ -432,7 +420,7 @@ export const config = {
     /*
      * Run on all paths except:
      *   - _next/static , bundled JS / CSS chunks
-     *   - _next/image  , Next.js image optimiser
+     *   - _next/image  , Next.js image optimizer
      *   - favicon.ico  , browser favicon
      *   - api/auth     , Auth.js OIDC callbacks
      *   - api/health   , Kubernetes probes

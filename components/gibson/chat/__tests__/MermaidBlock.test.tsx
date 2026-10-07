@@ -188,7 +188,7 @@ describe('MermaidBlock', () => {
     });
 
     // With htmlLabels disabled, mermaid never emits a foreignObject, so any
-    // HTML nested in one is by definition not ours. The sanitiser drops it.
+    // HTML nested in one is by definition not ours. The sanitizer drops it.
     it('drops HTML smuggled inside a foreignObject', async () => {
       mockRender.mockResolvedValueOnce({
         svg:

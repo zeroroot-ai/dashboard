@@ -12,7 +12,7 @@
  * Spec: zero-trust-hardening Req 11.3, `ALLOWED_SERVICE_SUBJECTS` must
  * be non-empty before any inbound service-acting traffic can succeed.
  * Spec: security-hardening R9, `DASHBOARD_AUTHZ_PERMISSIVE_DEV=1` must
- * never be honoured in a production build; defense-in-depth on top of
+ * never be honored in a production build; defense-in-depth on top of
  * the existing `NODE_ENV` gate at `assert-authorized.ts`.
  */
 

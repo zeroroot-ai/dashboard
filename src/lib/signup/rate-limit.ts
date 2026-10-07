@@ -2,14 +2,21 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Signup rate limiter, wraps the existing sliding-window Redis limiter with
- * signup-specific key namespacing and limits.
+ * Signup rate limiter. It wraps the sliding-window limiter of
+ * src/lib/rate-limiter.ts with signup key names and limits.
+ *
+ * The dashboard holds no shared store, so these counters live in each
+ * process: the effective limit is the configured limit times the replica
+ * count. The cluster-wide signup budget is in the daemon. Each signup RPC
+ * passes the client IP that resolveClientIp reads, and the daemon keeps its
+ * own per-IP and per-email budgets (gibson
+ * internal/server/daemon/api/signup_rate_limit.go).
  *
  * Two independent counters per attempt, a violation of either trips the
  * limit. This makes abuse harder:
  *   - IP counter: 5 attempts / 15 min / source IP
  *   - Email counter: 3 attempts / 1 hour / email (SHA-256'd so the key
- *     doesn't leak the email plaintext if Redis is dumped)
+ *     does not leak the email plaintext if the store is dumped)
  *
  * Returns `{allowed, retryAfterMs}`. When disallowed, `retryAfterMs` is the
  * time until the MORE-LENIENT of the two limits releases (so the UI shows a

@@ -54,7 +54,7 @@
  *
  * Higher number = more privilege. A user whose role maps to a higher tier
  * satisfies any requirement at an equal or lower tier. Unknown role strings
- * receive tier 0, default-deny for unrecognised values.
+ * receive tier 0, default-deny for unrecognized values.
  *
  * This scale covers tenant roles ONLY. Per-object grants live in
  * `OBJECT_SCOPED_RELATIONS` below and deliberately have no tier, so they can

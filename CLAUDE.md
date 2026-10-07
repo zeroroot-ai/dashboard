@@ -593,7 +593,7 @@ Rules:
   serialization.
 - New PII fields require a redactor update in `src/lib/logger.ts`.
 
-In development, output is colourised via `pino-pretty`. In production,
+In development, output is colorized via `pino-pretty`. In production,
 the logger emits one JSON object per event for ingestion.
 
 ## Auth (post-Better-Auth)

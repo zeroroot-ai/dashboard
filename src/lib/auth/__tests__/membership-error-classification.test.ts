@@ -52,9 +52,6 @@ vi.mock('@/src/lib/auth/user-token', () => ({
   requireUserToken: vi.fn(async () => 'fake-token'),
 }));
 
-vi.mock('@/src/lib/test-fixtures/fault-injection', () => ({
-  getFaultMode: () => undefined,
-}));
 
 vi.mock('@/src/lib/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },

@@ -102,7 +102,7 @@ export interface ApplicationReport {
   application: { key: string; name: string; scope: string } | null;
   findingCount: number;
   bySeverity: Record<ReportSeverity, number>;
-  /** Findings whose severity is absent or unrecognised. Never bucketed into `info`. */
+  /** Findings whose severity is absent or unrecognized. Never bucketed into `info`. */
   unknownSeverity: number;
   byStatus: Record<FindingStatus, number>;
   /** Findings with no status yet (projected before Taxonomy v2). */
