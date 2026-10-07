@@ -81,9 +81,8 @@ export async function register() {
     throw err;
   }
 
-  // Legacy validator kept for the warn-on-missing-NEO4J_PASSWORD path and
-  // for any callsite that still imports `validateEnvConfig`. Now a thin
-  // shim over env-validator semantics.
+  // The required-variable check of src/lib/config. It refuses to start when
+  // GIBSON_PLATFORM_PUBLIC_URL or AUTH_URL is unset.
   const { validateEnvConfig } = await import('@/src/lib/config');
   validateEnvConfig();
 

@@ -40,12 +40,6 @@ export const serverConfig = {
   // (e.g. https://api.zeroroot.local:30443). See .env.example.
   gibsonPlatformPublicUrl: process.env.GIBSON_PLATFORM_PUBLIC_URL,
 
-  // Neo4j Database Configuration
-  // REQUIRED: set NEO4J_URI to the Neo4j bolt endpoint (e.g. bolt://neo4j-service:7687).
-  neo4jUri: process.env.NEO4J_URI,
-  neo4jUser: process.env.NEO4J_USER || 'neo4j',
-  neo4jPassword: process.env.NEO4J_PASSWORD || '',
-
   // Auth.js + Zitadel, public dashboard URL Auth.js uses for OIDC
   // redirect URIs and the email-nonce HMAC secret used by the
   // legacy missing-email recovery flow. The HMAC secret is just a
@@ -89,7 +83,6 @@ const clientConfig = {
  *
  * Required variables are checked unconditionally (not only in production):
  *   - GIBSON_PLATFORM_PUBLIC_URL
- *   - NEO4J_URI
  *   - AUTH_URL
  *
  * Auth.js secrets and DATABASE_URL are additionally checked in production.
@@ -108,12 +101,6 @@ export function validateEnvConfig(): void {
     );
   }
 
-  if (!serverConfig.neo4jUri) {
-    errors.push(
-      'NEO4J_URI is required (e.g. bolt://neo4j-service:7687). See .env.example.',
-    );
-  }
-
   if (!serverConfig.dashboardPublicUrl) {
     errors.push(
       'AUTH_URL is required (the dashboard public URL for ' +
@@ -129,11 +116,6 @@ export function validateEnvConfig(): void {
     if (!serverConfig.databaseUrl) {
       errors.push('DATABASE_URL is required in production');
     }
-  }
-
-  // Warn about missing Neo4j password (not fatal, but recommended)
-  if (!serverConfig.neo4jPassword) {
-    console.warn('NEO4J_PASSWORD not set - Neo4j client may fail to connect');
   }
 
   // Throw if any errors found
