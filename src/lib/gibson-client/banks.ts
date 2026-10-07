@@ -2,6 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 import 'server-only';
+import { randomUUID } from 'node:crypto';
 import { principalView } from '@/src/lib/gibson-client/principal';
 
 /**
@@ -198,6 +199,7 @@ export async function createBank(input: CreateBankInput): Promise<BankView | nul
     maxJobsInFlight: input.maxJobsInFlight,
     staleLimit: input.staleLimitSeconds && input.staleLimitSeconds > 0 ? duration(input.staleLimitSeconds) : undefined,
     spillPolicy: input.spillPolicy ? SPILL_POLICY_NAME[input.spillPolicy] : SpillPolicy.UNSPECIFIED,
+    idempotencyKey: randomUUID(),
   });
   return resp.bank ? toBankView(resp.bank) : null;
 }
@@ -233,12 +235,12 @@ export async function listMembers(bankId: string, pageToken = ''): Promise<Membe
 // ---------------------------------------------------------------------------
 
 export async function startSignIn(bankId: string, memberId: string): Promise<MemberView | null> {
-  const resp = await userClient(BankService).startSignIn({ bankId, memberId });
+  const resp = await userClient(BankService).startSignIn({ bankId, memberId, idempotencyKey: randomUUID() });
   return resp.member ? toMemberView(resp.member) : null;
 }
 
 export async function submitSignInCode(bankId: string, memberId: string, code: string): Promise<MemberView | null> {
-  const resp = await userClient(BankService).submitSignInCode({ bankId, memberId, code });
+  const resp = await userClient(BankService).submitSignInCode({ bankId, memberId, code, idempotencyKey: randomUUID() });
   return resp.member ? toMemberView(resp.member) : null;
 }
 

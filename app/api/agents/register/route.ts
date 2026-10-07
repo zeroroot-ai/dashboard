@@ -37,6 +37,8 @@
 
 import 'server-only';
 
+import { randomUUID } from 'node:crypto';
+
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { ConnectError, Code } from '@connectrpc/connect';
@@ -225,6 +227,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         componentRef: g.componentRef,
         relation: g.relation,
       })),
+      idempotencyKey: randomUUID(),
     });
     daemonResp = {
       bootstrapToken: resp.bootstrapToken,
