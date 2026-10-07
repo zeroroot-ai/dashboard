@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.130.0](https://github.com/zeroroot-ai/dashboard/compare/v0.129.0...v0.130.0) (2026-10-07)
+
+
+### Features
+
+* **metrics:** serve metrics on a separate metrics-only port ([#270](https://github.com/zeroroot-ai/dashboard/issues/270)) ([8161a00](https://github.com/zeroroot-ai/dashboard/commit/8161a00419d0ecc753161a16a8c6c7a2a67a4edd))
+* **results:** the mission results view shows the track record of each technique ([#265](https://github.com/zeroroot-ai/dashboard/issues/265)) ([e77df9d](https://github.com/zeroroot-ai/dashboard/commit/e77df9d1a836d71eac632447c29941055bb1ff67)), closes [#192](https://github.com/zeroroot-ai/dashboard/issues/192)
+
 ## [0.129.0](https://github.com/zeroroot-ai/dashboard/compare/v0.128.0...v0.129.0) (2026-10-07)
 
 
