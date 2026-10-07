@@ -10,6 +10,9 @@
  * Environment variables (ALL required, pod fails to boot if any are missing
  * per epic one-code-path / deploy#196):
  *   AUTH_SECRET         , random 32+ char secret (Helm: randAlphaNum 32, mounted via K8s Secret)
+ *   AUTH_SECRET_PREVIOUS, optional: the secret AUTH_SECRET replaced. Auth.js
+ *                         encrypts with AUTH_SECRET and decrypts a cookie of
+ *                         either, so a rotation signs nobody out (ADR-0171).
  *   ZITADEL_ISSUER      , OIDC issuer base URL (browser-facing, appears in `iss` claim)
  *                         The pod compares it and never dials it.
  *   ZITADEL_URL         , in-cluster Zitadel Service base URL. The pod connects
@@ -49,6 +52,7 @@ import { cookies } from "next/headers";
 import { resolvePostSignInRedirect } from "@/src/lib/auth/post-signin-redirect";
 import { evaluateMfaGate } from "@/src/lib/auth/mfa-gate";
 import { zitadelProvider } from "@/src/lib/auth/zitadel-provider";
+import { authSecrets } from "@/src/lib/auth/auth-secrets";
 import { zitadelFetch } from "@/src/lib/zitadel/conn";
 import {
   SESSION_IDLE_MAX_AGE_SECONDS,
@@ -204,7 +208,13 @@ const clientSecret = requireEnv("ZITADEL_CLIENT_SECRET");
 // ---------------------------------------------------------------------------
 // Auth.js configuration
 // ---------------------------------------------------------------------------
+// The current secret first: Auth.js encrypts with the first entry and tries
+// each entry to decrypt. Empty only in the build phase, where Auth.js falls
+// back to its own AUTH_SECRET lookup.
+const secrets = authSecrets();
+
 const config: NextAuthConfig = {
+  ...(secrets.length > 0 ? { secret: secrets } : {}),
   // -------------------------------------------------------------------------
   // Provider, generic OIDC, NOT a Zitadel-specific plugin.
   // Auth.js v5 accepts an inline OIDCConfig object directly; the wellKnown

@@ -126,3 +126,43 @@ describe('verified-session codec', () => {
     expect(display.tier).toBe('team');
   });
 });
+
+// ADR-0171: a rotation moves AUTH_SECRET into AUTH_SECRET_PREVIOUS and writes a
+// new AUTH_SECRET. A cookie signed before the rotation still verifies, a new
+// cookie is signed with the new secret, and after the next rotation the old
+// cookie is refused.
+describe('verified-session across a secret rotation', () => {
+  const OLD = 'old-secret-0123456789-abcdefghij';
+  const NEW = 'new-secret-0123456789-abcdefghij';
+  const NEWER = 'newer-secret-0123456789-abcdefgh';
+
+  function withSecrets<T>(current: string, previous: string | undefined, fn: () => T): T {
+    const saved = { cur: process.env.AUTH_SECRET, prev: process.env.AUTH_SECRET_PREVIOUS };
+    process.env.AUTH_SECRET = current;
+    if (previous === undefined) delete process.env.AUTH_SECRET_PREVIOUS;
+    else process.env.AUTH_SECRET_PREVIOUS = previous;
+    try {
+      return fn();
+    } finally {
+      process.env.AUTH_SECRET = saved.cur;
+      if (saved.prev === undefined) delete process.env.AUTH_SECRET_PREVIOUS;
+      else process.env.AUTH_SECRET_PREVIOUS = saved.prev;
+    }
+  }
+
+  it('a cookie of the previous secret verifies during the overlap', () => {
+    const before = withSecrets(OLD, undefined, () => encodeVerifiedSession(SESSION));
+    expect(withSecrets(NEW, OLD, () => decodeVerifiedSession(before))).toEqual(SESSION);
+  });
+
+  it('a new cookie is signed with the current secret only', () => {
+    const after = withSecrets(NEW, OLD, () => encodeVerifiedSession(SESSION));
+    expect(withSecrets(NEW, undefined, () => decodeVerifiedSession(after))).toEqual(SESSION);
+    expect(withSecrets(OLD, undefined, () => decodeVerifiedSession(after))).toBeNull();
+  });
+
+  it('a cookie of a secret that left the pair is refused', () => {
+    const before = withSecrets(OLD, undefined, () => encodeVerifiedSession(SESSION));
+    expect(withSecrets(NEWER, NEW, () => decodeVerifiedSession(before))).toBeNull();
+  });
+});

@@ -50,6 +50,8 @@ import 'server-only';
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
+import { authSecrets } from '@/src/lib/auth/auth-secrets';
+
 import type { RedeemedSignupVerification } from './owner-provisioning';
 
 /**
@@ -128,40 +130,54 @@ export function signupCookieOptions(): {
 // ---------------------------------------------------------------------------
 
 /**
- * The signing key. Deliberately the same one `active-tenant.ts` uses: it is a
- * generic server-side signing secret that happens to be named for Auth.js, the
- * chart already generates it into the dashboard Secret, and a second key would
- * be a second thing to rotate for no gain.
+ * The signing keys: AUTH_SECRET first, then AUTH_SECRET_PREVIOUS when a
+ * rotation is in progress (ADR-0171). Auth.js uses the same pair for the
+ * session cookie, so one rotation covers both, and a second key would be a
+ * second thing to rotate for no gain.
  *
  * Hard-fails rather than falling back to a guessable value. A signup flow that
  * silently signs with the empty string is worse than one that does not start.
+ * A key that is too short fails the same way, so this reader and Auth.js never
+ * disagree about the pair.
  */
-function signingKey(): Buffer {
-  const s = process.env.AUTH_SECRET;
-  if (!s || s.length < 16) {
-    throw new Error('AUTH_SECRET is missing or too short to sign cookies');
+function signingKeys(): Buffer[] {
+  const keys = authSecrets();
+  if (keys.length === 0 || keys.some((k) => k.length < 16)) {
+    throw new Error('AUTH_SECRET or AUTH_SECRET_PREVIOUS is missing or too short to sign cookies');
   }
-  return Buffer.from(s, 'utf8');
+  return keys.map((k) => Buffer.from(k, 'utf8'));
 }
 
+function hmac(key: Buffer, payload: string): string {
+  return createHmac('sha256', key).update(payload).digest('hex');
+}
+
+/** Sign with the current secret only. */
 function sign(payload: string): string {
-  return createHmac('sha256', signingKey()).update(payload).digest('hex');
+  return hmac(signingKeys()[0], payload);
 }
 
 /**
- * Constant-time signature compare. Returns false on a length mismatch so a
- * caller cannot use timing to learn anything about the expected signature.
+ * Constant-time signature compare against the current and the previous
+ * secret (ADR-0171), so a cookie signed before a rotation still verifies.
+ * Returns false on a length mismatch so a caller cannot use timing to learn
+ * anything about the expected signature.
  */
 function signatureMatches(payload: string, providedHex: string): boolean {
-  const expected = Buffer.from(sign(payload), 'hex');
   let provided: Buffer;
   try {
     provided = Buffer.from(providedHex, 'hex');
   } catch {
     return false;
   }
-  if (expected.length !== provided.length) return false;
-  return timingSafeEqual(expected, provided);
+  let match = false;
+  for (const key of signingKeys()) {
+    const expected = Buffer.from(hmac(key, payload), 'hex');
+    if (expected.length === provided.length && timingSafeEqual(expected, provided)) {
+      match = true;
+    }
+  }
+  return match;
 }
 
 /**

@@ -253,6 +253,11 @@ const OPTIONAL_ENV = [
   // Defaults to /run/spire/agent.sock; chart override only.
   'SPIFFE_ENDPOINT_SOCKET',
 
+  // ---- Auth secret rotation (ADR-0171) ----
+  // The secret AUTH_SECRET replaced. Absent when no rotation is in progress;
+  // src/lib/auth/auth-secrets.ts is the one reader.
+  'AUTH_SECRET_PREVIOUS',
+
   // ---- CAPTCHA secret (gated by DASHBOARD_CAPTCHA_PROVIDER) ----
   'DASHBOARD_CAPTCHA_SECRET_KEY',
 
