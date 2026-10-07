@@ -46,9 +46,9 @@
 //   passed.
 //
 // Authorization: all three RPCs are UNAUTHENTICATED. They run before any tenant
-// or membership exists, so there is no principal to FGA-check (like
-// UserService.SetSignupProgress). The capability is the emailed token, then the
-// session token derived from it, both held only by whoever received the mail.
+// or membership exists, so there is no principal to FGA-check. The capability
+// is the emailed token, then the session token derived from it, both held only
+// by whoever received the mail.
 // The handlers enforce rate limits, expiry and single-use themselves.
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
@@ -648,8 +648,7 @@ export const SignupService: GenService<{
   },
   /**
    * GetSignupStep reports the state of the external signup step of one
-   * signup attempt. The attempt id is the capability, as for
-   * GetSignupProgress. An unknown attempt reads as SIGNUP_STEP_STATE_NONE, so
+   * signup attempt. The attempt id is the capability. An unknown attempt reads as SIGNUP_STEP_STATE_NONE, so
    * the answer does not tell a caller which attempts exist.
    *
    * @generated from rpc gibson.tenant.v1.SignupService.GetSignupStep

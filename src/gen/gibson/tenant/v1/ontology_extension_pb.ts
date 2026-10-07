@@ -45,7 +45,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/ontology_extension.proto.
  */
 export const file_gibson_tenant_v1_ontology_extension: GenFile = /*@__PURE__*/
-  fileDesc("CilnaWJzb24vdGVuYW50L3YxL29udG9sb2d5X2V4dGVuc2lvbi5wcm90bxIQZ2lic29uLnRlbmFudC52MSK7AwoZT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbBI0CgRraW5kGAEgASgOMiYuZ2lic29uLnRlbmFudC52MS5PbnRvbG9neVByb3Bvc2FsS2luZBINCgVsYWJlbBgCIAEoCRI4CgZzdGF0dXMYBiABKA4yKC5naWJzb24udGVuYW50LnYxLk9udG9sb2d5UHJvcG9zYWxTdGF0dXMSEAoIcmV2aWV3ZXIYByABKAkSFgoOc2lnaHRpbmdfY291bnQYCyABKAUSFwoPbGF0ZXN0X3Byb3Bvc2VyGAwgASgJEhQKDGxhdGVzdF9jbGFpbRgNIAEoCRIYChByZWplY3Rpb25fcmVhc29uGA4gASgJEhMKC2lzX3Byb21vdGVkGA8gASgIEhgKEHRheG9ub215X3ZlcnNpb24YECABKAVKBAgDEARKBAgEEAVKBAgFEAZKBAgIEAlKBAgJEApKBAgKEAtSCnJlY3VycmVuY2VSDWxhc3RfcHJvcG9zZXJSCmxhc3RfY2xhaW1SDXJlamVjdF9yZWFzb25SCHByb21vdGVkUhlwcm9tb3RlZF90YXhvbm9teV92ZXJzaW9uIicKJUxpc3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2Fsc1JlcXVlc3QiggEKJkxpc3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2Fsc1Jlc3BvbnNlEkcKEm9udG9sb2d5X3Byb3Bvc2FscxgCIAMoCzIrLmdpYnNvbi50ZW5hbnQudjEuT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbEoECAEQAlIJcHJvcG9zYWxzIoIBCidBcHByb3ZlT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlcXVlc3QSPgoEa2luZBgBIAEoDjImLmdpYnNvbi50ZW5hbnQudjEuT250b2xvZ3lQcm9wb3NhbEtpbmRCCLpIBYIBAhABEhcKBWxhYmVsGAIgASgJQgi6SAVyAxiAICIqCihBcHByb3ZlT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlc3BvbnNlIp0BCiZSZWplY3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsUmVxdWVzdBI+CgRraW5kGAEgASgOMiYuZ2lic29uLnRlbmFudC52MS5PbnRvbG9neVByb3Bvc2FsS2luZEIIukgFggECEAESFwoFbGFiZWwYAiABKAlCCLpIBXIDGIAgEhoKBnJlYXNvbhgDIAEoCUIKukgHcgUYgICACCIpCidSZWplY3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsUmVzcG9uc2UipAEKJlN1Ym1pdE9udG9sb2d5RXh0ZW5zaW9uVXBzdHJlYW1SZXF1ZXN0Ej4KBGtpbmQYASABKA4yJi5naWJzb24udGVuYW50LnYxLk9udG9sb2d5UHJvcG9zYWxLaW5kQgi6SAWCAQIQARIXCgVsYWJlbBgCIAEoCUIIukgFcgMYgCASIQoPaWRlbXBvdGVuY3lfa2V5GAMgASgJQgi6SAVyAxiAASKHAgonU3VibWl0T250b2xvZ3lFeHRlbnNpb25VcHN0cmVhbVJlc3BvbnNlEhcKD2F1ZGl0X3JlY29yZF9pZBgFIAEoCRIVCg1mcmFnbWVudF9qc29uGAYgASgMEhYKDnBhY2tfZmlsZV9wYXRoGAcgASgJEhoKEnB1bGxfcmVxdWVzdF90aXRsZRgIIAEoCRIZChFwdWxsX3JlcXVlc3RfYm9keRgJIAEoCUoECAEQAkoECAIQA0oECAMQBEoECAQQBVIJcGFja19qc29uUhNzdWdnZXN0ZWRfZmlsZV9wYXRoUhJzdWdnZXN0ZWRfcHJfdGl0bGVSEXN1Z2dlc3RlZF9wcl9ib2R5KpMBChRPbnRvbG9neVByb3Bvc2FsS2luZBImCiJPTlRPTE9HWV9QUk9QT1NBTF9LSU5EX1VOU1BFQ0lGSUVEEAASJQohT05UT0xPR1lfUFJPUE9TQUxfS0lORF9OT0RFX0xBQkVMEAESLAooT05UT0xPR1lfUFJPUE9TQUxfS0lORF9SRUxBVElPTlNISVBfVFlQRRACKrYBChZPbnRvbG9neVByb3Bvc2FsU3RhdHVzEigKJE9OVE9MT0dZX1BST1BPU0FMX1NUQVRVU19VTlNQRUNJRklFRBAAEiQKIE9OVE9MT0dZX1BST1BPU0FMX1NUQVRVU19QRU5ESU5HEAESJQohT05UT0xPR1lfUFJPUE9TQUxfU1RBVFVTX0FQUFJPVkVEEAISJQohT05UT0xPR1lfUFJPUE9TQUxfU1RBVFVTX1JFSkVDVEVEEAMysgYKGE9udG9sb2d5RXh0ZW5zaW9uU2VydmljZRLAAQoeTGlzdE9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxzEjcuZ2lic29uLnRlbmFudC52MS5MaXN0T250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbHNSZXF1ZXN0GjguZ2lic29uLnRlbmFudC52MS5MaXN0T250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbHNSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARLGAQogQXBwcm92ZU9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWwSOS5naWJzb24udGVuYW50LnYxLkFwcHJvdmVPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsUmVxdWVzdBo6LmdpYnNvbi50ZW5hbnQudjEuQXBwcm92ZU9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxSZXNwb25zZSIrirUYJwoFb3duZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARLDAQofUmVqZWN0T250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbBI4LmdpYnNvbi50ZW5hbnQudjEuUmVqZWN0T250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlcXVlc3QaOS5naWJzb24udGVuYW50LnYxLlJlamVjdE9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxSZXNwb25zZSIrirUYJwoFb3duZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgARLDAQofU3VibWl0T250b2xvZ3lFeHRlbnNpb25VcHN0cmVhbRI4LmdpYnNvbi50ZW5hbnQudjEuU3VibWl0T250b2xvZ3lFeHRlbnNpb25VcHN0cmVhbVJlcXVlc3QaOS5naWJzb24udGVuYW50LnYxLlN1Ym1pdE9udG9sb2d5RXh0ZW5zaW9uVXBzdHJlYW1SZXNwb25zZSIrirUYJwoFb3duZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAUJUWlJnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vdGVuYW50L3YxO3RlbmFudHYxYgZwcm90bzM", [file_gibson_auth_v1_options, file_buf_validate_validate]);
+  fileDesc("CilnaWJzb24vdGVuYW50L3YxL29udG9sb2d5X2V4dGVuc2lvbi5wcm90bxIQZ2lic29uLnRlbmFudC52MSKrAgoZT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbBI0CgRraW5kGAEgASgOMiYuZ2lic29uLnRlbmFudC52MS5PbnRvbG9neVByb3Bvc2FsS2luZBINCgVsYWJlbBgCIAEoCRI4CgZzdGF0dXMYBiABKA4yKC5naWJzb24udGVuYW50LnYxLk9udG9sb2d5UHJvcG9zYWxTdGF0dXMSEAoIcmV2aWV3ZXIYByABKAlKBAgDEARKBAgEEAVKBAgFEAZKBAgIEAlKBAgJEApKBAgKEAtSCnJlY3VycmVuY2VSDWxhc3RfcHJvcG9zZXJSCmxhc3RfY2xhaW1SDXJlamVjdF9yZWFzb25SCHByb21vdGVkUhlwcm9tb3RlZF90YXhvbm9teV92ZXJzaW9uIicKJUxpc3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2Fsc1JlcXVlc3QiOQomTGlzdE9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxzUmVzcG9uc2VKBAgBEAJSCXByb3Bvc2FscyKCAQonQXBwcm92ZU9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxSZXF1ZXN0Ej4KBGtpbmQYASABKA4yJi5naWJzb24udGVuYW50LnYxLk9udG9sb2d5UHJvcG9zYWxLaW5kQgi6SAWCAQIQARIXCgVsYWJlbBgCIAEoCUIIukgFcgMYgCAiKgooQXBwcm92ZU9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxSZXNwb25zZSKdAQomUmVqZWN0T250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlcXVlc3QSPgoEa2luZBgBIAEoDjImLmdpYnNvbi50ZW5hbnQudjEuT250b2xvZ3lQcm9wb3NhbEtpbmRCCLpIBYIBAhABEhcKBWxhYmVsGAIgASgJQgi6SAVyAxiAIBIaCgZyZWFzb24YAyABKAlCCrpIB3IFGICAgAgiKQonUmVqZWN0T250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlc3BvbnNlIqQBCiZTdWJtaXRPbnRvbG9neUV4dGVuc2lvblVwc3RyZWFtUmVxdWVzdBI+CgRraW5kGAEgASgOMiYuZ2lic29uLnRlbmFudC52MS5PbnRvbG9neVByb3Bvc2FsS2luZEIIukgFggECEAESFwoFbGFiZWwYAiABKAlCCLpIBXIDGIAgEiEKD2lkZW1wb3RlbmN5X2tleRgDIAEoCUIIukgFcgMYgAEioQEKJ1N1Ym1pdE9udG9sb2d5RXh0ZW5zaW9uVXBzdHJlYW1SZXNwb25zZRIXCg9hdWRpdF9yZWNvcmRfaWQYBSABKAlKBAgBEAJKBAgCEANKBAgDEARKBAgEEAVSCXBhY2tfanNvblITc3VnZ2VzdGVkX2ZpbGVfcGF0aFISc3VnZ2VzdGVkX3ByX3RpdGxlUhFzdWdnZXN0ZWRfcHJfYm9keSqTAQoUT250b2xvZ3lQcm9wb3NhbEtpbmQSJgoiT05UT0xPR1lfUFJPUE9TQUxfS0lORF9VTlNQRUNJRklFRBAAEiUKIU9OVE9MT0dZX1BST1BPU0FMX0tJTkRfTk9ERV9MQUJFTBABEiwKKE9OVE9MT0dZX1BST1BPU0FMX0tJTkRfUkVMQVRJT05TSElQX1RZUEUQAiq2AQoWT250b2xvZ3lQcm9wb3NhbFN0YXR1cxIoCiRPTlRPTE9HWV9QUk9QT1NBTF9TVEFUVVNfVU5TUEVDSUZJRUQQABIkCiBPTlRPTE9HWV9QUk9QT1NBTF9TVEFUVVNfUEVORElORxABEiUKIU9OVE9MT0dZX1BST1BPU0FMX1NUQVRVU19BUFBST1ZFRBACEiUKIU9OVE9MT0dZX1BST1BPU0FMX1NUQVRVU19SRUpFQ1RFRBADMrIGChhPbnRvbG9neUV4dGVuc2lvblNlcnZpY2USwAEKHkxpc3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FscxI3LmdpYnNvbi50ZW5hbnQudjEuTGlzdE9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxzUmVxdWVzdBo4LmdpYnNvbi50ZW5hbnQudjEuTGlzdE9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESxgEKIEFwcHJvdmVPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsEjkuZ2lic29uLnRlbmFudC52MS5BcHByb3ZlT250b2xvZ3lFeHRlbnNpb25Qcm9wb3NhbFJlcXVlc3QaOi5naWJzb24udGVuYW50LnYxLkFwcHJvdmVPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsUmVzcG9uc2UiK4q1GCcKBW93bmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESwwEKH1JlamVjdE9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWwSOC5naWJzb24udGVuYW50LnYxLlJlamVjdE9udG9sb2d5RXh0ZW5zaW9uUHJvcG9zYWxSZXF1ZXN0GjkuZ2lic29uLnRlbmFudC52MS5SZWplY3RPbnRvbG9neUV4dGVuc2lvblByb3Bvc2FsUmVzcG9uc2UiK4q1GCcKBW93bmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAESwwEKH1N1Ym1pdE9udG9sb2d5RXh0ZW5zaW9uVXBzdHJlYW0SOC5naWJzb24udGVuYW50LnYxLlN1Ym1pdE9udG9sb2d5RXh0ZW5zaW9uVXBzdHJlYW1SZXF1ZXN0GjkuZ2lic29uLnRlbmFudC52MS5TdWJtaXRPbnRvbG9neUV4dGVuc2lvblVwc3RyZWFtUmVzcG9uc2UiK4q1GCcKBW93bmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAFCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_gibson_auth_v1_options, file_buf_validate_validate]);
 
 /**
  * OntologyExtensionProposal is one taxonomy node label or relationship type
@@ -77,55 +77,6 @@ export type OntologyExtensionProposal = Message<"gibson.tenant.v1.OntologyExtens
    * @generated from field: string reviewer = 7;
    */
   reviewer: string;
-
-  /**
-   * The fields below return the review data to the dashboard (gibson#618).
-   * They take new numbers and names because the old ones stay reserved.
-   *
-   * sighting_count is how many independent times this exact (kind, label)
-   * has been sighted (the running count of taxonomy.PromotionGate.Observe).
-   *
-   * @generated from field: int32 sighting_count = 11;
-   */
-  sightingCount: number;
-
-  /**
-   * latest_proposer is the agent that proposed it most recently.
-   *
-   * @generated from field: string latest_proposer = 12;
-   */
-  latestProposer: string;
-
-  /**
-   * latest_claim is the claim of the most recent proposal.
-   *
-   * @generated from field: string latest_claim = 13;
-   */
-  latestClaim: string;
-
-  /**
-   * rejection_reason is set only when status is REJECTED.
-   *
-   * @generated from field: string rejection_reason = 14;
-   */
-  rejectionReason: string;
-
-  /**
-   * is_promoted is true once the proposal is in the live Taxonomy of the
-   * tenant. status APPROVED alone does not imply it: the proposal can still
-   * be short of the recurrence that settlement requires.
-   *
-   * @generated from field: bool is_promoted = 15;
-   */
-  isPromoted: boolean;
-
-  /**
-   * taxonomy_version is the Taxonomy registry version that the promotion
-   * made. Zero while is_promoted is false.
-   *
-   * @generated from field: int32 taxonomy_version = 16;
-   */
-  taxonomyVersion: number;
 };
 
 /**
@@ -152,14 +103,6 @@ export const ListOntologyExtensionProposalsRequestSchema: GenMessage<ListOntolog
  * @generated from message gibson.tenant.v1.ListOntologyExtensionProposalsResponse
  */
 export type ListOntologyExtensionProposalsResponse = Message<"gibson.tenant.v1.ListOntologyExtensionProposalsResponse"> & {
-  /**
-   * ontology_proposals holds each proposal of the tenant, pending and
-   * decided, in (kind, label) order. The dashboard review page reads it
-   * (gibson#618).
-   *
-   * @generated from field: repeated gibson.tenant.v1.OntologyExtensionProposal ontology_proposals = 2;
-   */
-  ontologyProposals: OntologyExtensionProposal[];
 };
 
 /**
@@ -313,39 +256,6 @@ export type SubmitOntologyExtensionUpstreamResponse = Message<"gibson.tenant.v1.
    * @generated from field: string audit_record_id = 5;
    */
   auditRecordId: string;
-
-  /**
-   * The fields below return the contribution to the dashboard (gibson#618).
-   * They take new numbers and names because the old ones stay reserved.
-   *
-   * fragment_json is the ontology.DomainPack fragment, JSON-encoded exactly
-   * as Export/Import round-trip it (gibson#378). It is the same bytes as the
-   * metadata of the audit record that audit_record_id names.
-   *
-   * @generated from field: bytes fragment_json = 6;
-   */
-  fragmentJson: Uint8Array;
-
-  /**
-   * pack_file_path is where this fragment belongs in the pack source tree
-   * of the SDK, e.g. "packs/<name>.json".
-   *
-   * @generated from field: string pack_file_path = 7;
-   */
-  packFilePath: string;
-
-  /**
-   * pull_request_title and pull_request_body are the text of the pull
-   * request that the tenant owner opens by hand.
-   *
-   * @generated from field: string pull_request_title = 8;
-   */
-  pullRequestTitle: string;
-
-  /**
-   * @generated from field: string pull_request_body = 9;
-   */
-  pullRequestBody: string;
 };
 
 /**

@@ -7,6 +7,7 @@ import { generateMeta } from "@/lib/utils";
 
 import { ErrorAlert } from "@/components/gibson/shared";
 import { ComplianceEvidenceContent } from "@/components/gibson/compliance/ComplianceEvidenceContent";
+import { RetentionCard } from "@/components/gibson/compliance/RetentionCard";
 import { COMPLIANCE_TEXT } from "@/components/gibson/compliance/texts";
 import { daemonListCompliancePacks } from "@/src/lib/gibson-client/compliance";
 import { assertAuthorized, authzDenial } from "@/src/lib/auth/assert-authorized";
@@ -50,5 +51,10 @@ export default async function CompliancePage() {
     );
   }
 
-  return <ComplianceEvidenceContent packs={packs} />;
+  return (
+    <div className="space-y-6">
+      <ComplianceEvidenceContent packs={packs} />
+      <RetentionCard />
+    </div>
+  );
 }
