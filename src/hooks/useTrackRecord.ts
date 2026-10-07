@@ -13,7 +13,7 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { useTenantId } from '@/src/lib/auth/tenant';
 import { queryKeys } from '@/src/lib/query/keys';
-import type { TrackRecord } from '@/src/types/calibration';
+import type { MissionTechniques, TrackRecord } from '@/src/types/calibration';
 
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { cache: 'no-store' });
@@ -47,6 +47,18 @@ export function useTrackRecord(
         `/api/world/reputation?technique=${encodeURIComponent(technique)}&scope=${encodeURIComponent(scopeId)}`,
       ),
     enabled: technique !== '' && scopeId !== '',
+    staleTime: 30_000,
+  });
+}
+
+/** The techniques one mission used, each in its scope. Idle until the mission id is set. */
+export function useMissionTechniques(missionId: string): UseQueryResult<MissionTechniques, Error> {
+  const tenantId = useTenantId() ?? '';
+  return useQuery({
+    queryKey: queryKeys.calibration.missionTechniques(tenantId, missionId),
+    queryFn: () =>
+      getJson<MissionTechniques>(`/api/missions/${encodeURIComponent(missionId)}/techniques`),
+    enabled: missionId !== '',
     staleTime: 30_000,
   });
 }

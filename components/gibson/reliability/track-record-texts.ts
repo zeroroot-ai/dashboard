@@ -19,4 +19,8 @@ export const TRACK_RECORD_TEXT = {
   noTrackRecord:
     "No track record yet. No bet of this technique has settled in this scope, so a new hypothesis starts from the neutral prior.",
   loadFailed: "The track record did not load.",
+  missionIntro:
+    "How often bets of each technique this mission used came true, in the scope the mission used it in.",
+  noTechniques: "No hypothesis of this mission names a technique yet.",
+  truncated: "The World holds more hypotheses than one read returns. Some techniques can be missing here.",
 } as const;

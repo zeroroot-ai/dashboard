@@ -7,9 +7,9 @@
  * TrackRecordPanel — the track record of one technique in one scope
  * (gibson#619, dashboard#192, ADR-0129 §3).
  *
- * The prior strength shows as a bar from 0 to 100%. When no bet of the
- * technique has settled in the scope, the panel says so instead of showing
- * the neutral prior as if it were a record.
+ * The scope is chosen from the scopes of the tenant's World. The record
+ * itself renders through TrackRecordReading, the same way the mission
+ * panel renders its records.
  */
 
 import * as React from 'react';
@@ -25,10 +25,7 @@ import {
 import { ErrorAlert } from '@/components/gibson/shared/ErrorAlert';
 import { useTrackRecord, useWorldScopes } from '@/src/hooks/useTrackRecord';
 import { TRACK_RECORD_TEXT } from './track-record-texts';
-
-function pct(v: number): string {
-  return `${(v * 100).toFixed(0)}%`;
-}
+import { TrackRecordReading } from './TrackRecordReading';
 
 export function TrackRecordPanel({ technique }: { technique: string }) {
   const scopes = useWorldScopes();
@@ -72,42 +69,11 @@ export function TrackRecordPanel({ technique }: { technique: string }) {
           </div>
         )}
 
-        {(scopes.error || record.error) && (
-          <ErrorAlert
-            title={TRACK_RECORD_TEXT.loadFailed}
-            error={(scopes.error ?? record.error) as Error}
-          />
+        {scopes.error && (
+          <ErrorAlert title={TRACK_RECORD_TEXT.loadFailed} error={scopes.error} />
         )}
 
-        {record.data && !record.data.hasTrackRecord && (
-          <p className="text-sm" data-testid="track-record-none">
-            {TRACK_RECORD_TEXT.noTrackRecord}
-          </p>
-        )}
-
-        {record.data && record.data.hasTrackRecord && (
-          <div className="space-y-1" data-testid="track-record-bar">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-medium uppercase tracking-wide text-muted-foreground">
-                {TRACK_RECORD_TEXT.barLabel}
-              </span>
-              <span className="font-mono">{pct(record.data.priorStrength)}</span>
-            </div>
-            <div
-              className="h-2 w-full rounded-full bg-muted"
-              role="meter"
-              aria-label={TRACK_RECORD_TEXT.barLabel}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={Math.round(record.data.priorStrength * 100)}
-            >
-              <div
-                className="h-2 rounded-full bg-highlight"
-                style={{ width: pct(Math.min(Math.max(record.data.priorStrength, 0), 1)) }}
-              />
-            </div>
-          </div>
-        )}
+        <TrackRecordReading record={record.data} error={record.error} />
       </CardContent>
     </Card>
   );

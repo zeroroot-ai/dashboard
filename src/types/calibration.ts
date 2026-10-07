@@ -83,3 +83,19 @@ export interface TrackRecord {
   /** False when no bet of this technique has settled in this scope. */
   hasTrackRecord: boolean;
 }
+
+/**
+ * One technique a mission used, in the scope the mission used it in: the
+ * technique and the scope of one hypothesis of the mission (dashboard#192).
+ */
+export interface MissionTechnique {
+  technique: string;
+  scopeId: string;
+}
+
+/** The techniques of one mission, from /api/missions/:id/techniques. */
+export interface MissionTechniques {
+  techniques: MissionTechnique[];
+  /** True when the World holds more hypotheses than one read returns. */
+  truncated: boolean;
+}

@@ -76,6 +76,14 @@ vi.mock('@/src/components/mission/ToolStreamProgress', () => ({
 vi.mock('@/src/components/missions/MissionTerminal', () => ({
   MissionTerminal: () => <div />,
 }));
+// The track record panel is exercised in
+// components/gibson/reliability/__tests__/MissionTrackRecordPanel.test.tsx.
+// Here we only need to observe that the Overview mounts it for THIS mission.
+vi.mock('@/components/gibson/reliability/MissionTrackRecordPanel', () => ({
+  MissionTrackRecordPanel: ({ missionId }: { missionId: string }) => (
+    <div data-testid="mission-track-record" data-mission={missionId} />
+  ),
+}));
 
 import MissionDetailPage from '../page';
 
@@ -167,6 +175,17 @@ describe('mission detail, Snapshot tab gating', () => {
     expect(
       screen.queryByRole('tab', { name: /^Snapshot$/ }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('mission detail, Overview', () => {
+  it('mounts the track record panel for this mission (dashboard#192)', async () => {
+    await renderPage();
+    await screen.findByRole('tab', { name: /^Overview$/ });
+    expect(screen.getByTestId('mission-track-record')).toHaveAttribute(
+      'data-mission',
+      MISSION_ID,
+    );
   });
 });
 
