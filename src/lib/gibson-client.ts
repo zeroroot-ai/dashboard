@@ -265,9 +265,9 @@ interface ConversationMessageRecord {
   createdAt: string;
 }
 
-export async function listConversations(limit = 50, userId = '', tenantId = ''): Promise<ConversationRecord[]> {
+export async function listConversations(pageSize = 50, userId = '', tenantId = ''): Promise<ConversationRecord[]> {
   const client = await getUserServiceClient();
-  const resp = await client.listConversations({ tenantId, userId, limit });
+  const resp = await client.listConversations({ tenantId, userId, pageSize });
   return (resp.conversations ?? []).map((c) => ({
     id: c.id,
     tenantId: c.tenantId,

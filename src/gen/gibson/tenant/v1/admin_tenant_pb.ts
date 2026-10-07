@@ -34,8 +34,8 @@
 // chain (no admin-prefix chart change needed — the catch-all route already
 // gates every gibson.* method by its registry rule).
 
-import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_gibson_auth_v1_options } from "../../auth/v1/options_pb";
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb";
 import type { Message } from "@bufbuild/protobuf";
@@ -44,7 +44,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/admin_tenant.proto.
  */
 export const file_gibson_tenant_v1_admin_tenant: GenFile = /*@__PURE__*/
-  fileDesc("CiNnaWJzb24vdGVuYW50L3YxL2FkbWluX3RlbmFudC5wcm90bxIQZ2lic29uLnRlbmFudC52MSKxAQoTUGVuZGluZ1JlZ2lzdHJhdGlvbhIXCg9yZWdpc3RyYXRpb25faWQYASABKAkSEwoLb3duZXJfZW1haWwYAiABKAkSFgoOd29ya3NwYWNlX25hbWUYAyABKAkSDAoEdGllchgEIAEoCRIYChBvd25lcl9maXJzdF9uYW1lGAUgASgJEhcKD293bmVyX2xhc3RfbmFtZRgGIAEoCUoECAcQCFINcmVnaXN0ZXJlZF9hdCI1CiRBZG1pbkxpc3RQZW5kaW5nUmVnaXN0cmF0aW9uc1JlcXVlc3QSDQoFbGltaXQYASABKAUiZQolQWRtaW5MaXN0UGVuZGluZ1JlZ2lzdHJhdGlvbnNSZXNwb25zZRI8Cg1yZWdpc3RyYXRpb25zGAEgAygLMiUuZ2lic29uLnRlbmFudC52MS5QZW5kaW5nUmVnaXN0cmF0aW9uIkYKH0FkbWluQXBwcm92ZVJlZ2lzdHJhdGlvblJlcXVlc3QSIwoPcmVnaXN0cmF0aW9uX2lkGAEgASgJQgq6SAdyBRABGIAIIl0KIEFkbWluQXBwcm92ZVJlZ2lzdHJhdGlvblJlc3BvbnNlEhEKCXRlbmFudF9pZBgBIAEoCRIVCg1vd25lcl91c2VyX2lkGAIgASgJEg8KB3BsYW5faWQYAyABKAkiYQoeQWRtaW5SZWplY3RSZWdpc3RyYXRpb25SZXF1ZXN0EiMKD3JlZ2lzdHJhdGlvbl9pZBgBIAEoCUIKukgHcgUQARiACBIaCgZyZWFzb24YAiABKAlCCrpIB3IFGICAgAgiIQofQWRtaW5SZWplY3RSZWdpc3RyYXRpb25SZXNwb25zZSKXAQobQWRtaW5Qcm92aXNpb25UZW5hbnRSZXF1ZXN0Eh0KCXRlbmFudF9pZBgBIAEoCUIKukgHcgUQARiACBIgCgxkaXNwbGF5X25hbWUYAiABKAlCCrpIB3IFEAEYgAgSHwoLb3duZXJfZW1haWwYAyABKAlCCrpIB3IFEAEYgCASFgoEdGllchgEIAEoCUIIukgFcgMYgCAiLQocQWRtaW5Qcm92aXNpb25UZW5hbnRSZXNwb25zZRINCgVvcF9pZBgBIAEoCSKdAQoYQWRtaW5VcGRhdGVUZW5hbnRSZXF1ZXN0Eh0KCXRlbmFudF9pZBgBIAEoCUIKukgHcgUQARiACBIWCgR0aWVyGAIgASgJQgi6SAVyAxiAIBIQCgh0aWVyX3NldBgDIAEoCBIeCgxkaXNwbGF5X25hbWUYBCABKAlCCLpIBXIDGIAIEhgKEGRpc3BsYXlfbmFtZV9zZXQYBSABKAgiKgoZQWRtaW5VcGRhdGVUZW5hbnRSZXNwb25zZRINCgVvcF9pZBgBIAEoCSI5ChhBZG1pbkRlbGV0ZVRlbmFudFJlcXVlc3QSHQoJdGVuYW50X2lkGAEgASgJQgq6SAdyBRABGIAIIioKGUFkbWluRGVsZXRlVGVuYW50UmVzcG9uc2USDQoFb3BfaWQYASABKAkiHwodQWRtaW5HZXRQbGF0Zm9ybUhlYWx0aFJlcXVlc3QiggEKE1BsYXRmb3JtUGxhbmVIZWFsdGgSDQoFcGxhbmUYASABKAkSMwoFc3RhdGUYAiABKA4yJC5naWJzb24udGVuYW50LnYxLlBsYXRmb3JtUGxhbmVTdGF0ZRIOCgZkZXRhaWwYAyABKAkSFwoPY2hlY2tlZF9hdF91bml4GAQgASgDIlcKHkFkbWluR2V0UGxhdGZvcm1IZWFsdGhSZXNwb25zZRI1CgZwbGFuZXMYASADKAsyJS5naWJzb24udGVuYW50LnYxLlBsYXRmb3JtUGxhbmVIZWFsdGgqogEKElBsYXRmb3JtUGxhbmVTdGF0ZRIkCiBQTEFURk9STV9QTEFORV9TVEFURV9VTlNQRUNJRklFRBAAEiAKHFBMQVRGT1JNX1BMQU5FX1NUQVRFX0hFQUxUSFkQARIiCh5QTEFURk9STV9QTEFORV9TVEFURV9VTkhFQUxUSFkQAhIgChxQTEFURk9STV9QTEFORV9TVEFURV9VTktOT1dOEAMy+gkKEkFkbWluVGVuYW50U2VydmljZRKrAQoUQWRtaW5Qcm92aXNpb25UZW5hbnQSLS5naWJzb24udGVuYW50LnYxLkFkbWluUHJvdmlzaW9uVGVuYW50UmVxdWVzdBouLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5Qcm92aXNpb25UZW5hbnRSZXNwb25zZSI0irUYMAoOcGxhdGZvcm1fb3duZXISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARKiAQoRQWRtaW5VcGRhdGVUZW5hbnQSKi5naWJzb24udGVuYW50LnYxLkFkbWluVXBkYXRlVGVuYW50UmVxdWVzdBorLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5VcGRhdGVUZW5hbnRSZXNwb25zZSI0irUYMAoOcGxhdGZvcm1fb3duZXISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARKiAQoRQWRtaW5EZWxldGVUZW5hbnQSKi5naWJzb24udGVuYW50LnYxLkFkbWluRGVsZXRlVGVuYW50UmVxdWVzdBorLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5EZWxldGVUZW5hbnRSZXNwb25zZSI0irUYMAoOcGxhdGZvcm1fb3duZXISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARLGAQodQWRtaW5MaXN0UGVuZGluZ1JlZ2lzdHJhdGlvbnMSNi5naWJzb24udGVuYW50LnYxLkFkbWluTGlzdFBlbmRpbmdSZWdpc3RyYXRpb25zUmVxdWVzdBo3LmdpYnNvbi50ZW5hbnQudjEuQWRtaW5MaXN0UGVuZGluZ1JlZ2lzdHJhdGlvbnNSZXNwb25zZSI0irUYMAoOcGxhdGZvcm1fb3duZXISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARK3AQoYQWRtaW5BcHByb3ZlUmVnaXN0cmF0aW9uEjEuZ2lic29uLnRlbmFudC52MS5BZG1pbkFwcHJvdmVSZWdpc3RyYXRpb25SZXF1ZXN0GjIuZ2lic29uLnRlbmFudC52MS5BZG1pbkFwcHJvdmVSZWdpc3RyYXRpb25SZXNwb25zZSI0irUYMAoOcGxhdGZvcm1fb3duZXISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARK0AQoXQWRtaW5SZWplY3RSZWdpc3RyYXRpb24SMC5naWJzb24udGVuYW50LnYxLkFkbWluUmVqZWN0UmVnaXN0cmF0aW9uUmVxdWVzdBoxLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5SZWplY3RSZWdpc3RyYXRpb25SZXNwb25zZSI0irUYMAoOcGxhdGZvcm1fb3duZXISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARKxAQoWQWRtaW5HZXRQbGF0Zm9ybUhlYWx0aBIvLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5HZXRQbGF0Zm9ybUhlYWx0aFJlcXVlc3QaMC5naWJzb24udGVuYW50LnYxLkFkbWluR2V0UGxhdGZvcm1IZWFsdGhSZXNwb25zZSI0irUYMAoOcGxhdGZvcm1fb3duZXISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAUJUWlJnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vdGVuYW50L3YxO3RlbmFudHYxYgZwcm90bzM", [file_gibson_auth_v1_options, file_buf_validate_validate]);
+  fileDesc("CiNnaWJzb24vdGVuYW50L3YxL2FkbWluX3RlbmFudC5wcm90bxIQZ2lic29uLnRlbmFudC52MSKxAQoTUGVuZGluZ1JlZ2lzdHJhdGlvbhIXCg9yZWdpc3RyYXRpb25faWQYASABKAkSEwoLb3duZXJfZW1haWwYAiABKAkSFgoOd29ya3NwYWNlX25hbWUYAyABKAkSDAoEdGllchgEIAEoCRIYChBvd25lcl9maXJzdF9uYW1lGAUgASgJEhcKD293bmVyX2xhc3RfbmFtZRgGIAEoCUoECAcQCFINcmVnaXN0ZXJlZF9hdCJkCiRBZG1pbkxpc3RQZW5kaW5nUmVnaXN0cmF0aW9uc1JlcXVlc3QSEQoJcGFnZV9zaXplGAIgASgFEhwKCnBhZ2VfdG9rZW4YAyABKAlCCLpIBXIDGIAISgQIARACUgVsaW1pdCJ+CiVBZG1pbkxpc3RQZW5kaW5nUmVnaXN0cmF0aW9uc1Jlc3BvbnNlEjwKDXJlZ2lzdHJhdGlvbnMYASADKAsyJS5naWJzb24udGVuYW50LnYxLlBlbmRpbmdSZWdpc3RyYXRpb24SFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIkYKH0FkbWluQXBwcm92ZVJlZ2lzdHJhdGlvblJlcXVlc3QSIwoPcmVnaXN0cmF0aW9uX2lkGAEgASgJQgq6SAdyBRABGIAIIl0KIEFkbWluQXBwcm92ZVJlZ2lzdHJhdGlvblJlc3BvbnNlEhEKCXRlbmFudF9pZBgBIAEoCRIVCg1vd25lcl91c2VyX2lkGAIgASgJEg8KB3BsYW5faWQYAyABKAkiYQoeQWRtaW5SZWplY3RSZWdpc3RyYXRpb25SZXF1ZXN0EiMKD3JlZ2lzdHJhdGlvbl9pZBgBIAEoCUIKukgHcgUQARiACBIaCgZyZWFzb24YAiABKAlCCrpIB3IFGICAgAgiIQofQWRtaW5SZWplY3RSZWdpc3RyYXRpb25SZXNwb25zZSKXAQobQWRtaW5Qcm92aXNpb25UZW5hbnRSZXF1ZXN0Eh0KCXRlbmFudF9pZBgBIAEoCUIKukgHcgUQARiACBIgCgxkaXNwbGF5X25hbWUYAiABKAlCCrpIB3IFEAEYgAgSHwoLb3duZXJfZW1haWwYAyABKAlCCrpIB3IFEAEYgCASFgoEdGllchgEIAEoCUIIukgFcgMYgCAiLQocQWRtaW5Qcm92aXNpb25UZW5hbnRSZXNwb25zZRINCgVvcF9pZBgBIAEoCSKdAQoYQWRtaW5VcGRhdGVUZW5hbnRSZXF1ZXN0Eh0KCXRlbmFudF9pZBgBIAEoCUIKukgHcgUQARiACBIWCgR0aWVyGAIgASgJQgi6SAVyAxiAIBIQCgh0aWVyX3NldBgDIAEoCBIeCgxkaXNwbGF5X25hbWUYBCABKAlCCLpIBXIDGIAIEhgKEGRpc3BsYXlfbmFtZV9zZXQYBSABKAgiKgoZQWRtaW5VcGRhdGVUZW5hbnRSZXNwb25zZRINCgVvcF9pZBgBIAEoCSI5ChhBZG1pbkRlbGV0ZVRlbmFudFJlcXVlc3QSHQoJdGVuYW50X2lkGAEgASgJQgq6SAdyBRABGIAIIioKGUFkbWluRGVsZXRlVGVuYW50UmVzcG9uc2USDQoFb3BfaWQYASABKAkyxggKEkFkbWluVGVuYW50U2VydmljZRKrAQoUQWRtaW5Qcm92aXNpb25UZW5hbnQSLS5naWJzb24udGVuYW50LnYxLkFkbWluUHJvdmlzaW9uVGVuYW50UmVxdWVzdBouLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5Qcm92aXNpb25UZW5hbnRSZXNwb25zZSI0irUYMAoOcGxhdGZvcm1fb3duZXISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARKiAQoRQWRtaW5VcGRhdGVUZW5hbnQSKi5naWJzb24udGVuYW50LnYxLkFkbWluVXBkYXRlVGVuYW50UmVxdWVzdBorLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5VcGRhdGVUZW5hbnRSZXNwb25zZSI0irUYMAoOcGxhdGZvcm1fb3duZXISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARKiAQoRQWRtaW5EZWxldGVUZW5hbnQSKi5naWJzb24udGVuYW50LnYxLkFkbWluRGVsZXRlVGVuYW50UmVxdWVzdBorLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5EZWxldGVUZW5hbnRSZXNwb25zZSI0irUYMAoOcGxhdGZvcm1fb3duZXISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARLGAQodQWRtaW5MaXN0UGVuZGluZ1JlZ2lzdHJhdGlvbnMSNi5naWJzb24udGVuYW50LnYxLkFkbWluTGlzdFBlbmRpbmdSZWdpc3RyYXRpb25zUmVxdWVzdBo3LmdpYnNvbi50ZW5hbnQudjEuQWRtaW5MaXN0UGVuZGluZ1JlZ2lzdHJhdGlvbnNSZXNwb25zZSI0irUYMAoOcGxhdGZvcm1fb3duZXISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARK3AQoYQWRtaW5BcHByb3ZlUmVnaXN0cmF0aW9uEjEuZ2lic29uLnRlbmFudC52MS5BZG1pbkFwcHJvdmVSZWdpc3RyYXRpb25SZXF1ZXN0GjIuZ2lic29uLnRlbmFudC52MS5BZG1pbkFwcHJvdmVSZWdpc3RyYXRpb25SZXNwb25zZSI0irUYMAoOcGxhdGZvcm1fb3duZXISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgARK0AQoXQWRtaW5SZWplY3RSZWdpc3RyYXRpb24SMC5naWJzb24udGVuYW50LnYxLkFkbWluUmVqZWN0UmVnaXN0cmF0aW9uUmVxdWVzdBoxLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5SZWplY3RSZWdpc3RyYXRpb25SZXNwb25zZSI0irUYMAoOcGxhdGZvcm1fb3duZXISDXN5c3RlbV90ZW5hbnQaDXN5c3RlbV90ZW5hbnQgAUJUWlJnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vdGVuYW50L3YxO3RlbmFudHYxYgZwcm90bzM", [file_gibson_auth_v1_options, file_buf_validate_validate]);
 
 /**
  * PendingRegistration is one registration awaiting an administrator's
@@ -111,12 +111,21 @@ export const PendingRegistrationSchema: GenMessage<PendingRegistration> = /*@__P
  */
 export type AdminListPendingRegistrationsRequest = Message<"gibson.tenant.v1.AdminListPendingRegistrationsRequest"> & {
   /**
-   * limit caps the page. Zero means the server default; the server also caps
-   * it, so a large value cannot turn this into a full-table read.
+   * page_size is the largest number of registrations on one page. Zero means
+   * the server default. The server also caps it, so a large value cannot turn
+   * this into a full-table read.
    *
-   * @generated from field: int32 limit = 1;
+   * @generated from field: int32 page_size = 2;
    */
-  limit: number;
+  pageSize: number;
+
+  /**
+   * page_token is the next_page_token of the previous page. Empty for the
+   * first page.
+   *
+   * @generated from field: string page_token = 3;
+   */
+  pageToken: string;
 };
 
 /**
@@ -136,6 +145,13 @@ export type AdminListPendingRegistrationsResponse = Message<"gibson.tenant.v1.Ad
    * @generated from field: repeated gibson.tenant.v1.PendingRegistration registrations = 1;
    */
   registrations: PendingRegistration[];
+
+  /**
+   * next_page_token is empty on the last page.
+   *
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
 };
 
 /**
@@ -438,117 +454,6 @@ export const AdminDeleteTenantResponseSchema: GenMessage<AdminDeleteTenantRespon
   messageDesc(file_gibson_tenant_v1_admin_tenant, 12);
 
 /**
- * @generated from message gibson.tenant.v1.AdminGetPlatformHealthRequest
- */
-export type AdminGetPlatformHealthRequest = Message<"gibson.tenant.v1.AdminGetPlatformHealthRequest"> & {
-};
-
-/**
- * Describes the message gibson.tenant.v1.AdminGetPlatformHealthRequest.
- * Use `create(AdminGetPlatformHealthRequestSchema)` to create a new message.
- */
-export const AdminGetPlatformHealthRequestSchema: GenMessage<AdminGetPlatformHealthRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_admin_tenant, 13);
-
-/**
- * PlatformPlaneHealth is the result of one probe.
- *
- * @generated from message gibson.tenant.v1.PlatformPlaneHealth
- */
-export type PlatformPlaneHealth = Message<"gibson.tenant.v1.PlatformPlaneHealth"> & {
-  /**
-   * plane names the plane, for example "secret_plane".
-   *
-   * @generated from field: string plane = 1;
-   */
-  plane: string;
-
-  /**
-   * @generated from field: gibson.tenant.v1.PlatformPlaneState state = 2;
-   */
-  state: PlatformPlaneState;
-
-  /**
-   * detail says what failed. It is empty when the plane is healthy.
-   *
-   * @generated from field: string detail = 3;
-   */
-  detail: string;
-
-  /**
-   * checked_at_unix is the time of the probe.
-   *
-   * @generated from field: int64 checked_at_unix = 4;
-   */
-  checkedAtUnix: bigint;
-};
-
-/**
- * Describes the message gibson.tenant.v1.PlatformPlaneHealth.
- * Use `create(PlatformPlaneHealthSchema)` to create a new message.
- */
-export const PlatformPlaneHealthSchema: GenMessage<PlatformPlaneHealth> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_admin_tenant, 14);
-
-/**
- * @generated from message gibson.tenant.v1.AdminGetPlatformHealthResponse
- */
-export type AdminGetPlatformHealthResponse = Message<"gibson.tenant.v1.AdminGetPlatformHealthResponse"> & {
-  /**
-   * @generated from field: repeated gibson.tenant.v1.PlatformPlaneHealth planes = 1;
-   */
-  planes: PlatformPlaneHealth[];
-};
-
-/**
- * Describes the message gibson.tenant.v1.AdminGetPlatformHealthResponse.
- * Use `create(AdminGetPlatformHealthResponseSchema)` to create a new message.
- */
-export const AdminGetPlatformHealthResponseSchema: GenMessage<AdminGetPlatformHealthResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_admin_tenant, 15);
-
-/**
- * PlatformPlaneState is the state of one plane at the time of the probe.
- *
- * @generated from enum gibson.tenant.v1.PlatformPlaneState
- */
-export enum PlatformPlaneState {
-  /**
-   * @generated from enum value: PLATFORM_PLANE_STATE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * PLATFORM_PLANE_STATE_HEALTHY: the probe got an answer.
-   *
-   * @generated from enum value: PLATFORM_PLANE_STATE_HEALTHY = 1;
-   */
-  HEALTHY = 1,
-
-  /**
-   * PLATFORM_PLANE_STATE_UNHEALTHY: the probe got an error or no answer in
-   * time.
-   *
-   * @generated from enum value: PLATFORM_PLANE_STATE_UNHEALTHY = 2;
-   */
-  UNHEALTHY = 2,
-
-  /**
-   * PLATFORM_PLANE_STATE_UNKNOWN: the daemon has no probe for the plane, so
-   * it does not claim that the plane is healthy.
-   *
-   * @generated from enum value: PLATFORM_PLANE_STATE_UNKNOWN = 3;
-   */
-  UNKNOWN = 3,
-}
-
-/**
- * Describes the enum gibson.tenant.v1.PlatformPlaneState.
- */
-export const PlatformPlaneStateSchema: GenEnum<PlatformPlaneState> = /*@__PURE__*/
-  enumDesc(file_gibson_tenant_v1_admin_tenant, 0);
-
-/**
  * AdminTenantService is the dashboard-facing write side of admin tenant CRUD.
  * Each RPC records a tenant_admin_ops row (the admin's intent) and returns the
  * generated op_id; the tenant-operator drains the queue and applies the op to
@@ -647,21 +552,6 @@ export const AdminTenantService: GenService<{
     methodKind: "unary";
     input: typeof AdminRejectRegistrationRequestSchema;
     output: typeof AdminRejectRegistrationResponseSchema;
-  },
-  /**
-   * AdminGetPlatformHealth reports the state of the platform planes that a
-   * healthy-looking cluster can hide (hosted#174). Today it reports the
-   * secret plane: the daemon asks the secret source of the platform to
-   * answer now. When the source stops answering, the pods keep running on
-   * the Secrets that were written earlier, so only an active probe shows it.
-   * The Platform owner reads it in the dashboard.
-   *
-   * @generated from rpc gibson.tenant.v1.AdminTenantService.AdminGetPlatformHealth
-   */
-  adminGetPlatformHealth: {
-    methodKind: "unary";
-    input: typeof AdminGetPlatformHealthRequestSchema;
-    output: typeof AdminGetPlatformHealthResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_tenant_v1_admin_tenant, 0);
