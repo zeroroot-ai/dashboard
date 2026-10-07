@@ -95,5 +95,5 @@ export async function register() {
 
   // The metrics-only listener (charts#515). The API port serves no metrics.
   const { startMetricsServer } = await import('@/src/lib/metrics/server');
-  startMetricsServer();
+  await startMetricsServer();
 }

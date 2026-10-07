@@ -170,6 +170,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 USER nextjs
 
 EXPOSE 3000
+# The metrics-only port (src/lib/metrics/server.ts).
+EXPOSE 9464
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"

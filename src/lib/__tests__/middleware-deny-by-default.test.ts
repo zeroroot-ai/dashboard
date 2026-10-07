@@ -81,6 +81,8 @@ describe('unauthenticated requests', () => {
     '/api/missions',
     '/api/admin/plugins',
     '/api/debug/recent-errors',
+    // The metrics left the API port (charts#515); the old path is not public.
+    '/api/metrics',
   ])('denies %s', async (path) => {
     const res = await run(path, null);
     // The regression: this used to be 200 with `NextResponse.next()`.

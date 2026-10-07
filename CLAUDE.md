@@ -617,6 +617,6 @@ or docs, treat it as a regression and remove it.
 
 ## Service-account identity (canonical sub)
 
-The TS module `src/lib/auth/identity-resolver.ts` is the **log-enrichment-only** lookup (numeric → readable). Never import it from auth-decision code. The mounted source is `/shared/sa-identity-map.json`, written by the same init container.
+The TS module `src/lib/auth/identity-resolver.ts` is the **log-enrichment-only** lookup (numeric → readable). Never import it from auth-decision code. The mounted source is `/shared/sa-identity-map.json`, written by the `resolve-sa-identity-map` init container of the chart.
 
 Spec: `canonical-service-identity`.
