@@ -6,7 +6,7 @@
  * auth-latency-baseline.mjs
  *
  * Measures sign-in p50/p95/p99 latency by scraping the
- * dashboard_signin_duration_seconds histogram from /api/metrics before and
+ * dashboard_signin_duration_seconds histogram from the metrics-only port before and
  * after a load run, then computing percentiles from the cumulative bucket
  * distribution.
  *
@@ -37,7 +37,7 @@
  * -----
  *   --base-url <url>    Dashboard base URL (default: http://localhost:3000)
  *   --n <number>        Number of scrape iterations for --drive-load (default: 200)
- *   --drive-load        Use lightweight /api/metrics polling loop to collect
+ *   --drive-load        Use lightweight /metrics polling loop to collect
  *                       histogram snapshots (does not log in users, useful when
  *                       the cluster already has active sign-in traffic)
  *   --out <path>        Write JSON result to this path (default: docs/auth-latency-baseline.json)
@@ -170,22 +170,13 @@ function computePercentile(histogram, p) {
 // ---------------------------------------------------------------------------
 
 async function fetchMetrics(url) {
-  const resp = await fetch(`${url}/api/metrics`, {
+  const resp = await fetch(`${url}/metrics`, {
     method: "GET",
     headers: { Accept: "text/plain" },
     signal: AbortSignal.timeout(10_000),
   });
-  if (resp.status === 401 || resp.status === 403) {
-    throw new Error(
-      `/api/metrics returned HTTP ${resp.status}. ` +
-        "The metrics endpoint requires a SPIFFE JWT-SVID (for in-cluster scrapers) " +
-        "or a source IP in DASHBOARD_METRICS_ALLOWED_CIDRS. " +
-        "To run the baseline against a live cluster, set DASHBOARD_METRICS_ALLOWED_CIDRS " +
-        "to include your machine's IP, or use kubectl port-forward and a SPIFFE token.",
-    );
-  }
   if (!resp.ok) {
-    throw new Error(`/api/metrics returned HTTP ${resp.status}`);
+    throw new Error(`/metrics returned HTTP ${resp.status}`);
   }
   return resp.text();
 }
@@ -201,7 +192,7 @@ async function main() {
   // -------------------------------------------------------------------------
   if (DRIVE_LOAD) {
     console.log(
-      `[auth-latency-baseline] --drive-load: polling /api/metrics ${N_ITERS}x to snapshot histogram...`,
+      `[auth-latency-baseline] --drive-load: polling /metrics ${N_ITERS}x to snapshot histogram...`,
     );
     for (let i = 0; i < N_ITERS; i++) {
       try {
@@ -221,14 +212,14 @@ async function main() {
   try {
     text = await fetchMetrics(BASE_URL);
   } catch (err) {
-    console.error(`[auth-latency-baseline] FAIL: cannot reach ${BASE_URL}/api/metrics: ${err}`);
+    console.error(`[auth-latency-baseline] FAIL: cannot reach ${BASE_URL}/metrics: ${err}`);
     process.exit(1);
   }
 
   const histogram = parseHistogram(text, "dashboard_signin_duration_seconds");
   if (!histogram) {
     console.warn(
-      "[auth-latency-baseline] WARNING: dashboard_signin_duration_seconds not found in /api/metrics. " +
+      "[auth-latency-baseline] WARNING: dashboard_signin_duration_seconds not found in /metrics. " +
         "The histogram is only populated after at least one sign-in. " +
         "Run pnpm test:e2e e2e/auth/login-happy.spec.ts to generate samples.",
     );

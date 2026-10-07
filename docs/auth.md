@@ -78,28 +78,6 @@ The `scripts/check-no-spiffe-in-user-client.mjs` build guard fails the
 build if SPIFFE-JWT-SVID-minting code re-appears anywhere in the
 dashboard.
 
-## Inbound service-acting bearer tokens
-
-Some routes accept inbound bearer tokens presented by other platform
-components (the tenant-operator, the tool-runner). The dashboard verifies
-those against Zitadel's published JWKS, not against a SPIFFE trust bundle.
-[`src/lib/auth/zitadel-bearer-verifier.ts`](../src/lib/auth/zitadel-bearer-verifier.ts)
-is the single verifier for every such route. It checks the signature, the
-issuer, the audience and the numeric `sub` against the allowed
-service-account subjects.
-
-Env vars:
-
-```
-ZITADEL_ISSUER             the issuer the token must carry
-ZITADEL_AUDIENCE           expected JWT audience (default gibson-platform)
-ALLOWED_SERVICE_SUBJECTS   comma-separated numeric Zitadel subjects
-```
-
-This is **not** the dashboard authenticating users. It is the dashboard
-verifying a peer platform component. End users always come through Auth.js.
-No JWT-SVID minting or JWT-SVID verification code lives in the dashboard.
-
 ## "Register Agent" flow
 
 [`app/api/agents/register/route.ts`](../app/api/agents/register/route.ts)

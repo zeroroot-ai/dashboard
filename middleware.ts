@@ -112,9 +112,6 @@ const PUBLIC_PREFIXES: readonly string[] = [
   "/api/health",
   // Signup polling. Guarded by an opaque per-signup capability, not a session.
   "/api/signup/",
-  // Prometheus scrape target. Guarded by DASHBOARD_METRICS_ALLOWED_CIDRS in the
-  // route handler; a scraper has no session and must not be redirected to /login.
-  "/api/metrics",
   // Explicitly-public config projection consumed by the anonymous login/signup
   // pages (app/api/config/public).
   "/api/config/public",

@@ -48,8 +48,6 @@ const VALID_ENV: Record<string, string> = {
   ZITADEL_EXTERNAL_DOMAIN: 'auth.zeroroot.local',
   ZITADEL_CLIENT_ID: 'gibson-dashboard',
   ZITADEL_CLIENT_SECRET: 'shh-test',
-  ZITADEL_AUDIENCE: 'gibson-platform',
-  ALLOWED_SERVICE_SUBJECTS: '111,222,333',
 
   // Auth.js
   // NOT `'a'.repeat(32)`: that cleared the old length-only check while having
@@ -273,14 +271,14 @@ describe('env-validator: validateEnv()', () => {
 
   it('skips prodOnly entries when NODE_ENV is not production', () => {
     setProcessEnv({ ...VALID_ENV, NODE_ENV: 'development' });
-    delete process.env.ALLOWED_SERVICE_SUBJECTS;
+    delete process.env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY;
     // prodOnly entry, should NOT cause a throw when NODE_ENV=development
     expect(() => validateEnv()).not.toThrow();
   });
 
   it('enforces prodOnly entries when NODE_ENV is production', () => {
     setProcessEnv({ ...VALID_ENV, NODE_ENV: 'production' });
-    delete process.env.ALLOWED_SERVICE_SUBJECTS;
+    delete process.env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY;
     let caught: unknown;
     try {
       validateEnv();
@@ -289,7 +287,7 @@ describe('env-validator: validateEnv()', () => {
     }
     expect(caught).toBeInstanceOf(EnvValidationError);
     const e = caught as EnvValidationError;
-    expect(e.missing.map((s) => s.name)).toContain('ALLOWED_SERVICE_SUBJECTS');
+    expect(e.missing.map((s) => s.name)).toContain('NEXT_SERVER_ACTIONS_ENCRYPTION_KEY');
   });
 });
 

@@ -11,8 +11,9 @@ and the rollback procedure.
 
 ## Metrics to monitor during soak
 
-All metrics are exported by the dashboard pod at `/api/metrics` and scraped by
-the in-cluster Prometheus.
+All metrics are exported by the dashboard pod on its metrics-only port
+(`DASHBOARD_METRICS_PORT`, default 9464, path `/metrics`) and scraped by the
+in-cluster Prometheus.
 
 | Metric | Type | What it measures | Steady-state expectation |
 |---|---|---|---|

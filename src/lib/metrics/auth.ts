@@ -7,7 +7,7 @@
  * Naming follows Prometheus conventions: snake_case metric names, `_total`
  * suffix on counters, `_seconds` suffix on latency histograms. All metrics
  * register against the shared `registry` singleton (see `./registry.ts`)
- * and are exposed via `/api/metrics`.
+ * and are exposed on the metrics-only port (`src/lib/metrics/server.ts`).
  *
  * Label cardinality is deliberately bounded. No tenant-id, user-id, email,
  * IP address, or other per-principal identifier appears as a label, those

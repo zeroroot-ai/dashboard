@@ -118,7 +118,6 @@ describe('unauthenticated requests', () => {
     '/sitemap.xml',
     '/invite/some-opaque-token',
     '/api/health',
-    '/api/metrics',
     '/api/config/public',
   ])('still serves the public path %s', async (path) => {
     const res = await run(path, null);
