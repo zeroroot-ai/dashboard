@@ -12,6 +12,8 @@ import 'server-only';
  * system tenant. The calls go through the user-acting transport
  * (userClient), never a direct channel, and ext-authz decides the relation.
  */
+import { timestampDate } from '@bufbuild/protobuf/wkt';
+
 import { AdminTenantService } from '@/src/gen/gibson/tenant/v1/admin_tenant_pb';
 
 import { userClient } from '../gibson-client';
@@ -25,6 +27,8 @@ export interface PendingRegistrationDTO {
   tier: string;
   ownerFirstName: string;
   ownerLastName: string;
+  /** When the registration arrived, as an ISO 8601 string. Null when the daemon sent none. */
+  receivedAt: string | null;
 }
 
 export interface ApprovedRegistrationDTO {
@@ -48,6 +52,7 @@ export async function daemonListPendingRegistrations(): Promise<PendingRegistrat
     tier: r.tier,
     ownerFirstName: r.ownerFirstName,
     ownerLastName: r.ownerLastName,
+    receivedAt: r.receivedAt ? timestampDate(r.receivedAt).toISOString() : null,
   }));
 }
 

@@ -39,6 +39,7 @@ const ROWS = [
     tier: "team",
     ownerFirstName: "Ada",
     ownerLastName: "Lovelace",
+    receivedAt: "2026-10-07T09:30:00.000Z",
   },
   {
     registrationId: "reg-2",
@@ -47,6 +48,7 @@ const ROWS = [
     tier: "org",
     ownerFirstName: "",
     ownerLastName: "",
+    receivedAt: null,
   },
 ];
 
@@ -73,6 +75,16 @@ describe("RegistrationsContent", () => {
     expect(within(rows[0]!).getByText("Analytical")).toBeTruthy();
     expect(screen.getByText(REGISTRATIONS_TEXT.title)).toBeTruthy();
     expect(screen.getByText(REGISTRATIONS_TEXT.intro)).toBeTruthy();
+  });
+
+  it("states when each registration arrived", async () => {
+    wrap(<RegistrationsContent />);
+    const rows = await screen.findAllByTestId("registration-row");
+    expect(screen.getByText(REGISTRATIONS_TEXT.columnReceived)).toBeTruthy();
+    const time = rows[0]!.querySelector("time");
+    expect(time?.getAttribute("dateTime")).toBe("2026-10-07T09:30:00.000Z");
+    expect(time?.textContent).toBe(new Date("2026-10-07T09:30:00.000Z").toLocaleString());
+    expect(rows[1]!.querySelector("time")).toBeNull();
   });
 
   it("states that no registration waits", async () => {
