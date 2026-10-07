@@ -75,6 +75,8 @@ export function useSubmitBetVerdict() {
       if (!res.ok) throw await readError(res, 'Failed to record the verdict');
       return (await res.json()) as HitlSettleVerdictResponse;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.hitlSettle.list(tenantId) }),
+    // A verdict settles a bet, so both the open bets and the proofs that
+    // wait for a review change. The prefix covers both lists.
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.hitlSettle.all }),
   });
 }
