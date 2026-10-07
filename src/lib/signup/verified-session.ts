@@ -130,20 +130,22 @@ export function signupCookieOptions(): {
 // ---------------------------------------------------------------------------
 
 /**
- * The signing key. Deliberately the same one `active-tenant.ts` uses: it is a
- * generic server-side signing secret that happens to be named for Auth.js, the
- * chart already generates it into the dashboard Secret, and a second key would
- * be a second thing to rotate for no gain.
+ * The signing keys: AUTH_SECRET first, then AUTH_SECRET_PREVIOUS when a
+ * rotation is in progress (ADR-0171). Auth.js uses the same pair for the
+ * session cookie, so one rotation covers both, and a second key would be a
+ * second thing to rotate for no gain.
  *
  * Hard-fails rather than falling back to a guessable value. A signup flow that
  * silently signs with the empty string is worse than one that does not start.
+ * A key that is too short fails the same way, so this reader and Auth.js never
+ * disagree about the pair.
  */
 function signingKeys(): Buffer[] {
   const keys = authSecrets();
-  if (keys.length === 0 || keys[0].length < 16) {
-    throw new Error('AUTH_SECRET is missing or too short to sign cookies');
+  if (keys.length === 0 || keys.some((k) => k.length < 16)) {
+    throw new Error('AUTH_SECRET or AUTH_SECRET_PREVIOUS is missing or too short to sign cookies');
   }
-  return keys.filter((k) => k.length >= 16).map((k) => Buffer.from(k, 'utf8'));
+  return keys.map((k) => Buffer.from(k, 'utf8'));
 }
 
 function hmac(key: Buffer, payload: string): string {
