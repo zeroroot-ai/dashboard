@@ -198,6 +198,9 @@ export const queryKeys = {
     trackRecord: (tenantId: string, technique: string, scopeId: string) =>
       ['calibration', tenantId, 'track-record', technique, scopeId] as const,
     scopes: (tenantId: string) => ['calibration', tenantId, 'scopes'] as const,
+    // The techniques one mission used, each in its scope (dashboard#192).
+    missionTechniques: (tenantId: string, missionId: string) =>
+      ['calibration', tenantId, 'mission-techniques', missionId] as const,
   },
 } as const;
 

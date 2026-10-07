@@ -26,6 +26,7 @@ import { MissionFindingsTab } from "@/components/gibson/missions/MissionFindings
 import { RunJobsTab } from "@/components/gibson/missions/RunJobsTab";
 import { RunChainTab } from "@/components/gibson/missions/RunChainTab";
 import { MissionFlowTab } from "@/src/components/gibson/mission-graph/MissionFlowTab";
+import { MissionTrackRecordPanel } from "@/components/gibson/reliability/MissionTrackRecordPanel";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import type { MissionTerminalHandle } from "@/src/components/missions/MissionTerminal";
 
@@ -465,6 +466,12 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
               </CardContent>
             </Card>
           )}
+
+          {/* The track record of each technique the mission used, in the
+              scope it used it in (dashboard#192, gibson#619). */}
+          <div className="mt-4">
+            <MissionTrackRecordPanel missionId={mission.id} />
+          </div>
 
           {/* In-flight tool streaming progress, week-4-handlers-ui-e2e §5
               task 53. One <ToolStreamProgress /> per active invocation. The
