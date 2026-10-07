@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.130.1](https://github.com/zeroroot-ai/dashboard/compare/v0.130.0...v0.130.1) (2026-10-07)
+
+
+### Bug Fixes
+
+* **deps:** pin sharp to 0.35.5 ([#275](https://github.com/zeroroot-ai/dashboard/issues/275)) ([47da6e9](https://github.com/zeroroot-ai/dashboard/commit/47da6e9b2938e0833415d37645ae6d6993a44d8f))
+
 ## [0.130.0](https://github.com/zeroroot-ai/dashboard/compare/v0.129.0...v0.130.0) (2026-10-07)
 
 
