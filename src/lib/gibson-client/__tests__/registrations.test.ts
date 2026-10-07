@@ -9,6 +9,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { timestampFromDate } from '@bufbuild/protobuf/wkt';
 
 vi.mock('server-only', () => ({}));
 
@@ -48,6 +49,15 @@ describe('registrations client', () => {
           tier: 'team',
           ownerFirstName: 'Ada',
           ownerLastName: 'Lovelace',
+          receivedAt: timestampFromDate(new Date('2026-10-07T09:30:00.000Z')),
+        },
+        {
+          registrationId: 'reg-2',
+          ownerEmail: 'alan@example.test',
+          workspaceName: 'Bombe',
+          tier: 'org',
+          ownerFirstName: '',
+          ownerLastName: '',
         },
       ],
     });
@@ -59,6 +69,16 @@ describe('registrations client', () => {
         tier: 'team',
         ownerFirstName: 'Ada',
         ownerLastName: 'Lovelace',
+        receivedAt: '2026-10-07T09:30:00.000Z',
+      },
+      {
+        registrationId: 'reg-2',
+        ownerEmail: 'alan@example.test',
+        workspaceName: 'Bombe',
+        tier: 'org',
+        ownerFirstName: '',
+        ownerLastName: '',
+        receivedAt: null,
       },
     ]);
     expect(list).toHaveBeenCalledWith({ pageSize: 200 });
