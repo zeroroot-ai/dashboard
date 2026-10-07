@@ -98,7 +98,6 @@ const SECRET_ENV_VARS = [
   // Backing stores
   "DATABASE_URL",
   "REDIS_URL",
-  "NEO4J_PASSWORD",
   // Mail / cloud
   "AWS_SECRET_ACCESS_KEY",
   "AWS_SESSION_TOKEN",
