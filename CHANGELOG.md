@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.131.0](https://github.com/zeroroot-ai/dashboard/compare/v0.130.1...v0.131.0) (2026-10-07)
+
+
+### Features
+
+* **admin:** the registration queue states when each registration arrived ([#268](https://github.com/zeroroot-ai/dashboard/issues/268)) ([4d24707](https://github.com/zeroroot-ai/dashboard/commit/4d24707e970d9c4a63be0514f99f5c96611af0ac))
+* **auth:** a rotated AUTH_SECRET signs nobody out ([#274](https://github.com/zeroroot-ai/dashboard/issues/274)) ([17cfb06](https://github.com/zeroroot-ai/dashboard/commit/17cfb069001612e6df3c8debbb9334003a63205a))
+
+
+### Bug Fixes
+
+* **config:** the dashboard starts with no Neo4j variables ([#272](https://github.com/zeroroot-ai/dashboard/issues/272)) ([2dbb6d5](https://github.com/zeroroot-ai/dashboard/commit/2dbb6d5c4769b529b638b8587b7bc8228fab572f))
+
 ## [0.130.1](https://github.com/zeroroot-ai/dashboard/compare/v0.130.0...v0.130.1) (2026-10-07)
 
 
