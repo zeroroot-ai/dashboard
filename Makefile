@@ -22,7 +22,7 @@ PNPM ?= pnpm
 IMAGE_NAME ?= ghcr.io/zeroroot-ai/dashboard
 IMAGE_TAG  ?= dev
 
-.PHONY: all bootstrap build test check image lint typecheck knip proto help
+.PHONY: all bootstrap build test check image lint knip proto help
 
 all: check build ## Run the full check suite then build
 
@@ -40,9 +40,6 @@ check: ## Typecheck + knip (dead-code) + AST guards — the enforced gate (mirro
 
 lint: ## ESLint over the TS/TSX surface
 	$(PNPM) lint
-
-typecheck: ## tsc --noEmit
-	$(PNPM) typecheck
 
 knip: ## Dead-code / unused-dependency gate (blocking; see knip.jsonc)
 	$(PNPM) knip

@@ -16,9 +16,8 @@
  *  - `javascript:` or other non-http(s) schemes → reject, return "/".
  *  - Empty / missing → return "/".
  *
- * The allowed origin is derived from NEXTAUTH_URL (Auth.js convention; legacy
- * AUTH_URL also accepted). If neither is set (e.g. in test environments),
- * only relative paths are accepted.
+ * The allowed origin is derived from AUTH_URL. If it is not set (e.g. in
+ * test environments), only relative paths are accepted.
  */
 
 /**
@@ -75,15 +74,14 @@ export function validateRedirectTo(url: string | null | undefined): string {
 }
 
 /**
- * Resolve the dashboard's own origin from NEXTAUTH_URL / AUTH_URL.
+ * Resolve the dashboard's own origin from AUTH_URL.
  * Returns null if the env var is unset or the URL is unparseable.
  *
  * Spec: unified-identity-and-authorization Phase 4, Auth.js owns the
- * dashboard's session layer and uses the standard NEXTAUTH_URL / AUTH_URL
- * convention.
+ * dashboard's session layer and uses the standard AUTH_URL convention.
  */
 function resolveAllowedOrigin(): string | null {
-  const raw = process.env.NEXTAUTH_URL || process.env.AUTH_URL;
+  const raw = process.env.AUTH_URL;
   if (!raw) return null;
   try {
     return new URL(raw).origin;

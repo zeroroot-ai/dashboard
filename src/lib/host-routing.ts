@@ -22,7 +22,7 @@
  * redirects fire. `GET /` renders the root page, which now redirects to /login.
  *
  * Hostnames are CONFIG-DERIVED per deploy#630: the product origin comes from
- * AUTH_URL/NEXTAUTH_URL, the marketing origin from WWW_URL (wired by the Helm
+ * AUTH_URL, the marketing origin from WWW_URL (wired by the Helm
  * chart from `global.domain`). When WWW_URL is unset (self-hosted), the split
  * is disabled.
  */
@@ -151,7 +151,7 @@ export function resolveDocsOrigin(
 export function loadHostSplitConfig(
   source: Record<string, string | undefined> = process.env,
 ): HostSplitConfig | null {
-  const appOrigin = source.NEXTAUTH_URL || source.AUTH_URL;
+  const appOrigin = source.AUTH_URL;
   const wwwOrigin = source.WWW_URL;
   if (!appOrigin || !wwwOrigin) return null;
   let appHost: string;

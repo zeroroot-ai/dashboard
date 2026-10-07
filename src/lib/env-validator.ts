@@ -267,14 +267,6 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
  * block whenever possible.
  */
 const OPTIONAL_ENV = [
-  // ---- Auth.js legacy aliases ----
-  // NEXTAUTH_URL / NEXTAUTH_SECRET are read-only legacy aliases for AUTH_URL /
-  // AUTH_SECRET. Auth.js v5 honors either name; the dashboard requires
-  // AUTH_URL / AUTH_SECRET, so the NEXTAUTH_* variants are intentionally
-  // never required.
-  'NEXTAUTH_URL',
-  'NEXTAUTH_SECRET',
-
   // ---- Marketing host (deploy#630 S11 www/app split) ----
   // Full origin of the marketing host (e.g. https://www.zeroroot.ai:30443),
   // wired by the chart from `global.domain` + `gibson.wwwHost`. When unset
@@ -347,7 +339,7 @@ const OPTIONAL_ENV = [
   // NEXT_PUBLIC_* are evaluated at build time and ship to the browser; not a
   // boot-time concern. (NEXT_PUBLIC_APP_URL was deleted in dashboard#1036:
   // nothing set it anywhere, so its readers silently pinned prod URLs;
-  // metadataBase now derives from NEXTAUTH_URL/AUTH_URL at request time.)
+  // metadataBase now derives from AUTH_URL at request time.)
   'NEXT_PUBLIC_API_URL',
   'NEXT_PUBLIC_IDENTITY_PROVIDER_URL',
 

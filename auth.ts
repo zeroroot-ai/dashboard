@@ -189,7 +189,7 @@ requireEnv("ZITADEL_EXTERNAL_DOMAIN");
  * set.
  */
 const useSecureCookies: boolean = (() => {
-  const rawAuthUrl = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL;
+  const rawAuthUrl = process.env.AUTH_URL;
   if (!rawAuthUrl) return process.env.NODE_ENV === "production";
   try {
     return new URL(rawAuthUrl).protocol === "https:";

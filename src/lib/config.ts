@@ -51,12 +51,12 @@ export const serverConfig = {
   // legacy missing-email recovery flow. The HMAC secret is just a
   // generic signing key; the env var name is retained at AUTH_SECRET
   // (the Auth.js convention) under unified-identity-and-authorization
-  // Phase 4. NEXTAUTH_URL is the canonical dashboard URL.
+  // Phase 4. AUTH_URL is the canonical dashboard URL.
   // Spec Phase 4 Requirement 9.1: Auth.js is the canonical session layer.
   //
-  // REQUIRED: set AUTH_URL (or NEXTAUTH_URL) to the dashboard public URL.
-  dashboardPublicUrl: process.env.NEXTAUTH_URL || process.env.AUTH_URL,
-  authHmacSecret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || '',
+  // REQUIRED: set AUTH_URL to the dashboard public URL.
+  dashboardPublicUrl: process.env.AUTH_URL,
+  authHmacSecret: process.env.AUTH_SECRET || '',
 
   // Dashboard PostgreSQL (Auth.js + tenant state)
   databaseUrl: process.env.DATABASE_URL || '',
@@ -90,7 +90,7 @@ const clientConfig = {
  * Required variables are checked unconditionally (not only in production):
  *   - GIBSON_PLATFORM_PUBLIC_URL
  *   - NEO4J_URI
- *   - AUTH_URL / NEXTAUTH_URL
+ *   - AUTH_URL
  *
  * Auth.js secrets and DATABASE_URL are additionally checked in production.
  *
@@ -116,7 +116,7 @@ export function validateEnvConfig(): void {
 
   if (!serverConfig.dashboardPublicUrl) {
     errors.push(
-      'AUTH_URL (or NEXTAUTH_URL) is required (the dashboard public URL for ' +
+      'AUTH_URL is required (the dashboard public URL for ' +
       'Auth.js OIDC callbacks, e.g. http://localhost:30081). See .env.example.',
     );
   }
@@ -124,7 +124,7 @@ export function validateEnvConfig(): void {
   // Validate Auth.js configuration in production
   if (serverConfig.isProduction) {
     if (!serverConfig.authHmacSecret) {
-      errors.push('AUTH_SECRET (or legacy NEXTAUTH_SECRET) is required in production');
+      errors.push('AUTH_SECRET is required in production');
     }
     if (!serverConfig.databaseUrl) {
       errors.push('DATABASE_URL is required in production');
