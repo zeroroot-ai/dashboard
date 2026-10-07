@@ -18,11 +18,7 @@ import type {
   StatusResponse,
   Capabilities,
 } from '@/src/gen/gibson/daemon/v1/daemon_pb';
-import type {
-  UserProfile,
-  UserActivity,
-  ListUserActivitiesResponse,
-} from '@/src/types/user';
+import type { UserProfile } from '@/src/types/user';
 import type {
   DaemonProviderConfigInput,
   ProviderCapability,
@@ -830,22 +826,6 @@ async function updateUserProfile(
     status: (p?.status ?? 'active') as UserProfile['status'],
     createdAt: p?.createdAt ?? new Date().toISOString(),
   };
-}
-
-/**
- * Retrieve user activity.
- *
- * ListAuditEvents is DEFERRED per admin-services-completion design.md.
- * This function returns an empty result set until the feature ships.
- * The /api/users/activity route handler degrades gracefully on empty.
- */
-export async function getUserActivity(
-  _tenantId: string,
-  _userId: string,
-  opts?: { page?: number; limit?: number }
-): Promise<ListUserActivitiesResponse> {
-  const limit = Math.min(opts?.limit ?? 20, 100);
-  return { activities: [], total: 0, page: opts?.page ?? 1, limit, hasMore: false };
 }
 
 // Invitation RPCs (ListInvitations / RevokeInvitation / ResendInvitation /

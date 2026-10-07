@@ -22,12 +22,19 @@ import { RunningAgentsBadge } from "@/components/gibson/agent-console/RunningAge
 import { ComplianceNavGate } from "@/components/gibson/compliance/ComplianceNavGate";
 import { COMPLIANCE_MENU_TITLE } from "@/components/gibson/compliance/texts";
 import { INTEGRATIONS_TEXTS } from "@/components/gibson/integrations/texts";
+import { AuthorizedNavGate } from "@/components/gibson/auth/AuthorizedNavGate";
+import { AUDIT_TEXT } from "@/components/gibson/audit-log/texts";
+import { ONTOLOGY_TEXT } from "@/components/gibson/ontology-proposals/texts";
+import { RegistrationsNavGate } from "@/components/gibson/registrations/RegistrationsNavGate";
+import { REGISTRATIONS_TEXT } from "@/components/gibson/registrations/texts";
 import {
   ActivityIcon,
   AlertTriangleIcon,
+  BookOpenIcon,
   BotIcon,
   BoxIcon,
   UserIcon,
+  UserCheckIcon,
   UsersIcon,
   ChevronRight,
   CrosshairIcon,
@@ -42,6 +49,7 @@ import {
   NetworkIcon,
   Plug2Icon,
   RocketIcon,
+  ScrollTextIcon,
   ServerIcon,
   SettingsIcon,
   ShieldAlertIcon,
@@ -63,8 +71,13 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 
+/** A menu gate. Each value names a component that hides its entry. */
+type NavGate = "compliance" | "registrations" | "ontology" | "audit";
+
 type NavGroup = {
   title: string;
+  /** A gate on the whole group, label included. Same values as NavItem.gate. */
+  gate?: NavGate;
   items: NavItem;
 };
 
@@ -80,8 +93,12 @@ type NavItem = {
   /**
    * "compliance": the entry shows only for the Owner and the Admin, and only
    * when the tenant enabled a compliance pack (D56).
+   * "registrations": the entry shows only for a caller that may read the
+   * registration queue, the Platform owner (dashboard#193).
+   * "ontology" and "audit": the entry shows only for the Owner and the
+   * Admin, the roles that may call the page's RPC (dashboard#191, G23).
    */
-  gate?: "compliance";
+  gate?: NavGate;
   newTab?: boolean;
   items?: NavItem;
 }[];
@@ -149,6 +166,14 @@ export const navItems: NavGroup[] = [
         title: "Reliability",
         href: "/dashboard/reliability",
         icon: GaugeIcon
+      },
+      {
+        // The ontology proposals of the agents (ADR-0033 decision 3,
+        // dashboard#191): the Owner approves what agents propose.
+        title: ONTOLOGY_TEXT.menu,
+        href: "/dashboard/organization/ontology-proposals",
+        icon: BookOpenIcon,
+        gate: "ontology"
       },
       {
         title: "Agents",
@@ -243,6 +268,29 @@ export const navItems: NavGroup[] = [
         href: "/dashboard/organization/security-policy",
         icon: ShieldCheckIcon,
       },
+      {
+        // The audit log of the organization (lane 11 row G23): who did
+        // what, as which kind of actor, to which object.
+        title: AUDIT_TEXT.menu,
+        href: "/dashboard/organization/audit-log",
+        icon: ScrollTextIcon,
+        gate: "audit",
+      },
+    ],
+  },
+  {
+    // The Platform owner's surface. The whole group, label included, shows
+    // only for a caller that may read the registration queue.
+    title: "Platform",
+    gate: "registrations",
+    items: [
+      {
+        // The registration queue of the approval rung (ADR-0074,
+        // dashboard#193).
+        title: REGISTRATIONS_TEXT.menu,
+        href: "/dashboard/admin/registrations",
+        icon: UserCheckIcon,
+      },
     ],
   },
   {
@@ -262,8 +310,24 @@ export const navItems: NavGroup[] = [
   },
 ];
 
-function GatedItem({ gate, children }: { gate?: "compliance"; children: React.ReactNode }) {
+/** The RPC that each RPC-gated entry needs. */
+const GATE_METHOD = {
+  ontology: "/gibson.tenant.v1.OntologyExtensionService/ListOntologyExtensionProposals",
+  audit: "/gibson.tenant.v1.TenantService/ListAuditEvents",
+} as const;
+
+function GatedItem({
+  gate,
+  children,
+}: {
+  gate?: NavGate;
+  children: React.ReactNode;
+}) {
   if (gate === "compliance") return <ComplianceNavGate>{children}</ComplianceNavGate>;
+  if (gate === "registrations") return <RegistrationsNavGate>{children}</RegistrationsNavGate>;
+  if (gate === "ontology" || gate === "audit") {
+    return <AuthorizedNavGate method={GATE_METHOD[gate]}>{children}</AuthorizedNavGate>;
+  }
   return <>{children}</>;
 }
 
@@ -274,7 +338,8 @@ export function NavMain() {
   return (
     <>
       {navItems.map((nav) => (
-        <SidebarGroup key={nav.title}>
+        <GatedItem key={nav.title} gate={nav.gate}>
+        <SidebarGroup>
           <SidebarGroupLabel>{nav.title}</SidebarGroupLabel>
           <SidebarGroupContent className="flex flex-col gap-2">
             <SidebarMenu>
@@ -372,6 +437,7 @@ export function NavMain() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        </GatedItem>
       ))}
     </>
   );

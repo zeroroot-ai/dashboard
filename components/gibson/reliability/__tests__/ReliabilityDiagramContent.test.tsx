@@ -8,6 +8,7 @@
  *   2. The diagram renders a point per non-empty bucket, from real report data.
  *   3. The Brier score and summary stats surface.
  *   4. The technique filter switches which curve is drawn.
+ *   5. A chosen technique shows its track record panel (dashboard#192).
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -18,6 +19,12 @@ import type { CalibrationReport } from '@/src/types/calibration';
 const mockUseCalibration = vi.fn();
 vi.mock('@/src/hooks/useCalibration', () => ({
   useCalibration: (...args: unknown[]) => mockUseCalibration(...args),
+}));
+
+vi.mock('@/components/gibson/reliability/TrackRecordPanel', () => ({
+  TrackRecordPanel: ({ technique }: { technique: string }) => (
+    <div data-testid="track-record-stub">{technique}</div>
+  ),
 }));
 
 import { ReliabilityDiagramContent } from '../ReliabilityDiagramContent';
@@ -96,8 +103,9 @@ describe('ReliabilityDiagramContent', () => {
     mockUseCalibration.mockReturnValue({ isLoading: false, data: REPORT, error: null });
     render(<ReliabilityDiagramContent />);
 
-    // Default is the tenant-wide summary (two buckets).
+    // Default is the tenant-wide summary (two buckets), with no track record.
     expect(screen.getByTestId('reliability-point-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('track-record-stub')).not.toBeInTheDocument();
 
     await user.click(screen.getByTestId('reliability-technique-select'));
     await user.click(await screen.findByText('http-probe'));
@@ -106,6 +114,7 @@ describe('ReliabilityDiagramContent', () => {
     expect(screen.getByTestId('reliability-point-0')).toBeInTheDocument();
     expect(screen.queryByTestId('reliability-point-1')).not.toBeInTheDocument();
     expect(screen.getByText('0.220')).toBeInTheDocument(); // the technique's Brier score
+    expect(screen.getByTestId('track-record-stub')).toHaveTextContent('http-probe');
   });
 
   it('renders an error state when the query fails', () => {
