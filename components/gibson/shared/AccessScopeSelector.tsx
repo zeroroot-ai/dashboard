@@ -5,7 +5,7 @@
 
 /**
  * Shared scope selector used by /dashboard/agents, /dashboard/tools,
- * /dashboard/plugins, and the Security Policy page. Emits a
+ * the Plugins tab of /dashboard/integrations, and the Security Policy page. Emits a
  * {scope, targetId?} structure; parent decides what to do with it.
  *
  * The secondary dropdown (team / user / agent) is populated on demand: when a

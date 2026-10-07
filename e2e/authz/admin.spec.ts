@@ -71,7 +71,7 @@ test.describe("Authz gating, admin visibility", () => {
 
   for (const [type, path] of [
     ["agent", "/dashboard/agents"],
-    ["plugin", "/dashboard/plugins"],
+    ["plugin", "/dashboard/integrations?tab=plugins"],
     ["tool", "/dashboard/tools"],
   ] as const) {
     test(`the Deploy ${type} CTA is enabled for an admin`, async ({ page }) => {
