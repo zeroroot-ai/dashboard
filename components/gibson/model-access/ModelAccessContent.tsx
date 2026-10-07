@@ -71,6 +71,14 @@ export function ModelAccessContent() {
   );
 }
 
+/**
+ * A tenant subject is the caller's own tenant and needs no id. A user or
+ * team subject needs one.
+ */
+function subjectReady(kind: SubjectKindInput, id: string): boolean {
+  return kind === "tenant" || id !== "";
+}
+
 // ---------------------------------------------------------------------
 // Grant form: add a single (subject, target) grant
 // ---------------------------------------------------------------------
@@ -128,23 +136,23 @@ function GrantFormCard() {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
-            <Label>Subject ID</Label>
-            {subjectKind === "user" ? (
-              <MemberPicker
-                value={subjectId}
-                onChange={(userId) => setSubjectId(userId)}
-              />
-            ) : (
-              <Input
-                placeholder={
-                  subjectKind === "team" ? "team-uuid" : "tenant-uuid"
-                }
-                value={subjectId}
-                onChange={(e) => setSubjectId(e.target.value)}
-              />
-            )}
-          </div>
+          {subjectKind !== "tenant" && (
+            <div className="space-y-1.5">
+              <Label>Subject ID</Label>
+              {subjectKind === "user" ? (
+                <MemberPicker
+                  value={subjectId}
+                  onChange={(userId) => setSubjectId(userId)}
+                />
+              ) : (
+                <Input
+                  placeholder="team-uuid"
+                  value={subjectId}
+                  onChange={(e) => setSubjectId(e.target.value)}
+                />
+              )}
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label>Target kind</Label>
             <Select
@@ -172,7 +180,7 @@ function GrantFormCard() {
           </div>
         </div>
         <div className="mt-4 flex justify-end">
-          <Button onClick={grant} disabled={!subjectId || !targetId}>
+          <Button onClick={grant} disabled={!subjectReady(subjectKind, subjectId) || !targetId}>
             Grant access
           </Button>
         </div>
@@ -190,14 +198,24 @@ function GrantsViewerCard() {
   const [subjectId, setSubjectId] = useState("");
   const [rows, setRows] = useState<AccessGrantRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   async function load() {
-    if (!subjectId) return;
+    if (!subjectReady(subjectKind, subjectId)) return;
     setLoading(true);
     const res = await listModelAccessAction(subjectKind, subjectId);
-    if (res.ok) setRows(res.data);
-    else toast.error(res.error);
+    if (res.ok) {
+      setRows(res.data);
+      setLoaded(true);
+    } else toast.error(res.error);
     setLoading(false);
+  }
+
+  function changeSubject(kind: SubjectKindInput, id: string) {
+    setSubjectKind(kind);
+    setSubjectId(id);
+    setRows([]);
+    setLoaded(false);
   }
 
   async function revoke(row: AccessGrantRow) {
@@ -230,7 +248,7 @@ function GrantsViewerCard() {
             <Label>Subject kind</Label>
             <Select
               value={subjectKind}
-              onValueChange={(v) => setSubjectKind(v as SubjectKindInput)}
+              onValueChange={(v) => changeSubject(v as SubjectKindInput, "")}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -242,21 +260,23 @@ function GrantsViewerCard() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex-1 space-y-1.5">
-            <Label>Subject ID</Label>
-            {subjectKind === "user" ? (
-              <MemberPicker
-                value={subjectId}
-                onChange={(userId) => setSubjectId(userId)}
-              />
-            ) : (
-              <Input
-                value={subjectId}
-                onChange={(e) => setSubjectId(e.target.value)}
-              />
-            )}
-          </div>
-          <Button onClick={load} disabled={!subjectId || loading}>
+          {subjectKind !== "tenant" && (
+            <div className="flex-1 space-y-1.5">
+              <Label>Subject ID</Label>
+              {subjectKind === "user" ? (
+                <MemberPicker
+                  value={subjectId}
+                  onChange={(userId) => changeSubject(subjectKind, userId)}
+                />
+              ) : (
+                <Input
+                  value={subjectId}
+                  onChange={(e) => changeSubject(subjectKind, e.target.value)}
+                />
+              )}
+            </div>
+          )}
+          <Button onClick={load} disabled={!subjectReady(subjectKind, subjectId) || loading}>
             Load
           </Button>
         </div>
@@ -298,7 +318,7 @@ function GrantsViewerCard() {
               ))}
             </TableBody>
           </Table>
-        ) : subjectId && !loading ? (
+        ) : loaded && !loading ? (
           <EmptyState
             icon={KeyIcon}
             title="No grants for this subject"
