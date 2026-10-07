@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.129.0](https://github.com/zeroroot-ai/dashboard/compare/v0.128.0...v0.129.0) (2026-10-07)
+
+
+### Features
+
+* **billing:** the dashboard holds no billing code and offers two neutral connection points ([#256](https://github.com/zeroroot-ai/dashboard/issues/256)) ([fc652c7](https://github.com/zeroroot-ai/dashboard/commit/fc652c71988975e8b66978d0325d3d154e7634be))
+* **compliance:** one page shows the audit evidence for each control ([#259](https://github.com/zeroroot-ai/dashboard/issues/259)) ([0c2cc94](https://github.com/zeroroot-ai/dashboard/commit/0c2cc9469009ec349e43e5c3e0786e064eae3ad2)), closes [#224](https://github.com/zeroroot-ai/dashboard/issues/224)
+* end-phase integration of the dashboard ([#263](https://github.com/zeroroot-ai/dashboard/issues/263)) ([8685563](https://github.com/zeroroot-ai/dashboard/commit/8685563c9b9934ab3659d40137c55ae4afa56596))
+* **missions:** the runs of a mission show as a chain, and a checkpoint offers a rewind ([#258](https://github.com/zeroroot-ai/dashboard/issues/258)) ([89aaa38](https://github.com/zeroroot-ai/dashboard/commit/89aaa38a1c256491bda73babff4775ec69fbc65b)), closes [#227](https://github.com/zeroroot-ai/dashboard/issues/227)
+* **proto:** the list calls use page_size and page_token of sdk v0.196.0 ([#257](https://github.com/zeroroot-ai/dashboard/issues/257)) ([32c418f](https://github.com/zeroroot-ai/dashboard/commit/32c418f991264922d969b2676b0c31c0fcbd883e))
+
+
+### Bug Fixes
+
+* **auth:** the sign-in error text makes no promise about on-call ([#232](https://github.com/zeroroot-ai/dashboard/issues/232)) ([b39381a](https://github.com/zeroroot-ai/dashboard/commit/b39381a65494172ae2339fb1cb847c4627975fe9)), closes [#211](https://github.com/zeroroot-ai/dashboard/issues/211)
+* **auth:** the sign-out route accepts POST only ([#231](https://github.com/zeroroot-ai/dashboard/issues/231)) ([6594b36](https://github.com/zeroroot-ai/dashboard/commit/6594b36dcbedec2292ec9b75b03afb7d5d1b4c8d)), closes [#210](https://github.com/zeroroot-ai/dashboard/issues/210)
+* **build:** pnpm-lock.yaml is the one lockfile ([#247](https://github.com/zeroroot-ai/dashboard/issues/247)) ([03c846f](https://github.com/zeroroot-ai/dashboard/commit/03c846fae58d16a8972fe89aa8a5d50926bfe4d5))
+* **deploy:** the plugin guide names no integrations repository ([#260](https://github.com/zeroroot-ai/dashboard/issues/260)) ([71c3e21](https://github.com/zeroroot-ai/dashboard/commit/71c3e2129556a29ab874c8e93c77c937b9161a13))
+* **enroll:** the credential panel shows how enrollment works ([#223](https://github.com/zeroroot-ai/dashboard/issues/223)) ([cdd172a](https://github.com/zeroroot-ai/dashboard/commit/cdd172adf1c7d6b94698d64ff13898acbaaec363))
+* **guards:** the admin binding guard has one list and a failing fixture ([#236](https://github.com/zeroroot-ai/dashboard/issues/236)) ([3095ca6](https://github.com/zeroroot-ai/dashboard/commit/3095ca688f0ce26b95fdc67df151548c2679cc69)), closes [#214](https://github.com/zeroroot-ai/dashboard/issues/214)
+* **guards:** the RBAC checks of the dashboard read a chart file that exists ([#230](https://github.com/zeroroot-ai/dashboard/issues/230)) ([3ecbf7f](https://github.com/zeroroot-ai/dashboard/commit/3ecbf7f073325a31e49dafe1ed5a29fbc9c23fe9)), closes [#209](https://github.com/zeroroot-ai/dashboard/issues/209)
+* **model-access:** the page states the real default ([#220](https://github.com/zeroroot-ai/dashboard/issues/220)) ([088f187](https://github.com/zeroroot-ai/dashboard/commit/088f187ffd0aebf08855ba7f4f8a1033621ec55d))
+* **proto:** gen-authz-registry reads the sdk protos from the Buf registry ([#244](https://github.com/zeroroot-ai/dashboard/issues/244)) ([a674f4b](https://github.com/zeroroot-ai/dashboard/commit/a674f4b301aa728206d89960868b05e53e1425ca)), closes [#240](https://github.com/zeroroot-ai/dashboard/issues/240)
+* **proto:** proto-generate reads the sdk protos from the Buf registry ([#241](https://github.com/zeroroot-ai/dashboard/issues/241)) ([b886d62](https://github.com/zeroroot-ai/dashboard/commit/b886d6248a7fbd6ab89075c704b1360d71b4174a))
+* **providers:** one client function updates a provider credential ([#235](https://github.com/zeroroot-ai/dashboard/issues/235)) ([badae48](https://github.com/zeroroot-ai/dashboard/commit/badae48870d883f85834d96543b1f01a26d8ef69)), closes [#213](https://github.com/zeroroot-ai/dashboard/issues/213)
+* **providers:** the provider code names the real service and no missing doc ([#233](https://github.com/zeroroot-ai/dashboard/issues/233)) ([344661b](https://github.com/zeroroot-ai/dashboard/commit/344661bdd26e634c835c52c0ce1c54d7308c5715)), closes [#212](https://github.com/zeroroot-ai/dashboard/issues/212)
+* **secrets:** the dashboard calls gibson.secrets.v1.SecretsService ([#248](https://github.com/zeroroot-ai/dashboard/issues/248)) ([0a4a303](https://github.com/zeroroot-ai/dashboard/commit/0a4a30329eb7d78b4cd362b63f42df40f26697f7))
+
 ## [0.128.0](https://github.com/zeroroot-ai/dashboard/compare/v0.127.2...v0.128.0) (2026-10-05)
 
 
