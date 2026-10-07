@@ -11,7 +11,7 @@ overrides:
   '@ai-sdk/provider-utils@5': 5.0.53
   '@ai-sdk/provider@4': 4.0.21
   katex: ^0.18.2
-  sharp: 0.35.5
+  sharp: ^0.35.5
 
 importers:
 
