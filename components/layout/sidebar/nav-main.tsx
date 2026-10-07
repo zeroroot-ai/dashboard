@@ -25,6 +25,8 @@ import { INTEGRATIONS_TEXTS } from "@/components/gibson/integrations/texts";
 import { AuthorizedNavGate } from "@/components/gibson/auth/AuthorizedNavGate";
 import { AUDIT_TEXT } from "@/components/gibson/audit-log/texts";
 import { ONTOLOGY_TEXT } from "@/components/gibson/ontology-proposals/texts";
+import { PlatformHealthNavGate } from "@/components/gibson/platform-health/PlatformHealthNavGate";
+import { PLATFORM_HEALTH_TEXTS } from "@/components/gibson/platform-health/texts";
 import { RegistrationsNavGate } from "@/components/gibson/registrations/RegistrationsNavGate";
 import { REGISTRATIONS_TEXT } from "@/components/gibson/registrations/texts";
 import {
@@ -72,7 +74,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 /** A menu gate. Each value names a component that hides its entry. */
-type NavGate = "compliance" | "registrations" | "ontology" | "audit";
+type NavGate = "compliance" | "registrations" | "ontology" | "audit" | "platform-health";
 
 type NavGroup = {
   title: string;
@@ -97,6 +99,8 @@ type NavItem = {
    * registration queue, the Platform owner (dashboard#193).
    * "ontology" and "audit": the entry shows only for the Owner and the
    * Admin, the roles that may call the page's RPC (dashboard#191, G23).
+   * "platform-health": the entry shows only for the Platform owner, the
+   * caller that may read the platform health (hosted#174).
    */
   gate?: NavGate;
   newTab?: boolean;
@@ -306,6 +310,14 @@ export const navItems: NavGroup[] = [
         href: "/dashboard/pages/settings/account",
         icon: SettingsIcon,
       },
+      {
+        // The Platform owner's health view (hosted#174). The gate shows the
+        // entry only to a caller that may read it.
+        title: PLATFORM_HEALTH_TEXTS.menu,
+        href: "/dashboard/admin/platform-health",
+        icon: ActivityIcon,
+        gate: "platform-health",
+      },
     ],
   },
 ];
@@ -328,6 +340,7 @@ function GatedItem({
   if (gate === "ontology" || gate === "audit") {
     return <AuthorizedNavGate method={GATE_METHOD[gate]}>{children}</AuthorizedNavGate>;
   }
+  if (gate === "platform-health") return <PlatformHealthNavGate>{children}</PlatformHealthNavGate>;
   return <>{children}</>;
 }
 
