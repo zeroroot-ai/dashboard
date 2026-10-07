@@ -9,8 +9,6 @@
  * production), which is the desired fail-fast behavior for misconfigured
  * pods.
  *
- * Spec: zero-trust-hardening Req 11.3, `ALLOWED_SERVICE_SUBJECTS` must
- * be non-empty before any inbound service-acting traffic can succeed.
  * Spec: security-hardening R9, `DASHBOARD_AUTHZ_PERMISSIVE_DEV=1` must
  * never be honored in a production build; defense-in-depth on top of
  * the existing `NODE_ENV` gate at `assert-authorized.ts`.
@@ -94,4 +92,8 @@ export async function register() {
   // pod fails at boot rather than on the first page that reads it.
   const { getDeploymentProfile } = await import('@/src/lib/deployment-profile');
   getDeploymentProfile();
+
+  // The metrics-only listener (charts#515). The API port serves no metrics.
+  const { startMetricsServer } = await import('@/src/lib/metrics/server');
+  await startMetricsServer();
 }

@@ -5,8 +5,8 @@
  * Singleton Prometheus `Registry` for the dashboard process.
  *
  * All dashboard-emitted metrics must register against this registry so the
- * `/api/metrics` route (see `app/api/metrics/route.ts`) can expose them in a
- * single scrape response. Each subsystem (auth, missions, components, ...)
+ * metrics-only listener (see `src/lib/metrics/server.ts`) can expose them in
+ * a single scrape response. Each subsystem (auth, missions, components, ...)
  * owns a sibling file under `src/lib/metrics/` that imports `registry` and
  * registers its own counters/histograms at module load time.
  *
@@ -78,7 +78,7 @@ function getOrCreateRegistry(): Registry {
     // ensures we don't crash the bundler in Client Component SSR even if
     // a transitive import accidentally reaches us). Return a no-op proxy
     // so Counter/Histogram constructors that accept `registers: [registry]`
-    // don't throw. Anything that actually scrapes /api/metrics runs in
+    // don't throw. Anything that actually scrapes the metrics port runs in
     // the Node.js runtime where the real registry is available.
     const noop = new Proxy({}, { get: () => () => undefined }) as unknown as Registry;
     cachedRegistry = noop;
@@ -92,7 +92,7 @@ function getOrCreateRegistry(): Registry {
 /**
  * Process-wide Prometheus registry. Import this from every metrics module
  * and pass it via the `registers` option when constructing Counter/Histogram
- * instances so the `/api/metrics` endpoint exposes them in a single call to
- * `registry.metrics()`.
+ * instances so the metrics-only listener (`src/lib/metrics/server.ts`)
+ * exposes them in a single call to `registry.metrics()`.
  */
 export const registry: Registry = getOrCreateRegistry();

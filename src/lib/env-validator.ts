@@ -139,24 +139,6 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
       'OIDC client_secret for the dashboard. Confidential client per ' +
       'one-code-path/196; PKCE-public-client variant retired.',
   },
-  {
-    name: 'ZITADEL_AUDIENCE',
-    kind: 'string',
-    hint:
-      'Expected `aud` claim on machine-to-machine JWTs hitting service-acting routes. ' +
-      'Production value: "gibson-platform". Set explicitly; no default.',
-  },
-  {
-    name: 'ALLOWED_SERVICE_SUBJECTS',
-    kind: 'string',
-    hint:
-      'Comma-separated NUMERIC Zitadel subs allowed to call service-acting routes. ' +
-      'Populated by the chart\'s resolve-sa-identity-map init container at pod start.',
-    // Only enforced in production: local `pnpm dev` and `pnpm build` static
-    // analysis do not exercise inbound service-acting traffic. Matches the
-    // existing `assertAllowedServiceSubjectsConfigured()` gate at instrumentation.
-    prodOnly: true,
-  },
 
   // ---- Auth.js ----
   {
@@ -319,8 +301,8 @@ const OPTIONAL_ENV = [
   'GIBSON_TIER',
 
   // ---- Misc dashboard knobs ----
-  // CIDR allow-list for /api/metrics, when unset the route is open to all.
-  'DASHBOARD_METRICS_ALLOWED_CIDRS',
+  // The port of the metrics-only listener (src/lib/metrics/server.ts).
+  'DASHBOARD_METRICS_PORT',
   // Social preview flag for the login page (dev knob).
   'DASHBOARD_SOCIAL_PREVIEW',
   // Debug toggle.

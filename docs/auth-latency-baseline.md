@@ -17,8 +17,8 @@ pnpm build && pnpm start
 PLAYWRIGHT_BASE_URL=http://localhost:3000 \
   pnpm test:e2e e2e/auth/login-happy.spec.ts
 
-# 3. Capture the histogram from /api/metrics:
-node scripts/auth-latency-baseline.mjs --base-url http://localhost:3000
+# 3. Capture the histogram from the metrics-only port (default 9464):
+node scripts/auth-latency-baseline.mjs --base-url http://localhost:9464
 
 # Output is written to docs/auth-latency-baseline.json (gitignored).
 # The script prints p50/p95/p99 and exits non-zero if the SLO is violated.
@@ -42,30 +42,16 @@ markdown file instead after each meaningful measurement.
 - **Date:** 2026-04-26
 - **Environment:** Kind dev cluster (`kind-gibson`), single-node, Zitadel live
   (NodePort 30443), FGA live, dashboard at NodePort 30081.
-- **Constraint:** The dashboard `/api/metrics` endpoint requires a SPIFFE JWT-SVID
-  or a source IP in `DASHBOARD_METRICS_ALLOWED_CIDRS`. On the Kind cluster the
-  Prometheus scrape job does not yet carry a SPIFFE identity for this route
-  (`DASHBOARD_METRICS_ALLOWED_CIDRS` is empty in the Helm values). As a result
-  the histogram has 0 externally-scrapeable samples even though sign-ins flow
-  through the cluster.
-- **Resolution path:** To capture baseline numbers, either:
-  1. Set `DASHBOARD_METRICS_ALLOWED_CIDRS=10.244.0.0/16,10.96.0.0/12` in the
-     Helm values (pod CIDR + service CIDR) and re-deploy, then re-run the
-     script from inside the cluster, or
-  2. Wire the Prometheus scrape job with a SPIFFE JWT-SVID (future work under
-     the SPIFFE scrape spec).
-- **p50:** not captured (metrics endpoint auth blocks external scraping)
+- **Constraint:** the metrics endpoint then sat on the API port behind an
+  authentication gate, and the scrape job of the Kind cluster could not pass it.
+  The histogram had no scrapeable samples.
+- **p50:** not captured
 - **p95:** not captured
 - **p99:** not captured
 
-  The `auth-latency-baseline.mjs` script will print a clear message explaining
-  the 401 auth constraint when run against the cluster. This is the expected
-  behavior, the guard correctly rejects unauthenticated scrapes.
-
-  The baseline is deferred until `DASHBOARD_METRICS_ALLOWED_CIDRS` is set for
-  the Kind cluster or the Prometheus scrape job carries SPIFFE identity.
-  The SLO of p95 < 1.5 s is validated by the recording rules once scraping
-  is configured.
+  The dashboard now serves metrics on a metrics-only port that the network
+  policy opens to the cluster scraper only (charts#515). The baseline can be
+  captured from that port.
 
 ### Post-deploy production baseline
 

@@ -16,7 +16,7 @@
  * SPIFFE JWT-SVID outbound path.
  *
  * All metrics register against the shared `registry` singleton and are
- * exposed via `/api/metrics`. Label cardinality is deliberately bounded:
+ * exposed on the metrics-only port (`src/lib/metrics/server.ts`). Label cardinality is deliberately bounded:
  * no tenant-id, user-id, or SPIFFE subject appears as a label, those
  * blow up on tenant counts and live in the audit stream instead.
  */
