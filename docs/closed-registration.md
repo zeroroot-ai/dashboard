@@ -82,8 +82,8 @@ self-contained product. An operator who wants to lock down registration sets
 decision.
 
 The chart render guard (`helm/gibson/tests/signup-seam.bats`) enforces this
-default. It asserts that the OSS-profile
-Helm render has `SIGNUP_SELF_SERVE` set (open registration is the open-source
+default. It asserts that the self-hosted profile
+Helm render has `SIGNUP_SELF_SERVE` set (open registration is the self-hosted
 default).
 
 ## Creating the first/owner account when registration is closed
