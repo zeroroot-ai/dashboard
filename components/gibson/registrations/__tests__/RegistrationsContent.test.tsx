@@ -29,7 +29,13 @@ vi.mock("sonner", () => ({ toast }));
 
 import { RegistrationsContent } from "../RegistrationsContent";
 import { RegistrationsNavGate } from "../RegistrationsNavGate";
-import { REGISTRATIONS_TEXT, approvedText, rejectFailedText, rejectTitle } from "../texts";
+import {
+  REGISTRATIONS_TEXT,
+  approveFailedText,
+  approvedText,
+  rejectFailedText,
+  rejectTitle,
+} from "../texts";
 
 const ROWS = [
   {
@@ -106,6 +112,21 @@ describe("RegistrationsContent", () => {
     await waitFor(() => expect(mockApprove).toHaveBeenCalledWith("reg-1"));
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith(approvedText("analytical")));
     await waitFor(() => expect(mockList).toHaveBeenCalledTimes(2));
+  });
+
+  it("states that no workspace was created when the name is taken", async () => {
+    mockApprove.mockResolvedValue({
+      ok: false,
+      error: REGISTRATIONS_TEXT.nameTaken,
+      code: "name_taken",
+    });
+    wrap(<RegistrationsContent />);
+    const rows = await screen.findAllByTestId("registration-row");
+    await userEvent.click(within(rows[0]!).getByRole("button", { name: REGISTRATIONS_TEXT.approve }));
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(approveFailedText(REGISTRATIONS_TEXT.nameTaken)),
+    );
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it("rejects a registration with the reason the administrator wrote", async () => {

@@ -47,6 +47,7 @@ import { cookies } from "next/headers";
 import { randomUUID } from "node:crypto";
 
 import { ConnectError, Code } from "@connectrpc/connect";
+import { ErrorDetailSchema } from "@/src/gen/gibson/common/v1/gibson_common_pb";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -742,6 +743,17 @@ function mapVerificationError(err: unknown): FinishFailure {
 }
 
 /**
+ * workspaceNameTaken reports whether err carries the ErrorDetail reason of a
+ * workspace name in use. The reason is stable, and the message text is not.
+ */
+function workspaceNameTaken(err: unknown): boolean {
+  if (!(err instanceof ConnectError)) return false;
+  return err
+    .findDetails(ErrorDetailSchema)
+    .some((d) => d.reason === "WORKSPACE_NAME_TAKEN");
+}
+
+/**
  * mapCompletionError turns a Signup failure into a user-safe code.
  *
  * `AlreadyExists` is surfaced honestly here and ONLY here: by this point the
@@ -757,6 +769,15 @@ function mapCompletionError(err: unknown): FinishFailure {
     return {
       code: "VERIFICATION_INVALID",
       userMessage: "That link is no longer valid. Please start again.",
+    };
+  }
+  if (code === Code.AlreadyExists && workspaceNameTaken(err)) {
+    // The daemon found the workspace name in use after the email round trip
+    // (gibson#1050). It created no account, so the person starts again.
+    return {
+      code: "WORKSPACE_TAKEN",
+      userMessage:
+        "That company name isn't available. Start the signup again with another name.",
     };
   }
   if (code === Code.AlreadyExists) {

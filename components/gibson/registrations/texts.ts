@@ -29,6 +29,8 @@ export const REGISTRATIONS_TEXT = {
   cancel: "Cancel",
   rejected: "Registration rejected.",
   alreadyDecided: "Another administrator already decided this registration.",
+  nameTaken:
+    "Another workspace already has this name. No workspace was created. Reject this registration.",
 } as const;
 
 /** 'Reject the registration of {email}' */

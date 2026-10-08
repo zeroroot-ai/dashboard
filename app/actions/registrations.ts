@@ -48,6 +48,17 @@ function alreadyDecided(err: unknown): RegistrationActionResult<never> | null {
   return null;
 }
 
+/**
+ * An approval whose workspace name gives the tenant id of another workspace.
+ * The daemon queued no tenant, so the page must not report one.
+ */
+function nameTaken(err: unknown): RegistrationActionResult<never> | null {
+  if (err instanceof ConnectError && err.code === Code.AlreadyExists) {
+    return { ok: false, error: REGISTRATIONS_TEXT.nameTaken, code: "name_taken" };
+  }
+  return null;
+}
+
 /** The registrations that wait for a decision, oldest first. */
 export async function listPendingRegistrationsAction(): Promise<
   RegistrationActionResult<PendingRegistrationDTO[]>
@@ -84,6 +95,8 @@ export async function approveRegistrationAction(
     if (denied) return denied;
     const decided = alreadyDecided(err);
     if (decided) return decided;
+    const taken = nameTaken(err);
+    if (taken) return taken;
     return serverActionError(err, { action: "approveRegistrationAction" });
   }
 }
