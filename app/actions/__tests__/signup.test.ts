@@ -25,6 +25,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { ConnectError, Code } from '@connectrpc/connect';
+import { ErrorCode, ErrorDetailSchema } from '@/src/gen/gibson/common/v1/gibson_common_pb';
 
 import type { TenantProvisioningStatus } from '@/src/lib/gibson-client/provisioning';
 
@@ -439,6 +440,23 @@ describe('completeSignup', () => {
     });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe('ALREADY_PROVISIONED');
+  });
+
+  it('maps a taken workspace name to WORKSPACE_TAKEN, not to an existing account', async () => {
+    seedVerifiedSession();
+    mockCompleteSignupOwner.mockRejectedValue(
+      new ConnectError('taken', Code.AlreadyExists, undefined, [
+        {
+          desc: ErrorDetailSchema,
+          value: { code: ErrorCode.ALREADY_EXISTS, reason: 'WORKSPACE_NAME_TAKEN' },
+        },
+      ]),
+    );
+    const result = await completeSignup({
+      password: 'Passw0rd!Test'
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.code).toBe('WORKSPACE_TAKEN');
   });
 
   // -------------------------------------------------------------------------
