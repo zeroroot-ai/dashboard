@@ -637,6 +637,7 @@
     "WINDOW",
     "WITH",
     "WORKING",
+    "WORKSPACE_NAME_TAKEN",
     "WORKSPACE_ROOT_ENV",
     "WORKSPACE_TAKEN",
     "WRAP_UP",
