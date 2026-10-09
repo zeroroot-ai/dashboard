@@ -10,12 +10,7 @@ Spec: `auth-resolution-hardening` (Req 9).
 
 ## 1. Kubernetes RBAC bound to the gibson-dashboard ServiceAccount
 
-### Role: `gibson-dashboard-init-secrets`
-- Namespace: `gibson`
-
-| apiGroup | Resources | Verbs |
-| --- | --- | --- |
-| `""` (core) | `secrets` | `get` (read one by name) |
+_(none rendered)_
 
 ## 2. FGA tuples seeded for the dashboard workload identity
 
@@ -26,10 +21,69 @@ Spec: `auth-resolution-hardening` (Req 9).
 
 > Authorizes the dashboard workload SPIFFE identity to call admin RPCs that operate on the system tenant (Shutdown, ImpersonateTenant, UpsertTenantQuota, etc.). User-acting RPCs do NOT use this tuple, those reach FGA as `user:<zitadel-sub>` per spec dashboard-fga-user-identity.
 
-## 3. NetworkPolicies that gate dashboard ingress/egress
+## 3. Network policies that select the dashboard pod
 
-### NetworkPolicy: `gibson-dashboard`
-- podSelector.matchLabels: `{"app.kubernetes.io/name":"gibson-workloads","app.kubernetes.io/instance":"gibson","app.kubernetes.io/component":"dashboard"}`
-- ingress rules: 2
+### CiliumClusterwideNetworkPolicy: `gibson-gibson-default-deny`
+- description: Each pod of the namespace gibson denies all traffic, except DNS (ADR-0165 rule 4).
+- selector: `{"matchLabels":{"k8s:io.kubernetes.pod.namespace":"gibson"}}`
+- ingress rules: 1
 - egress rules: 1
+- ingressDeny rules: 0
+- egressDeny rules: 0
+
+### CiliumNetworkPolicy: `gibson-control-plane`
+- description: Platform pods reach the webhook ports.
+- selector: `{"matchLabels":{"gibson.zeroroot.ai/net-role":"platform"}}`
+- ingress rules: 0
+- egress rules: 1
+- ingressDeny rules: 0
+- egressDeny rules: 0
+
+### CiliumNetworkPolicy: `gibson-datastore-postgres`
+- description: The clients of the postgres data store reach it.
+- selector: `{"matchLabels":{"gibson.zeroroot.ai/client-postgres":"true"}}`
+- ingress rules: 0
+- egress rules: 1
+- ingressDeny rules: 0
+- egressDeny rules: 0
+
+### CiliumNetworkPolicy: `gibson-datastore-redis`
+- description: The clients of the redis data store reach it.
+- selector: `{"matchLabels":{"gibson.zeroroot.ai/client-redis":"true"}}`
+- ingress rules: 0
+- egress rules: 1
+- ingressDeny rules: 0
+- egressDeny rules: 0
+
+### CiliumNetworkPolicy: `gibson-edge`
+- description: Each pod of the release reaches the edge listener.
+- selector: `{"matchExpressions":[{"key":"gibson.zeroroot.ai/net-role","operator":"Exists"}]}`
+- ingress rules: 0
+- egress rules: 1
+- ingressDeny rules: 0
+- egressDeny rules: 0
+
+### CiliumNetworkPolicy: `gibson-kube-api`
+- description: Pods with the kube-api label reach the Kubernetes API server.
+- selector: `{"matchLabels":{"gibson.zeroroot.ai/kube-api":"true"}}`
+- ingress rules: 0
+- egress rules: 1
+- ingressDeny rules: 0
+- egressDeny rules: 0
+
+### CiliumNetworkPolicy: `gibson-metrics`
+- description: The cluster scraper reaches the metrics port 9464 of the pods that serve metrics there.
+- selector: `{"matchLabels":{"gibson.zeroroot.ai/metrics-port":"9464"}}`
+- ingress rules: 1
+- egress rules: 0
+- ingressDeny rules: 0
+- egressDeny rules: 0
+
+### CiliumNetworkPolicy: `gibson-platform`
+- description: Platform pods reach each other.
+- selector: `{"matchLabels":{"gibson.zeroroot.ai/net-role":"platform"}}`
+- ingress rules: 1
+- egress rules: 1
+- ingressDeny rules: 0
+- egressDeny rules: 0
 

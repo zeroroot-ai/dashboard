@@ -25,7 +25,7 @@
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import yaml from 'yaml';
 import { resolveRepoPath } from './lib/workspace-root.mjs';
 
@@ -48,7 +48,7 @@ function renderChart() {
   return readFileSync(GOLDEN_PATH, 'utf8');
 }
 
-function parseDocs(rendered) {
+export function parseDocs(rendered) {
   const docs = [];
   for (const chunk of rendered.split(/\n---\n/)) {
     const t = chunk.trim();
@@ -156,27 +156,113 @@ function extractDashboardFGATuple(rendered) {
   };
 }
 
-function networkPoliciesForDashboard(docs) {
-  return docs
-    .filter((d) => d.kind === 'NetworkPolicy')
-    .filter((d) => {
-      const ml = d.spec?.podSelector?.matchLabels ?? {};
-      const labels = JSON.stringify(ml);
-      return /gibson-dashboard|dashboard/i.test(labels);
-    });
+const POLICY_KINDS = new Set([
+  'NetworkPolicy',
+  'CiliumNetworkPolicy',
+  'CiliumClusterwideNetworkPolicy',
+]);
+
+/**
+ * The pod labels and namespace of the dashboard Deployment. A network policy
+ * selects pods by these labels, so they decide which policies gate the pod.
+ */
+export function dashboardPod(docs) {
+  const dep = docs.find(
+    (d) => d.kind === 'Deployment' && d.metadata?.name === 'gibson-dashboard',
+  );
+  if (!dep) return null;
+  return {
+    namespace: dep.metadata.namespace ?? '',
+    labels: dep.spec?.template?.metadata?.labels ?? {},
+  };
 }
 
-function renderNetworkPolicy(np) {
-  const sel = np.spec?.podSelector?.matchLabels ?? {};
-  const ingress = np.spec?.ingress ?? [];
-  const egress = np.spec?.egress ?? [];
-  return [
-    `### NetworkPolicy: \`${np.metadata.name}\``,
-    `- podSelector.matchLabels: \`${JSON.stringify(sel)}\``,
-    `- ingress rules: ${ingress.length}`,
-    `- egress rules: ${egress.length}`,
-    '',
-  ].join('\n');
+/**
+ * A Cilium selector key can carry a source prefix (`k8s:` or `any:`). The pod
+ * label has none, so the prefix is dropped before the compare.
+ */
+function labelKey(key) {
+  return key.replace(/^(k8s|any):/, '');
+}
+
+/** True when a Kubernetes label selector selects a pod with these labels. */
+export function selectorMatches(selector, labels) {
+  if (!selector) return false;
+  for (const [k, v] of Object.entries(selector.matchLabels ?? {})) {
+    if (labels[labelKey(k)] !== String(v)) return false;
+  }
+  for (const e of selector.matchExpressions ?? []) {
+    const key = labelKey(e.key);
+    const has = Object.hasOwn(labels, key);
+    const values = (e.values ?? []).map(String);
+    switch (e.operator) {
+      case 'In':
+        if (!has || !values.includes(labels[key])) return false;
+        break;
+      case 'NotIn':
+        if (has && values.includes(labels[key])) return false;
+        break;
+      case 'Exists':
+        if (!has) return false;
+        break;
+      case 'DoesNotExist':
+        if (has) return false;
+        break;
+      default:
+        // An operator this reader does not know cannot prove a match.
+        return false;
+    }
+  }
+  return true;
+}
+
+/** The rule sets of a policy: a Cilium policy holds `spec`, `specs` or both. */
+function policySpecs(d) {
+  const out = [];
+  if (d.spec) out.push(d.spec);
+  for (const sp of d.specs ?? []) out.push(sp);
+  return out;
+}
+
+/**
+ * The network policy rule sets that select the dashboard pod: a NetworkPolicy
+ * by its podSelector, a Cilium rule set by its endpointSelector. A namespaced
+ * policy gates the pod only in the pod's namespace. Cilium gives each pod the
+ * label `io.kubernetes.pod.namespace`, so a clusterwide policy can select by
+ * it. Each entry is { kind, name, spec }.
+ */
+export function networkPoliciesForDashboard(docs) {
+  const pod = dashboardPod(docs);
+  if (!pod) return [];
+  const withNamespace = { ...pod.labels, 'io.kubernetes.pod.namespace': pod.namespace };
+  const out = [];
+  for (const d of docs) {
+    if (!POLICY_KINDS.has(d.kind)) continue;
+    const clusterwide = d.kind === 'CiliumClusterwideNetworkPolicy';
+    if (!clusterwide && (d.metadata?.namespace ?? pod.namespace) !== pod.namespace) continue;
+    for (const spec of policySpecs(d)) {
+      const sel = d.kind === 'NetworkPolicy' ? spec.podSelector : spec.endpointSelector;
+      if (selectorMatches(sel, clusterwide ? withNamespace : pod.labels)) {
+        out.push({ kind: d.kind, name: d.metadata.name, spec });
+      }
+    }
+  }
+  return out.sort((x, y) => `${x.kind}/${x.name}`.localeCompare(`${y.kind}/${y.name}`));
+}
+
+function renderNetworkPolicy({ kind, name, spec }) {
+  const sel = (kind === 'NetworkPolicy' ? spec.podSelector : spec.endpointSelector) ?? {};
+  const lines = [`### ${kind}: \`${name}\``];
+  if (spec.description) lines.push(`- description: ${spec.description}`);
+  lines.push(`- selector: \`${JSON.stringify(sel)}\``);
+  lines.push(`- ingress rules: ${(spec.ingress ?? []).length}`);
+  lines.push(`- egress rules: ${(spec.egress ?? []).length}`);
+  if (kind !== 'NetworkPolicy') {
+    lines.push(`- ingressDeny rules: ${(spec.ingressDeny ?? []).length}`);
+    lines.push(`- egressDeny rules: ${(spec.egressDeny ?? []).length}`);
+  }
+  lines.push('');
+  return lines.join('\n');
 }
 
 function generate() {
@@ -228,10 +314,10 @@ function generate() {
     out.push('');
   }
 
-  out.push('## 3. NetworkPolicies that gate dashboard ingress/egress');
+  out.push('## 3. Network policies that select the dashboard pod');
   out.push('');
   if (nps.length === 0) {
-    out.push('_(none, dashboard ingress is gated at the Envoy edge)_');
+    out.push('_(no network policy selects the dashboard pod)_');
     out.push('');
   } else {
     for (const np of nps) out.push(renderNetworkPolicy(np));
@@ -240,29 +326,36 @@ function generate() {
   return out.join('\n') + '\n';
 }
 
-const argv = process.argv.slice(2);
-
-// --probe: report whether the chart's golden render is reachable, as JSON on
-// stdout. check-auth-rbac-inventory-fresh.mjs uses this to choose between a
-// full byte-diff and a structural pass, so the generator that owns this path is
-// the only thing that has to know it. Same contract as
-// `proto-generate.mjs --probe`.
-if (argv.includes('--probe')) {
-  const present = existsSync(GOLDEN_PATH);
-  process.stdout.write(
-    JSON.stringify(
-      { sources: { golden: present ? GOLDEN_PATH : null }, available: present },
-      null,
-      2,
-    ) + '\n',
-  );
-  process.exit(0);
+// Run only as a script. The unit test imports the pure functions above.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
 }
 
-const text = generate();
-if (argv.includes('--stdout')) {
-  process.stdout.write(text);
-} else {
-  writeFileSync(OUTPUT_PATH, text, 'utf8');
-  console.log(`wrote ${OUTPUT_PATH}`);
+function main() {
+  const argv = process.argv.slice(2);
+
+  // --probe: report whether the chart's golden render is reachable, as JSON on
+  // stdout. check-auth-rbac-inventory-fresh.mjs uses this to choose between a
+  // full byte-diff and a structural pass, so the generator that owns this path is
+  // the only thing that has to know it. Same contract as
+  // `proto-generate.mjs --probe`.
+  if (argv.includes('--probe')) {
+    const present = existsSync(GOLDEN_PATH);
+    process.stdout.write(
+      JSON.stringify(
+        { sources: { golden: present ? GOLDEN_PATH : null }, available: present },
+        null,
+        2,
+      ) + '\n',
+    );
+    process.exit(0);
+  }
+
+  const text = generate();
+  if (argv.includes('--stdout')) {
+    process.stdout.write(text);
+  } else {
+    writeFileSync(OUTPUT_PATH, text, 'utf8');
+    console.log(`wrote ${OUTPUT_PATH}`);
+  }
 }

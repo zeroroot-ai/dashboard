@@ -26,6 +26,12 @@ name: authz-registry-drift
 # registry serves a public module with no token. The generators have no
 # offline path, so a registry that is not reachable fails this run. No Go
 # toolchain is needed.
+#
+# The rbac-inventory job does the same for docs/AUTH_RBAC_INVENTORY.md against
+# the golden render of the public charts repository. node-ci has no charts
+# checkout, so check-auth-rbac-inventory-fresh.mjs runs there in STRUCTURAL
+# mode only. That is how the inventory drifted from charts main with no red
+# check (dashboard#269).
 
 on:
   schedule:
@@ -38,6 +44,8 @@ on:
       - "scripts/gen-authz-registry.mjs"
       - "scripts/lib/freshness-gate.mjs"
       - "scripts/lib/sdk-proto-source.mjs"
+      - "scripts/gen-auth-rbac-inventory.mjs"
+      - "scripts/check-auth-rbac-inventory-fresh.mjs"
 
 concurrency:
   group: authz-registry-drift-${{ github.ref }}
@@ -96,3 +104,48 @@ jobs:
         env:
           GIBSON_WORKSPACE_ROOT: ${{ github.workspace }}/_gws
         run: node scripts/check-authz-registry-fresh.mjs
+
+  rbac-inventory:
+    name: RBAC inventory drift vs charts main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dashboard
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Checkout charts main (public, no token required)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: zeroroot-ai/charts
+          ref: main
+          path: _gws/charts
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: "10.34.5"
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .tool-versions
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Confirm FULL mode (the charts golden render is on disk)
+        env:
+          GIBSON_WORKSPACE_ROOT: ${{ github.workspace }}/_gws
+        run: |
+          set -euo pipefail
+          probe="$(node scripts/gen-auth-rbac-inventory.mjs --probe)"
+          echo "$probe"
+          available="$(node -e 'process.stdout.write(String(JSON.parse(process.argv[1]).available))' "$probe")"
+          if [ "$available" != "true" ]; then
+            echo "::error::charts sibling not resolved; this run would degrade to STRUCTURAL mode and pass vacuously." >&2
+            exit 1
+          fi
+
+      - name: RBAC inventory drift (FULL mode)
+        env:
+          GIBSON_WORKSPACE_ROOT: ${{ github.workspace }}/_gws
+        run: node scripts/check-auth-rbac-inventory-fresh.mjs
