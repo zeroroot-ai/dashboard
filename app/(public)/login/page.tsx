@@ -21,9 +21,9 @@ import { LoginForm } from "./login-form";
 
 export default function LoginPage() {
   // Resolve the deployment posture from the single source of truth.
-  // selfServeSignup governs whether a "Create account" CTA is shown.
+  // A "Create account" CTA is shown on the open and the approval rung.
   // dashboard#922 / PRD dashboard#920 / ADR-0074.
-  const { selfServeSignup } = getDeploymentProfile();
+  const selfServeSignup = getDeploymentProfile().signupRung !== 'closed';
 
   // buildSocialProviders() throws at startup if any provider has a partial
   // config, so by the time this render runs either everything is valid or

@@ -198,3 +198,43 @@ export async function getSignupStep(attemptId: string): Promise<SignupStepStatus
       return 'none';
   }
 }
+
+/** Inputs to `registerForApproval`. */
+interface RegisterForApprovalInput {
+  /** Opaque registration-attempt UUID. */
+  attemptId: string;
+  /** Address of the registrant. Normalized server-side. */
+  ownerEmail: string;
+  /** Human-readable workspace / company name; the daemon derives the slug. */
+  workspaceName: string;
+  /** Canonical plan id of the install. */
+  tier: string;
+  ownerFirstName: string;
+  ownerLastName: string;
+  /** The password the registrant chose. It reaches the identity provider only. */
+  password: string;
+}
+
+/**
+ * Register on the APPROVAL rung (ADR-0074, dashboard#267).
+ *
+ * The daemon records one pending registration and one DEACTIVATED identity
+ * user with the password. It creates no tenant: an administrator approves the
+ * registration in the registration queue, and that runs the provisioning.
+ * The response carries no fields (gibson#1008).
+ *
+ * Throws a `ConnectError` on RPC-level failure: AlreadyExists (the address has
+ * an account), ResourceExhausted, InvalidArgument, PermissionDenied (not the
+ * approval rung) or Unavailable.
+ */
+export async function registerForApproval(input: RegisterForApprovalInput): Promise<void> {
+  await serviceClient(SignupService, '').register({
+    attemptId: input.attemptId,
+    ownerEmail: input.ownerEmail,
+    workspaceName: input.workspaceName,
+    tier: input.tier,
+    ownerFirstName: input.ownerFirstName,
+    ownerLastName: input.ownerLastName,
+    password: input.password,
+  });
+}

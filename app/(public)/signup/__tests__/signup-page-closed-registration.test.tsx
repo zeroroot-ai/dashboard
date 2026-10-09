@@ -7,11 +7,11 @@
  *
  * Behavioral properties under test:
  *
- *   A) With selfServeSignup=false (closed-registration profile), SignupPage
+ *   A) On the closed rung, SignupPage
  *      calls redirect("/login") immediately. This is the closed-front-door
  *      posture: /signup is never reachable on an admin-locked install.
  *
- *   B) With selfServeSignup=true (open registration), SignupPage does NOT
+ *   B) On the open rung, SignupPage does NOT
  *      call redirect("/login"), regardless of the billing posture.
  *
  * Test strategy: SignupPage is an async Server Component. We test the redirect
@@ -108,6 +108,11 @@ vi.mock('./signup-form', () => ({
   SignupForm: (_props: any) => null,
 }));
 
+vi.mock('../register-form', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  RegisterForm: (_props: any) => null,
+}));
+
 // ---------------------------------------------------------------------------
 // Subject under test (imported after mocks are in place).
 // ---------------------------------------------------------------------------
@@ -120,19 +125,25 @@ import SignupPage from '../page';
 
 /** Closed-registration self-hosted: no signup, no marketing. */
 const CLOSED_PROFILE = {
-  selfServeSignup: false,
+  signupRung: 'closed',
   marketingUrl: null,
 };
 
 /** Open-registration self-hosted: signup on, no marketing. */
 const OPEN_SELF_HOSTED_PROFILE = {
-  selfServeSignup: true,
+  signupRung: 'open',
+  marketingUrl: null,
+};
+
+/** The approval rung (dashboard#267): one form, sent to Register. */
+const APPROVAL_PROFILE = {
+  signupRung: 'approval',
   marketingUrl: null,
 };
 
 /** Full SaaS profile: signup on, marketing URL set. */
 const SAAS_PROFILE = {
-  selfServeSignup: true,
+  signupRung: 'open',
   marketingUrl: 'https://www.zeroroot.ai',
 };
 
@@ -157,7 +168,7 @@ describe('SignupPage — closed-registration gate (A)', () => {
     mockGetDeploymentProfile.mockReset();
   });
 
-  it('A.1: calls redirect("/login") when selfServeSignup is false', async () => {
+  it('A.1: calls redirect("/login") on the closed rung', async () => {
     mockGetDeploymentProfile.mockReturnValue(CLOSED_PROFILE);
     await SignupPage({ searchParams: makeSearchParams() });
     expect(mockRedirect).toHaveBeenCalledWith('/login');
@@ -189,7 +200,7 @@ describe('SignupPage — open-registration, no /login redirect (B)', () => {
     mockGetDeploymentProfile.mockReset();
   });
 
-  it('B.1: does NOT call redirect("/login") when selfServeSignup is true (self-hosted open)', async () => {
+  it('B.1: does NOT call redirect("/login") on the open rung (self-hosted)', async () => {
     mockGetDeploymentProfile.mockReturnValue(OPEN_SELF_HOSTED_PROFILE);
     await SignupPage({ searchParams: makeSearchParams() });
     const loginRedirects = mockRedirect.mock.calls.filter(
@@ -198,7 +209,7 @@ describe('SignupPage — open-registration, no /login redirect (B)', () => {
     expect(loginRedirects).toHaveLength(0);
   });
 
-  it('B.2: does NOT call redirect("/login") when selfServeSignup is true (SaaS, with valid plan)', async () => {
+  it('B.2: does NOT call redirect("/login") on the open rung (SaaS, with valid plan)', async () => {
     mockGetDeploymentProfile.mockReturnValue(SAAS_PROFILE);
     // Provide a valid plan to bypass the pricing redirect in the SaaS path.
     await SignupPage({ searchParams: makeSearchParams({ plan: 'team' }) });
@@ -206,5 +217,27 @@ describe('SignupPage — open-registration, no /login redirect (B)', () => {
       (call) => call[0] === '/login',
     );
     expect(loginRedirects).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// C) Approval rung: /signup renders the registration form (dashboard#267)
+// ---------------------------------------------------------------------------
+
+describe('SignupPage — approval rung (C)', () => {
+  beforeEach(() => {
+    mockRedirect.mockReset();
+    mockGetDeploymentProfile.mockReset();
+  });
+
+  it('C.1: renders RegisterForm with the first self-serve tier, and no redirect', async () => {
+    mockGetDeploymentProfile.mockReturnValue(APPROVAL_PROFILE);
+    const page = (await SignupPage({ searchParams: makeSearchParams() })) as {
+      type: { name?: string };
+      props: { tier?: string };
+    };
+    expect(mockRedirect).not.toHaveBeenCalled();
+    expect(page.type.name).toBe('RegisterForm');
+    expect(page.props.tier).toBe('solo');
   });
 });

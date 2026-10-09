@@ -32,7 +32,9 @@ gibson:
 The chart translates this to `SIGNUP_SELF_SERVE=""` (unset / falsy) in the
 dashboard pod environment. The deployment-profile resolver (`src/lib/deployment-profile.ts`)
 reads that knob once at server startup and sets
-`selfServeSignup: false` in the resolved `DeploymentProfile`. Every surface
+`signupRung: 'closed'` in the resolved `DeploymentProfile`. The value
+`approval` sets `signupRung: 'approval'`, and any other value sets
+`signupRung: 'open'`. The daemon reads the same knob with the same rule. Every surface
 that needs to know the posture reads the resolved profile — never the raw
 env — which ensures the front door, the signup route, and any future surfaces
 stay in sync automatically.
@@ -49,22 +51,25 @@ gibson:
 
 ## What the closed-registration posture does (end to end)
 
-| Surface | selfServeSignup=true (open) | selfServeSignup=false (closed) |
-|---|---|---|
-| `/login` front door | Shows "Sign in" + "Create account" | Shows "Sign in" only |
-| `/signup` route | Renders the registration form | Redirects to `/login` |
-| Registration provisioning | User self-provisions via `SignupService.Signup` | No self-provisioning path |
-| Tenant creation | On successful signup | Admin-only via `AdminProvisionTenant` |
+| Surface | `open` | `approval` | `closed` |
+|---|---|---|---|
+| `/login` front door | Shows "Sign in" + "Create account" | Shows "Sign in" + "Create account" | Shows "Sign in" only |
+| `/signup` route | Renders the self-serve signup form | Renders the registration form (`RegisterForm`) | Redirects to `/login` |
+| Registration | User self-provisions via `SignupService.Signup` | `SignupService.Register`, with no mail step | No registration path |
+| Tenant creation | On successful signup | When an administrator approves the registration | Admin-only via `AdminProvisionTenant` |
 
 The front-door conditional is implemented in `app/(public)/login/login-form.tsx`
-(the `selfServeSignup` prop). The route-level guard is
-implemented in `app/(public)/signup/page.tsx`:
+(the `selfServeSignup` prop, true on the open and the approval rung). The
+route-level guard is implemented in `app/(public)/signup/page.tsx`:
 
 ```ts
 // app/(public)/signup/page.tsx
 const profile = getDeploymentProfile();
-if (!profile.selfServeSignup) {
+if (profile.signupRung === "closed") {
   redirect("/login");
+}
+if (profile.signupRung === "approval") {
+  return <RegisterForm tier={selfServeTierIds[0] ?? "solo"} />;
 }
 ```
 

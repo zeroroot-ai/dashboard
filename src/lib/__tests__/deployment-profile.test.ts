@@ -60,7 +60,7 @@ describe('getDeploymentProfile — self-hosted (A)', () => {
   it('A.1: returns all-off for a minimal self-hosted install (no knobs set)', () => {
     const profile = getDeploymentProfile(SELF_HOSTED_CLOSED);
     expect(profile).toEqual({
-      selfServeSignup: false,
+      signupRung: 'closed',
       marketingUrl: null,
       // Never null, in either audience: docs ship self-hosted too.
       docsUrl: 'https://docs.zeroroot.ai',
@@ -69,17 +69,23 @@ describe('getDeploymentProfile — self-hosted (A)', () => {
     });
   });
 
-  it('A.2: selfServeSignup is false when SIGNUP_SELF_SERVE is absent', () => {
-    expect(getDeploymentProfile({}).selfServeSignup).toBe(false);
+  it('A.2: the rung is closed when SIGNUP_SELF_SERVE is absent', () => {
+    expect(getDeploymentProfile({}).signupRung).toBe('closed');
   });
 
-  it('A.3: selfServeSignup is false for an empty string', () => {
-    expect(getDeploymentProfile({ SIGNUP_SELF_SERVE: '' }).selfServeSignup).toBe(false);
+  it('A.3: the rung is closed for an empty or blank string', () => {
+    expect(getDeploymentProfile({ SIGNUP_SELF_SERVE: '' }).signupRung).toBe('closed');
+    expect(getDeploymentProfile({ SIGNUP_SELF_SERVE: '  ' }).signupRung).toBe('closed');
   });
 
-  it('A.4: open registration sets selfServeSignup and nothing else', () => {
+  it('A.3b: "approval" selects the approval rung, in any case, trimmed (dashboard#267)', () => {
+    expect(getDeploymentProfile({ SIGNUP_SELF_SERVE: 'approval' }).signupRung).toBe('approval');
+    expect(getDeploymentProfile({ SIGNUP_SELF_SERVE: ' Approval ' }).signupRung).toBe('approval');
+  });
+
+  it('A.4: open registration sets the open rung and nothing else', () => {
     const profile = getDeploymentProfile(SELF_HOSTED_OPEN);
-    expect(profile.selfServeSignup).toBe(true);
+    expect(profile.signupRung).toBe('open');
     expect(profile.marketingUrl).toBeNull();
     expect(profile.accountLink).toBeNull();
     expect(profile.signupStepText).toBeNull();
@@ -108,7 +114,7 @@ describe('getDeploymentProfile — SaaS (B)', () => {
   it('B.1: returns the full SaaS profile when all knobs are set', () => {
     const profile = getDeploymentProfile(SAAS);
     expect(profile).toEqual({
-      selfServeSignup: true,
+      signupRung: 'open',
       marketingUrl: 'https://www.zeroroot.ai',
       // A DIFFERENT host from marketingUrl, on purpose: the marketing site
       // serves no /docs and answers 404 for it.
