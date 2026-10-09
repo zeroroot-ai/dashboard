@@ -112,9 +112,14 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 # Create non-root user matching Helm deployment spec (UID 1001)
 # Pull the alpine fixes that landed after the base image was built (2026-09:
-# openssl 3.5.8-r0). The digest pin keeps the base reproducible; the upgrade
-# keeps the runtime patched between Dependabot digest bumps.
-RUN apk upgrade --no-cache
+# openssl 3.5.8-r0, 2026-10: zlib 1.3.2-r1). The digest pin keeps the base
+# reproducible; the upgrade keeps the runtime patched between Dependabot
+# digest bumps. APT_CACHE_BUST makes the upgrade run on each build: the org
+# image workflow passes the run id, so the buildx cache cannot replay an old
+# upgrade layer (dashboard#278).
+ARG APT_CACHE_BUST=0
+RUN echo "apk refresh ${APT_CACHE_BUST}" >/dev/null \
+ && apk upgrade --no-cache
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
