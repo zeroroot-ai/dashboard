@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.132.0](https://github.com/zeroroot-ai/dashboard/compare/v0.131.0...v0.132.0) (2026-10-09)
+
+
+### Features
+
+* **admin:** an approval reports a workspace only when the daemon queued one ([#279](https://github.com/zeroroot-ai/dashboard/issues/279)) ([6d4bc62](https://github.com/zeroroot-ai/dashboard/commit/6d4bc6253d841bb873a52934200cf08ccb1d44e6))
+* **signup:** the approval rung registers through SignupService.Register ([#283](https://github.com/zeroroot-ai/dashboard/issues/283)) ([38f806d](https://github.com/zeroroot-ai/dashboard/commit/38f806d4625e5d29f11c5e1bf0e45bb3a69ed143))
+
+
+### Bug Fixes
+
+* **gen:** regenerate operator_pb.ts against gibson main ([#285](https://github.com/zeroroot-ai/dashboard/issues/285)) ([5fe1758](https://github.com/zeroroot-ai/dashboard/commit/5fe1758b70218019fb34957a1812344c2576bab0)), closes [#284](https://github.com/zeroroot-ai/dashboard/issues/284)
+* **guards:** the RBAC inventory reads the Cilium policies and runs against charts main ([#281](https://github.com/zeroroot-ai/dashboard/issues/281)) ([9ee774d](https://github.com/zeroroot-ai/dashboard/commit/9ee774d81430d7683dacdf5de79b0a32ce7b0acc)), closes [#269](https://github.com/zeroroot-ai/dashboard/issues/269)
+* **image:** the apk upgrade of the runner stage runs on each build ([#282](https://github.com/zeroroot-ai/dashboard/issues/282)) ([e9c8a85](https://github.com/zeroroot-ai/dashboard/commit/e9c8a854c17255dd186e06823f4991ae40dee30d)), closes [#278](https://github.com/zeroroot-ai/dashboard/issues/278)
+
 ## [0.131.0](https://github.com/zeroroot-ai/dashboard/compare/v0.130.1...v0.131.0) (2026-10-07)
 
 
