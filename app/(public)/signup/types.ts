@@ -106,6 +106,46 @@ export const completeSignupInputSchema = z
 
 export type CompleteSignupFormInput = z.infer<typeof completeSignupInputSchema>;
 
+/**
+ * Approval-rung registration schema (ADR-0074, dashboard#267).
+ *
+ * On the approval rung there is no mail round trip: the daemon's Register RPC
+ * takes the whole form, password included, in one call, and an administrator
+ * approves the registration. So this one schema holds every field.
+ */
+export const registerInputSchema = z
+  .object({
+    firstName: signupInputSchema.shape.firstName,
+    lastName: signupInputSchema.shape.lastName,
+    email: signupInputSchema.shape.email,
+    workspaceName: signupInputSchema.shape.workspaceName,
+    tier: signupInputSchema.shape.tier,
+    password: completeSignupInputSchema.innerType().shape.password,
+    passwordConfirm: z.string(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.password !== data.passwordConfirm) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["passwordConfirm"],
+        message: "Passwords don't match",
+      });
+    }
+  });
+
+export type RegisterInput = z.infer<typeof registerInputSchema>;
+
+/** The result of `registerAction`. */
+export type RegisterActionResult =
+  | { ok: true }
+  | {
+      ok: false;
+      /** A user-safe message for the whole form. */
+      userMessage: string;
+      /** Per-field messages, keyed by the form field name. */
+      fieldErrors?: Partial<Record<keyof RegisterInput, string>>;
+    };
+
 // ---------------------------------------------------------------------------
 // Post-signup destination
 // ---------------------------------------------------------------------------

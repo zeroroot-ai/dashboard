@@ -26,9 +26,12 @@
  * Renders `<SignupForm>` inside a Suspense boundary (matching the pattern
  * used by `/login`).
  *
- * Self-hosted / SaaS seam gate (ADR-0074, gibson#1088):
- * When SIGNUP_SELF_SERVE is unset (self-hosted profile), this page is not
- * accessible — redirect to /login so the self-hosted front door is login-only.
+ * Registration rung gate (ADR-0074, gibson#1088, dashboard#267):
+ *   - closed (SIGNUP_SELF_SERVE unset): redirect to /login, so the front door
+ *     is login-only.
+ *   - approval: render <RegisterForm>, which sends the whole form to
+ *     SignupService.Register. An administrator approves the registration.
+ *   - open: the self-serve flow below.
  * The env var is read server-side only; it is not exposed to the browser.
  */
 
@@ -40,6 +43,7 @@ import type { Metadata } from "next";
 import { selfServeTierIds, pricingDisplays } from "@/src/lib/pricing-display";
 import { getDeploymentProfile } from "@/src/lib/deployment-profile";
 import { SignupForm } from "./signup-form";
+import { RegisterForm } from "./register-form";
 
 export const metadata: Metadata = {
   title: "Create account | Gibson",
@@ -64,11 +68,16 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
   // dashboard#921 / PRD dashboard#920 / ADR-0074.
   const profile = getDeploymentProfile();
 
-  // Self-hosted / SaaS seam gate (ADR-0074, gibson#1088).
-  // When selfServeSignup is false, /signup is never reachable — redirect to
-  // login (the front door). Derived from SIGNUP_SELF_SERVE via the resolver.
-  if (!profile.selfServeSignup) {
+  // Registration rung gate (ADR-0074, gibson#1088). On the closed rung
+  // /signup is never reachable: redirect to login (the front door).
+  if (profile.signupRung === "closed") {
     redirect("/login");
+  }
+
+  // The approval rung (dashboard#267): one form, sent to Register. Plans are a
+  // SaaS concept, so the daemon gets the first self-serve tier.
+  if (profile.signupRung === "approval") {
+    return <RegisterForm tier={selfServeTierIds[0] ?? "solo"} />;
   }
 
   const params = await searchParams;

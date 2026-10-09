@@ -9,8 +9,10 @@
  * registration) or as the ZeroRoot SaaS offering (marketing host, account
  * link, external signup step). These env knobs govern the split:
  *
- *   SIGNUP_SELF_SERVE              — set by the SaaS gitops overlay; absent =
- *                                    self-hosted (no self-serve signup path).
+ *   SIGNUP_SELF_SERVE              — the registration rung (ADR-0074), the
+ *                                    same knob and rule as the daemon: absent
+ *                                    = closed, "approval" = approval, any
+ *                                    other value = open (the SaaS overlay).
  *   WWW_URL                        — full origin of the marketing host, e.g.
  *                                    https://www.zeroroot.ai. Absent on self-
  *                                    hosted (no marketing surface).
@@ -39,7 +41,7 @@
  *
  *   import { getDeploymentProfile } from '@/src/lib/deployment-profile';
  *   const profile = getDeploymentProfile();
- *   if (profile.selfServeSignup) { ... }
+ *   if (profile.signupRung === 'open') { ... }
  *
  * Never call in a Client Component. Pass resolved fields as props from the
  * nearest server boundary.
@@ -61,15 +63,20 @@ import { resolveDocsOrigin } from '@/src/lib/host-routing';
  */
 interface DeploymentProfile {
   /**
-   * True when self-serve signup is active (the SaaS profile or a self-hosted
-   * install that has explicitly enabled open registration).
+   * The registration rung of this install (ADR-0074). The daemon reads the
+   * same knob with the same rule (gibson `internal/platform/signup/seam.go`),
+   * so the dashboard and the daemon cannot disagree about it.
    *
-   * When false, `/signup` redirects to `/login` and no "Create account" CTA
-   * is shown — the install is login-only (admin-provisioned tenants).
+   * - `closed`: no registration. `/signup` redirects to `/login`, and no
+   *   "Create account" CTA is shown. Admins provision tenants.
+   * - `approval`: `/signup` sends the whole form to SignupService.Register.
+   *   An administrator approves each registration (dashboard#267).
+   * - `open`: the self-serve flow. Prove the mailbox, then provision.
    *
-   * Derived from `SIGNUP_SELF_SERVE` (truthy = true, absent/falsy = false).
+   * Derived from `SIGNUP_SELF_SERVE`: absent or empty is `closed`,
+   * `approval` (any case, trimmed) is `approval`, any other value is `open`.
    */
-  selfServeSignup: boolean;
+  signupRung: SignupRung;
 
   /**
    * Full origin of the marketing host (e.g. `https://www.zeroroot.ai`), or
@@ -114,6 +121,19 @@ interface DeploymentProfile {
    * Derived from the six `DASHBOARD_SIGNUP_STEP_*` variables.
    */
   signupStepText: SignupStepText | null;
+}
+
+/** The registration rung of an install (ADR-0074). */
+type SignupRung = 'closed' | 'approval' | 'open';
+
+/**
+ * resolveSignupRung reads SIGNUP_SELF_SERVE with the rule of the daemon seam:
+ * absent or empty is closed, "approval" is approval, anything else is open.
+ */
+function resolveSignupRung(raw: string | undefined): SignupRung {
+  const value = (raw ?? '').trim();
+  if (value === '') return 'closed';
+  return value.toLowerCase() === 'approval' ? 'approval' : 'open';
 }
 
 /** The account link: a URL and the label that the settings area shows. */
@@ -179,7 +199,7 @@ export class IncoherentDeploymentProfileError extends Error {
 export function getDeploymentProfile(
   source: Record<string, string | undefined> = process.env,
 ): DeploymentProfile {
-  const selfServeSignup = !!(source['SIGNUP_SELF_SERVE']);
+  const signupRung = resolveSignupRung(source['SIGNUP_SELF_SERVE']);
 
   const wwwRaw = source['WWW_URL'];
   const marketingUrl = wwwRaw ? wwwRaw.replace(/\/$/, '') : null;
@@ -217,7 +237,7 @@ export function getDeploymentProfile(
   const signupStepText = missing.length === 0 ? stepText : null;
 
   return {
-    selfServeSignup,
+    signupRung,
     marketingUrl,
     docsUrl: resolveDocsOrigin(source),
     accountLink,

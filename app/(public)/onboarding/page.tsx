@@ -51,10 +51,11 @@ export default async function OnboardingPage() {
   const userEmail = session.user.email ?? null;
 
   // Self-hosted / SaaS seam gate (ADR-0074, gibson#1088).
-  // When selfServeSignup is false, self-serve is not active — do not show a
-  // CTA that links to /signup (which redirects back to /login on self-hosted).
+  // Only the open rung finishes an organization from here. On the closed rung
+  // /signup redirects back to /login, and on the approval rung an
+  // administrator approves the registration, so neither shows the CTA.
   // dashboard#921: resolved via the deployment-profile resolver (single reader).
-  const { selfServeSignup: selfServeActive } = getDeploymentProfile();
+  const selfServeActive = getDeploymentProfile().signupRung === 'open';
 
   return (
     <div className="mx-auto max-w-xl p-8">
