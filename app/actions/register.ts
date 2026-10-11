@@ -32,6 +32,7 @@ import {
 import { REGISTER_TEXT } from "@/app/(public)/signup/register-texts";
 import { getDeploymentProfile } from "@/src/lib/deployment-profile";
 import { assertPasswordNotBreached } from "@/src/lib/auth/breached-password-gate";
+import { resolveClientIp } from "@/src/lib/signup/client-ip";
 import { registerForApproval } from "@/src/lib/signup/owner-provisioning";
 import { logger } from "@/src/lib/logger";
 
@@ -66,6 +67,10 @@ export async function registerAction(rawInput: RegisterInput): Promise<RegisterA
     };
   }
 
+  // The daemon keys the per-source Register budget on this address. With no
+  // address, every registrant shares one small unattributed bucket.
+  const clientIp = await resolveClientIp();
+
   try {
     await registerForApproval({
       attemptId: randomUUID(),
@@ -75,6 +80,7 @@ export async function registerAction(rawInput: RegisterInput): Promise<RegisterA
       ownerFirstName: input.firstName.trim(),
       ownerLastName: input.lastName.trim(),
       password: input.password,
+      clientIp,
     });
     return { ok: true };
   } catch (err) {

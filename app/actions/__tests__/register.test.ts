@@ -17,6 +17,7 @@ vi.mock('server-only', () => ({}));
 const mockRegister = vi.fn();
 const mockProfile = vi.fn();
 const mockBreach = vi.fn();
+const mockClientIp = vi.fn();
 
 vi.mock('@/src/lib/signup/owner-provisioning', () => ({
   registerForApproval: (...args: unknown[]) => mockRegister(...args),
@@ -26,6 +27,9 @@ vi.mock('@/src/lib/deployment-profile', () => ({
 }));
 vi.mock('@/src/lib/auth/breached-password-gate', () => ({
   assertPasswordNotBreached: (...args: unknown[]) => mockBreach(...args),
+}));
+vi.mock('@/src/lib/signup/client-ip', () => ({
+  resolveClientIp: () => mockClientIp(),
 }));
 vi.mock('@/src/lib/logger', () => ({ logger: { error: vi.fn() } }));
 vi.mock('@/src/lib/pricing-display', () => ({
@@ -51,6 +55,7 @@ describe('registerAction', () => {
     mockRegister.mockReset();
     mockProfile.mockReset().mockReturnValue({ signupRung: 'approval' });
     mockBreach.mockReset().mockResolvedValue({ allowed: true });
+    mockClientIp.mockReset().mockResolvedValue('203.0.113.7');
   });
 
   it('sends the whole form to Register, normalized', async () => {
@@ -67,6 +72,15 @@ describe('registerAction', () => {
       password: INPUT.password,
     });
     expect(sent.attemptId).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  // dashboard#286: with no address, the daemon puts each registrant in one
+  // shared bucket, so one person can block every other registration.
+  it('sends the client address from the edge header, so each source has its own budget', async () => {
+    mockRegister.mockResolvedValue(undefined);
+    await registerAction(INPUT);
+    expect(mockClientIp).toHaveBeenCalledTimes(1);
+    expect(mockRegister.mock.calls[0][0].clientIp).toBe('203.0.113.7');
   });
 
   it('refuses on any rung but approval, and calls nothing', async () => {
