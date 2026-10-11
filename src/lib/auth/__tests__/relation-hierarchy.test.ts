@@ -181,7 +181,7 @@ describe('scopeOfEntry, the object dimension', () => {
     ).toBe('per_object');
   });
 
-  it('classifies an unrecognised objectType as per_object (deny-by-default)', () => {
+  it('classifies an unrecognized objectType as per_object (deny-by-default)', () => {
     expect(
       scopeOfEntry({
         relation: 'admin',

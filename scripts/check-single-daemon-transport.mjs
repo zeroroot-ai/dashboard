@@ -87,7 +87,7 @@ const FORBIDDEN_PATTERNS = [
   },
 ];
 
-function normalise(absPath) {
+function normalize(absPath) {
   return relative(ROOT, absPath).split(sep).join("/");
 }
 
@@ -111,7 +111,7 @@ function walk(dir, out = []) {
 
 function scanFile(path) {
   // The transport module is the one sanctioned owner, exempt it entirely.
-  if (normalise(path) === TRANSPORT_MODULE) return [];
+  if (normalize(path) === TRANSPORT_MODULE) return [];
   const src = readFileSync(path, "utf8");
   const violations = [];
   const lines = src.split("\n");
@@ -152,7 +152,7 @@ function runScan() {
     "❌ check-single-daemon-transport.mjs found daemon-transport construction outside the single transport module:\n",
   );
   for (const v of violations) {
-    console.error(`  ${normalise(v.file)}:${v.line}, ${v.label}`);
+    console.error(`  ${normalize(v.file)}:${v.line}, ${v.label}`);
     console.error(`    ${v.text}`);
   }
   console.error(

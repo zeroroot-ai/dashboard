@@ -227,7 +227,7 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('assertAuthorized, unknown method (fail-closed)', () => {
-  it('(a) throws AuthzDeniedError with code unknown_method for an unrecognised method', async () => {
+  it('(a) throws AuthzDeniedError with code unknown_method for an unrecognized method', async () => {
     await expect(assertAuthorized('/unknown/Service/FailClosed')).rejects.toThrow(AuthzDeniedError);
     await expect(assertAuthorized('/unknown/Service/FailClosed2')).rejects.toMatchObject({
       reason: 'unknown_method',

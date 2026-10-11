@@ -19,7 +19,7 @@ describe("GoogleAnalyticsInit", () => {
     vi.unstubAllEnvs();
   });
 
-  it("initialises once and sends one pageview across re-renders", () => {
+  it("initializes once and sends one pageview across re-renders", () => {
     const view = render(<GoogleAnalyticsInit />);
     view.rerender(<GoogleAnalyticsInit />);
     view.rerender(<GoogleAnalyticsInit />);

@@ -87,7 +87,7 @@ describe("serverActionError", () => {
     expect(serverActionError(wrapped).code).toBe("permission_denied");
   });
 
-  it("falls back to internal for an unrecognised code", () => {
+  it("falls back to internal for an unrecognized code", () => {
     const wrapped = Object.assign(new Error("nope"), { code: "banana" });
     const result = serverActionError(wrapped);
     expect(result.code).toBe("internal");
