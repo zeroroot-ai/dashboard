@@ -49,7 +49,9 @@ on:
 
 concurrency:
   group: e2e-staging-${{ github.ref }}
-  cancel-in-progress: true
+  # A run that started finishes. On main an exit test is the proof (ADR-0080),
+  # so a newer push queues behind it and does not cancel it (dashboard#289).
+  cancel-in-progress: false
 
 permissions:
   contents: read
