@@ -130,7 +130,7 @@ describe("useMissionTerminal", () => {
     );
   });
 
-  it("writes a coloured, timestamped line on a log frame", () => {
+  it("writes a colored, timestamped line on a log frame", () => {
     const writeMock = vi.fn();
     const ref = makeRef(writeMock);
 

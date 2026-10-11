@@ -105,7 +105,7 @@ describe("auth route GET — session token stripping", () => {
     expect(res.status).toBe(302);
   });
 
-  it("preserves the '+' → '%2B' callback-url sanitisation", async () => {
+  it("preserves the '+' → '%2B' callback-url sanitization", async () => {
     mockHandlersGet.mockResolvedValue(jsonResponse({}));
 
     await GET(

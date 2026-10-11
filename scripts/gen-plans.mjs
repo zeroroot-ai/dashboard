@@ -354,7 +354,7 @@ function renderTypeScript(doc) {
     `export const PLAN_REGISTRY_VERSION = ${JSON.stringify(doc.version)};`,
     "",
     "export const plans: readonly Plan[] = Object.freeze([",
-    ...doc.plans.map((p) => "  " + jsonToTsLiteral(normalisePlan(p)) + ","),
+    ...doc.plans.map((p) => "  " + jsonToTsLiteral(normalizePlan(p)) + ","),
     "]);",
     "",
     `export const planIDs: readonly PlanID[] = Object.freeze([${KNOWN_PLAN_IDS.map(
@@ -376,11 +376,11 @@ function renderTypeScript(doc) {
 }
 
 /**
- * normalisePlan strips any YAML keys not part of the Plan TS interface and
+ * normalizePlan strips any YAML keys not part of the Plan TS interface and
  * fills in `stripeProductId: null` when omitted, so the generated literal
  * matches the type exactly.
  */
-function normalisePlan(p) {
+function normalizePlan(p) {
   return {
     id: p.id,
     displayName: p.displayName,

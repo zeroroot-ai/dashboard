@@ -51,8 +51,8 @@ function formatDate(isoString: string): string {
 }
 
 function RoleBadge({ role }: { role: string }) {
-  const normalised = role.toLowerCase();
-  if (normalised === "admin") {
+  const normalized = role.toLowerCase();
+  if (normalized === "admin") {
     return (
       <Badge variant="default" className="bg-primary/20 text-primary border-primary/30 hover:bg-primary/20">
         admin
@@ -61,7 +61,7 @@ function RoleBadge({ role }: { role: string }) {
   }
   return (
     <Badge variant="secondary">
-      {normalised || "member"}
+      {normalized || "member"}
     </Badge>
   );
 }

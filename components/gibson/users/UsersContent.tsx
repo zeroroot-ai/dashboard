@@ -233,7 +233,7 @@ export function UsersContent() {
     newOwnerUserId: string;
   } | null>(null);
   const [memberToCancel, setMemberToCancel] = React.useState<MemberRow | null>(null);
-  const [cancelling, setCancelling] = React.useState(false);
+  const [canceling, setCanceling] = React.useState(false);
   const [leaveOpen, setLeaveOpen] = React.useState(false);
   const [leaving, setLeaving] = React.useState(false);
   const [pendingRole, setPendingRole] = React.useState<Record<string, boolean>>({});
@@ -304,7 +304,7 @@ export function UsersContent() {
 
   async function handleConfirmCancel() {
     if (!memberToCancel) return;
-    setCancelling(true);
+    setCanceling(true);
     try {
       const res = await revokeMemberAction({
         userId: "",
@@ -317,7 +317,7 @@ export function UsersContent() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to cancel invitation.");
     } finally {
-      setCancelling(false);
+      setCanceling(false);
       setMemberToCancel(null);
     }
   }
@@ -567,15 +567,15 @@ export function UsersContent() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={cancelling}>
+            <AlertDialogCancel disabled={canceling}>
               Keep invitation
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmCancel}
-              disabled={cancelling}
+              disabled={canceling}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {cancelling ? "Canceling..." : "Cancel invitation"}
+              {canceling ? "Canceling..." : "Cancel invitation"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

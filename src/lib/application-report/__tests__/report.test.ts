@@ -118,7 +118,7 @@ describe('deriveApplicationReport', () => {
     expect(r.byStatus).toEqual({ open: 1, fixing: 1, fixed: 1, verified: 1 });
   });
 
-  it('counts an unlabelled finding as unknown rather than bucketing it into info or open', () => {
+  it('counts an unlabeled finding as unknown rather than bucketing it into info or open', () => {
     const r = deriveApplicationReport(input);
     expect(r.unknownSeverity).toBe(1);
     expect(r.unknownStatus).toBe(1);
