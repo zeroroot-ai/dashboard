@@ -63,14 +63,6 @@ _(none rendered)_
 - ingressDeny rules: 0
 - egressDeny rules: 0
 
-### CiliumNetworkPolicy: `gibson-kube-api`
-- description: Pods with the kube-api label reach the Kubernetes API server.
-- selector: `{"matchLabels":{"gibson.zeroroot.ai/kube-api":"true"}}`
-- ingress rules: 0
-- egress rules: 1
-- ingressDeny rules: 0
-- egressDeny rules: 0
-
 ### CiliumNetworkPolicy: `gibson-metrics`
 - description: The cluster scraper reaches the metrics port 9464 of the pods that serve metrics there.
 - selector: `{"matchLabels":{"gibson.zeroroot.ai/metrics-port":"9464"}}`
