@@ -213,6 +213,13 @@ interface RegisterForApprovalInput {
   ownerLastName: string;
   /** The password the registrant chose. It reaches the identity provider only. */
   password: string;
+  /**
+   * The address of the registrant, from `resolveClientIp()` (the edge
+   * header, never a value the client sets). The daemon keys the per-source
+   * Register budget on it. An empty value puts the request in the one shared
+   * unattributed bucket.
+   */
+  clientIp: string;
 }
 
 /**
@@ -236,5 +243,6 @@ export async function registerForApproval(input: RegisterForApprovalInput): Prom
     ownerFirstName: input.ownerFirstName,
     ownerLastName: input.ownerLastName,
     password: input.password,
+    clientIp: input.clientIp,
   });
 }

@@ -25,19 +25,22 @@ const {
   mockRequest,
   mockRedeem,
   mockGetStep,
+  mockRegister,
   mockServiceClient,
 } = vi.hoisted(() => {
   const mockSignup = vi.fn();
   const mockRequest = vi.fn();
   const mockRedeem = vi.fn();
   const mockGetStep = vi.fn();
+  const mockRegister = vi.fn();
   const mockServiceClient = vi.fn(() => ({
     signup: mockSignup,
     requestEmailVerification: mockRequest,
     redeemEmailVerification: mockRedeem,
     getSignupStep: mockGetStep,
+    register: mockRegister,
   }));
-  return { mockSignup, mockRequest, mockRedeem, mockGetStep, mockServiceClient };
+  return { mockSignup, mockRequest, mockRedeem, mockGetStep, mockRegister, mockServiceClient };
 });
 
 vi.mock('@/src/lib/gibson-client', () => ({
@@ -49,6 +52,7 @@ import {
   redeemSignupVerification,
   completeSignupOwner,
   getSignupStep,
+  registerForApproval,
 } from '../owner-provisioning';
 import { SignupService, SignupStepState } from '@/src/gen/gibson/tenant/v1/signup_pb';
 
@@ -185,5 +189,20 @@ describe('signup service wrappers', () => {
       stepUrl: 'https://billing.example.test/step',
       stepToken: 'opaque',
     });
+  });
+
+  it('sends the client address on Register (dashboard#286)', async () => {
+    mockRegister.mockReset().mockResolvedValue({});
+    await registerForApproval({
+      attemptId: 'a-1',
+      ownerEmail: 'ada@example.com',
+      workspaceName: 'Analytical Engines',
+      tier: 'solo',
+      ownerFirstName: 'Ada',
+      ownerLastName: 'Lovelace',
+      password: 'pw',
+      clientIp: '203.0.113.7',
+    });
+    expect(mockRegister).toHaveBeenCalledWith(expect.objectContaining({ clientIp: '203.0.113.7' }));
   });
 });
