@@ -85,23 +85,49 @@ function selftest() {
   };
   const sorted = (set) => [...set].sort();
 
-  // 1. Over-approximation: no helper list. Each shape of read is found.
+  // 1. Each real read form is found (dashboard#294).
   const found = sorted(
     namesInSource(
       [
         "const a = process.env.PROCESS_DOT;",
         'const b = process.env["PROCESS_INDEX"];',
-        "const c = env.PROXY_READ;",
-        "const d = durationOr('HELPER_ARG', 5);",
-        "const REQUIRED = [{ name: 'DECLARED_NAME' }];",
-        "const e = `prefix ${x} TEMPLATE_NAME`;",
+        "const c = env.PROXY_READ; const c2 = env?.OPTIONAL_CHAIN;",
+        "const { DESTRUCTURED, RENAMED: r, DEFAULTED = 'x' } = process.env;",
+        "const REQUIRED_ENV = [{ name: 'DECLARED_NAME' }];",
+        "const OPTIONAL_ENV = ['OPTIONAL_NAME'];",
         'const url = "https://example.test/x"; const f = env.AFTER_URL;',
         'const g = process.env.CI ? 1 : 2; const h = process.env["E2"];',
+        "const KEY = 'CONST_KEY'; const k = process.env[KEY];",
+        "function need(n) {\n  return process.env[n];\n}\nconst i = need('HELPER_ARG');",
+        "for (const n of ['LIST_A', 'LIST_B']) process.env[n];",
+        "function p(source = process.env) { return source['RECORD_INDEX'] ?? source.RECORD_DOT; }",
       ].join("\n"),
     ),
   );
-  const wantFound = ["AFTER_URL", "CI", "DECLARED_NAME", "E2", "HELPER_ARG", "PROCESS_DOT", "PROCESS_INDEX", "PROXY_READ", "TEMPLATE_NAME"];
+  const wantFound = [
+    "AFTER_URL", "CI", "CONST_KEY", "DECLARED_NAME", "DEFAULTED", "DESTRUCTURED", "E2", "HELPER_ARG",
+    "LIST_A", "LIST_B", "OPTIONAL_CHAIN", "OPTIONAL_NAME", "PROCESS_DOT", "PROCESS_INDEX", "PROXY_READ",
+    "RECORD_DOT", "RECORD_INDEX", "RENAMED",
+  ];
   expect("every shape of read is found", JSON.stringify(found) === JSON.stringify(wantFound), `got ${found.join(",")}`);
+
+  // 1b. A string that no read reaches is not a read: an error code, a name
+  //     in a template, a helper argument with no env read, a list of names
+  //     in a file with no dynamic env read. Before dashboard#294 each of
+  //     these was in the set.
+  const notReads = sorted(
+    namesInSource(
+      [
+        'throw new Error("WORKSPACE_NAME_TAKEN");',
+        "const e = { code: 'ERROR_CODE' };",
+        "const t = `prefix ${x} TEMPLATE_NAME`;",
+        "const d = durationOr('NOT_A_HELPER', 5);",
+        "const codes = ['CODE_A', 'CODE_B'];",
+        "const v = process.env.REAL_READ;",
+      ].join("\n"),
+    ),
+  );
+  expect("an error code or other string is not a read", JSON.stringify(notReads) === JSON.stringify(["REAL_READ"]), `got ${notReads.join(",")}`);
 
   // 2. A comment is not a reader. Neither is a lower-case string, a short
   //    token, a bare identifier, or a token inside a longer word.
