@@ -12,8 +12,8 @@
  * Background
  * ----------
  * The `iam-admin-pat` / `IAM_ADMIN_PAT` credential grants IAM_OWNER-level
- * access to the Zitadel instance. Signup flows use a narrowly-scoped
- * `ZITADEL_SIGNUP_BOT_PAT` (IAM_USER_MANAGER only) instead. The admin PAT
+ * access to the Zitadel instance. Signup runs in the daemon, so the
+ * dashboard holds no Zitadel admin credential. The admin PAT
  * must never be wired into the dashboard runtime; keeping it out of the
  * source tree prevents an accidental re-introduction.
  *
@@ -189,8 +189,8 @@ function printViolations(violations) {
       `---------------\n` +
       `The IAM_ADMIN_PAT credential grants IAM_OWNER-level access to the\n` +
       `Zitadel instance. Spec "${SPEC_NAME}" (task 23) requires this credential\n` +
-      `to stay out of the dashboard runtime. Signup flows use the narrowly-\n` +
-      `scoped ZITADEL_SIGNUP_BOT_PAT (IAM_USER_MANAGER only) instead.\n` +
+      `to stay out of the dashboard runtime. Signup runs in the daemon, so the\n` +
+      `dashboard holds no Zitadel admin credential.\n` +
       `\n` +
       `Banned strings: ${BANNED_LABELS.join(', ')}\n` +
       `\n` +

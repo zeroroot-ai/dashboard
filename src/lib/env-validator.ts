@@ -276,7 +276,7 @@ const OPTIONAL_ENV = [
   'DASHBOARD_SIGNUP_STEP_RETRY_LABEL',
 
   // ---- Zitadel admin ----
-  // NOTE: the broad ZITADEL_SIGNUP_BOT_PAT + ZITADEL_EXTERNAL_DOMAIN pair was
+  // NOTE: the signup Zitadel token and ZITADEL_EXTERNAL_DOMAIN were
   // removed in E9 (dashboard#812). Owner provisioning now runs daemon-side via
   // the unauthenticated gibson.tenant.v1.SignupService.Signup RPC, so the
   // dashboard holds NO Zitadel admin credential for signup.
