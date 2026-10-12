@@ -15,19 +15,23 @@
  *
  * Extraction
  * ----------
- * The set over-approximates on purpose. From every `.ts`, `.tsx`, `.mjs` and
- * `.js` file in the tree that is not a test or a spec, it takes:
+ * From every `.ts`, `.tsx`, `.mjs` and `.js` file in the tree that is not a
+ * test or a spec, it takes the real env reads only (dashboard#294):
  *
- *   - every env-shaped token inside a string or a template literal. This
- *     covers the REQUIRED_ENV and OPTIONAL_ENV blocks of
- *     `src/lib/env-validator.ts` and `process.env["NAME"]`.
- *   - every env-shaped property read: `process.env.NAME`, `env.NAME`.
- *   - every `process.env.X` and `process.env["X"]` at any length, so a short
- *     name such as `CI` is in the set.
+ *   - `process.env.NAME` and `process.env["NAME"]`, at any length, so a short
+ *     name such as `CI` is in the set;
+ *   - `const { NAME, ... } = process.env`;
+ *   - `env.NAME`, the reads through the env proxy of `src/lib/env-validator.ts`;
+ *   - the names of the REQUIRED_ENV (`name: "NAME"`) and OPTIONAL_ENV
+ *     (`"NAME"`) blocks, which the proxy reads with `process.env[name]`.
  *
- * It lists no helper. A set that MISSES a name makes the chart gate report a
- * live env var as dead, and deleting one of those boots a pod with an empty
- * value. A set with a name too many only hides one dead env var.
+ * Any other string or template literal is not a read: an error code such as
+ * `WORKSPACE_NAME_TAKEN`, or a name in the text of a guard. Such a name in
+ * the set hid a dead env var from the charts `env-consumed` check.
+ *
+ * A set that MISSES a name makes the chart gate report a live env var as
+ * dead, and deleting one of those boots a pod with an empty value. So each
+ * read form above stays, and a new read form needs a new rule here.
  *
  * A name in a comment is not a reader. A name in a test is not a reader.
  *
@@ -46,42 +50,70 @@ export const ARTIFACT = "src/lib/env-readers.json";
 
 /** A scan under these floors read the wrong tree, so it is refused. */
 const MIN_FILES = 200;
-const MIN_NAMES = 100;
+const MIN_NAMES = 50;
 
 const SOURCE_EXT = /\.(ts|tsx|mjs|js)$/;
 const TEST_FILE = /\.(test|spec)\./;
-const ENV_TOKEN = /[A-Z][A-Z0-9_]{2,}/g;
 // A read through `process.env` counts at any length: `process.env.CI`.
 const PROCESS_DOT = /process\.env\.([A-Z][A-Z0-9_]*)/g;
+// A read through the env proxy of env-validator.ts: `env.NAME`, `env?.NAME`.
+const ENV_DOT = /(^|[^A-Za-z0-9_$.])env\??\.([A-Z][A-Z0-9_]*)/g;
+// `const { A, B: b, C = "x" } = process.env`.
+const DESTRUCTURE = /\{([^{}]*)\}\s*=\s*process\.env\b/g;
 const SHORT_NAME = /^[A-Z][A-Z0-9_]*$/;
 const isWord = (c) => c !== undefined && /[A-Za-z0-9_$]/.test(c);
+
+/**
+ * The names of the REQUIRED_ENV and OPTIONAL_ENV blocks: `name: "NAME"` in
+ * REQUIRED_ENV, a whole-string `"NAME"` in OPTIONAL_ENV. Comment lines of a
+ * block are skipped. The env proxy reads each with `process.env[name]`.
+ */
+export function validatorBlockNames(src) {
+  const names = new Set();
+  for (const m of src.matchAll(/\b(REQUIRED_ENV|OPTIONAL_ENV)\b[^=;\n]*=\s*\[/g)) {
+    let depth = 1;
+    let j = m.index + m[0].length;
+    while (j < src.length && depth > 0) {
+      if (src[j] === "[") depth += 1;
+      else if (src[j] === "]") depth -= 1;
+      j += 1;
+    }
+    const block = src
+      .slice(m.index + m[0].length, j - 1)
+      .split("\n")
+      .filter((line) => !line.trim().startsWith("//") && !line.trim().startsWith("*"))
+      .join("\n");
+    const re = m[1] === "REQUIRED_ENV" ? /\bname:\s*['"]([A-Z][A-Z0-9_]*)['"]/g : /['"]([A-Z][A-Z0-9_]*)['"]/g;
+    for (const n of block.matchAll(re)) names.add(n[1]);
+  }
+  return names;
+}
 
 /**
  * Env-shaped names one source file can read.
  *
  * A small scanner splits the text into code, comments and string bodies.
- * Comments are dropped. A whole-word env-shaped token counts when it is in a
- * string body, or when a `.` precedes it in code.
+ * Comments are dropped. In code, the read forms of the header count. A string
+ * body counts only as the index of `process.env[...]`. The validator blocks
+ * are read from the whole text (validatorBlockNames).
  */
 export function namesInSource(src) {
-  const names = new Set();
+  const names = validatorBlockNames(src);
   const take = (text, base, inString) => {
-    for (const m of text.matchAll(ENV_TOKEN)) {
-      const start = m.index;
-      const end = start + m[0].length;
-      if (isWord(text[start - 1]) || isWord(text[end])) continue;
-      if (inString || text[start - 1] === ".") names.add(m[0]);
+    if (inString) return base;
+    for (const m of text.matchAll(PROCESS_DOT)) {
+      if (!isWord(text[m.index + m[0].length])) names.add(m[1]);
     }
-    if (!inString) {
-      for (const m of text.matchAll(PROCESS_DOT)) {
-        if (!isWord(text[m.index + m[0].length])) names.add(m[1]);
-      }
+    for (const m of text.matchAll(ENV_DOT)) {
+      if (!isWord(text[m.index + m[0].length])) names.add(m[2]);
     }
     return base;
   };
 
   let i = 0;
   let code = "";
+  // The text with comments dropped and strings kept, for indirectReads.
+  let kept = "";
   const flushCode = () => {
     take(code, 0, false);
     code = "";
@@ -93,6 +125,7 @@ export function namesInSource(src) {
       const end = src.indexOf("*/", i + 2);
       i = end === -1 ? src.length : end + 2;
       code += " ";
+      kept += " ";
       continue;
     }
     // A line comment starts a line or follows white space. `//` inside a URL
@@ -117,14 +150,71 @@ export function namesInSource(src) {
       const body = src.slice(i + 1, j);
       take(body, 0, true);
       if (indexed && SHORT_NAME.test(body)) names.add(body);
+      kept += src.slice(i, j + 1);
       i = j + 1;
       code += " ";
       continue;
     }
     code += c;
+    kept += c;
     i += 1;
   }
   flushCode();
+  for (const n of indirectReads(kept)) names.add(n);
+  return names;
+}
+
+const LIT = String.raw`['"]([A-Z][A-Z0-9_]*)['"]`;
+
+/**
+ * Env reads through one level of indirection, from a text with no comments.
+ * Each form keeps a real `process.env` read in the same file:
+ *
+ *   - `const K = "NAME"` and `process.env[K]`;
+ *   - `function f(k) { ... process.env[k] ... }` and a call `f("NAME")`;
+ *   - `const { NAME } = process.env`;
+ *   - `const r = process.env` (or a parameter `r = process.env`) and
+ *     `r["NAME"]` or `r.NAME`;
+ *   - an array of names only, `["A", "B"]`, in a file that reads
+ *     `process.env[k]` with an identifier `k`: the file loops over it.
+ *
+ * A string that none of these forms reaches is not a read.
+ */
+export function indirectReads(text) {
+  const names = new Set();
+  // A destructure reads from the text with strings kept, so a default
+  // value such as `B = "x"` does not split it.
+  for (const m of text.matchAll(DESTRUCTURE)) {
+    for (const part of m[1].split(",")) {
+      const key = part.split(/[:=]/)[0].trim();
+      if (SHORT_NAME.test(key)) names.add(key);
+    }
+  }
+  const dynamic = new Set();
+  for (const m of text.matchAll(/process\.env\[\s*([A-Za-z_$][\w$]*)\s*\]/g)) dynamic.add(m[1]);
+  if (dynamic.size > 0) {
+    for (const m of text.matchAll(new RegExp(String.raw`\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*${LIT}`, "g"))) {
+      if (dynamic.has(m[1])) names.add(m[2]);
+    }
+    const readers = [];
+    for (const m of text.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(\s*([A-Za-z_$][\w$]*)/g)) {
+      const end = text.indexOf("\n}", m.index);
+      const body = text.slice(m.index, end === -1 ? text.length : end + 2);
+      if (dynamic.has(m[2]) && body.includes(`process.env[${m[2]}]`)) readers.push(m[1]);
+    }
+    for (const f of readers) {
+      for (const m of text.matchAll(new RegExp(String.raw`(?<![\w$.])${f}\(\s*${LIT}`, "g"))) names.add(m[1]);
+    }
+    const ONLY_NAMES = new RegExp(String.raw`\[\s*(${LIT}\s*,\s*)*${LIT}\s*,?\s*\]`, "g");
+    for (const m of text.matchAll(ONLY_NAMES)) {
+      for (const n of m[0].matchAll(new RegExp(LIT, "g"))) names.add(n[1]);
+    }
+  }
+  for (const m of text.matchAll(/\b([A-Za-z_$][\w$]*)\s*(?::[^=;()]*)?=\s*process\.env\b(?!\s*[.[])/g)) {
+    const r = m[1];
+    for (const n of text.matchAll(new RegExp(String.raw`(?<![\w$.])${r}\s*\[\s*${LIT}\s*\]`, "g"))) names.add(n[1]);
+    for (const n of text.matchAll(new RegExp(String.raw`(?<![\w$.])${r}\??\.([A-Z][A-Z0-9_]*)\b`, "g"))) names.add(n[1]);
+  }
   return names;
 }
 
