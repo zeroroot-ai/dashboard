@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.132.1](https://github.com/zeroroot-ai/dashboard/compare/v0.132.0...v0.132.1) (2026-10-12)
+
+
+### Bug Fixes
+
+* **env-readers:** count only real env reads ([#295](https://github.com/zeroroot-ai/dashboard/issues/295)) ([1b11e5b](https://github.com/zeroroot-ai/dashboard/commit/1b11e5bb702105d5b1fd6eba8a1ee9ee1360e839)), closes [#294](https://github.com/zeroroot-ai/dashboard/issues/294)
+
 ## [0.132.0](https://github.com/zeroroot-ai/dashboard/compare/v0.131.0...v0.132.0) (2026-10-12)
 
 
