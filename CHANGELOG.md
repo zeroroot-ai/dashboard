@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.132.2](https://github.com/zeroroot-ai/dashboard/compare/v0.132.1...v0.132.2) (2026-10-13)
+
+
+### Bug Fixes
+
+* **signup:** after Create account the completion page shows the payment step, not the return page ([#305](https://github.com/zeroroot-ai/dashboard/issues/305)) ([9c88d39](https://github.com/zeroroot-ai/dashboard/commit/9c88d39439f3b95791bdde2c174a5f51eb3c7b00)), closes [#304](https://github.com/zeroroot-ai/dashboard/issues/304)
+
 ## [0.132.1](https://github.com/zeroroot-ai/dashboard/compare/v0.132.0...v0.132.1) (2026-10-12)
 
 
