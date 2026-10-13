@@ -125,6 +125,17 @@ describe('verified-session codec', () => {
     expect(display).not.toHaveProperty('verifiedSessionToken');
     expect(display.tier).toBe('team');
   });
+
+  it('strips the step link from the display projection', () => {
+    const display = displayOnly({
+      ...SESSION,
+      spent: true,
+      stepLink: 'https://billing.example.test/step?token=t',
+    });
+    expect(display).not.toHaveProperty('stepLink');
+    expect(display).not.toHaveProperty('verifiedSessionToken');
+    expect(display.spent).toBe(true);
+  });
 });
 
 // ADR-0171: a rotation moves AUTH_SECRET into AUTH_SECRET_PREVIOUS and writes a

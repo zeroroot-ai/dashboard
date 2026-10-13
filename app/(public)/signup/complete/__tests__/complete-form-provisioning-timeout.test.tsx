@@ -226,4 +226,18 @@ describe('CompleteSignupForm external signup step (dashboard#226)', () => {
     const button = screen.getByRole('link', { name: 'step-button' });
     expect(button).toHaveAttribute('href', '/signup/step/start');
   });
+
+  // The page renders the form with stepStarted for a spent session that holds
+  // a step link: the account exists, and the next thing is the step. The form
+  // opens on the step card, with no password fields (staging promotion run
+  // 38403381507).
+  it('opens on the step card with its link to the step route when the step has started', () => {
+    render(<CompleteSignupForm {...CARD_FREE_PROPS} stepText={STEP_TEXT} stepStarted />);
+
+    expect(screen.getByText('step-title')).toBeInTheDocument();
+    const button = screen.getByRole('link', { name: 'step-button' });
+    expect(button).toHaveAttribute('href', '/signup/step/start');
+    expect(screen.queryByLabelText(/^password$/i)).not.toBeInTheDocument();
+    expect(mockCompleteSignup).not.toHaveBeenCalled();
+  });
 });

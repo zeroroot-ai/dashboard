@@ -62,6 +62,12 @@ interface CompleteSignupFormProps {
   passwordPolicy: PasswordPolicy;
   /** The texts of the external signup step, or null when none is configured. */
   stepText: SignupStepText | null;
+  /**
+   * The account already exists and the external step is the next thing to do.
+   * The page sets it for a spent session that holds a step link: the form then
+   * opens on the step card, with the link to /signup/step/start.
+   */
+  stepStarted?: boolean;
 }
 
 /** Timeout codes are non-destructive: the account and workspace both exist. */
@@ -110,9 +116,10 @@ export function CompleteSignupForm({
   verified,
   passwordPolicy,
   stepText,
+  stepStarted = false,
 }: CompleteSignupFormProps) {
   const [showPassword, setShowPassword] = useState(false);
-  const [stepPending, setStepPending] = useState(false);
+  const [stepPending, setStepPending] = useState(stepStarted);
   const [provisioning, setProvisioning] = useState(false);
   const [redirectOnSuccess, setRedirectOnSuccess] = useState("");
   // Set only on a non-fatal PROVISIONING_TIMEOUT result (dashboard#967):

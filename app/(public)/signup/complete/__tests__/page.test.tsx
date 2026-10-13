@@ -15,7 +15,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockCookieStore, mockRedirect } = vi.hoisted(() => {
+const { mockCookieStore, mockRedirect, profile, formProps } = vi.hoisted(() => {
   const store = new Map<string, string>();
   return {
     mockCookieStore: {
@@ -26,6 +26,8 @@ const { mockCookieStore, mockRedirect } = vi.hoisted(() => {
     mockRedirect: vi.fn((to: string) => {
       throw new Error(`REDIRECT:${to}`);
     }),
+    profile: { signupStepText: null as null | Record<string, string> },
+    formProps: { last: null as null | Record<string, unknown> },
   };
 });
 
@@ -37,10 +39,13 @@ vi.mock('@/src/lib/zitadel/password-policy-cache', () => ({
   DEFAULT_PASSWORD_POLICY: { minLength: 12 },
 }));
 vi.mock('@/src/lib/deployment-profile', () => ({
-  getDeploymentProfile: () => ({ signupStepText: null }),
+  getDeploymentProfile: () => ({ signupStepText: profile.signupStepText }),
 }));
 vi.mock('../complete-form', () => ({
-  CompleteSignupForm: () => null,
+  CompleteSignupForm: (props: Record<string, unknown>) => {
+    formProps.last = props;
+    return null;
+  },
 }));
 
 import SignupCompletePage from '../page';
@@ -59,9 +64,18 @@ const SESSION: VerifiedSignupSession = {
   tier: 'team',
 };
 
+const STEP_TEXT = {
+  title: 'Payment details',
+  text: 'Add a card to start your workspace.',
+  buttonLabel: 'Continue to payment',
+};
+
 async function landing(): Promise<string> {
   try {
-    await SignupCompletePage();
+    const element = (await SignupCompletePage()) as { type?: unknown; props?: Record<string, unknown> } | undefined;
+    // The mocked form records its props when React renders it. A server
+    // component test does not render, so the returned element is read here.
+    formProps.last = element?.props ?? null;
     return 'rendered';
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -74,6 +88,8 @@ describe('/signup/complete page', () => {
   beforeEach(() => {
     mockCookieStore.store.clear();
     mockRedirect.mockClear();
+    profile.signupStepText = null;
+    formProps.last = null;
   });
 
   it('renders the form for a live verified session', async () => {
@@ -89,7 +105,13 @@ describe('/signup/complete page', () => {
     expect(await landing()).toBe(POST_SIGNUP_REDIRECT);
   });
 
-  it('sends a spent session that holds a step link to the step page', async () => {
+  // The completion action sets the cookie, and Next.js renders this page again
+  // inside the action's response. A spent session with a step link must open
+  // on the step card, with the link to /signup/step/start. It used to be
+  // redirected to /signup/step, the page for the RETURN from the step, which
+  // waits for a step nobody started (staging promotion run 38403381507).
+  it('shows a spent session that holds a step link the step card, never the return page', async () => {
+    profile.signupStepText = STEP_TEXT;
     mockCookieStore.store.set(
       SIGNUP_VERIFIED_COOKIE,
       encodeVerifiedSession({
@@ -98,7 +120,24 @@ describe('/signup/complete page', () => {
         stepLink: 'https://billing.example.test/step?token=t',
       }),
     );
-    expect(await landing()).toBe('/signup/step');
+    expect(await landing()).toBe('rendered');
+    expect(mockRedirect).not.toHaveBeenCalledWith('/signup/step');
+    expect(formProps.last).toMatchObject({ stepStarted: true, stepText: STEP_TEXT });
+    // The client never receives the completion token or the step link.
+    expect(JSON.stringify(formProps.last)).not.toContain('billing.example.test');
+    expect(JSON.stringify(formProps.last)).not.toContain('sess-1');
+  });
+
+  it('sends a spent session with a step link but no step text to /login', async () => {
+    mockCookieStore.store.set(
+      SIGNUP_VERIFIED_COOKIE,
+      encodeVerifiedSession({
+        ...SESSION,
+        spent: true,
+        stepLink: 'https://billing.example.test/step?token=t',
+      }),
+    );
+    expect(await landing()).toBe(POST_SIGNUP_REDIRECT);
   });
 
   it('sends a browser with no session to the shared failure destination', async () => {
