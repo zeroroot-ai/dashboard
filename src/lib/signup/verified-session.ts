@@ -101,10 +101,14 @@ export interface VerifiedSignupSession {
   spent?: true;
 }
 
-/** The subset the completion page may render. Note the absent token. */
+/**
+ * The subset the completion page may render. Note the absent token and step
+ * link: the step link holds the opaque step token of the daemon, and only
+ * /signup/step/start reads it, from the httpOnly cookie.
+ */
 export type VerifiedSignupDisplay = Omit<
   VerifiedSignupSession,
-  'verifiedSessionToken'
+  'verifiedSessionToken' | 'stepLink'
 >;
 
 /** Cookie attributes. Shared by the set and clear paths so they cannot drift. */
@@ -260,8 +264,12 @@ export function verifiedSessionFrom(
   };
 }
 
-/** Strip the capability before anything is handed to a client component. */
+/**
+ * Strip the capabilities before anything is handed to a client component: the
+ * completion token, and the step link that the completion page now renders the
+ * step card for.
+ */
 export function displayOnly(s: VerifiedSignupSession): VerifiedSignupDisplay {
-  const { verifiedSessionToken: _token, ...rest } = s;
+  const { verifiedSessionToken: _token, stepLink: _stepLink, ...rest } = s;
   return rest;
 }

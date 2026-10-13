@@ -38,11 +38,30 @@ export default async function SignupCompletePage() {
   const jar = await cookies();
   const session = decodeVerifiedSession(jar.get(SIGNUP_VERIFIED_COOKIE)?.value);
 
+  const { signupStepText } = getDeploymentProfile();
+
   if (session?.spent) {
-    // Completion already succeeded in this browser. The account exists. With
-    // an external signup step, the step page takes over; otherwise the only
-    // thing left to do is sign in (dashboard#79).
-    redirect(session.stepLink ? "/signup/step" : POST_SIGNUP_REDIRECT);
+    // Completion already succeeded in this browser. The account exists.
+    //
+    // With an external signup step, the next thing to do is START it, so the
+    // page shows the step card and its link to /signup/step/start. The
+    // completion action sets the session cookie, and Next.js renders this
+    // page again inside the action's response. This page used to redirect a
+    // spent session with a step link to /signup/step, the page for the
+    // RETURN from the step, which waits for a step that nobody had started.
+    // No customer reached the step (staging promotion run 38403381507).
+    if (session.stepLink && signupStepText) {
+      return (
+        <CompleteSignupForm
+          verified={displayOnly(session)}
+          passwordPolicy={DEFAULT_PASSWORD_POLICY}
+          stepText={signupStepText}
+          stepStarted
+        />
+      );
+    }
+    // Otherwise the only thing left to do is sign in (dashboard#79).
+    redirect(POST_SIGNUP_REDIRECT);
   }
 
   if (!session) {
@@ -51,8 +70,6 @@ export default async function SignupCompletePage() {
     // the place where those outcomes are told apart.
     redirect("/signup?verify=invalid");
   }
-
-  const { signupStepText } = getDeploymentProfile();
 
   return (
     <CompleteSignupForm
