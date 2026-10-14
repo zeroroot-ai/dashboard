@@ -714,6 +714,8 @@ function ModelPickerAndSave({
   setCapabilities,
   embeddingModel,
   setEmbeddingModel,
+  contextWindow,
+  setContextWindow,
   onSave,
   isSavePending,
 }: {
@@ -727,6 +729,9 @@ function ModelPickerAndSave({
   setCapabilities: (c: ProviderCapability[]) => void;
   embeddingModel: string;
   setEmbeddingModel: (m: string) => void;
+  /** The stated context window, used only when the provider reported none. */
+  contextWindow: string;
+  setContextWindow: (w: string) => void;
   onSave: () => void;
   isSavePending: boolean;
 }) {
@@ -748,10 +753,7 @@ function ModelPickerAndSave({
   // The Save button is disabled when nothing actionable is configured: chat
   // needs a chat model; embedding needs an embedding model. At least one
   // capability must be selected.
-  const chatReady = !servesChat || Boolean(pickedModel);
   const embeddingReady = !servesEmbedding || Boolean(embeddingModel.trim());
-  const saveDisabled =
-    isSavePending || capabilities.length === 0 || !chatReady || !embeddingReady;
 
   // Chat model list: only what the provider itself reported to the test.
   // With no list, the picker below takes a typed model ID (gibson#1193).
@@ -776,6 +778,15 @@ function ModelPickerAndSave({
   }, [descriptor.embeddingModels]);
 
   const pickedModelMeta = chatModels.find((m) => m.name === pickedModel);
+  // The daemon stores the window of the chosen model (gibson#1193). When the
+  // provider reported none, the person states it once here.
+  const windowNeeded = servesChat && Boolean(pickedModel) && !(pickedModelMeta?.contextWindow);
+  const statedWindow = Number(contextWindow);
+  const windowReady =
+    !windowNeeded || (Number.isInteger(statedWindow) && statedWindow >= 1 && statedWindow <= 10_000_000);
+  const chatReady = !servesChat || (Boolean(pickedModel) && windowReady);
+  const saveDisabled =
+    isSavePending || capabilities.length === 0 || !chatReady || !embeddingReady;
 
   React.useEffect(() => {
     if (!pickedModel && chatModels.length > 0 && servesChat) {
@@ -878,6 +889,25 @@ function ModelPickerAndSave({
               className="font-mono text-xs"
             />
           )}
+          {windowNeeded && (
+            <div className="space-y-1">
+              <label htmlFor="context-window" className="text-xs font-medium">
+                Context window (tokens)
+              </label>
+              <Input
+                id="context-window"
+                inputMode="numeric"
+                value={contextWindow}
+                onChange={(e) => setContextWindow(e.target.value.replace(/[^0-9]/g, ""))}
+                placeholder="200000"
+                className="font-mono text-xs"
+              />
+              <p className="text-muted-foreground text-[11px]">
+                The provider does not report a context window for this model. Agents that need a
+                minimum window use this value.
+              </p>
+            </div>
+          )}
           {pickedModelMeta?.deprecated && (
             <Alert>
               <AlertDescription className="text-xs">
@@ -979,6 +1009,7 @@ export function ProviderWizard({
     () => defaultCapabilitiesForType(initialType),
   );
   const [embeddingModel, setEmbeddingModel] = React.useState<string>("");
+  const [contextWindow, setContextWindow] = React.useState<string>("");
 
   const createMutation = useCreateProvider();
   const descriptor = supported.find((d) => d.type === selectedType);
@@ -1074,6 +1105,10 @@ export function ProviderWizard({
     }
   }
 
+  function reportedWindow(model: string): number {
+    return probeResult?.models.find((m) => m.name === model)?.contextWindow ?? 0;
+  }
+
   function save() {
     if (!descriptor) return;
     const servesEmbedding = capabilities.includes("embedding");
@@ -1089,6 +1124,10 @@ export function ProviderWizard({
           // Only send an embedding model when the provider serves embeddings;
           // otherwise leave it empty (provider is chat-only).
           defaultEmbeddingModel: servesEmbedding ? embeddingModel : "",
+          // Only a window the provider did not report is stated (gibson#1193).
+          ...(reportedWindow(pickedModel) === 0 && contextWindow
+            ? { defaultModelContextWindow: Number(contextWindow) }
+            : {}),
         },
       },
       {
@@ -1215,6 +1254,8 @@ export function ProviderWizard({
             setCapabilities={setCapabilities}
             embeddingModel={embeddingModel}
             setEmbeddingModel={setEmbeddingModel}
+            contextWindow={contextWindow}
+            setContextWindow={setContextWindow}
             onSave={save}
             isSavePending={createMutation.isPending}
           />

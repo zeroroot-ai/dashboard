@@ -147,4 +147,10 @@ export interface DaemonProviderConfigInput {
    * model). Empty when the provider does not serve embeddings.
    */
   defaultEmbeddingModel?: string;
+  /**
+   * Context window of {@link defaultModel}, in tokens. Sent only when the
+   * provider did not report one; the daemon refuses to save a chat provider
+   * whose window is neither reported nor stated (gibson#1193).
+   */
+  defaultModelContextWindow?: number;
 }

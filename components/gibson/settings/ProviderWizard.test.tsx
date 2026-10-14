@@ -673,8 +673,11 @@ describe("ProviderWizard step 3, probe result is advisory (dashboard#288)", () =
       fetchOk: false,
     });
 
-    // No live model list after a failed test: the person types the model ID.
+    // No live model list after a failed test: the person types the model ID,
+    // and states its context window because the provider reported none.
     await user.type(screen.getByPlaceholderText("model-name"), "claude-sonnet-4-6");
+    expect(screen.getByRole("button", { name: /save provider/i })).toBeDisabled();
+    await user.type(screen.getByLabelText(/context window/i), "200000");
     expect(screen.getByRole("button", { name: /save provider/i })).toBeEnabled();
   });
 
@@ -1306,5 +1309,32 @@ describe("ProviderWizard, model-free connection test (gibson#1193)", () => {
 
   it("sends the typed model for a provider with no model list", async () => {
     expect((await sentBody("my-foundry-deployment")).defaultModel).toBe("my-foundry-deployment");
+  });
+});
+
+describe("ProviderWizard, the stored context window (gibson#1193)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("asks for no window when the provider reported one", async () => {
+    const { user } = setupWizardAtStep2Advisory();
+    await advanceToStep3Advisory(user, {
+      fetchBody: { result: { ok: true, latencyMs: 5, models: [{ name: "m-reported", family: "", contextWindow: 200000 }] } },
+    });
+    expect(screen.queryByLabelText(/context window/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /save provider/i })).toBeEnabled();
+  });
+
+  it("asks for the window when the provider reported none, and refuses nonsense", async () => {
+    const { user } = setupWizardAtStep2Advisory();
+    await advanceToStep3Advisory(user, {
+      fetchBody: { result: { ok: true, latencyMs: 5, models: [{ name: "m-unreported", family: "", contextWindow: 0 }] } },
+    });
+    const field = screen.getByLabelText(/context window/i);
+    expect(screen.getByRole("button", { name: /save provider/i })).toBeDisabled();
+    await user.type(field, "99999999");
+    expect(screen.getByRole("button", { name: /save provider/i })).toBeDisabled();
+    await user.clear(field);
+    await user.type(field, "128000");
+    expect(screen.getByRole("button", { name: /save provider/i })).toBeEnabled();
   });
 });
