@@ -673,7 +673,20 @@ describe("ProviderWizard step 3, probe result is advisory (dashboard#288)", () =
       fetchOk: false,
     });
 
+    // No live model list after a failed test: the person types the model ID.
+    await user.type(screen.getByPlaceholderText("model-name"), "claude-sonnet-4-6");
     expect(screen.getByRole("button", { name: /save provider/i })).toBeEnabled();
+  });
+
+  it("shows the provider's own error text on step 3 (gibson#1193)", async () => {
+    const { user } = setupWizardAtStep2Advisory();
+
+    await advanceToStep3Advisory(user, {
+      fetchBody: { result: { ok: false, latencyMs: 12, error: "401 invalid x-api-key", models: [] } },
+      fetchOk: true,
+    });
+
+    expect(screen.getByTestId("probe-error")).toHaveTextContent("401 invalid x-api-key");
   });
 
   it("advisory warning is shown when probe result is { ok: false }", async () => {
@@ -816,7 +829,10 @@ describe("ModelPickerAndSave, deprecated model display (dashboard#289)", () => {
     const { user } = setupWizardAtStep2Mixed();
 
     await advanceToStep3Mixed(user, {
-      result: { ok: true, latencyMs: 10, models: [] },
+      result: { ok: true, latencyMs: 10, models: [
+        { name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000, deprecated: false },
+        { name: "claude-2-0", family: "Claude 2", contextWindow: 100000, deprecated: true },
+      ] },
     });
 
     // Open the Select dropdown so SelectItem content is in the DOM.
@@ -832,7 +848,10 @@ describe("ModelPickerAndSave, deprecated model display (dashboard#289)", () => {
     const { user } = setupWizardAtStep2Mixed();
 
     await advanceToStep3Mixed(user, {
-      result: { ok: true, latencyMs: 10, models: [] },
+      result: { ok: true, latencyMs: 10, models: [
+        { name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000, deprecated: false },
+        { name: "claude-2-0", family: "Claude 2", contextWindow: 100000, deprecated: true },
+      ] },
     });
 
     const trigger = screen.getByRole("combobox");
@@ -849,7 +868,10 @@ describe("ModelPickerAndSave, deprecated model display (dashboard#289)", () => {
     const { user } = setupWizardAtStep2Mixed();
 
     await advanceToStep3Mixed(user, {
-      result: { ok: true, latencyMs: 10, models: [] },
+      result: { ok: true, latencyMs: 10, models: [
+        { name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000, deprecated: false },
+        { name: "claude-2-0", family: "Claude 2", contextWindow: 100000, deprecated: true },
+      ] },
     });
 
     const trigger = screen.getByRole("combobox");
@@ -870,7 +892,10 @@ describe("ModelPickerAndSave, deprecated model display (dashboard#289)", () => {
     const { user } = setupWizardAtStep2Mixed();
 
     await advanceToStep3Mixed(user, {
-      result: { ok: true, latencyMs: 10, models: [] },
+      result: { ok: true, latencyMs: 10, models: [
+        { name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000, deprecated: false },
+        { name: "claude-2-0", family: "Claude 2", contextWindow: 100000, deprecated: true },
+      ] },
     });
 
     // Open picker, wait for options, then pick the deprecated model.
@@ -894,7 +919,10 @@ describe("ModelPickerAndSave, deprecated model display (dashboard#289)", () => {
     const { user } = setupWizardAtStep2Mixed();
 
     await advanceToStep3Mixed(user, {
-      result: { ok: true, latencyMs: 10, models: [] },
+      result: { ok: true, latencyMs: 10, models: [
+        { name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000, deprecated: false },
+        { name: "claude-2-0", family: "Claude 2", contextWindow: 100000, deprecated: true },
+      ] },
     });
 
     // The default selection is the first (non-deprecated) model, advisory should be absent.

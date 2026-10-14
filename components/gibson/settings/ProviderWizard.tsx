@@ -14,10 +14,10 @@
  *      Test connection         CredentialField list. "Test" hits the daemon
  *                              TestProvider RPC, which returns the live model
  *                              catalog from the provider's API on success.
- *   3. Pick a default model , populated from the live test result; falls back
- *      and save                to the descriptor's static defaultModels for
- *                              providers (e.g. Bedrock) where the daemon
- *                              already knows the catalog.
+ *   3. Pick a default model , populated from the live model list the test
+ *      and save                returned. With no list (the test failed), the
+ *                              person types a model ID. The platform keeps no
+ *                              hand-written model list (gibson#1193).
  *
  * The same component drives the empty-state first-run flow AND the
  * "Add Provider" dialog for subsequent providers, the only difference is
@@ -726,34 +726,13 @@ function ModelPickerAndSave({
   const saveDisabled =
     isSavePending || capabilities.length === 0 || !chatReady || !embeddingReady;
 
-  // Chat model list: prefer live models from the probe; fall back to the
-  // descriptor's static defaultModels catalog (e.g. Bedrock).
-  // Cross-reference live models with the static list to pick up deprecated flags.
-  const chatModels: FoundModel[] = React.useMemo(() => {
-    let base: FoundModel[];
-    if (liveModels.length > 0) {
-      base = liveModels.map((m) => {
-        const meta = descriptor.defaultModels.find((d) => d.name === m.name);
-        return {
-          ...m,
-          deprecated: m.deprecated ?? meta?.deprecated ?? false,
-        };
-      });
-    } else {
-      base = descriptor.defaultModels.map((m) => ({
-        name: m.name,
-        family: m.family ?? "",
-        contextWindow: m.contextWindow ?? 0,
-        deprecated: m.deprecated ?? false,
-      }));
-    }
-    // Sort: non-deprecated first, deprecated last.
-    return [...base].sort((a, b) => {
-      const aD = a.deprecated ? 1 : 0;
-      const bD = b.deprecated ? 1 : 0;
-      return aD - bD;
-    });
-  }, [liveModels, descriptor.defaultModels]);
+  // Chat model list: only what the provider itself reported to the test.
+  // With no list, the picker below takes a typed model ID (gibson#1193).
+  const chatModels: FoundModel[] = React.useMemo(
+    () =>
+      [...liveModels].sort((a, b) => (a.deprecated ? 1 : 0) - (b.deprecated ? 1 : 0)),
+    [liveModels],
+  );
 
   // Embedding model list: from gibson#1072 SupportedProvider.embeddingModels
   // (field 7). For embedding-only providers this IS the complete catalog.
@@ -1014,11 +993,8 @@ export function ProviderWizard({
         body: JSON.stringify({
           type: descriptor.type,
           name: values.name,
-          // The default model is populated AFTER the probe; for the test call
-          // itself we send a single representative entry from the descriptor's
-          // catalog when one exists, otherwise the empty string. Providers
-          // that ignore the model field on a health probe (most do) won't care.
-          defaultModel: descriptor.defaultModels[0]?.name ?? "",
+          // No model: the daemon checks the key with the provider's own model
+          // list and returns that list (gibson#1193).
           credentials: values.credentials,
         }),
       });
@@ -1190,6 +1166,11 @@ export function ProviderWizard({
             <Alert>
               <AlertDescription>
                 Connection test did not pass, you can still save and troubleshoot later.
+                {probeResult.error ? (
+                  <span className="mt-1 block font-mono text-xs" data-testid="probe-error">
+                    {probeResult.error}
+                  </span>
+                ) : null}
               </AlertDescription>
             </Alert>
           )}

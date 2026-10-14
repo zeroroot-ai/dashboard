@@ -96,198 +96,6 @@ function formatRelativeTime(iso: string): string {
   }
 }
 
-// ---------------------------------------------------------------------------
-// DynamicCredentialForm, retained for backward-compat with tests + the
-// onboarding flow. The Settings → Providers page uses ProviderWizard now.
-// ---------------------------------------------------------------------------
-
-interface DynamicFormValues {
-  name: string;
-  defaultModel: string;
-  setAsDefault: boolean;
-  credentials: Record<string, string>;
-}
-
-interface DynamicCredentialFormProps {
-  descriptor: SupportedProviderDescriptor;
-  onSubmit: (values: DynamicFormValues) => void;
-  isPending: boolean;
-}
-
-export function DynamicCredentialForm({ descriptor, onSubmit, isPending }: DynamicCredentialFormProps) {
-  const form = useForm<DynamicFormValues>({
-    defaultValues: {
-      name: descriptor.type,
-      defaultModel: descriptor.defaultModels[0]?.name ?? "",
-      setAsDefault: false,
-      credentials: {},
-    },
-  });
-
-  function handleSubmit(values: DynamicFormValues) {
-    onSubmit(values);
-  }
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          rules={{ required: "Name is required" }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-xs">Name</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  placeholder={descriptor.type}
-                  className="font-mono text-xs"
-                  autoComplete="off"
-                />
-              </FormControl>
-              <FormDescription className="text-xs">
-                Unique name for this provider instance (e.g. &ldquo;anthropic-prod&rdquo;).
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Dynamic credential fields from descriptor */}
-        {descriptor.credentials.map((field) => {
-          const rawFieldType = field.fieldType ?? CREDENTIAL_FIELD_TYPE.UNSPECIFIED;
-          const effectiveType =
-            rawFieldType !== CREDENTIAL_FIELD_TYPE.UNSPECIFIED
-              ? rawFieldType
-              : field.secret
-                ? CREDENTIAL_FIELD_TYPE.PASSWORD
-                : CREDENTIAL_FIELD_TYPE.TEXT;
-          const isBool = effectiveType === CREDENTIAL_FIELD_TYPE.BOOL;
-          const isRegion = effectiveType === CREDENTIAL_FIELD_TYPE.REGION;
-          const isUrl = effectiveType === CREDENTIAL_FIELD_TYPE.URL;
-          const listId = `${field.key}-regions`;
-          return (
-            <FormField
-              key={field.key}
-              control={form.control}
-              name={`credentials.${field.key}`}
-              rules={{ required: field.required ? `${field.label} is required` : false }}
-              render={({ field: formField }) => (
-                <FormItem>
-                  {!isBool && (
-                    <FormLabel className="text-xs">
-                      {field.label}
-                      {field.required && (
-                        <span className="text-destructive ml-1" aria-label="required">
-                          *
-                        </span>
-                      )}
-                    </FormLabel>
-                  )}
-                  <FormControl>
-                    {isBool ? (
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id={field.key}
-                          checked={formField.value === "true"}
-                          onCheckedChange={(checked) => {
-                            formField.onChange({
-                              target: { value: checked ? "true" : "false" },
-                            } as React.ChangeEvent<HTMLInputElement>);
-                          }}
-                        />
-                        <label htmlFor={field.key} className="cursor-pointer text-xs">
-                          {field.label}
-                        </label>
-                      </div>
-                    ) : isRegion ? (
-                      <>
-                        <Input
-                          {...formField}
-                          type="text"
-                          list={listId}
-                          placeholder={field.placeholder || undefined}
-                          className="font-mono text-xs"
-                          autoComplete="off"
-                          autoCorrect="off"
-                          spellCheck={false}
-                        />
-                        <datalist id={listId}>
-                          {["us-east-1","us-east-2","us-west-1","us-west-2","ca-central-1","eu-west-1","eu-west-2","eu-central-1","eu-north-1","ap-southeast-1","ap-southeast-2","ap-northeast-1","ap-south-1","sa-east-1"].map((r) => (
-                            <option key={r} value={r} />
-                          ))}
-                          {["us-central1","us-east1","us-east4","us-west1","europe-west1","europe-west2","asia-east1","asia-northeast1","asia-south1","australia-southeast1"].map((r) => (
-                            <option key={r} value={r} />
-                          ))}
-                        </datalist>
-                      </>
-                    ) : (
-                      <Input
-                        {...formField}
-                        type={isUrl ? "url" : effectiveType === CREDENTIAL_FIELD_TYPE.PASSWORD ? "password" : "text"}
-                        placeholder={field.placeholder || undefined}
-                        className="font-mono text-xs"
-                        autoComplete="off"
-                        autoCorrect="off"
-                        spellCheck={false}
-                      />
-                    )}
-                  </FormControl>
-                  {field.help && (
-                    <FormDescription className="text-xs">{field.help}</FormDescription>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          );
-        })}
-
-        {descriptor.defaultModels.length > 0 && (
-          <FormField
-            control={form.control}
-            name="defaultModel"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-xs">Default Model</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="w-full text-xs">
-                      <SelectValue placeholder="Select model" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {descriptor.defaultModels.map((m) => (
-                      <SelectItem key={m.name} value={m.name} className="font-mono text-xs">
-                        {m.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
-        <div className="flex items-center gap-2 pt-1">
-          <Button
-            type="submit"
-            size="sm"
-            variant="outline"
-            className="text-xs"
-            disabled={isPending}
-          >
-            {isPending && <Loader2 className="size-3 animate-spin" />}
-            Add Provider
-          </Button>
-        </div>
-      </form>
-    </Form>
-  );
-}
-
 // AddProviderDialog was replaced by ProviderWizard (multi-step type-pick →
 // connect+test → model-pick+save with live model fetching). The page-level
 // component renders the wizard inline for the empty state and inside a
@@ -359,7 +167,6 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
         body: JSON.stringify({
           type: descriptor.type,
           name: provider.name,
-          defaultModel: descriptor.defaultModels[0]?.name ?? "",
           credentials: values.credentials,
         }),
       });
@@ -465,19 +272,11 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
                   / {provider.type}
                 </span>
               </CardTitle>
-              {provider.defaultModel && (() => {
-                const configuredModelMeta = descriptor?.defaultModels.find(
-                  (m) => m.name === provider.defaultModel,
-                );
-                return (
-                  <CardDescription className="mt-0.5 text-xs flex items-center gap-1.5">
-                    Default model: {provider.defaultModel}
-                    {configuredModelMeta?.deprecated === true && (
-                      <Badge variant="destructive" className="text-[10px]">Model deprecated</Badge>
-                    )}
-                  </CardDescription>
-                );
-              })()}
+              {provider.defaultModel && (
+                <CardDescription className="mt-0.5 text-xs flex items-center gap-1.5">
+                  Default model: {provider.defaultModel}
+                </CardDescription>
+              )}
               {/* Capabilities + embedding model (E11 BYO-embedder,
                   gibson#810). Empty capabilities normalize to chat-only. */}
               {(() => {
