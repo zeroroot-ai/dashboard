@@ -673,7 +673,23 @@ describe("ProviderWizard step 3, probe result is advisory (dashboard#288)", () =
       fetchOk: false,
     });
 
+    // No live model list after a failed test: the person types the model ID,
+    // and states its context window because the provider reported none.
+    await user.type(screen.getByPlaceholderText("model-name"), "claude-sonnet-4-6");
+    expect(screen.getByRole("button", { name: /save provider/i })).toBeDisabled();
+    await user.type(screen.getByLabelText(/context window/i), "200000");
     expect(screen.getByRole("button", { name: /save provider/i })).toBeEnabled();
+  });
+
+  it("shows the provider's own error text on step 3 (gibson#1193)", async () => {
+    const { user } = setupWizardAtStep2Advisory();
+
+    await advanceToStep3Advisory(user, {
+      fetchBody: { result: { ok: false, latencyMs: 12, error: "401 invalid x-api-key", models: [] } },
+      fetchOk: true,
+    });
+
+    expect(screen.getByTestId("probe-error")).toHaveTextContent("401 invalid x-api-key");
   });
 
   it("advisory warning is shown when probe result is { ok: false }", async () => {
@@ -737,172 +753,7 @@ describe("ProviderWizard step 3, probe result is advisory (dashboard#288)", () =
   });
 });
 
-// ===========================================================================
-// dashboard#289, deprecated model display in catalog picker
-// ===========================================================================
 
-const mixedModelsDescriptor: SupportedProviderDescriptor = {
-  type: "anthropic",
-  displayName: "Anthropic (Claude)",
-  docsUrl: "https://docs.anthropic.com/",
-  selfHosted: false,
-  credentials: [
-    {
-      key: "api_key",
-      label: "Anthropic API Key",
-      required: true,
-      secret: true,
-      placeholder: "sk-ant-...",
-      help: "Find your key at console.anthropic.com",
-    },
-  ],
-  defaultModels: [
-    { name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000, deprecated: false },
-    { name: "claude-2-0", family: "Claude 2", contextWindow: 100000, deprecated: true },
-  ],
-};
-
-function setupWizardAtStep2Mixed() {
-  const user = userEvent.setup();
-  render(
-    <ProviderWizard supported={[mixedModelsDescriptor]} initialType="anthropic" />,
-    { wrapper },
-  );
-  return { user };
-}
-
-async function advanceToStep3Mixed(
-  user: ReturnType<typeof userEvent.setup>,
-  fetchBody: unknown,
-  fetchOk = true,
-) {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockResolvedValue({ ok: fetchOk, json: async () => fetchBody }),
-  );
-
-  const apiKeyInput = screen.getByPlaceholderText("sk-ant-...");
-  await user.type(apiKeyInput, "sk-ant-test-key");
-
-  await act(async () => {
-    await user.click(screen.getByRole("button", { name: /test connection/i }));
-  });
-
-  await waitFor(
-    () => {
-      expect(screen.getByRole("button", { name: /edit credentials/i })).toBeInTheDocument();
-    },
-    { timeout: 3000 },
-  );
-}
-
-describe("ModelPickerAndSave, deprecated model display (dashboard#289)", () => {
-  beforeEach(() => {
-    // Radix Select pointer-event polyfills required for jsdom.
-    // Pattern matches src/components/secrets-backend/__tests__/SecretsBackendForm.test.tsx.
-    Element.prototype.hasPointerCapture ??= vi.fn(() => false);
-    Element.prototype.setPointerCapture ??= vi.fn();
-    Element.prototype.releasePointerCapture ??= vi.fn();
-    if (!Element.prototype.scrollIntoView) {
-      Element.prototype.scrollIntoView = vi.fn();
-    }
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("renders a Deprecated badge for deprecated models in the picker", async () => {
-    const { user } = setupWizardAtStep2Mixed();
-
-    await advanceToStep3Mixed(user, {
-      result: { ok: true, latencyMs: 10, models: [] },
-    });
-
-    // Open the Select dropdown so SelectItem content is in the DOM.
-    const trigger = screen.getByRole("combobox");
-    fireEvent.click(trigger);
-
-    await waitFor(() => {
-      expect(screen.getByText("Deprecated")).toBeInTheDocument();
-    });
-  });
-
-  it("does NOT render a Deprecated badge for non-deprecated models", async () => {
-    const { user } = setupWizardAtStep2Mixed();
-
-    await advanceToStep3Mixed(user, {
-      result: { ok: true, latencyMs: 10, models: [] },
-    });
-
-    const trigger = screen.getByRole("combobox");
-    fireEvent.click(trigger);
-
-    // There is exactly ONE "Deprecated" badge (for claude-2-0, not claude-3-5-sonnet).
-    await waitFor(() => {
-      const badges = screen.getAllByText("Deprecated");
-      expect(badges).toHaveLength(1);
-    });
-  });
-
-  it("sorts non-deprecated models before deprecated models", async () => {
-    const { user } = setupWizardAtStep2Mixed();
-
-    await advanceToStep3Mixed(user, {
-      result: { ok: true, latencyMs: 10, models: [] },
-    });
-
-    const trigger = screen.getByRole("combobox");
-    fireEvent.click(trigger);
-
-    await waitFor(() => {
-      const items = screen.getAllByRole("option");
-      const names = items.map((el) => el.textContent ?? "");
-      const nonDeprecatedIdx = names.findIndex((n) => n.includes("claude-3-5-sonnet-20241022"));
-      const deprecatedIdx = names.findIndex((n) => n.includes("claude-2-0"));
-      expect(nonDeprecatedIdx).toBeGreaterThanOrEqual(0);
-      expect(deprecatedIdx).toBeGreaterThanOrEqual(0);
-      expect(nonDeprecatedIdx).toBeLessThan(deprecatedIdx);
-    });
-  });
-
-  it("shows the deprecated advisory when a deprecated model is selected", async () => {
-    const { user } = setupWizardAtStep2Mixed();
-
-    await advanceToStep3Mixed(user, {
-      result: { ok: true, latencyMs: 10, models: [] },
-    });
-
-    // Open picker, wait for options, then pick the deprecated model.
-    const trigger = screen.getByRole("combobox");
-    fireEvent.click(trigger);
-
-    await waitFor(() => {
-      expect(screen.getByRole("option", { name: /claude-2-0/i })).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByRole("option", { name: /claude-2-0/i }));
-
-    await waitFor(() => {
-      expect(
-        screen.getByText(/this model is deprecated, consider switching to a newer model/i),
-      ).toBeInTheDocument();
-    });
-  });
-
-  it("does NOT show the deprecated advisory when a non-deprecated model is selected", async () => {
-    const { user } = setupWizardAtStep2Mixed();
-
-    await advanceToStep3Mixed(user, {
-      result: { ok: true, latencyMs: 10, models: [] },
-    });
-
-    // The default selection is the first (non-deprecated) model, advisory should be absent.
-    expect(
-      screen.queryByText(/this model is deprecated, consider switching to a newer model/i),
-    ).not.toBeInTheDocument();
-  });
-});
 
 // ===========================================================================
 // dashboard#870 — BYO embedding UI wired to daemon catalog (gibson#1072)
@@ -1253,5 +1104,57 @@ describe("Provider picker: login-shape hint", () => {
     expect(screen.getByTestId("login-shape-hint-foundry")).toHaveTextContent("Microsoft Foundry");
     expect(screen.getByTestId("login-shape-hint-bedrock")).toHaveTextContent("Amazon Bedrock");
     expect(screen.queryByTestId("login-shape-hint-openai")).toBeNull();
+  });
+});
+
+describe("ProviderWizard, model-free connection test (gibson#1193)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  async function sentBody(typedModel: string | null) {
+    const { user } = setupWizardAtStep2Advisory();
+    if (typedModel !== null) {
+      await user.type(screen.getByPlaceholderText(/leave empty when the provider lists its models/i), typedModel);
+    }
+    await advanceToStep3Advisory(user, {
+      fetchBody: { result: { ok: true, latencyMs: 5, models: [{ name: "live-model", family: "", contextWindow: 0 }] } },
+    });
+    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const call = fetchMock.mock.calls.find(([url]) => String(url).includes("/api/settings/providers/test"));
+    return JSON.parse(String((call?.[1] as { body: string }).body));
+  }
+
+  it("sends no model when the optional model field is empty", async () => {
+    expect((await sentBody(null)).defaultModel).toBeUndefined();
+  });
+
+  it("sends the typed model for a provider with no model list", async () => {
+    expect((await sentBody("my-foundry-deployment")).defaultModel).toBe("my-foundry-deployment");
+  });
+});
+
+describe("ProviderWizard, the stored context window (gibson#1193)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("asks for no window when the provider reported one", async () => {
+    const { user } = setupWizardAtStep2Advisory();
+    await advanceToStep3Advisory(user, {
+      fetchBody: { result: { ok: true, latencyMs: 5, models: [{ name: "m-reported", family: "", contextWindow: 200000 }] } },
+    });
+    expect(screen.queryByLabelText(/context window/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /save provider/i })).toBeEnabled();
+  });
+
+  it("asks for the window when the provider reported none, and refuses nonsense", async () => {
+    const { user } = setupWizardAtStep2Advisory();
+    await advanceToStep3Advisory(user, {
+      fetchBody: { result: { ok: true, latencyMs: 5, models: [{ name: "m-unreported", family: "", contextWindow: 0 }] } },
+    });
+    const field = screen.getByLabelText(/context window/i);
+    expect(screen.getByRole("button", { name: /save provider/i })).toBeDisabled();
+    await user.type(field, "99999999");
+    expect(screen.getByRole("button", { name: /save provider/i })).toBeDisabled();
+    await user.clear(field);
+    await user.type(field, "128000");
+    expect(screen.getByRole("button", { name: /save provider/i })).toBeEnabled();
   });
 });

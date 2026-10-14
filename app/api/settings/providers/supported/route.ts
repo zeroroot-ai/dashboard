@@ -37,14 +37,12 @@ function mapModelDescriptor(m: {
   name: string;
   family: string;
   contextWindow: number;
-  deprecated?: boolean;
   capabilities?: number[];
 }): ModelDescriptor {
   return {
     name: m.name,
     family: m.family ?? '',
     contextWindow: m.contextWindow,
-    deprecated: m.deprecated ?? false,
     capabilities: m.capabilities && m.capabilities.length > 0
       ? fromProtoCapabilities(m.capabilities)
       : undefined,

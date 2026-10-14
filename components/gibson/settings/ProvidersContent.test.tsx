@@ -15,7 +15,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ProvidersContent, DynamicCredentialForm } from "./ProvidersContent";
+import { ProvidersContent } from "./ProvidersContent";
 import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
 import type { ListProvidersResponse } from "@/src/types/provider";
 import { useSupportedProviders } from "@/src/hooks/useSupportedProviders";
@@ -88,18 +88,29 @@ vi.mock("./ProviderWizard", () => ({
   ProviderWizard: () => null,
   CredentialsAndTest: ({
     onValuesChange,
+    onTest,
   }: {
     onValuesChange?: (v: { name: string; credentials: Record<string, string> }) => void;
+    onTest?: (v: { name: string; credentials: Record<string, string>; testModel?: string }) => void;
   }) => (
-    <button
-      type="button"
-      data-testid="credentials-and-test-stub"
-      onClick={() =>
-        onValuesChange?.({ name: "my-anthropic", credentials: { api_key: "sk-ant-new-key" } })
-      }
-    >
-      Enter credentials
-    </button>
+    <>
+      <button
+        type="button"
+        data-testid="credentials-and-test-stub"
+        onClick={() =>
+          onValuesChange?.({ name: "my-anthropic", credentials: { api_key: "sk-ant-new-key" } })
+        }
+      >
+        Enter credentials
+      </button>
+      <button
+        type="button"
+        data-testid="credentials-and-test-run"
+        onClick={() => onTest?.({ name: "my-anthropic", credentials: { api_key: "sk-ant-new-key" } })}
+      >
+        Run test
+      </button>
+    </>
   ),
 }));
 
@@ -429,198 +440,6 @@ describe("ConfiguredProviderRow, health badge", () => {
 });
 
 // ---------------------------------------------------------------------------
-// DynamicCredentialForm tests
-// Tests the credential form directly without Dialog/Select interaction
-// ---------------------------------------------------------------------------
-
-describe("DynamicCredentialForm", () => {
-  const mockOnSubmit = vi.fn();
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("renders a password input for secret credential fields (anthropic api_key)", () => {
-    renderWithProviders(
-      <DynamicCredentialForm
-        descriptor={anthropicDescriptor}
-        onSubmit={mockOnSubmit}
-        isPending={false}
-      />
-    );
-
-    const apiKeyInput = screen.getByLabelText(/Anthropic API Key/i);
-    expect(apiKeyInput).toHaveAttribute("type", "password");
-    expect(apiKeyInput).toHaveAttribute("autoComplete", "off");
-  });
-
-  it("renders secret fields as password and non-secret fields as text (bedrock)", () => {
-    renderWithProviders(
-      <DynamicCredentialForm
-        descriptor={bedrockDescriptor}
-        onSubmit={mockOnSubmit}
-        isPending={false}
-      />
-    );
-
-    const regionInput = screen.getByLabelText(/AWS Region/i);
-    expect(regionInput).toHaveAttribute("type", "text");
-
-    const accessKeyInput = screen.getByLabelText(/AWS Access Key ID/i);
-    expect(accessKeyInput).toHaveAttribute("type", "password");
-
-    const secretKeyInput = screen.getByLabelText(/AWS Secret Access Key/i);
-    expect(secretKeyInput).toHaveAttribute("type", "password");
-  });
-
-  it("shows placeholder text from descriptor on credential inputs", () => {
-    renderWithProviders(
-      <DynamicCredentialForm
-        descriptor={anthropicDescriptor}
-        onSubmit={mockOnSubmit}
-        isPending={false}
-      />
-    );
-
-    const apiKeyInput = screen.getByLabelText(/Anthropic API Key/i);
-    expect(apiKeyInput).toHaveAttribute("placeholder", "sk-ant-...");
-  });
-
-  it("shows help text from descriptor below the input field", () => {
-    renderWithProviders(
-      <DynamicCredentialForm
-        descriptor={anthropicDescriptor}
-        onSubmit={mockOnSubmit}
-        isPending={false}
-      />
-    );
-
-    expect(screen.getByText("Find your key at console.anthropic.com")).toBeInTheDocument();
-  });
-
-  it("shows required marker (*) on required credential fields", () => {
-    renderWithProviders(
-      <DynamicCredentialForm
-        descriptor={anthropicDescriptor}
-        onSubmit={mockOnSubmit}
-        isPending={false}
-      />
-    );
-
-    expect(screen.getByLabelText("required")).toBeInTheDocument();
-  });
-
-  it("calls onSubmit with the generic payload shape on form submit", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(
-      <DynamicCredentialForm
-        descriptor={anthropicDescriptor}
-        onSubmit={mockOnSubmit}
-        isPending={false}
-      />
-    );
-
-    const nameInput = screen.getByLabelText(/^Name$/i);
-    await user.clear(nameInput);
-    await user.type(nameInput, "my-claude");
-
-    const apiKeyInput = screen.getByLabelText(/Anthropic API Key/i);
-    await user.type(apiKeyInput, "sk-ant-test-key-123");
-
-    const submitButton = screen.getByRole("button", { name: /add provider/i });
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(mockOnSubmit).toHaveBeenCalledTimes(1);
-    });
-
-    const callArgs = mockOnSubmit.mock.calls[0][0];
-    expect(callArgs.name).toBe("my-claude");
-    expect(typeof callArgs.credentials).toBe("object");
-    expect(callArgs.credentials.api_key).toBe("sk-ant-test-key-123");
-    expect(callArgs).not.toHaveProperty("apiKey");
-    expect(callArgs).not.toHaveProperty("isEnabled");
-    expect(callArgs).not.toHaveProperty("displayName");
-  });
-
-  it("verifies that the mutation called from AddProviderDialog uses the generic payload shape", async () => {
-    const mockCreateMutateLocal = vi.fn();
-    const user = userEvent.setup();
-
-    renderWithProviders(
-      <DynamicCredentialForm
-        descriptor={anthropicDescriptor}
-        onSubmit={(values) => {
-          mockCreateMutateLocal({
-            config: {
-              type: anthropicDescriptor.type,
-              name: values.name,
-              defaultModel: values.defaultModel,
-              credentials: values.credentials,
-              setAsDefault: values.setAsDefault,
-            },
-          });
-        }}
-        isPending={false}
-      />
-    );
-
-    const apiKeyInput = screen.getByLabelText(/Anthropic API Key/i);
-    await user.type(apiKeyInput, "sk-ant-test-key-123");
-
-    const submitButton = screen.getByRole("button", { name: /add provider/i });
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(mockCreateMutateLocal).toHaveBeenCalledTimes(1);
-    });
-
-    const callArgs = mockCreateMutateLocal.mock.calls[0][0];
-    expect(callArgs.config.type).toBe("anthropic");
-    expect(typeof callArgs.config.credentials).toBe("object");
-    expect(callArgs.config.credentials.api_key).toBe("sk-ant-test-key-123");
-    expect(callArgs.config).not.toHaveProperty("apiKey");
-    expect(callArgs.config).not.toHaveProperty("isEnabled");
-    expect(callArgs.config).not.toHaveProperty("displayName");
-  });
-
-  it("password inputs are uncontrolled, react does not hold plaintext in state beyond submit", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(
-      <DynamicCredentialForm
-        descriptor={anthropicDescriptor}
-        onSubmit={mockOnSubmit}
-        isPending={false}
-      />
-    );
-
-    const apiKeyInput = screen.getByLabelText(/Anthropic API Key/i) as HTMLInputElement;
-
-    expect(apiKeyInput.type).toBe("password");
-
-    await user.type(apiKeyInput, "sk-ant-secret");
-    expect(apiKeyInput.value).toBe("sk-ant-secret");
-
-    expect(apiKeyInput).not.toHaveAttribute("data-value");
-    expect(apiKeyInput).toHaveAttribute("autoComplete", "off");
-  });
-
-  it("renders no credential fields when descriptor has empty credentials (ollama)", () => {
-    renderWithProviders(
-      <DynamicCredentialForm
-        descriptor={ollamaDescriptor}
-        onSubmit={mockOnSubmit}
-        isPending={false}
-      />
-    );
-
-    expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/^Name$/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /add provider/i })).toBeInTheDocument();
-  });
-});
-
-// ---------------------------------------------------------------------------
 // ConfiguredProviderRow, credentialsMasked display
 // ---------------------------------------------------------------------------
 
@@ -742,6 +561,25 @@ describe("ConfiguredProviderRow, edit credentials", () => {
     expect(screen.getByTestId("credentials-and-test-stub")).toBeInTheDocument();
   });
 
+  it("re-tests with the saved model, so a provider with no model list can pass (gibson#1193)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ result: { ok: true, latencyMs: 3, models: [] } }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    renderWithProviders(<ProvidersContent />);
+
+    await user.click(screen.getByRole("button", { name: /edit credentials/i }));
+    await user.click(screen.getByTestId("credentials-and-test-run"));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const call = fetchMock.mock.calls.find(([url]) => String(url).includes("/api/settings/providers/test"));
+    const sent = JSON.parse(String((call?.[1] as { body: string }).body));
+    expect(sent.defaultModel).toBe("claude-3-5-sonnet-20241022");
+    vi.unstubAllGlobals();
+  });
+
   it("calls updateProvider mutation with credentials when Save is clicked", async () => {
     const user = userEvent.setup();
     renderWithProviders(<ProvidersContent />);
@@ -816,93 +654,3 @@ describe("ConfiguredProviderRow, edit credentials", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// ConfiguredProviderRow, deprecated model badge (dashboard#289)
-// ---------------------------------------------------------------------------
-
-describe("ConfiguredProviderRow, deprecated model badge (dashboard#289)", () => {
-  const mockedUseSupportedProviders = vi.mocked(useSupportedProviders);
-  const mockedUseProviders = vi.mocked(useProviders);
-  const mockedUseProviderHealth = vi.mocked(useProviderHealth);
-
-  const descriptorWithDeprecated: SupportedProviderDescriptor = {
-    ...anthropicDescriptor,
-    defaultModels: [
-      { name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000, deprecated: false },
-      { name: "claude-2-0", family: "Claude 2", contextWindow: 100000, deprecated: true },
-    ],
-  };
-
-  const providerWithDeprecatedModel = {
-    ...mockConfiguredProvider,
-    defaultModel: "claude-2-0",
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockedUseProviderHealth.mockReturnValue({
-      data: { status: "unknown" },
-      isLoading: false,
-      isError: false,
-    } as ReturnType<typeof useProviderHealth>);
-  });
-
-  it("shows 'Model deprecated' badge when configured model is deprecated", () => {
-    mockedUseSupportedProviders.mockReturnValue({
-      data: [descriptorWithDeprecated],
-      isLoading: false,
-      isError: false,
-    } as ReturnType<typeof useSupportedProviders>);
-    const deprecatedProviderList: ListProvidersResponse = {
-      providers: [providerWithDeprecatedModel],
-      defaultProvider: providerWithDeprecatedModel.name,
-        };
-    mockedUseProviders.mockReturnValue({
-      data: deprecatedProviderList,
-      isLoading: false,
-      isError: false,
-    } as ReturnType<typeof useProviders>);
-
-    renderWithProviders(<ProvidersContent />);
-
-    expect(screen.getByText("Model deprecated")).toBeInTheDocument();
-  });
-
-  it("does NOT show 'Model deprecated' badge when configured model is not deprecated", () => {
-    mockedUseSupportedProviders.mockReturnValue({
-      data: [descriptorWithDeprecated],
-      isLoading: false,
-      isError: false,
-    } as ReturnType<typeof useSupportedProviders>);
-    mockedUseProviders.mockReturnValue({
-      data: mockListProvidersResponse,
-      isLoading: false,
-      isError: false,
-    } as ReturnType<typeof useProviders>);
-
-    renderWithProviders(<ProvidersContent />);
-
-    expect(screen.queryByText("Model deprecated")).not.toBeInTheDocument();
-  });
-
-  it("does NOT show 'Model deprecated' badge when descriptor has no matching model", () => {
-    mockedUseSupportedProviders.mockReturnValue({
-      data: [anthropicDescriptor],
-      isLoading: false,
-      isError: false,
-    } as ReturnType<typeof useSupportedProviders>);
-    const unknownModelList: ListProvidersResponse = {
-      providers: [{ ...mockConfiguredProvider, defaultModel: "unknown-model" }],
-      defaultProvider: mockConfiguredProvider.name,
-        };
-    mockedUseProviders.mockReturnValue({
-      data: unknownModelList,
-      isLoading: false,
-      isError: false,
-    } as ReturnType<typeof useProviders>);
-
-    renderWithProviders(<ProvidersContent />);
-
-    expect(screen.queryByText("Model deprecated")).not.toBeInTheDocument();
-  });
-});

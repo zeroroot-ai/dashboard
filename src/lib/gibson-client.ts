@@ -1320,6 +1320,7 @@ function toProtoDaemonConfigInput(
     setAsDefault: input.setAsDefault ?? false,
     capabilities: toProtoCapabilities(input.capabilities ?? []),
     defaultEmbeddingModel: input.defaultEmbeddingModel ?? '',
+    defaultModelContextWindow: input.defaultModelContextWindow ?? 0,
   } as import('@/src/gen/gibson/tenant/v1/provider_pb').ProviderConfigInput;
 }
 

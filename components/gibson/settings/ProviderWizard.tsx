@@ -14,10 +14,10 @@
  *      Test connection         CredentialField list. "Test" hits the daemon
  *                              TestProvider RPC, which returns the live model
  *                              catalog from the provider's API on success.
- *   3. Pick a default model , populated from the live test result; falls back
- *      and save                to the descriptor's static defaultModels for
- *                              providers (e.g. Bedrock) where the daemon
- *                              already knows the catalog.
+ *   3. Pick a default model , populated from the live model list the test
+ *      and save                returned. With no list (the test failed), the
+ *                              person types a model ID. The platform keeps no
+ *                              hand-written model list (gibson#1193).
  *
  * The same component drives the empty-state first-run flow AND the
  * "Add Provider" dialog for subsequent providers, the only difference is
@@ -97,7 +97,6 @@ interface FoundModel {
   name: string;
   family: string;
   contextWindow: number;
-  deprecated?: boolean;
 }
 
 export interface ProbeResult {
@@ -116,6 +115,11 @@ export interface ProbeResult {
 interface CredentialFormValues {
   name: string;
   credentials: Record<string, string>;
+  /**
+   * Optional. A provider with no model list call (a Microsoft Foundry
+   * deployment) is tested with one message to this model (gibson#1193).
+   */
+  testModel?: string;
 }
 
 interface ProviderWizardProps {
@@ -603,6 +607,28 @@ export function CredentialsAndTest({
         />
         )}
 
+        <FormField
+          control={form.control}
+          name="testModel"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Model or deployment name (optional)</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  value={field.value ?? ""}
+                  placeholder="leave empty when the provider lists its models"
+                  className="font-mono text-xs"
+                  autoComplete="off"
+                />
+              </FormControl>
+              <FormDescription className="text-xs">
+                Needed only when the provider has no model list, such as a Foundry deployment.
+              </FormDescription>
+            </FormItem>
+          )}
+        />
+
         <IrsaAwareCredentialFields
           descriptor={descriptor}
           control={form.control}
@@ -618,7 +644,7 @@ export function CredentialsAndTest({
               {externalProbeResult!.models.length > 0 ? (
                 <>Found {externalProbeResult!.models.length} model{externalProbeResult!.models.length === 1 ? "" : "s"}.</>
               ) : (
-                "No live model list, using the provider&apos;s static catalog."
+                "The provider listed no models. Type the model name on the next step."
               )}
               {externalProbeResult!.embeddingOk && externalProbeResult!.embeddingDimension ? (
                 <> Embedding probe passed ({externalProbeResult!.embeddingDimension}d).</>
@@ -687,6 +713,8 @@ function ModelPickerAndSave({
   setCapabilities,
   embeddingModel,
   setEmbeddingModel,
+  contextWindow,
+  setContextWindow,
   onSave,
   isSavePending,
 }: {
@@ -700,6 +728,9 @@ function ModelPickerAndSave({
   setCapabilities: (c: ProviderCapability[]) => void;
   embeddingModel: string;
   setEmbeddingModel: (m: string) => void;
+  /** The stated context window, used only when the provider reported none. */
+  contextWindow: string;
+  setContextWindow: (w: string) => void;
   onSave: () => void;
   isSavePending: boolean;
 }) {
@@ -721,39 +752,11 @@ function ModelPickerAndSave({
   // The Save button is disabled when nothing actionable is configured: chat
   // needs a chat model; embedding needs an embedding model. At least one
   // capability must be selected.
-  const chatReady = !servesChat || Boolean(pickedModel);
   const embeddingReady = !servesEmbedding || Boolean(embeddingModel.trim());
-  const saveDisabled =
-    isSavePending || capabilities.length === 0 || !chatReady || !embeddingReady;
 
-  // Chat model list: prefer live models from the probe; fall back to the
-  // descriptor's static defaultModels catalog (e.g. Bedrock).
-  // Cross-reference live models with the static list to pick up deprecated flags.
-  const chatModels: FoundModel[] = React.useMemo(() => {
-    let base: FoundModel[];
-    if (liveModels.length > 0) {
-      base = liveModels.map((m) => {
-        const meta = descriptor.defaultModels.find((d) => d.name === m.name);
-        return {
-          ...m,
-          deprecated: m.deprecated ?? meta?.deprecated ?? false,
-        };
-      });
-    } else {
-      base = descriptor.defaultModels.map((m) => ({
-        name: m.name,
-        family: m.family ?? "",
-        contextWindow: m.contextWindow ?? 0,
-        deprecated: m.deprecated ?? false,
-      }));
-    }
-    // Sort: non-deprecated first, deprecated last.
-    return [...base].sort((a, b) => {
-      const aD = a.deprecated ? 1 : 0;
-      const bD = b.deprecated ? 1 : 0;
-      return aD - bD;
-    });
-  }, [liveModels, descriptor.defaultModels]);
+  // Chat model list: only what the provider itself reported to the test.
+  // With no list, the picker below takes a typed model ID (gibson#1193).
+  const chatModels: FoundModel[] = liveModels;
 
   // Embedding model list: from gibson#1072 SupportedProvider.embeddingModels
   // (field 7). For embedding-only providers this IS the complete catalog.
@@ -765,11 +768,19 @@ function ModelPickerAndSave({
       name: m.name,
       family: m.family ?? "",
       contextWindow: m.contextWindow ?? 0,
-      deprecated: m.deprecated ?? false,
     }));
   }, [descriptor.embeddingModels]);
 
   const pickedModelMeta = chatModels.find((m) => m.name === pickedModel);
+  // The daemon stores the window of the chosen model (gibson#1193). When the
+  // provider reported none, the person states it once here.
+  const windowNeeded = servesChat && Boolean(pickedModel) && !(pickedModelMeta?.contextWindow);
+  const statedWindow = Number(contextWindow);
+  const windowReady =
+    !windowNeeded || (Number.isInteger(statedWindow) && statedWindow >= 1 && statedWindow <= 10_000_000);
+  const chatReady = !servesChat || (Boolean(pickedModel) && windowReady);
+  const saveDisabled =
+    isSavePending || capabilities.length === 0 || !chatReady || !embeddingReady;
 
   React.useEffect(() => {
     if (!pickedModel && chatModels.length > 0 && servesChat) {
@@ -845,17 +856,12 @@ function ModelPickerAndSave({
                 {chatModels.map((m) => (
                   <SelectItem key={m.name} value={m.name} className="font-mono text-xs">
                     <div className="flex items-center justify-between gap-3">
-                      <span className={m.deprecated ? "text-muted-foreground" : undefined}>
-                        {m.name}
-                      </span>
+                      <span>{m.name}</span>
                       <div className="flex items-center gap-1.5">
                         {m.contextWindow > 0 && (
                           <span className="text-muted-foreground text-[10px]">
                             {m.contextWindow.toLocaleString()} ctx
                           </span>
-                        )}
-                        {m.deprecated && (
-                          <Badge variant="secondary" className="text-[10px]">Deprecated</Badge>
                         )}
                       </div>
                     </div>
@@ -872,12 +878,24 @@ function ModelPickerAndSave({
               className="font-mono text-xs"
             />
           )}
-          {pickedModelMeta?.deprecated && (
-            <Alert>
-              <AlertDescription className="text-xs">
-                This model is deprecated, consider switching to a newer model.
-              </AlertDescription>
-            </Alert>
+          {windowNeeded && (
+            <div className="space-y-1">
+              <label htmlFor="context-window" className="text-xs font-medium">
+                Context window (tokens)
+              </label>
+              <Input
+                id="context-window"
+                inputMode="numeric"
+                value={contextWindow}
+                onChange={(e) => setContextWindow(e.target.value.replace(/[^0-9]/g, ""))}
+                placeholder="200000"
+                className="font-mono text-xs"
+              />
+              <p className="text-muted-foreground text-[11px]">
+                The provider does not report a context window for this model. Agents that need a
+                minimum window use this value.
+              </p>
+            </div>
           )}
         </div>
       )}
@@ -973,6 +991,7 @@ export function ProviderWizard({
     () => defaultCapabilitiesForType(initialType),
   );
   const [embeddingModel, setEmbeddingModel] = React.useState<string>("");
+  const [contextWindow, setContextWindow] = React.useState<string>("");
 
   const createMutation = useCreateProvider();
   const descriptor = supported.find((d) => d.type === selectedType);
@@ -1014,11 +1033,10 @@ export function ProviderWizard({
         body: JSON.stringify({
           type: descriptor.type,
           name: values.name,
-          // The default model is populated AFTER the probe; for the test call
-          // itself we send a single representative entry from the descriptor's
-          // catalog when one exists, otherwise the empty string. Providers
-          // that ignore the model field on a health probe (most do) won't care.
-          defaultModel: descriptor.defaultModels[0]?.name ?? "",
+          // The daemon checks the key with the provider's own model list and
+          // returns that list. A typed model is sent only for a provider with
+          // no list call (gibson#1193).
+          ...(values.testModel?.trim() ? { defaultModel: values.testModel.trim() } : {}),
           credentials: values.credentials,
         }),
       });
@@ -1069,6 +1087,10 @@ export function ProviderWizard({
     }
   }
 
+  function reportedWindow(model: string): number {
+    return probeResult?.models.find((m) => m.name === model)?.contextWindow ?? 0;
+  }
+
   function save() {
     if (!descriptor) return;
     const servesEmbedding = capabilities.includes("embedding");
@@ -1084,6 +1106,11 @@ export function ProviderWizard({
           // Only send an embedding model when the provider serves embeddings;
           // otherwise leave it empty (provider is chat-only).
           defaultEmbeddingModel: servesEmbedding ? embeddingModel : "",
+          // Only a chat model whose window the provider did not report gets a
+          // stated window (gibson#1193).
+          ...(capabilities.includes("chat") && reportedWindow(pickedModel) === 0 && contextWindow
+            ? { defaultModelContextWindow: Number(contextWindow) }
+            : {}),
         },
       },
       {
@@ -1190,6 +1217,11 @@ export function ProviderWizard({
             <Alert>
               <AlertDescription>
                 Connection test did not pass, you can still save and troubleshoot later.
+                {probeResult.error ? (
+                  <span className="mt-1 block font-mono text-xs" data-testid="probe-error">
+                    {probeResult.error}
+                  </span>
+                ) : null}
               </AlertDescription>
             </Alert>
           )}
@@ -1205,6 +1237,8 @@ export function ProviderWizard({
             setCapabilities={setCapabilities}
             embeddingModel={embeddingModel}
             setEmbeddingModel={setEmbeddingModel}
+            contextWindow={contextWindow}
+            setContextWindow={setContextWindow}
             onSave={save}
             isSavePending={createMutation.isPending}
           />
