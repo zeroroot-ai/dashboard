@@ -85,8 +85,6 @@ export interface ModelDescriptor {
   family: string;
   /** Maximum input tokens; 0 when unknown. */
   contextWindow: number;
-  /** True when the provider catalog marks this model as superseded. */
-  deprecated?: boolean;
   /**
    * Capabilities this model supports. Mirrors proto `Capability` enum values
    * (1=chat, 2=embedding). Absent/empty implies chat-only (legacy default).

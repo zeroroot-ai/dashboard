@@ -88,18 +88,29 @@ vi.mock("./ProviderWizard", () => ({
   ProviderWizard: () => null,
   CredentialsAndTest: ({
     onValuesChange,
+    onTest,
   }: {
     onValuesChange?: (v: { name: string; credentials: Record<string, string> }) => void;
+    onTest?: (v: { name: string; credentials: Record<string, string>; testModel?: string }) => void;
   }) => (
-    <button
-      type="button"
-      data-testid="credentials-and-test-stub"
-      onClick={() =>
-        onValuesChange?.({ name: "my-anthropic", credentials: { api_key: "sk-ant-new-key" } })
-      }
-    >
-      Enter credentials
-    </button>
+    <>
+      <button
+        type="button"
+        data-testid="credentials-and-test-stub"
+        onClick={() =>
+          onValuesChange?.({ name: "my-anthropic", credentials: { api_key: "sk-ant-new-key" } })
+        }
+      >
+        Enter credentials
+      </button>
+      <button
+        type="button"
+        data-testid="credentials-and-test-run"
+        onClick={() => onTest?.({ name: "my-anthropic", credentials: { api_key: "sk-ant-new-key" } })}
+      >
+        Run test
+      </button>
+    </>
   ),
 }));
 
@@ -548,6 +559,25 @@ describe("ConfiguredProviderRow, edit credentials", () => {
     await user.click(screen.getByRole("button", { name: /edit credentials/i }));
 
     expect(screen.getByTestId("credentials-and-test-stub")).toBeInTheDocument();
+  });
+
+  it("re-tests with the saved model, so a provider with no model list can pass (gibson#1193)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ result: { ok: true, latencyMs: 3, models: [] } }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    renderWithProviders(<ProvidersContent />);
+
+    await user.click(screen.getByRole("button", { name: /edit credentials/i }));
+    await user.click(screen.getByTestId("credentials-and-test-run"));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const call = fetchMock.mock.calls.find(([url]) => String(url).includes("/api/settings/providers/test"));
+    const sent = JSON.parse(String((call?.[1] as { body: string }).body));
+    expect(sent.defaultModel).toBe("claude-3-5-sonnet-20241022");
+    vi.unstubAllGlobals();
   });
 
   it("calls updateProvider mutation with credentials when Save is clicked", async () => {

@@ -97,7 +97,6 @@ interface FoundModel {
   name: string;
   family: string;
   contextWindow: number;
-  deprecated?: boolean;
 }
 
 export interface ProbeResult {
@@ -645,7 +644,7 @@ export function CredentialsAndTest({
               {externalProbeResult!.models.length > 0 ? (
                 <>Found {externalProbeResult!.models.length} model{externalProbeResult!.models.length === 1 ? "" : "s"}.</>
               ) : (
-                "No live model list, using the provider&apos;s static catalog."
+                "The provider listed no models. Type the model name on the next step."
               )}
               {externalProbeResult!.embeddingOk && externalProbeResult!.embeddingDimension ? (
                 <> Embedding probe passed ({externalProbeResult!.embeddingDimension}d).</>
@@ -757,11 +756,7 @@ function ModelPickerAndSave({
 
   // Chat model list: only what the provider itself reported to the test.
   // With no list, the picker below takes a typed model ID (gibson#1193).
-  const chatModels: FoundModel[] = React.useMemo(
-    () =>
-      [...liveModels].sort((a, b) => (a.deprecated ? 1 : 0) - (b.deprecated ? 1 : 0)),
-    [liveModels],
-  );
+  const chatModels: FoundModel[] = liveModels;
 
   // Embedding model list: from gibson#1072 SupportedProvider.embeddingModels
   // (field 7). For embedding-only providers this IS the complete catalog.
@@ -773,7 +768,6 @@ function ModelPickerAndSave({
       name: m.name,
       family: m.family ?? "",
       contextWindow: m.contextWindow ?? 0,
-      deprecated: m.deprecated ?? false,
     }));
   }, [descriptor.embeddingModels]);
 
@@ -862,17 +856,12 @@ function ModelPickerAndSave({
                 {chatModels.map((m) => (
                   <SelectItem key={m.name} value={m.name} className="font-mono text-xs">
                     <div className="flex items-center justify-between gap-3">
-                      <span className={m.deprecated ? "text-muted-foreground" : undefined}>
-                        {m.name}
-                      </span>
+                      <span>{m.name}</span>
                       <div className="flex items-center gap-1.5">
                         {m.contextWindow > 0 && (
                           <span className="text-muted-foreground text-[10px]">
                             {m.contextWindow.toLocaleString()} ctx
                           </span>
-                        )}
-                        {m.deprecated && (
-                          <Badge variant="secondary" className="text-[10px]">Deprecated</Badge>
                         )}
                       </div>
                     </div>
@@ -907,13 +896,6 @@ function ModelPickerAndSave({
                 minimum window use this value.
               </p>
             </div>
-          )}
-          {pickedModelMeta?.deprecated && (
-            <Alert>
-              <AlertDescription className="text-xs">
-                This model is deprecated, consider switching to a newer model.
-              </AlertDescription>
-            </Alert>
           )}
         </div>
       )}
@@ -1124,8 +1106,9 @@ export function ProviderWizard({
           // Only send an embedding model when the provider serves embeddings;
           // otherwise leave it empty (provider is chat-only).
           defaultEmbeddingModel: servesEmbedding ? embeddingModel : "",
-          // Only a window the provider did not report is stated (gibson#1193).
-          ...(reportedWindow(pickedModel) === 0 && contextWindow
+          // Only a chat model whose window the provider did not report gets a
+          // stated window (gibson#1193).
+          ...(capabilities.includes("chat") && reportedWindow(pickedModel) === 0 && contextWindow
             ? { defaultModelContextWindow: Number(contextWindow) }
             : {}),
         },

@@ -16,7 +16,6 @@
 
 import * as React from "react";
 import { AlertCircle, CheckCircle2, Circle, Loader2, Pencil, Plug, Star, Trash2, WifiOff } from "lucide-react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -32,24 +31,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -62,9 +43,8 @@ import { formatDistanceToNow } from "date-fns";
 
 import { useSupportedProviders } from "@/src/hooks/useSupportedProviders";
 import { useProviders, providerQueryKeys } from "@/src/hooks/useProviders";
-import { useCreateProvider, useDeleteProvider, useSetDefaultProvider, useUpdateProvider } from "@/src/hooks/useProviderMutations";
+import { useDeleteProvider, useSetDefaultProvider, useUpdateProvider } from "@/src/hooks/useProviderMutations";
 import { useProviderHealth } from "@/src/hooks/useProviderHealth";
-import { CREDENTIAL_FIELD_TYPE } from '@/src/lib/gibson-client-types';
 import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
 import { capabilityLabel } from '@/src/lib/provider-capabilities';
 import type { ProviderConfig, ProviderHealthStatus } from "@/src/types/provider";
@@ -156,7 +136,7 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
     );
   }
 
-  async function runEditTest(values: { name: string; credentials: Record<string, string> }) {
+  async function runEditTest(values: { name: string; credentials: Record<string, string>; testModel?: string }) {
     if (!descriptor) return;
     setIsEditTestPending(true);
     setEditProbeResult(null);
@@ -167,6 +147,11 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
         body: JSON.stringify({
           type: descriptor.type,
           name: provider.name,
+          // A provider with no model list (Foundry) is tested with a model:
+          // the typed one, else the saved one (gibson#1193).
+          ...((values.testModel?.trim() || provider.defaultModel)
+            ? { defaultModel: values.testModel?.trim() || provider.defaultModel }
+            : {}),
           credentials: values.credentials,
         }),
       });
