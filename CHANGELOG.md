@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.133.0](https://github.com/zeroroot-ai/dashboard/compare/v0.132.2...v0.133.0) (2026-10-14)
+
+
+### Features
+
+* **providers:** the connection test sends no model, and the model menu comes from the provider ([#309](https://github.com/zeroroot-ai/dashboard/issues/309)) ([fc2baa6](https://github.com/zeroroot-ai/dashboard/commit/fc2baa67f24395d874c55eed16513f901ba4a70f))
+
 ## [0.132.2](https://github.com/zeroroot-ai/dashboard/compare/v0.132.1...v0.132.2) (2026-10-13)
 
 
