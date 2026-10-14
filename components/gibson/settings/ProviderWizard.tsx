@@ -116,6 +116,11 @@ export interface ProbeResult {
 interface CredentialFormValues {
   name: string;
   credentials: Record<string, string>;
+  /**
+   * Optional. A provider with no model list call (a Microsoft Foundry
+   * deployment) is tested with one message to this model (gibson#1193).
+   */
+  testModel?: string;
 }
 
 interface ProviderWizardProps {
@@ -603,6 +608,28 @@ export function CredentialsAndTest({
         />
         )}
 
+        <FormField
+          control={form.control}
+          name="testModel"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Model or deployment name (optional)</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  value={field.value ?? ""}
+                  placeholder="leave empty when the provider lists its models"
+                  className="font-mono text-xs"
+                  autoComplete="off"
+                />
+              </FormControl>
+              <FormDescription className="text-xs">
+                Needed only when the provider has no model list, such as a Foundry deployment.
+              </FormDescription>
+            </FormItem>
+          )}
+        />
+
         <IrsaAwareCredentialFields
           descriptor={descriptor}
           control={form.control}
@@ -993,8 +1020,10 @@ export function ProviderWizard({
         body: JSON.stringify({
           type: descriptor.type,
           name: values.name,
-          // No model: the daemon checks the key with the provider's own model
-          // list and returns that list (gibson#1193).
+          // The daemon checks the key with the provider's own model list and
+          // returns that list. A typed model is sent only for a provider with
+          // no list call (gibson#1193).
+          ...(values.testModel?.trim() ? { defaultModel: values.testModel.trim() } : {}),
           credentials: values.credentials,
         }),
       });

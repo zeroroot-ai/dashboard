@@ -1283,3 +1283,28 @@ describe("Provider picker: login-shape hint", () => {
     expect(screen.queryByTestId("login-shape-hint-openai")).toBeNull();
   });
 });
+
+describe("ProviderWizard, model-free connection test (gibson#1193)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  async function sentBody(typedModel: string | null) {
+    const { user } = setupWizardAtStep2Advisory();
+    if (typedModel !== null) {
+      await user.type(screen.getByPlaceholderText(/leave empty when the provider lists its models/i), typedModel);
+    }
+    await advanceToStep3Advisory(user, {
+      fetchBody: { result: { ok: true, latencyMs: 5, models: [{ name: "live-model", family: "", contextWindow: 0 }] } },
+    });
+    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
+    const call = fetchMock.mock.calls.find(([url]) => String(url).includes("/api/settings/providers/test"));
+    return JSON.parse(String((call?.[1] as { body: string }).body));
+  }
+
+  it("sends no model when the optional model field is empty", async () => {
+    expect((await sentBody(null)).defaultModel).toBeUndefined();
+  });
+
+  it("sends the typed model for a provider with no model list", async () => {
+    expect((await sentBody("my-foundry-deployment")).defaultModel).toBe("my-foundry-deployment");
+  });
+});
