@@ -71,6 +71,10 @@ const GUARDS = [
   // array disagreed, and nothing proved that an import from each forbidden
   // path fails.
   "check-no-direct-admin-rpc.mjs",
+  // The AI SDK override gate (dashboard#317). The pnpm overrides fell behind
+  // the exact provider pin of ai twice, and the build only said "missing
+  // export"; this proves a stale override fails with the version to set.
+  "check-ai-sdk-overrides.mjs",
 ];
 
 let failed = 0;
