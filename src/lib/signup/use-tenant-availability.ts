@@ -57,11 +57,19 @@ export function useTenantAvailability(
 ): TenantAvailability {
   const debounceMs = opts.debounceMs ?? DEFAULT_DEBOUNCE_MS;
   const slug = slugify(rawName || "");
-  const [state, setState] = useState<TenantAvailability>({
-    slug,
-    available: null,
-    checking: false,
-  });
+  // The last answer and the raw name it was for. The returned state derives
+  // from it during render: no check for a short slug, checking until the
+  // answer for this exact name arrives, and the previous answer kept while
+  // the slug is the same. The effect sets state only when a check ends.
+  const [answer, setAnswer] = useState<{ rawName: string; slug: string; available: boolean | null } | null>(null);
+  const tooShort = !slug || slug.length < MIN_SLUG_LENGTH;
+  const state: TenantAvailability = tooShort
+    ? { slug, available: null, checking: false }
+    : {
+        slug,
+        available: answer?.slug === slug ? answer.available : null,
+        checking: answer?.rawName !== rawName,
+      };
 
   // Track the most-recent in-flight request so its result is the one that
   // ends up in state (a stale resolve from a previous keystroke must not
@@ -70,13 +78,8 @@ export function useTenantAvailability(
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    // Empty / too-short slugs: clear state immediately, no fetch.
-    if (!slug || slug.length < MIN_SLUG_LENGTH) {
-      setState({ slug, available: null, checking: false });
-      return;
-    }
-
-    setState((prev) => ({ slug, available: prev.slug === slug ? prev.available : null, checking: true }));
+    // Empty / too-short slugs: no fetch. The returned state says so.
+    if (!slug || slug.length < MIN_SLUG_LENGTH) return;
 
     const requestId = ++latestRequestIdRef.current;
     const controller = new AbortController();
@@ -92,17 +95,17 @@ export function useTenantAvailability(
         .then((data) => {
           if (requestId !== latestRequestIdRef.current) return; // stale
           if (!data) {
-            setState({ slug, available: null, checking: false });
+            setAnswer({ rawName, slug, available: null });
             return;
           }
-          setState({ slug, available: data.available, checking: false });
+          setAnswer({ rawName, slug, available: data.available });
         })
         .catch((err) => {
           if (controller.signal.aborted) return;
           if (requestId !== latestRequestIdRef.current) return;
           // Network failure: treat the same as the server's `lookup_failed`
           // degradation, no inline state, let the submit-time check run.
-          setState({ slug, available: null, checking: false });
+          setAnswer({ rawName, slug, available: null });
           // Surface the failure once per debounce window in dev so we can
           // spot a misconfigured route quickly.
           if (process.env.NODE_ENV !== "production") {

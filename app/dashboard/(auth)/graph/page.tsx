@@ -103,11 +103,16 @@ export default function GraphPage() {
   const [extraNodes, setExtraNodes] = useState<GraphNode[]>([]);
   const [extraEdges, setExtraEdges] = useState<GraphEdge[]>([]);
 
-  // Reset extra nodes/edges when base data changes (mission switch, full refetch)
-  useEffect(() => {
+  // Reset extra nodes/edges when base data changes (mission switch, full
+  // refetch). React's "adjust state when a prop changes" pattern: compare with
+  // the key of the last render, so no effect sets state after the commit.
+  const baseKey = `${missionId ?? ''}|${dataUpdatedAt}`;
+  const [extrasKey, setExtrasKey] = useState(baseKey);
+  if (extrasKey !== baseKey) {
+    setExtrasKey(baseKey);
     setExtraNodes([]);
     setExtraEdges([]);
-  }, [missionId, dataUpdatedAt]);
+  }
 
   // Truncation detection, the daemon route returns total_node_count
   const truncated = (queryData as { truncated?: boolean } | undefined)?.truncated ?? false;
@@ -187,11 +192,11 @@ export default function GraphPage() {
   // scrubber does not fire a request per tick.
   const [frameGraph, setFrameGraph] = useState<{ nodes: GraphNode[]; edges: GraphEdge[] } | null>(null);
   const scrubbing = isScrubbing(timelineActive, total, seq);
+  // Back on the live tail, drop the folded frame, so a later scrub never shows
+  // a stale frame before its own request returns.
+  if (!scrubbing && frameGraph !== null) setFrameGraph(null);
   useEffect(() => {
-    if (!scrubbing) {
-      setFrameGraph(null);
-      return;
-    }
+    if (!scrubbing) return;
     const controller = new AbortController();
     const handle = setTimeout(() => {
       void (async () => {

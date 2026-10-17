@@ -42,12 +42,17 @@ interface ProbeResult {
 
 const probe: { result?: ProbeResult } = {};
 
+// The probe reads the hooks during render and publishes the result after the
+// commit, so render stays free of side effects.
 function Probe() {
-  probe.result = {
+  const result = {
     tenantId: useTenantId(),
     isCross: useIsCrossTenant(),
     groups: useGroups(),
   };
+  React.useLayoutEffect(() => {
+    probe.result = result;
+  });
   return null;
 }
 

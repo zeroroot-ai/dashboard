@@ -29,12 +29,11 @@ import { TrackRecordReading } from './TrackRecordReading';
 
 export function TrackRecordPanel({ technique }: { technique: string }) {
   const scopes = useWorldScopes();
-  const [scopeId, setScopeId] = React.useState('');
+  const [chosenScope, setScopeId] = React.useState('');
   const scopeList = React.useMemo(() => scopes.data ?? [], [scopes.data]);
-
-  React.useEffect(() => {
-    if (scopeId === '' && scopeList.length > 0) setScopeId(scopeList[0]!);
-  }, [scopeId, scopeList]);
+  // Until the reader picks one, the first scope is the default. It derives
+  // during render, so no effect sets state.
+  const scopeId = chosenScope || scopeList[0] || '';
 
   const record = useTrackRecord(technique, scopeId);
 

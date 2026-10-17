@@ -283,10 +283,11 @@ function CredentialInput({
   // value is write-only like every secret field; the shape check runs in the
   // form rules (see IrsaAwareCredentialFields). gibson#1706 lane E6.
   if (isSecretDocumentField(cf)) {
-    const { onChange, onBlur, value, name } = field;
     // react-hook-form's field carries a ref for focus-on-error; FieldProps
-    // types it away because it targets an <input>. Forward it explicitly.
-    const ref = (field as { ref?: React.Ref<HTMLTextAreaElement> }).ref;
+    // types it away because it targets an <input>. Forward it with the rest.
+    const { onChange, onBlur, value, name, ref } = field as typeof field & {
+      ref?: React.Ref<HTMLTextAreaElement>;
+    };
     return (
       <Textarea
         id={id}

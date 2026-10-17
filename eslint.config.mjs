@@ -45,10 +45,6 @@ export default defineConfig([
   // ESLint lints the TypeScript sources only, as `--ext .ts,.tsx` did before.
   // `**/.*` keeps the eslintrc default that skipped every dot file and dot
   // directory, such as `.org-dot-github/` that CI checks out and `.worktrees/`.
-  //
-  // eslint-plugin-react-hooks 7 adds React Compiler rules that find 88 sites
-  // in 54 files. These rules stay errors for new code. The known sites are in
-  // eslint-suppressions.json until dashboard#315 fixes them.
   globalIgnores([
     "**/.*",
     "node_modules/",

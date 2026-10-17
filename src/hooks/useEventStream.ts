@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useLayoutEffect } from "react";
 import { useUIStore } from "@/src/stores/ui-store";
 import type { Event } from "@/src/types";
 
@@ -15,6 +15,19 @@ import type { Event } from "@/src/types";
  * - Updates Zustand connectionStatus and eventBuffer
  * - Graceful cleanup on unmount
  */
+/**
+ * Create an EventSource. On failure it reports the error through onFail and
+ * returns null, so the caller sets no state on this path itself.
+ */
+function openEventSource(url: string, onFail: (err: Error) => void): EventSource | null {
+  try {
+    return new EventSource(url);
+  } catch (err) {
+    onFail(err instanceof Error ? err : new Error("Failed to connect"));
+    return null;
+  }
+}
+
 export function useEventStream() {
   const [error, setError] = useState<Error | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -40,6 +53,26 @@ export function useEventStream() {
     return delay;
   }, []);
 
+  // The reconnect timers call the latest connect through this ref, so connect
+  // does not refer to itself. The ref takes connect after each commit.
+  const connectRef = useRef<() => void>(() => {});
+
+  // The stream could not be created: report it and schedule a retry.
+  const failToConnect = useCallback(
+    (err: Error) => {
+      setConnectionStatus("disconnected");
+      setError(err);
+      const delay = getReconnectDelay();
+      reconnectTimeoutRef.current = setTimeout(() => {
+        if (mountedRef.current) {
+          reconnectAttemptsRef.current += 1;
+          connectRef.current();
+        }
+      }, delay);
+    },
+    [setConnectionStatus, getReconnectDelay],
+  );
+
   /**
    * Connect to SSE stream
    */
@@ -58,11 +91,13 @@ export function useEventStream() {
 
     if (!mountedRef.current) return;
 
+    // The error clears when the stream opens (onopen) or when the user asks
+    // for a reconnect, not here, so the mount effect sets no React state.
     setConnectionStatus("connecting");
-    setError(null);
 
-    try {
-      const eventSource = new EventSource("/api/events/stream");
+    const eventSource = openEventSource("/api/events/stream", failToConnect);
+    if (!eventSource) return;
+    {
       eventSourceRef.current = eventSource;
 
       // Connection opened
@@ -116,7 +151,7 @@ export function useEventStream() {
         reconnectTimeoutRef.current = setTimeout(() => {
           if (mountedRef.current) {
             reconnectAttemptsRef.current += 1;
-            connect();
+            connectRef.current();
           }
         }, delay);
 
@@ -126,26 +161,18 @@ export function useEventStream() {
           )
         );
       };
-    } catch (err) {
-      setConnectionStatus("disconnected");
-      setError(err instanceof Error ? err : new Error("Failed to connect"));
-
-      // Schedule reconnection
-      const delay = getReconnectDelay();
-      reconnectTimeoutRef.current = setTimeout(() => {
-        if (mountedRef.current) {
-          reconnectAttemptsRef.current += 1;
-          connect();
-        }
-      }, delay);
     }
-  }, [addEvent, setConnectionStatus, getReconnectDelay]);
+  }, [addEvent, setConnectionStatus, failToConnect, getReconnectDelay]);
+  useLayoutEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   /**
    * Manually trigger reconnection
    */
   const reconnect = useCallback(() => {
     reconnectAttemptsRef.current = 0; // Reset attempts on manual reconnect
+    setError(null);
     connect();
   }, [connect]);
 

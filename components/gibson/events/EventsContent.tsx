@@ -202,19 +202,17 @@ export function EventsContent() {
 
   // Snapshot the buffer at the moment the user hit pause so new events
   // don't scroll in while paused.
-  const pauseSnapshotRef = React.useRef<Event[]>([]);
-  const prevPausedRef = React.useRef(paused);
-
-  React.useEffect(() => {
-    // Capture snapshot when transitioning from live → paused
-    if (paused && !prevPausedRef.current) {
-      pauseSnapshotRef.current = eventBuffer;
-    }
-    prevPausedRef.current = paused;
-  }, [paused, eventBuffer]);
+  // The snapshot is taken during render on the change from live to paused, so
+  // the first paused render already shows it.
+  const [pauseSnapshot, setPauseSnapshot] = React.useState<Event[]>([]);
+  const [wasPaused, setWasPaused] = React.useState(paused);
+  if (wasPaused !== paused) {
+    setWasPaused(paused);
+    if (paused) setPauseSnapshot(eventBuffer);
+  }
 
   // When paused, show the snapshot; when live, show the live buffer
-  const displayBuffer = paused ? pauseSnapshotRef.current : eventBuffer;
+  const displayBuffer = paused ? pauseSnapshot : eventBuffer;
 
   const visibleEvents = React.useMemo(() => {
     if (filter === "all") return displayBuffer;

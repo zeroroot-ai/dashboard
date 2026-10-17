@@ -42,7 +42,6 @@ import {
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import { setComponentAccessAction } from "@/app/actions/crd/access";
 import {
-  listAccessibleComponentsAction,
   type DiscoveredItem,
 } from "@/app/actions/read/listAccessibleComponents";
 import {
@@ -81,6 +80,7 @@ import type {
   ConnectorDTO as Connector,
   ConnectorAuthDTO as ConnectorAuth,
 } from "@/src/lib/gibson-client/connector-types";
+import { useAccessibleComponents } from "@/src/hooks/useAccessibleComponents";
 
 // Tenant-admin lifecycle RPCs (gibson#1553). Members must not see the
 // Enable/Disable controls, so both gate through useAuthorize.
@@ -114,6 +114,39 @@ function phaseBadge(phase: string): { variant: "success" | "secondary" | "outlin
       return { variant: "destructive", label: "Failed" };
     default:
       return { variant: "secondary", label: phase || "Provisioning" };
+  }
+}
+
+
+/**
+ * One read of the connector catalog, the enabled connectors, and the auth
+ * status of each enabled connector that holds a credential. It sets no
+ * state, so an effect can hand its result to a setter.
+ */
+async function readConnectors(): Promise<
+  | { catalog: CatalogEntry[]; enabled: Connector[]; auth: Record<string, ConnectorAuth> }
+  | { error: string }
+> {
+  try {
+    const res = await listConnectorsAction();
+    if (!res.ok) return { error: res.error || "The connector service is unavailable." };
+    const { catalog, enabled } = res.data;
+    const auth: Record<string, ConnectorAuth> = {};
+    await Promise.all(
+      enabled
+        .filter((c) => hasCredential(catalogAuthKind(catalog, c.id)))
+        .map(async (c) => {
+          try {
+            const a = await getConnectorAuthStatusAction(c.id);
+            if (a.ok) auth[c.id] = a.data;
+          } catch {
+            // A failed status read is non-fatal; the card shows the phase regardless.
+          }
+        }),
+    );
+    return { catalog, enabled, auth };
+  } catch {
+    return { error: "The connector service could not be reached." };
   }
 }
 
@@ -162,33 +195,28 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
     }
   }, []);
 
+  // apply stores one read of the catalog. The mount effect hands it to the
+  // read, so no state is set before the read ends. load shows a reload.
+  const apply = React.useCallback((r: Awaited<ReturnType<typeof readConnectors>>) => {
+    if ("error" in r) {
+      setLoadError(r.error);
+    } else {
+      setCatalog(r.catalog);
+      setEnabled(r.enabled);
+      setAuth((prev) => ({ ...prev, ...r.auth }));
+    }
+    setLoading(false);
+  }, []);
+
   const load = React.useCallback(async () => {
     setLoading(true);
     setLoadError(null);
-    try {
-      const res = await listConnectorsAction();
-      if (!res.ok) {
-        setLoadError(res.error || "The connector service is unavailable.");
-        return;
-      }
-      const { catalog: nextCatalog, enabled: nextEnabled } = res.data;
-      setCatalog(nextCatalog);
-      setEnabled(nextEnabled);
-      await Promise.all(
-        nextEnabled
-          .filter((c) => hasCredential(catalogAuthKind(nextCatalog, c.id)))
-          .map((c) => loadAuth(c.id)),
-      );
-    } catch {
-      setLoadError("The connector service could not be reached.");
-    } finally {
-      setLoading(false);
-    }
-  }, [loadAuth]);
+    apply(await readConnectors());
+  }, [apply]);
 
   React.useEffect(() => {
-    void load();
-  }, [load]);
+    void readConnectors().then(apply);
+  }, [apply]);
 
   const enabledIds = React.useMemo(() => new Set(enabled.map((c) => c.id)), [enabled]);
 
@@ -787,45 +815,11 @@ function ConnectorAccessMatrix({ auth }: { auth: Record<string, ConnectorAuth> }
     }
   }, [authLoading, canManage]);
 
-  const [items, setItems] = React.useState<RWXItem[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<Error | null>(null);
-
-  React.useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    listAccessibleComponentsAction({
-      kind: "connector",
-      scope: scope.scope,
-      targetId: scope.targetId,
-    })
-      .then((r) => {
-        if (cancelled) return;
-        if (r.ok) setItems(r.data.map(toMatrixItem));
-        else setError(new Error(r.error));
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err : new Error(String(err)));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [scope]);
-
-  async function refetch() {
-    const r = await listAccessibleComponentsAction({
-      kind: "connector",
-      scope: scope.scope,
-      targetId: scope.targetId,
-    });
-    if (r.ok) setItems(r.data.map(toMatrixItem));
-  }
+  const { items, setItems, loading, error, refetch } = useAccessibleComponents(
+    "connector",
+    scope,
+    (d) => toMatrixItem(d),
+  );
 
   async function onToggle(item: RWXItem, action: RWXAction, enabled: boolean) {
     const s = scopeParam(scope.scope);

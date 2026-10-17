@@ -57,7 +57,8 @@ function Probe() {
   const storeLoading = useTenantStore((s) => s.isLoading);
   const storeError = useTenantStore((s) => s.error);
 
-  probe.result = {
+  // Published after the commit, so render stays free of side effects.
+  const result = {
     storeCurrent,
     storeAvailable,
     storeLoading,
@@ -69,6 +70,9 @@ function Probe() {
       error: useTenantError(),
     },
   };
+  React.useLayoutEffect(() => {
+    probe.result = result;
+  });
   return null;
 }
 

@@ -126,10 +126,9 @@ export function JobPanel({ member, compact = false }: JobPanelProps) {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
-  // A job that closed leaves the list; drop the selection with it.
-  React.useEffect(() => {
-    if (selectedId && !openJobs.some((j) => j.id === selectedId)) setSelectedId(null);
-  }, [openJobs, selectedId]);
+  // A job that closed leaves the list; drop the selection with it. The check
+  // runs during render, so no effect sets state after the commit.
+  if (selectedId && !openJobs.some((j) => j.id === selectedId)) setSelectedId(null);
 
   const jobPerms = selected ? deriveJobPermissions(selected.openedBy, bankPerms, myUserId) : null;
   const canCompose = selected ? jobPerms?.canSend === true : bankPerms.canSend;

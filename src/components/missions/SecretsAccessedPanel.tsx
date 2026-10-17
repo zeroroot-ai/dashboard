@@ -227,26 +227,37 @@ export function SecretsAccessedPanel({ missionId }: SecretsAccessedPanelProps) {
   const isLoading = accesses === null && loadError === null;
   const isLagging = lag > LAG_THRESHOLD_SECONDS;
 
-  const load = React.useCallback(async () => {
-    setRefreshing(true);
+  // read returns one audit read and sets no state; apply stores it. The
+  // initial load hands apply to the read, so no state is set before the read
+  // ends. load shows the refresh state for a later read.
+  const read = React.useCallback(async () => {
     try {
-      const result = await fetchMissionAudit(missionId);
-      setAccesses(result.accesses ?? []);
-      setLag(result.aggregationLagSeconds ?? 0);
-      setLoadError(null);
+      return { result: await fetchMissionAudit(missionId) };
     } catch (err) {
-      setLoadError(
-        err instanceof Error ? err.message : "Failed to load secrets audit."
-      );
-    } finally {
-      setRefreshing(false);
+      return { error: err instanceof Error ? err.message : "Failed to load secrets audit." };
     }
   }, [missionId]);
 
+  const apply = React.useCallback((r: Awaited<ReturnType<typeof read>>) => {
+    if ("result" in r && r.result) {
+      setAccesses(r.result.accesses ?? []);
+      setLag(r.result.aggregationLagSeconds ?? 0);
+      setLoadError(null);
+    } else if ("error" in r && r.error) {
+      setLoadError(r.error);
+    }
+  }, []);
+
+  const load = React.useCallback(async () => {
+    setRefreshing(true);
+    apply(await read());
+    setRefreshing(false);
+  }, [read, apply]);
+
   // Initial load
   React.useEffect(() => {
-    void load();
-  }, [load]);
+    void read().then(apply);
+  }, [read, apply]);
 
   // Auto-refresh while lagging
   React.useEffect(() => {

@@ -130,9 +130,15 @@ export function useJobEvents(
   open: (url: string) => JobEventSourceLike = (url) => new EventSource(url),
 ): JobFeed {
   const [feed, setFeed] = React.useState<JobFeed>({ events: [], phase: 'streaming' });
+  // A new job starts with an empty feed. The reset runs during render, so the
+  // effect only subscribes.
+  const [feedJob, setFeedJob] = React.useState(jobId);
+  if (feedJob !== jobId) {
+    setFeedJob(jobId);
+    setFeed({ events: [], phase: 'streaming' });
+  }
   React.useEffect(() => {
     if (!jobId) return;
-    setFeed({ events: [], phase: 'streaming' });
     let lastSeq = BigInt(0);
     const es = open(`/api/jobs/${encodeURIComponent(jobId)}/events`);
     es.addEventListener('job', (e) => {

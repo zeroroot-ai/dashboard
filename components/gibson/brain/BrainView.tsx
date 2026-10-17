@@ -182,8 +182,16 @@ export function BrainView({
   // The Timeline tick under inspection (0-based event seq), or null. Selecting a
   // tick folds frame(seq) vs frame(seq+1) to show what that event changed.
   const [selectedSeq, setSelectedSeq] = useState<number | null>(null);
-  const [diff, setDiff] = useState<FrameDiff | null>(null);
-  const [diffLoading, setDiffLoading] = useState(false);
+  // The last diff that finished, with the tick and mission it is for. The
+  // shown diff and its loading flag derive from it during render.
+  const [diffFor, setDiffFor] = useState<{
+    seq: number;
+    mission: string | null | undefined;
+    diff: FrameDiff;
+  } | null>(null);
+  const diff = selectedSeq === null ? null : (diffFor?.diff ?? null);
+  const diffLoading =
+    selectedSeq !== null && (diffFor?.seq !== selectedSeq || diffFor?.mission !== mission);
   // Which rendering of the World to show. Both draw the same folded frame, so
   // switching never refetches and the Scroller keeps driving whichever is up.
   const [worldView, setWorldView] = useState<"graph" | "globe">("graph");
@@ -197,11 +205,16 @@ export function BrainView({
   const scrub = playback.position;
   const atTail = playback.atTail;
 
+  // A new mission's Timeline re-indexes from 0, so any prior tick selection is
+  // meaningless — clear the inspector. The check runs during render.
+  const [selectionMission, setSelectionMission] = useState(mission);
+  if (selectionMission !== mission) {
+    setSelectionMission(mission);
+    setSelectedSeq(null);
+  }
+
   useEffect(() => {
     let active = true;
-    // A new mission's Timeline re-indexes from 0, so any prior tick selection is
-    // meaningless — clear the inspector.
-    setSelectedSeq(null);
     const url = mission
       ? `/api/world?mission=${encodeURIComponent(mission)}`
       : "/api/world";
@@ -240,13 +253,15 @@ export function BrainView({
   // — the entity panels must always reflect only this mission's slice, so even
   // the live frame (seq == total) comes from the mission-scoped fold. Debounced
   // and abortable so dragging the slider doesn't fire a request per pixel.
+  // Tenant-wide at the tail, the page renders live data, so the replay frame
+  // goes. The check runs during render.
+  const atLiveTail = !!data && !mission && scrub >= data.timeline.length;
+  if (atLiveTail && frame !== null) setFrame(null);
+
   useEffect(() => {
     if (!data) return;
     const total = data.timeline.length;
-    if (!mission && scrub >= total) {
-      setFrame(null); // tenant-wide at the tail → render live data
-      return;
-    }
+    if (!mission && scrub >= total) return;
     const seq = Math.min(scrub, total);
     const controller = new AbortController();
     const handle = setTimeout(() => {
@@ -302,12 +317,8 @@ export function BrainView({
   // frame(0)) and on ticks with no entity change (empty diff). Abortable so a
   // rapid re-select doesn't race a stale diff in.
   useEffect(() => {
-    if (selectedSeq === null) {
-      setDiff(null);
-      return;
-    }
+    if (selectedSeq === null) return;
     const controller = new AbortController();
-    setDiffLoading(true);
     void (async () => {
       try {
         const fetchFrame = async (seq: number): Promise<Frame> => {
@@ -323,8 +334,7 @@ export function BrainView({
           fetchFrame(selectedSeq),
           fetchFrame(selectedSeq + 1),
         ]);
-        setDiff(diffFrames(before, after));
-        setDiffLoading(false);
+        setDiffFor({ seq: selectedSeq, mission, diff: diffFrames(before, after) });
       } catch {
         /* aborted or transient — keep the last diff */
       }

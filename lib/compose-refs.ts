@@ -56,10 +56,14 @@ function composeRefs<T>(...refs: PossibleRef<T>[]): React.RefCallback<T> {
 /**
  * A custom hook that composes multiple refs
  * Accepts callback refs and RefObject(s)
+ *
+ * The React Compiler memoizes the composed callback when the refs are stable.
+ * A manual useCallback with a spread dependency list cannot be checked
+ * (react-hooks/use-memo), and every caller passes an inline callback, so it
+ * never kept the callback stable anyway.
  */
 function useComposedRefs<T>(...refs: PossibleRef<T>[]): React.RefCallback<T> {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  return React.useCallback(composeRefs(...refs), refs);
+  return composeRefs(...refs);
 }
 
 export { useComposedRefs };

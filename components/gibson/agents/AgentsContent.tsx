@@ -28,11 +28,11 @@ import { pickKillSwitch } from "@/components/gibson/shared/kill-switch";
 import { grantComponentAction } from "@/app/actions/crd/grant";
 import { useCurrentTenant } from "@/src/stores/tenant-store";
 import {
-  listAccessibleComponentsAction,
   type DiscoveredItem,
 } from "@/app/actions/read/listAccessibleComponents";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import { useTierLimits } from "@/src/hooks/useTierLimits";
+import { useAccessibleComponents } from "@/src/hooks/useAccessibleComponents";
 
 // Tenant-wide component management is gated on the component-management RPC
 // (relation: admin). Non-admins default to the "my-access" scope.
@@ -93,45 +93,11 @@ export function AgentsContent() {
       setScope({ scope: "tenant-wide" });
     }
   }, [authLoading, canManage]);
-  const [items, setItems] = useState<RWXItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    listAccessibleComponentsAction({
-      kind: "agent",
-      scope: scope.scope,
-      targetId: scope.targetId,
-    })
-      .then((r) => {
-        if (cancelled) return;
-        if (r.ok) setItems(r.data.map((d) => toMatrixItem(d, scope.scope)));
-        else setError(new Error(r.error));
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err : new Error(String(err)));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [scope]);
-
-  async function refetch() {
-    const r = await listAccessibleComponentsAction({
-      kind: "agent",
-      scope: scope.scope,
-      targetId: scope.targetId,
-    });
-    if (r.ok) setItems(r.data.map((d) => toMatrixItem(d, scope.scope)));
-  }
+  const { items, loading, error, refetch } = useAccessibleComponents(
+    "agent",
+    scope,
+    toMatrixItem,
+  );
 
   const tenant = useCurrentTenant();
   async function onEnable(item: RWXItem) {

@@ -75,30 +75,50 @@ const DENSITY_KEY = "agent-console.density";
 const SORT_KEY = "agent-console.sort";
 
 /**
- * A choice that persists in browser storage for this viewer. The stored
- * value is read after mount, so server and first client render agree.
+ * A choice that persists in browser storage for this viewer. It is an
+ * external store: useSyncExternalStore reads it during render, the server
+ * snapshot is the fallback, and the first client render agrees with the
+ * server. When storage is unavailable, the choice lives for this page only.
  */
+const choiceListeners = new Set<() => void>();
+const choiceMemory = new Map<string, string>();
+
+function subscribeChoices(onChange: () => void): () => void {
+  choiceListeners.add(onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    choiceListeners.delete(onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+function readChoice(key: string): string | null {
+  try {
+    return localStorage.getItem(key) ?? choiceMemory.get(key) ?? null;
+  } catch {
+    return choiceMemory.get(key) ?? null;
+  }
+}
+
 function usePersistedChoice<T extends string>(
   key: string,
   allowed: readonly T[],
   fallback: T,
 ): [T, (next: T) => void] {
-  const [value, setValue] = React.useState<T>(fallback);
-  React.useEffect(() => {
-    try {
-      setValue(pickChoice(localStorage.getItem(key), allowed, fallback));
-    } catch {
-      // Storage is unavailable; the fallback stays.
-    }
-  }, [key, allowed, fallback]);
+  const value = React.useSyncExternalStore(
+    subscribeChoices,
+    () => pickChoice(readChoice(key), allowed, fallback),
+    () => fallback,
+  );
   const set = React.useCallback(
     (next: T) => {
-      setValue(next);
+      choiceMemory.set(key, next);
       try {
         localStorage.setItem(key, next);
       } catch {
         // Storage is unavailable; the choice lives for this page only.
       }
+      for (const notify of choiceListeners) notify();
     },
     [key],
   );
@@ -137,13 +157,17 @@ const SORT_LABEL: Record<WallSort, string> = {
 };
 
 export function AgentConsole() {
-  const { data: agents, isLoading, error } = useRunningAgents();
+  const { data: agents, isLoading, error, dataUpdatedAt } = useRunningAgents();
   const memberRuns = useMemberRuns();
   const [density, setDensity] = usePersistedChoice(DENSITY_KEY, WALL_DENSITIES, "comfortable");
   const [sort, setSort] = usePersistedChoice(SORT_KEY, WALL_SORTS, "started");
-  const [facts, setFacts] = React.useState<ReadonlyMap<string, WallTileFacts>>(
-    () => new Map(),
-  );
+  // The tile facts and the time they last changed. The fold below stamps an
+  // ended run with the time of the input that ended it.
+  const [factsState, setFactsState] = React.useState<{
+    map: ReadonlyMap<string, WallTileFacts>;
+    at: number;
+  }>(() => ({ map: new Map(), at: 0 }));
+  const facts = factsState.map;
   const [registry] = React.useState(() => new AgentStreamRegistry());
   const [streamStats, setStreamStats] = React.useState(() => registry.stats());
   React.useEffect(() => registry.onStats(setStreamStats), [registry]);
@@ -151,15 +175,15 @@ export function AgentConsole() {
   const tileRefs = React.useRef(new Map<string, HTMLElement>());
   // The run that was open last, so focus can return to its tile after the
   // URL has already dropped ?run=.
-  const lastSelectedRef = React.useRef<string | null>(null);
-  if (selectedRun) lastSelectedRef.current = selectedRun;
+  const [lastSelected, setLastSelected] = React.useState<string | null>(null);
+  if (selectedRun && selectedRun !== lastSelected) setLastSelected(selectedRun);
   const onFacts = React.useCallback((runId: string, next: WallTileFacts) => {
-    setFacts((prev) => {
-      const cur = prev.get(runId);
+    setFactsState((prev) => {
+      const cur = prev.map.get(runId);
       if (cur && cur.costUsd === next.costUsd && cur.ended === next.ended) return prev;
-      const out = new Map(prev);
+      const out = new Map(prev.map);
       out.set(runId, { ...cur, ...next });
-      return out;
+      return { map: out, at: Date.now() };
     });
   }, []);
 
@@ -167,10 +191,17 @@ export function AgentConsole() {
   // into the recent list. `seen` remembers every run this page showed.
   const [seen, setSeen] = React.useState<ReadonlyMap<string, SeenRun>>(() => new Map());
   const [now, setNow] = React.useState(() => Date.now());
-  React.useEffect(() => {
-    if (!agents) return;
-    setSeen((prev) => foldSeenRuns(prev, agents, facts, Date.now()));
-  }, [agents, facts]);
+  // Fold each new agent list or facts map into `seen` during render (React's
+  // "adjust state when a prop changes" pattern), so no effect sets state.
+  const [folded, setFolded] = React.useState<{
+    agents?: typeof agents;
+    facts?: ReadonlyMap<string, WallTileFacts>;
+  }>({});
+  if (agents && (folded.agents !== agents || folded.facts !== facts)) {
+    setFolded({ agents, facts });
+    const at = Math.max(dataUpdatedAt, factsState.at);
+    setSeen((prev) => foldSeenRuns(prev, agents, facts, at));
+  }
   const hasRibbon = React.useMemo(
     () => [...seen.values()].some((r) => r.endedAt !== undefined && now - r.endedAt < RIBBON_MS),
     [seen, now],
@@ -212,8 +243,7 @@ export function AgentConsole() {
     setSelectedRun(running[next].runId);
   };
   const returnFocusToTile = (e: Event) => {
-    const last = lastSelectedRef.current;
-    const tile = last ? tileRefs.current.get(last) : undefined;
+    const tile = lastSelected ? tileRefs.current.get(lastSelected) : undefined;
     if (tile) {
       e.preventDefault();
       tile.focus();

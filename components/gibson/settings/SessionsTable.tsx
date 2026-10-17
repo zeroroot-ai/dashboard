@@ -62,10 +62,9 @@ export function SessionsTable() {
   const [toRevoke, setToRevoke] = useState<MySession | null>(null);
   const [revoking, setRevoking] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    const r = await listMySessionsAction();
+  // apply stores one read. The mount effect hands it to the read, so no state
+  // is set before the read ends. load shows a reload.
+  const apply = useCallback((r: Awaited<ReturnType<typeof listMySessionsAction>>) => {
     if (r.ok) {
       setSessions(r.data);
     } else {
@@ -74,9 +73,15 @@ export function SessionsTable() {
     setLoading(false);
   }, []);
 
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    apply(await listMySessionsAction());
+  }, [apply]);
+
   useEffect(() => {
-    void load();
-  }, [load]);
+    void listMySessionsAction().then(apply);
+  }, [apply]);
 
   async function confirmRevoke() {
     if (!toRevoke) return;

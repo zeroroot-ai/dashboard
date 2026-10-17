@@ -40,17 +40,20 @@ type State =
 export default function InviteAcceptPage() {
   const params = useParams();
   const token = Array.isArray(params.token) ? params.token[0] : (params.token ?? "");
-  const [state, setState] = useState<State>({ kind: "accepting" });
+  // A link with no token fails at once. The first state says so, so no
+  // effect has to set it.
+  const [state, setState] = useState<State>(() =>
+    token
+      ? { kind: "accepting" }
+      : { kind: "error", message: "This invitation link is missing its token." },
+  );
   // Guard against the effect firing twice under React strict mode.
   const ran = useRef(false);
 
   useEffect(() => {
     if (ran.current) return;
     ran.current = true;
-    if (!token) {
-      setState({ kind: "error", message: "This invitation link is missing its token." });
-      return;
-    }
+    if (!token) return;
     void (async () => {
       const res = await acceptInvitationAction({ token });
       if (res.ok) {

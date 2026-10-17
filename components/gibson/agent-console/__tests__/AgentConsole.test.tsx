@@ -62,7 +62,8 @@ vi.mock("@/components/gibson/agent-console/JobPanel", () => ({
 
 const useRunningAgentsMock = vi.fn();
 vi.mock("@/src/hooks/useRunningAgents", () => ({
-  useRunningAgents: () => useRunningAgentsMock(),
+  // A react-query result always carries dataUpdatedAt; the fold stamps ended runs with it.
+  useRunningAgents: () => ({ dataUpdatedAt: Date.now(), ...useRunningAgentsMock() }),
 }));
 
 function agent(over: Partial<RunningAgentView>): RunningAgentView {

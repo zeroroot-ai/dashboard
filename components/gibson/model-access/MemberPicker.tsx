@@ -60,8 +60,9 @@ export function MemberPicker({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // The first state is already loading, so the effect sets no state before
+    // the request.
     let cancelled = false;
-    setLoading(true);
     listMembersAction().then((res) => {
       if (cancelled) return;
       if (res.ok) setMembers(res.data);

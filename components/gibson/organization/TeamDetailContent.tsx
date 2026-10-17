@@ -60,15 +60,25 @@ export function TeamDetailContent({ teamId }: Props) {
   const [newUserId, setNewUserId] = useState("");
   const [addAsAdmin, setAddAsAdmin] = useState(false);
 
-  async function refresh() {
+  // A new team id shows the loading state at once. The check runs during
+  // render, so the effect sets no state before its request.
+  const [loadingTeam, setLoadingTeam] = useState(teamId);
+  if (loadingTeam !== teamId) {
+    setLoadingTeam(teamId);
     setLoading(true);
-    const r = await listTeamMembersAction(teamId);
+  }
+
+  function apply(r: Awaited<ReturnType<typeof listTeamMembersAction>>) {
     if (r.ok) setMembers(r.data);
     else toast.error(`Failed to load members: ${r.error}`);
     setLoading(false);
   }
+  async function refresh() {
+    setLoading(true);
+    apply(await listTeamMembersAction(teamId));
+  }
   useEffect(() => {
-    refresh();
+    void listTeamMembersAction(teamId).then(apply);
   }, [teamId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function onAdd() {

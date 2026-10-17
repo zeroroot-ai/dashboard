@@ -20,7 +20,7 @@
  * dashboard#151 (S7).
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -91,9 +91,11 @@ export function UserTeamMembershipsEditor({ userId, canEdit }: Props) {
   // Sync derived rows whenever the underlying graph refreshes. Preserve
   // pending flags on rows that the user just clicked (those server actions
   // are in-flight, their optimistic state shouldn't get clobbered by an
-  // unrelated graph refresh).
-  useEffect(() => {
-    if (graphLoading) return;
+  // unrelated graph refresh). The sync runs during render, so no effect sets
+  // state after the commit.
+  const [syncedFrom, setSyncedFrom] = useState<RowState[] | null>(null);
+  if (!graphLoading && syncedFrom !== derivedRows) {
+    setSyncedFrom(derivedRows);
     setRows((prev) => {
       if (!prev) return derivedRows;
       const pendingByTeam = new Map(
@@ -101,7 +103,7 @@ export function UserTeamMembershipsEditor({ userId, canEdit }: Props) {
       );
       return derivedRows.map((next) => pendingByTeam.get(next.team.id) ?? next);
     });
-  }, [derivedRows, graphLoading]);
+  }
 
   function updateRow(teamId: string, patch: Partial<RowState>) {
     setRows((prev) =>

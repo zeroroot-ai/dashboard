@@ -29,11 +29,6 @@
  *
  * Usage
  * -----
- *   // In a client component (use the hook wrapper):
- *   import { useMyPermissions } from '@/src/lib/permissions-cache';
- *   const { permissions, loading } = useMyPermissions(tenantId);
- *
- *   // From other client code paths (rare):
  *   import { getMyPermissions } from '@/src/lib/permissions-cache';
  *   const perms = await getMyPermissions(tenantId);
  */
@@ -45,7 +40,6 @@ import {
   GetMyPermissionsResponseSchema,
   type GetMyPermissionsResponse,
 } from '@/src/gen/gibson/daemon/v1/daemon_pb';
-import { useEffect, useState, useCallback } from 'react';
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -168,62 +162,3 @@ export async function getMyPermissions(
   return resp;
 }
 
-// ---------------------------------------------------------------------------
-// React hook
-// ---------------------------------------------------------------------------
-
-interface UseMyPermissionsResult {
-  permissions: GetMyPermissionsResponse | null;
-  loading: boolean;
-  error: Error | null;
-  refresh: () => void;
-}
-
-/**
- * useMyPermissions is a React hook that fetches and caches the current user's
- * permissions for the given tenant.
- *
- * @param tenantId - The tenant to fetch permissions for.
- */
-function useMyPermissions(tenantId: string): UseMyPermissionsResult {
-  const [permissions, setPermissions] = useState<GetMyPermissionsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [refreshCount, setRefreshCount] = useState(0);
-
-  const refresh = useCallback(() => {
-    invalidateTenantPermissions(tenantId);
-    setRefreshCount((c) => c + 1);
-  }, [tenantId]);
-
-  useEffect(() => {
-    if (!tenantId) {
-      setLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    getMyPermissions(tenantId)
-      .then((resp) => {
-        if (!cancelled) {
-          setPermissions(resp);
-          setLoading(false);
-        }
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err : new Error(String(err)));
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [tenantId, refreshCount]);
-
-  return { permissions, loading, error, refresh };
-}
