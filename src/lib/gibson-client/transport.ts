@@ -34,7 +34,7 @@ import {
 //   - `@connectrpc/connect-node` (the transport package) and the
 //     `createGrpcTransport` / `createConnectTransport` / `createClient`
 //     primitives are banned everywhere else by the ESLint
-//     `no-restricted-imports` rule (.eslintrc.js) AND by the build-time guard
+//     `no-restricted-imports` rule (eslint.config.mjs) AND by the build-time guard
 //     `scripts/check-single-daemon-transport.mjs` (runs in `pnpm prebuild`).
 //   - URL / env-var leakage is guarded separately by
 //     `scripts/check-no-direct-daemon-grpc.mjs`.

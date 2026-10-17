@@ -1,8 +1,0 @@
-node_modules/
-.next/
-out/
-src/gen/
-public/
-*.config.ts
-*.config.js
-*.config.mjs
