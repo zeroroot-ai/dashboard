@@ -35,7 +35,7 @@
     "gen:env-readers": "node scripts/gen-env-readers.mjs",
     "check:env-readers": "node scripts/check-env-readers-fresh.mjs --selftest && node scripts/check-env-readers-fresh.mjs",
     "start": "next start",
-    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint . --ext .ts,.tsx",
+    "lint": "eslint .",
     "knip": "knip",
     "check": "pnpm typecheck && pnpm knip && pnpm test:ast-checks",
     "typecheck": "tsc --noEmit",

@@ -80,10 +80,9 @@ read `repoRoot` off the result, as `proto-generate.mjs` does with `go.mod`.
 twice and will move again. Unit tests covering every layout live in
 `scripts/lib/workspace-root.test.mjs`.
 
-`.eslintrc.js` sets `root: true` so a worktree nested inside the dashboard
-checkout stops inheriting the parent's identical config, which used to make
-`@next/next` resolve from two `node_modules/.pnpm` trees and abort eslint with
-exit 2.
+`eslint.config.mjs` is a flat config. ESLint uses the nearest one above the
+current directory, so a worktree nested inside the dashboard checkout uses its
+own config and never loads `@next/next` from two `node_modules/.pnpm` trees.
 
 ## Mission schema copy
 

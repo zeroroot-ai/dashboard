@@ -44,7 +44,7 @@ Two guards enforce this:
   any import of `@connectrpc/connect-node` or any `createGrpcTransport(` /
   `createConnectTransport(` / `createClient(` call outside the single transport
   module. The same boundary is mirrored by the ESLint `no-restricted-imports`
-  rule in `.eslintrc.js`.
+  rule in `eslint.config.mjs`.
 
 Fix the call site (use a wrapper), not the guard.
 

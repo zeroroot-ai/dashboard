@@ -26,7 +26,7 @@
  * not transport constructors, and remain freely importable everywhere.
  *
  * This complements:
- *   - the ESLint `no-restricted-imports` rule (.eslintrc.js), which gives the
+ *   - the ESLint `no-restricted-imports` rule (eslint.config.mjs), which gives the
  *     same feedback in-editor / on `pnpm lint`, and
  *   - `check-no-direct-daemon-grpc.mjs`, which guards daemon URLs / env vars.
  * The build chain relies on THIS script as the authoritative gate because

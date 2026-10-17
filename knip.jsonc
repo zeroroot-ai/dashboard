@@ -21,7 +21,6 @@
   "ignoreDependencies": [
     "tailwindcss",
     "tailwindcss-animate",
-    "eslint-config-next",
     "pino-pretty",
     "@bufbuild/protoc-gen-es",
     "@zeroroot-ai/brand"

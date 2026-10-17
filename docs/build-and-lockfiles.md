@@ -101,8 +101,6 @@ Precise, justified `ignoreDependencies` (not blanket):
 - `tailwindcss` / `tailwindcss-animate` — consumed by CSS, not TS: `@import
   "tailwindcss"` and `@plugin "tailwindcss-animate"` in `app/globals.css`
   (knip only follows TS/TSX imports).
-- `eslint-config-next` — provides the `next/core-web-vitals` + `next/typescript`
-  configs that `.eslintrc.js` extends (a string ref knip can't follow).
 - `pino-pretty` — referenced by string as the pino transport `target` in
   `src/lib/logger.ts` + listed in `next.config.ts` `serverExternalPackages`.
 - `@bufbuild/buf` / `@bufbuild/protoc-gen-es` — the proto-generation toolchain
