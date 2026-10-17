@@ -36,19 +36,6 @@ export default defineConfig([
     },
   },
   {
-    // eslint-plugin-react-hooks 7 adds six React Compiler rules. They find 88
-    // sites in 54 files that ESLint never checked before. dashboard#315 fixes
-    // the sites and then deletes this block, so the rules become errors.
-    rules: {
-      "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/refs": "warn",
-      "react-hooks/immutability": "warn",
-      "react-hooks/static-components": "warn",
-      "react-hooks/purity": "warn",
-      "react-hooks/use-memo": "warn",
-    },
-  },
-  {
     // The single module that owns the ConnectRPC daemon transport. It is the
     // only place that may import @connectrpc/connect-node and call
     // createGrpcTransport / createClient.
@@ -56,7 +43,14 @@ export default defineConfig([
     rules: { "no-restricted-imports": "off" },
   },
   // ESLint lints the TypeScript sources only, as `--ext .ts,.tsx` did before.
+  // `**/.*` keeps the eslintrc default that skipped every dot file and dot
+  // directory, such as `.org-dot-github/` that CI checks out and `.worktrees/`.
+  //
+  // eslint-plugin-react-hooks 7 adds React Compiler rules that find 88 sites
+  // in 54 files. These rules stay errors for new code. The known sites are in
+  // eslint-suppressions.json until dashboard#315 fixes them.
   globalIgnores([
+    "**/.*",
     "node_modules/",
     ".next/",
     "out/",
