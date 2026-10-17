@@ -189,7 +189,10 @@ export function BrainView({
     mission: string | null | undefined;
     diff: FrameDiff;
   } | null>(null);
-  const diff = selectedSeq === null ? null : (diffFor?.diff ?? null);
+  const diff =
+    selectedSeq !== null && diffFor?.seq === selectedSeq && diffFor?.mission === mission
+      ? diffFor.diff
+      : null;
   const diffLoading =
     selectedSeq !== null && (diffFor?.seq !== selectedSeq || diffFor?.mission !== mission);
   // Which rendering of the World to show. Both draw the same folded frame, so

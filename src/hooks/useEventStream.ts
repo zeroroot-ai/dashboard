@@ -17,7 +17,8 @@ import type { Event } from "@/src/types";
  */
 /**
  * Create an EventSource. On failure it reports the error through onFail and
- * returns null, so the caller sets no state on this path itself.
+ * returns null. onFail sets state at once; that only happens when the
+ * constructor throws (an invalid URL), as it did before.
  */
 function openEventSource(url: string, onFail: (err: Error) => void): EventSource | null {
   try {

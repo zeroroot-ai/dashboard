@@ -121,13 +121,20 @@ interface JobEventSourceLike {
 const EVENT_CAP = 500;
 
 /**
+ * The default stream opener. It is a module constant, so its identity is the
+ * same on every render and the effect does not reopen the stream (a reopened
+ * stream replays from seq 0 and the feed showed each event twice).
+ */
+const openEventSource = (url: string): JobEventSourceLike => new EventSource(url);
+
+/**
  * Follows one job's events over SSE (/api/jobs/:id/events) and keeps them in
  * order. A reconnect resumes after the last seq seen. Nothing is written to
  * browser storage.
  */
 export function useJobEvents(
   jobId: string | null,
-  open: (url: string) => JobEventSourceLike = (url) => new EventSource(url),
+  open: (url: string) => JobEventSourceLike = openEventSource,
 ): JobFeed {
   const [feed, setFeed] = React.useState<JobFeed>({ events: [], phase: 'streaming' });
   // A new job starts with an empty feed. The reset runs during render, so the
