@@ -165,13 +165,15 @@ function writeFixture(dir, overrides, aiDeps, reactDeps) {
   );
 }
 
-function quiet(fn) {
+// Run fn with stdout and stderr captured. Returns its result and the text.
+function capture(fn) {
   const out = process.stdout.write;
   const err = process.stderr.write;
-  process.stdout.write = () => true;
-  process.stderr.write = () => true;
+  let text = "";
+  process.stdout.write = (chunk) => ((text += String(chunk)), true);
+  process.stderr.write = (chunk) => ((text += String(chunk)), true);
   try {
-    return fn();
+    return { result: fn(), text };
   } finally {
     process.stdout.write = out;
     process.stderr.write = err;
@@ -184,7 +186,7 @@ function selftest() {
   const cases = [
     ["stale override (dashboard#313)", { [P]: "4.0.21" }, { "@ai-sdk/provider": "4.0.27" }, 1, 'Move the override to "4.0.27"'],
     ["matching override", { [P]: "4.0.27", dompurify: "3.4.16" }, { "@ai-sdk/provider": "4.0.27" }, 0, null],
-    ["no install", { [P]: "4.0.27" }, undefined, 1, null],
+    ["no install", { [P]: "4.0.27" }, undefined, 1, "Run pnpm install first"],
     ["no AI SDK override", { dompurify: "3.4.16" }, { "@ai-sdk/provider": "4.0.27" }, 1, "no AI SDK override"],
     ["new major leaves the override dead", { [P]: "4.0.27" }, { "@ai-sdk/provider": "5.0.0" }, 1, "matches no installed exact pin"],
     ["caret pin is not compared", { [P]: "4.0.27" }, { "@ai-sdk/provider": "^4.0.1" }, 1, "matches no installed exact pin"],
@@ -209,10 +211,13 @@ function selftest() {
     const dir = mkdtempSync(join(tmpdir(), "ai-sdk-overrides-selftest-"));
     try {
       writeFixture(dir, overrides, aiDeps, reactDeps);
-      const exit = quiet(() => report(dir));
+      const { result: exit, text } = capture(() => report(dir));
       const problems = check(dir);
-      const text = problems ? problems.join("\n") : "";
-      if (exit !== wantExit || (wantText && !text.includes(wantText))) {
+      // A failure must also say that a stale install fails the check, and a
+      // missing install must reach the null branch of check().
+      const hintOk = exit === 0 || aiDeps === undefined || text.includes("a stale node_modules also fails");
+      const nullOk = aiDeps !== undefined || problems === null;
+      if (exit !== wantExit || (wantText && !text.includes(wantText)) || !hintOk || !nullOk) {
         failures += 1;
         process.stderr.write(`${SCRIPT_NAME} --selftest: FAIL, case "${name}": exit ${exit}, want ${wantExit}. ${text}\n`);
       }
@@ -222,7 +227,7 @@ function selftest() {
   }
   if (failures === 0) {
     process.stdout.write(
-      `${SCRIPT_NAME} --selftest: PASS, ${cases.length} cases: the guard rejects a stale, dead or missing override ` +
+      `${SCRIPT_NAME} --selftest: PASS, ${cases.length} cases: the guard rejects a stale, dead or missing override, a split tree ` +
         `and a missing install, and accepts a matching override.\n`,
     );
     return 0;
