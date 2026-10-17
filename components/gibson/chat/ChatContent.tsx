@@ -3,7 +3,7 @@
 
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createElement, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useChat as useAIChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import {
@@ -102,6 +102,11 @@ const AGENT_ICONS: Record<string, LucideIcon> = {
 
 function getAgentIcon(iconName?: string): LucideIcon {
   return AGENT_ICONS[iconName ?? 'bot'] ?? Bot;
+}
+
+/** The icon of an agent. The icon components are static, from AGENT_ICONS. */
+function AgentIcon({ icon, className }: { icon?: string; className?: string }) {
+  return createElement(getAgentIcon(icon), { className });
 }
 
 function agentStatusClass(status: ChatAgent['status']): string {
@@ -443,13 +448,12 @@ interface AgentSelectorProps {
 function AgentSelector({ agents, selectedId, onSelect }: AgentSelectorProps) {
   const selected = agents.find((a) => a.id === selectedId) ?? agents[0];
   if (!selected) return null;
-  const SelectedIcon = getAgentIcon(selected.icon);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-2">
-          <SelectedIcon className="h-4 w-4" />
+          <AgentIcon icon={selected.icon} className="h-4 w-4" />
           <span>{selected.name}</span>
           <span className={`h-2 w-2 rounded-full ${agentStatusClass(selected.status)}`} />
         </Button>
@@ -957,7 +961,6 @@ export function ChatContent() {
   const { setSystemPromptDebug } = useChatStore();
 
   const activeConvRef = useRef(activeConversationId);
-  activeConvRef.current = activeConversationId;
 
   // Ref for the sidebar search input, used by the ⌘+F / Ctrl+F shortcut
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -965,29 +968,35 @@ export function ChatContent() {
   // Keep the latest attachmentId reachable from the transport closure without
   // re-instantiating the transport on every render.
   const attachmentIdRef = useRef<string | null>(null);
-  attachmentIdRef.current = attachment?.id ?? null;
 
   const activeConversation = conversations.find((c) => c.id === activeConversationId);
 
-  // Keep stable refs to store setters so the fetch closure doesn't need to
-  // be recreated on every render.
-  const setDebugRef = useRef(setSystemPromptDebug);
-  setDebugRef.current = setSystemPromptDebug;
-  const setActiveProviderRef = useRef(setActiveProviderName);
-  setActiveProviderRef.current = setActiveProviderName;
+  // The refs take the latest values after each commit, not during render.
+  // Every reader runs later, in an event or a request. The two store setters
+  // are zustand actions, which are stable, so the fetch closure uses them
+  // directly.
+  useLayoutEffect(() => {
+    activeConvRef.current = activeConversationId;
+    attachmentIdRef.current = attachment?.id ?? null;
+  });
 
   // Transport, recreated only when the debug flag changes. The body callback
   // and fetch wrapper read the latest attachment / debug state from refs so we
   // don't churn the transport on every render.
+  const transportBody = useCallback(() => {
+    const id = attachmentIdRef.current;
+    return id ? { attachmentId: id } : {};
+  }, []);
   const transport = useMemo(
     () =>
+      // The transport calls `body` once per request, never during render, so
+      // the ref read in transportBody happens outside render. The compiler
+      // cannot see into the constructor and assumes it may call it.
+      // eslint-disable-next-line react-hooks/refs
       new DefaultChatTransport({
         api: '/api/chat',
         headers: isDebugOpen ? { 'X-Gibson-Debug': '1' } : undefined,
-        body: () => {
-          const id = attachmentIdRef.current;
-          return id ? { attachmentId: id } : {};
-        },
+        body: transportBody,
         fetch: async (input, init) => {
           // The transport builds its own request, so it bypasses apiFetch.
           // Route it back through so /api/chat gets the CSRF header like every
@@ -996,17 +1005,17 @@ export function ChatContent() {
           const response = await apiFetch(input, init);
           const debugPayload = response.headers.get('X-Gibson-System-Prompt-Debug');
           if (debugPayload) {
-            setDebugRef.current(decodeURIComponent(debugPayload));
+            setSystemPromptDebug(decodeURIComponent(debugPayload));
           }
           // Capture the resolved provider name for visibility in the header.
           const activeProvider = response.headers.get('X-Gibson-Active-Provider');
           if (activeProvider) {
-            setActiveProviderRef.current(activeProvider);
+            setActiveProviderName(activeProvider);
           }
           return response;
         },
       }),
-    [isDebugOpen],
+    [isDebugOpen, transportBody, setSystemPromptDebug, setActiveProviderName],
   );
 
   // Wire to AI SDK useChat, assistant-ui wraps this via useAISDKRuntime
@@ -1091,12 +1100,14 @@ export function ChatContent() {
     }
   }, [status, setConnectionStatus]);
 
-  // Clear provider error on successful completion
-  useEffect(() => {
-    if (status === 'ready' && messages.length > 0) {
-      setProviderError(null);
-    }
-  }, [status, messages.length]);
+  // Clear provider error on successful completion. The check runs during
+  // render when the status or the message count changes, as the effect did.
+  const completionKey = `${status}|${messages.length}`;
+  const [checkedCompletion, setCheckedCompletion] = useState(completionKey);
+  if (checkedCompletion !== completionKey) {
+    setCheckedCompletion(completionKey);
+    if (status === 'ready' && messages.length > 0) setProviderError(null);
+  }
 
   // Build the assistant-ui runtime from the AI SDK chat helpers
   const runtime = useAISDKRuntime(aiChat);

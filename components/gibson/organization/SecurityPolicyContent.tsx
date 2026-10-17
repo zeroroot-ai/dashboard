@@ -68,17 +68,20 @@ export function SecurityPolicyContent() {
   const [kind, setKind] = useState<Kind>("plugin");
   const [scope, setScope] = useState<AccessScopeSelection>({ scope: "tenant-wide" });
   const [items, setItems] = useState<RWXItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  // The kind and scope of the last load that ended. Loading derives from it
+  // during render, so the effect sets state only when a load ends. The last
+  // items stay on screen while a new selection loads.
+  const [loadedFor, setLoadedFor] = useState<{ kind: Kind; scope: AccessScopeSelection } | null>(null);
+  const loading = loadedFor?.kind !== kind || loadedFor?.scope !== scope;
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     fetchItems(kind, scope)
       .then((next) => {
         if (!cancelled) setItems(next);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoadedFor({ kind, scope });
       });
     return () => {
       cancelled = true;

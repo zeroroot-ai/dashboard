@@ -62,7 +62,10 @@ function ProvisioningStatus() {
 
   const [status, setStatus] = useState<ProvisioningStatusResponse | null>(null);
   const [timedOut, setTimedOut] = useState(false);
-  const [networkError, setNetworkError] = useState(false);
+  const [requestFailed, setRequestFailed] = useState(false);
+  // With neither id in the URL there is nothing to poll, so the page shows
+  // the failure at once. It derives from the URL, not from an effect.
+  const networkError = requestFailed || (!userId && !tenant);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -96,10 +99,7 @@ function ProvisioningStatus() {
   }
 
   useEffect(() => {
-    if (!userId && !tenant) {
-      setNetworkError(true);
-      return;
-    }
+    if (!userId && !tenant) return;
 
     async function poll() {
       try {
@@ -109,7 +109,7 @@ function ProvisioningStatus() {
 
         const res = await fetch(`/api/signup/status?${params.toString()}`);
         if (!res.ok) {
-          setNetworkError(true);
+          setRequestFailed(true);
           stopPolling();
           stopTimeout();
           return;
@@ -130,7 +130,7 @@ function ProvisioningStatus() {
           stopTimeout();
         }
       } catch {
-        setNetworkError(true);
+        setRequestFailed(true);
         stopPolling();
         stopTimeout();
       }

@@ -597,13 +597,14 @@ function WaitForConnectionStep({
     enabled: !connected,
   });
 
-  useEffect(() => {
-    if (!data || connected) return;
+  // The component shows up in the list once it connects. The check runs during
+  // render, so no effect sets state after the commit.
+  if (data && !connected) {
     const items: Array<{ name: string }> = data[arrayKey] ?? [];
     if (items.some((it) => it.name?.toLowerCase() === componentName.toLowerCase())) {
       setConnected(true);
     }
-  }, [data, arrayKey, componentName, connected]);
+  }
 
   useEffect(() => {
     if (connected || timedOut) return;

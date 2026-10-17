@@ -19,7 +19,8 @@ vi.mock("@/src/hooks/useMemberRuns", () => ({ useMemberRuns: () => new Map() }))
 
 const useRunningAgentsMock = vi.fn();
 vi.mock("@/src/hooks/useRunningAgents", () => ({
-  useRunningAgents: () => useRunningAgentsMock(),
+  // A react-query result always carries dataUpdatedAt; the fold stamps ended runs with it.
+  useRunningAgents: () => ({ dataUpdatedAt: Date.now(), ...useRunningAgentsMock() }),
 }));
 vi.mock("@/components/ui/sidebar", () => ({
   SidebarMenuBadge: ({ children, ...rest }: React.PropsWithChildren<Record<string, unknown>>) => (

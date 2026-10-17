@@ -940,13 +940,20 @@ interface KanbanOverlayProps
     | React.ReactNode;
 }
 
+const noopSubscribe = () => () => {};
+
 function KanbanOverlay(props: KanbanOverlayProps) {
   const { container: containerProp, children, ...overlayProps } = props;
 
   const context = useKanbanContext(OVERLAY_NAME);
 
-  const [mounted, setMounted] = React.useState(false);
-  React.useLayoutEffect(() => setMounted(true), []);
+  // True on the client after hydration, false on the server. The portal
+  // needs document.body, which the server does not have.
+  const mounted = React.useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
 
   const container = containerProp ?? (mounted ? globalThis.document?.body : null);
 

@@ -105,8 +105,12 @@ export function useMissionEditor(
 
   // Refs so the debounce timer always sees the latest values without being
   // rescheduled on every keystroke (ref-snapshot debounce pattern).
+  // The ref takes the values after each commit; every reader runs later, in
+  // the timer or an event handler.
   const latest = React.useRef({ cueSource, missionId, missionName });
-  latest.current = { cueSource, missionId, missionName };
+  React.useLayoutEffect(() => {
+    latest.current = { cueSource, missionId, missionName };
+  });
   const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // The core save primitive. Snapshots the source it persists so savedSource

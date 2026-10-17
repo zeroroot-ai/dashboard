@@ -54,7 +54,8 @@ const probe: { result?: ProbeResult } = {};
 
 function Probe() {
   const ctx = useTenantContext();
-  probe.result = {
+  // Published after the commit, so render stays free of side effects.
+  const result = {
     currentTenantId: ctx.currentTenant?.id ?? null,
     availableSlugs: ctx.availableTenants.map((t) => t.id),
     crossTenant: ctx.crossTenant,
@@ -62,6 +63,9 @@ function Probe() {
     groups: ctx.groups,
     isLoading: ctx.isLoading,
   };
+  React.useLayoutEffect(() => {
+    probe.result = result;
+  });
   return null;
 }
 

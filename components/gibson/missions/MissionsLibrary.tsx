@@ -58,10 +58,11 @@ export function MissionsLibrary() {
   );
   const [deleting, startDelete] = React.useTransition();
 
-  const refresh = React.useCallback(async () => {
-    setError(null);
-    const res = await listMissionSourcesAction();
+  // apply stores a result. The first state has no error, so the mount effect
+  // only hands apply to the request. refresh clears the error for a later call.
+  const apply = React.useCallback((res: Awaited<ReturnType<typeof listMissionSourcesAction>>) => {
     if (res.ok) {
+      setError(null);
       setMissions(res.data);
     } else {
       setError(
@@ -72,10 +73,14 @@ export function MissionsLibrary() {
       setMissions([]);
     }
   }, []);
+  const refresh = React.useCallback(async () => {
+    setError(null);
+    apply(await listMissionSourcesAction());
+  }, [apply]);
 
   React.useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    void listMissionSourcesAction().then(apply);
+  }, [apply]);
 
   function handleConfirmDelete() {
     const mission = pendingDelete;

@@ -6,34 +6,32 @@ import * as React from "react";
 const MOBILE_BREAKPOINT = 768;
 const TABLET_BREAKPOINT = 1200;
 
+/**
+ * Subscribe to a max-width media query. useSyncExternalStore reads the
+ * browser state during render, so no effect sets state, and the server
+ * snapshot is false, as the old hook returned before its first effect.
+ */
+function useMaxWidth(breakpoint: number): boolean {
+  const query = `(max-width: ${breakpoint - 1}px)`;
+  const subscribe = React.useCallback(
+    (onChange: () => void) => {
+      const mql = window.matchMedia(query);
+      mql.addEventListener("change", onChange);
+      return () => mql.removeEventListener("change", onChange);
+    },
+    [query],
+  );
+  return React.useSyncExternalStore(
+    subscribe,
+    () => window.innerWidth < breakpoint,
+    () => false,
+  );
+}
+
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined);
-
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    };
-    mql.addEventListener("change", onChange);
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    return () => mql.removeEventListener("change", onChange);
-  }, []);
-
-  return !!isMobile;
+  return useMaxWidth(MOBILE_BREAKPOINT);
 }
 
 export function useIsTablet() {
-  const [isTablet, setIsTablet] = React.useState<boolean | undefined>(undefined);
-
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${TABLET_BREAKPOINT - 1}px)`);
-    const onChange = () => {
-      setIsTablet(window.innerWidth < TABLET_BREAKPOINT);
-    };
-    mql.addEventListener("change", onChange);
-    setIsTablet(window.innerWidth < TABLET_BREAKPOINT);
-    return () => mql.removeEventListener("change", onChange);
-  }, []);
-
-  return !!isTablet;
+  return useMaxWidth(TABLET_BREAKPOINT);
 }

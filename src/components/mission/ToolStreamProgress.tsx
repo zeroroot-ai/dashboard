@@ -63,6 +63,129 @@ function tryParse<T>(raw: unknown): T | null {
   }
 }
 
+/**
+ * Open the progress stream of one tool call and report each state change.
+ * It returns the cleanup. The component subscribes in an effect, so every
+ * state change, the failure to open the stream too, arrives through `set`.
+ */
+function subscribeToolStream(
+  url: string,
+  toolName: string,
+  setState: React.Dispatch<React.SetStateAction<StreamState>>,
+): () => void {
+  let closed = false;
+  let es: EventSource;
+  try {
+    es = new EventSource(url);
+  } catch {
+    setState({ kind: "failed", message: "Unable to open progress stream" });
+    return () => {};
+  }
+
+  const closeStream = () => {
+    if (closed) return;
+    closed = true;
+    es.close();
+  };
+
+  const handleProgress = (ev: MessageEvent) => {
+    const outer = tryParse<{ payloadJson?: string }>(ev.data);
+    const payload = tryParse<ProgressPayload>(outer?.payloadJson) ?? {};
+    setState((prev) => ({
+      kind: "running",
+      percent:
+        typeof payload.percent === "number"
+          ? Math.max(0, Math.min(100, payload.percent))
+          : prev.kind === "running"
+            ? prev.percent
+            : null,
+      message: payload.message ?? (prev.kind === "running" ? prev.message : ""),
+    }));
+  };
+
+  const handlePartial = (ev: MessageEvent) => {
+    const outer = tryParse<{ payloadJson?: string }>(ev.data);
+    const txt =
+      outer?.payloadJson && typeof outer.payloadJson === "string"
+        ? outer.payloadJson.slice(0, 80)
+        : "partial result received";
+    setState((prev) => ({
+      kind: "running",
+      percent: prev.kind === "running" ? prev.percent : null,
+      message: txt,
+    }));
+  };
+
+  const handleWarning = (ev: MessageEvent) => {
+    const outer = tryParse<{ payloadJson?: string }>(ev.data);
+    const payload = tryParse<WarningPayload>(outer?.payloadJson) ?? {};
+    setState((prev) => ({
+      kind: "warning",
+      percent: prev.kind === "running" ? prev.percent : null,
+      message: payload.message ?? "warning",
+    }));
+  };
+
+  const handleError = (ev: MessageEvent) => {
+    const outer = tryParse<{ payloadJson?: string; error?: ErrorPayload }>(
+      ev.data,
+    );
+    const payload =
+      tryParse<ErrorPayload>(outer?.payloadJson) ?? outer?.error ?? {};
+    const fatal = payload.fatal ?? true;
+    const msg = payload.message ?? "Tool execution failed";
+    if (fatal) {
+      toast.error(`Tool ${toolName} failed`, { description: msg });
+      setState({ kind: "failed", message: msg });
+      closeStream();
+    } else {
+      setState((prev) => ({
+        kind: "warning",
+        percent: prev.kind === "running" ? prev.percent : null,
+        message: msg,
+      }));
+    }
+  };
+
+  const handleResult = (ev: MessageEvent) => {
+    const outer = tryParse<{ payloadJson?: string }>(ev.data);
+    const summary =
+      outer?.payloadJson && typeof outer.payloadJson === "string"
+        ? outer.payloadJson.slice(0, 80)
+        : "complete";
+    setState({ kind: "complete", message: summary });
+    closeStream();
+  };
+
+  es.addEventListener("progress", handleProgress);
+  es.addEventListener("partial", handlePartial);
+  es.addEventListener("warning", handleWarning);
+  es.addEventListener("error", handleError);
+  es.addEventListener("result", handleResult);
+
+  es.onerror = () => {
+    if (closed) return;
+    // Browser-level connection error (network drop). Surface a soft
+    // failed state but don't toast, the user already sees the bar
+    // turn red.
+    setState((prev) =>
+      prev.kind === "complete" || prev.kind === "failed"
+        ? prev
+        : { kind: "failed", message: "Stream connection lost" },
+    );
+    closeStream();
+  };
+
+  return () => {
+    es.removeEventListener("progress", handleProgress);
+    es.removeEventListener("partial", handlePartial);
+    es.removeEventListener("warning", handleWarning);
+    es.removeEventListener("error", handleError);
+    es.removeEventListener("result", handleResult);
+    closeStream();
+  };
+}
+
 interface ToolStreamProgressProps {
   missionId: string;
   invocationId: string;
@@ -91,117 +214,7 @@ export function ToolStreamProgress({
       missionId,
     )}/tool-stream/${encodeURIComponent(invocationId)}?${params.toString()}`;
 
-    let closed = false;
-    let es: EventSource;
-    try {
-      es = new EventSource(url);
-    } catch {
-      setState({ kind: "failed", message: "Unable to open progress stream" });
-      return;
-    }
-
-    const closeStream = () => {
-      if (closed) return;
-      closed = true;
-      es.close();
-    };
-
-    const handleProgress = (ev: MessageEvent) => {
-      const outer = tryParse<{ payloadJson?: string }>(ev.data);
-      const payload = tryParse<ProgressPayload>(outer?.payloadJson) ?? {};
-      setState((prev) => ({
-        kind: "running",
-        percent:
-          typeof payload.percent === "number"
-            ? Math.max(0, Math.min(100, payload.percent))
-            : prev.kind === "running"
-              ? prev.percent
-              : null,
-        message: payload.message ?? (prev.kind === "running" ? prev.message : ""),
-      }));
-    };
-
-    const handlePartial = (ev: MessageEvent) => {
-      const outer = tryParse<{ payloadJson?: string }>(ev.data);
-      const txt =
-        outer?.payloadJson && typeof outer.payloadJson === "string"
-          ? outer.payloadJson.slice(0, 80)
-          : "partial result received";
-      setState((prev) => ({
-        kind: "running",
-        percent: prev.kind === "running" ? prev.percent : null,
-        message: txt,
-      }));
-    };
-
-    const handleWarning = (ev: MessageEvent) => {
-      const outer = tryParse<{ payloadJson?: string }>(ev.data);
-      const payload = tryParse<WarningPayload>(outer?.payloadJson) ?? {};
-      setState((prev) => ({
-        kind: "warning",
-        percent: prev.kind === "running" ? prev.percent : null,
-        message: payload.message ?? "warning",
-      }));
-    };
-
-    const handleError = (ev: MessageEvent) => {
-      const outer = tryParse<{ payloadJson?: string; error?: ErrorPayload }>(
-        ev.data,
-      );
-      const payload =
-        tryParse<ErrorPayload>(outer?.payloadJson) ?? outer?.error ?? {};
-      const fatal = payload.fatal ?? true;
-      const msg = payload.message ?? "Tool execution failed";
-      if (fatal) {
-        toast.error(`Tool ${toolName} failed`, { description: msg });
-        setState({ kind: "failed", message: msg });
-        closeStream();
-      } else {
-        setState((prev) => ({
-          kind: "warning",
-          percent: prev.kind === "running" ? prev.percent : null,
-          message: msg,
-        }));
-      }
-    };
-
-    const handleResult = (ev: MessageEvent) => {
-      const outer = tryParse<{ payloadJson?: string }>(ev.data);
-      const summary =
-        outer?.payloadJson && typeof outer.payloadJson === "string"
-          ? outer.payloadJson.slice(0, 80)
-          : "complete";
-      setState({ kind: "complete", message: summary });
-      closeStream();
-    };
-
-    es.addEventListener("progress", handleProgress);
-    es.addEventListener("partial", handlePartial);
-    es.addEventListener("warning", handleWarning);
-    es.addEventListener("error", handleError);
-    es.addEventListener("result", handleResult);
-
-    es.onerror = () => {
-      if (closed) return;
-      // Browser-level connection error (network drop). Surface a soft
-      // failed state but don't toast, the user already sees the bar
-      // turn red.
-      setState((prev) =>
-        prev.kind === "complete" || prev.kind === "failed"
-          ? prev
-          : { kind: "failed", message: "Stream connection lost" },
-      );
-      closeStream();
-    };
-
-    return () => {
-      es.removeEventListener("progress", handleProgress);
-      es.removeEventListener("partial", handlePartial);
-      es.removeEventListener("warning", handleWarning);
-      es.removeEventListener("error", handleError);
-      es.removeEventListener("result", handleResult);
-      closeStream();
-    };
+    return subscribeToolStream(url, toolName, setState);
   }, [missionId, invocationId, toolName, inputJson]);
 
   const pct = state.kind === "running" || state.kind === "warning" ? state.percent : null;

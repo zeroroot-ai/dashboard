@@ -64,6 +64,20 @@ function isSessionExpired(code?: string): boolean {
   return code === "unauthenticated";
 }
 
+
+type DomainPacksData = Extract<Awaited<ReturnType<typeof listDomainPacksAction>>, { ok: true }>["data"];
+
+/** One read of the Domain Pack catalog and the enabled packs. It sets no state. */
+async function readDomainPacks(): Promise<DomainPacksData | { error: string }> {
+  try {
+    const res = await listDomainPacksAction();
+    if (!res.ok) return { error: res.error || "The Domain Pack service is unavailable." };
+    return res.data;
+  } catch {
+    return { error: "The Domain Pack service could not be reached." };
+  }
+}
+
 export function DomainPacksContent({ docsHref }: { docsHref: string }) {
   const router = useRouter();
   const [catalog, setCatalog] = React.useState<DomainPackCatalogEntry[]>([]);
@@ -82,27 +96,27 @@ export function DomainPacksContent({ docsHref }: { docsHref: string }) {
     setBusy((prev) => ({ ...prev, [name]: value }));
   }, []);
 
+  // apply stores one read. The mount effect hands it to the read, so no state
+  // is set before the read ends. load shows a reload.
+  const apply = React.useCallback((r: Awaited<ReturnType<typeof readDomainPacks>>) => {
+    if ("error" in r) {
+      setLoadError(r.error);
+    } else {
+      setCatalog(r.catalog);
+      setEnabled(r.enabled);
+    }
+    setLoading(false);
+  }, []);
+
   const load = React.useCallback(async () => {
     setLoading(true);
     setLoadError(null);
-    try {
-      const res = await listDomainPacksAction();
-      if (!res.ok) {
-        setLoadError(res.error || "The Domain Pack service is unavailable.");
-        return;
-      }
-      setCatalog(res.data.catalog);
-      setEnabled(res.data.enabled);
-    } catch {
-      setLoadError("The Domain Pack service could not be reached.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    apply(await readDomainPacks());
+  }, [apply]);
 
   React.useEffect(() => {
-    void load();
-  }, [load]);
+    void readDomainPacks().then(apply);
+  }, [apply]);
 
   const enabledByName = React.useMemo(() => new Map(enabled.map((p) => [p.name, p])), [enabled]);
 

@@ -15,7 +15,7 @@
  * keeping `components/**` free of hardcoded color literals.
  */
 
-import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, useLayoutEffect } from 'react';
 import ForceGraph2D, { type ForceGraphMethods, type NodeObject, type LinkObject } from 'react-force-graph-2d';
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
 import { parseEntityType, getSeverityColor } from '@/src/lib/graph/entity-taxonomy';
@@ -55,6 +55,54 @@ type RFLink = LinkObject<GNodeExtra, GLinkExtra>;
 
 interface GraphCanvasInnerProps extends GraphCanvasProps {
   handleRef: React.Ref<GraphCanvasHandle>;
+}
+
+// The engine nodes belong to the force-graph simulation, which mutates them
+// (x, y, fx, fy). These helpers hold every write of the component to them, so
+// the writes run in effects and never during render.
+
+/** Point each engine node at the latest graph node of the same id. */
+function syncEngineNodes(engineNodes: RFNode[], latest: GraphNode[]): void {
+  const byId = new Map(latest.map((n) => [n.id, n] as const));
+  for (const rn of engineNodes) {
+    const g = byId.get(rn.__g.id);
+    if (g) rn.__g = g;
+  }
+}
+
+/** Pin each node at its computed position, or unpin it when it has none. */
+function applyPositions(
+  engineNodes: RFNode[],
+  positions: Map<string, { x: number; y: number }> | null | undefined,
+): void {
+  for (const n of engineNodes) {
+    const p = positions?.get(n.__g.id);
+    if (p) {
+      n.fx = p.x;
+      n.fy = p.y;
+      n.x = p.x;
+      n.y = p.y;
+    } else {
+      n.fx = undefined;
+      n.fy = undefined;
+    }
+  }
+}
+
+/** Fix pinned nodes where they are; in force mode release the rest. */
+function applyPins(engineNodes: RFNode[], pinnedIds: string[], forceMode: boolean): void {
+  const pinned = new Set(pinnedIds);
+  for (const n of engineNodes) {
+    if (pinned.has(n.__g.id)) {
+      if (n.fx == null) {
+        n.fx = n.x;
+        n.fy = n.y;
+      }
+    } else if (forceMode) {
+      n.fx = undefined;
+      n.fy = undefined;
+    }
+  }
 }
 
 /** Stable signature of the graph topology, only rebuild engine data on change. */
@@ -124,11 +172,7 @@ export default function GraphCanvasInner({
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   }, []);
   useEffect(() => {
-    const byId = new Map(data.nodes.map((n) => [n.id, n] as const));
-    for (const rn of graphData.nodes) {
-      const latest = byId.get(rn.__g.id);
-      if (latest) rn.__g = latest;
-    }
+    syncEngineNodes(graphData.nodes, data.nodes);
     runningRef.current = runningNodeIds(data.nodes);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.nodes]);
@@ -144,19 +188,7 @@ export default function GraphCanvasInner({
   // positions (fx/fy); force mode unpins them so the simulation runs. Recomputed
   // when the layout mode or the topology changes.
   useEffect(() => {
-    const positions = computeLayout(data.nodes, data.edges, data.layoutMode);
-    for (const n of graphData.nodes) {
-      const p = positions?.get(n.__g.id);
-      if (p) {
-        n.fx = p.x;
-        n.fy = p.y;
-        n.x = p.x;
-        n.y = p.y;
-      } else {
-        n.fx = undefined;
-        n.fy = undefined;
-      }
-    }
+    applyPositions(graphData.nodes, computeLayout(data.nodes, data.edges, data.layoutMode));
     const fg = fgRef.current;
     if (!fg) return;
     fg.d3ReheatSimulation();
@@ -188,18 +220,7 @@ export default function GraphCanvasInner({
   // (only in force mode, computed layouts manage fx/fy themselves). Runs after
   // the layout effect so pins win on a layout change.
   useEffect(() => {
-    const pinned = new Set(data.pinnedNodeIds);
-    for (const n of graphData.nodes) {
-      if (pinned.has(n.__g.id)) {
-        if (n.fx == null) {
-          n.fx = n.x;
-          n.fy = n.y;
-        }
-      } else if (data.layoutMode === 'force') {
-        n.fx = undefined;
-        n.fy = undefined;
-      }
-    }
+    applyPins(graphData.nodes, data.pinnedNodeIds, data.layoutMode === 'force');
     fgRef.current?.d3ReheatSimulation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.pinnedNodeIds, data.layoutMode, signature]);
@@ -209,9 +230,12 @@ export default function GraphCanvasInner({
   const hoveredRef = useRef<string | null>(null);
   const highlightRef = useRef<HighlightState>({ active: false, nodes: new Set(), edges: new Set() });
   const displayRef = useRef(data.display);
-  displayRef.current = data.display;
-
-  selectedRef.current = data.selectedNodeId ?? null;
+  // The canvas accessors read these refs at paint time. They take the latest
+  // values after each commit, not during render.
+  useLayoutEffect(() => {
+    displayRef.current = data.display;
+    selectedRef.current = data.selectedNodeId ?? null;
+  });
 
   useEffect(() => {
     const nodes = new Set<string>();

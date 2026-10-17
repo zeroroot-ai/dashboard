@@ -397,10 +397,13 @@ function MissionsKanban({ missions }: { missions: Mission[] }) {
 
   const [columns, setColumns] = React.useState(initialColumns);
 
-  // Sync columns when live data changes
-  React.useEffect(() => {
+  // Sync columns when live data changes. The check runs during render, so no
+  // effect sets state after the commit.
+  const [columnsFrom, setColumnsFrom] = React.useState(initialColumns);
+  if (columnsFrom !== initialColumns) {
+    setColumnsFrom(initialColumns);
     setColumns(initialColumns);
-  }, [initialColumns]);
+  }
 
   return (
     <Kanban.Root

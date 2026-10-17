@@ -13,7 +13,7 @@
  * variant.
  */
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import type { AccountLink } from "@/src/lib/deployment-profile";
 import { useTenantQuotaUsage } from "@/src/lib/hooks/use-tenant-quota-usage";
@@ -39,6 +39,25 @@ function pct(used: number, limit: number): number {
   return Math.min(100, Math.round((used / limit) * 100));
 }
 
+const dismissalListeners = new Set<() => void>();
+
+function subscribeDismissals(onChange: () => void): () => void {
+  dismissalListeners.add(onChange);
+  return () => dismissalListeners.delete(onChange);
+}
+
+function notifyDismissals(): void {
+  for (const notify of dismissalListeners) notify();
+}
+
+function readDismissal(storageKey: string): boolean {
+  try {
+    return window.sessionStorage.getItem(storageKey) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function ApproachingLimitBanner({
   missionsLimit,
   agentsLimit,
@@ -46,13 +65,17 @@ export function ApproachingLimitBanner({
   accountLink = null,
 }: ApproachingLimitBannerProps) {
   const { data } = useTenantQuotaUsage();
-  const [dismissed, setDismissed] = useState(false);
   const storageKey = STORAGE_KEY_BASE + (storageKeySuffix || "default");
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    setDismissed(window.sessionStorage.getItem(storageKey) === "1");
-  }, [storageKey]);
+  // The dismissal lives in sessionStorage, an external store. It is read
+  // during render with useSyncExternalStore. The server snapshot is "not
+  // dismissed", as the first render was before.
+  const [dismissedHere, setDismissed] = useState(false);
+  const dismissedInSession = useSyncExternalStore(
+    subscribeDismissals,
+    () => readDismissal(storageKey),
+    () => false,
+  );
+  const dismissed = dismissedHere || dismissedInSession;
 
   if (!data || dismissed) return null;
   const missionsPct = pct(data.missionsActive, missionsLimit);
@@ -119,6 +142,7 @@ export function ApproachingLimitBanner({
               // in-memory dismissal for the current page mount.
             }
             setDismissed(true);
+            notifyDismissals();
           }}
         >
           ×

@@ -58,14 +58,24 @@ export function BudgetsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // load fetches and stores the result. The first state is already loading
+  // with no error, so the mount effect calls load and sets no state before
+  // the request. refresh shows the reload for a later call.
   async function refresh() {
     setLoading(true);
     setError(null);
-    const [d, u, t] = await Promise.all([
+    apply(await fetchAll());
+  }
+
+  function fetchAll() {
+    return Promise.all([
       getTenantBudgetDefaultsAction(),
       listBudgetStatusAction("user"),
       listBudgetStatusAction("team"),
     ]);
+  }
+
+  function apply([d, u, t]: Awaited<ReturnType<typeof fetchAll>>) {
     if (d.ok) setDefaults(d.data);
     if (u.ok) setUserRows(u.data);
     if (t.ok) setTeamRows(t.data);
@@ -74,8 +84,10 @@ export function BudgetsContent() {
     setLoading(false);
   }
 
+  // Load once on mount. apply only calls state setters, which are stable.
   useEffect(() => {
-    refresh();
+    void fetchAll().then(apply);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -114,17 +126,24 @@ function TenantDefaultsCard({
   defaults: TenantDefaultsRow | null;
   onSaved: () => void;
 }) {
-  const [form, setForm] = useState<TenantDefaultsRow>({
-    defaultUserMonthlyTokens: 0,
-    defaultUserMonthlySpendUsdCents: 0,
-    defaultTeamMonthlyTokens: 0,
-    defaultTeamMonthlySpendUsdCents: 0,
-    defaultWarningThreshold: 0.8,
-  });
+  const [form, setForm] = useState<TenantDefaultsRow>(
+    () =>
+      defaults ?? {
+        defaultUserMonthlyTokens: 0,
+        defaultUserMonthlySpendUsdCents: 0,
+        defaultTeamMonthlyTokens: 0,
+        defaultTeamMonthlySpendUsdCents: 0,
+        defaultWarningThreshold: 0.8,
+      },
+  );
 
-  useEffect(() => {
+  // New defaults from the server replace the form. The check runs during
+  // render, so no effect sets state after the commit.
+  const [formFor, setFormFor] = useState(defaults);
+  if (formFor !== defaults) {
+    setFormFor(defaults);
     if (defaults) setForm(defaults);
-  }, [defaults]);
+  }
 
   async function save() {
     const res = await setTenantBudgetDefaultsAction(form);

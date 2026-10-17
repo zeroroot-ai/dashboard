@@ -173,10 +173,11 @@ export function TargetsLibrary() {
   const [pendingDelete, setPendingDelete] = React.useState<TargetView | null>(null);
   const [deleting, startDelete] = React.useTransition();
 
-  const refresh = React.useCallback(async () => {
-    setError(null);
-    const res = await listTargetsAction();
+  // apply stores one read. The mount effect hands it to the read, so no state
+  // is set before the read ends. refresh clears the error for a later read.
+  const apply = React.useCallback((res: Awaited<ReturnType<typeof listTargetsAction>>) => {
     if (res.ok) {
+      setError(null);
       setTargets(res.data);
     } else {
       setError(res.code === "permission_denied" ? "Permission denied" : "Could not load your targets");
@@ -184,9 +185,14 @@ export function TargetsLibrary() {
     }
   }, []);
 
+  const refresh = React.useCallback(async () => {
+    setError(null);
+    apply(await listTargetsAction());
+  }, [apply]);
+
   React.useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    void listTargetsAction().then(apply);
+  }, [apply]);
 
   function openCreate() {
     setForm(EMPTY_FORM);

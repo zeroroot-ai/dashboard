@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Card,
   CardContent,
@@ -66,12 +66,15 @@ export function TickInspector({
   const [callError, setCallError] = useState<string | null>(null);
 
   // Reset the transcript whenever the selected tick changes — a stale transcript
-  // must never bleed across ticks.
-  useEffect(() => {
+  // must never bleed across ticks. The check runs during render.
+  const tickKey = `${event.seq}|${callId ?? ""}`;
+  const [shownTick, setShownTick] = useState(tickKey);
+  if (shownTick !== tickKey) {
+    setShownTick(tickKey);
     setCall(null);
     setCallError(null);
     setCallLoading(false);
-  }, [event.seq, callId]);
+  }
 
   const loadTranscript = useCallback(async () => {
     if (!callId) return;

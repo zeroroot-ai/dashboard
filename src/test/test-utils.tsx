@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright 2026 Zero Root AI
 
-import { ReactElement, type ReactNode } from 'react';
+import { ReactElement, type ReactNode, useState } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TenantContextProvider } from '@/src/lib/tenant-context';
@@ -52,20 +52,36 @@ export const TEST_TENANT: Tenant = {
  * `TenantContextProvider`. Omitting it throws
  * "useTenantContext must be used within a TenantContextProvider."
  */
+function TestProviders({
+  queryClient,
+  tenant,
+  children,
+}: {
+  queryClient: QueryClient;
+  tenant: Tenant | null;
+  children: ReactNode;
+}) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TenantContextProvider
+        currentTenant={tenant}
+        availableTenants={tenant ? [tenant] : []}
+        crossTenant={false}
+        rolesByTenant={tenant ? { [tenant.id]: 'admin' } : {}}
+        groups={[]}
+      >
+        {children}
+      </TenantContextProvider>
+    </QueryClientProvider>
+  );
+}
+
 export function createHookWrapper(queryClient: QueryClient, tenant: Tenant | null = TEST_TENANT) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <QueryClientProvider client={queryClient}>
-        <TenantContextProvider
-          currentTenant={tenant}
-          availableTenants={tenant ? [tenant] : []}
-          crossTenant={false}
-          rolesByTenant={tenant ? { [tenant.id]: 'admin' } : {}}
-          groups={[]}
-        >
-          {children}
-        </TenantContextProvider>
-      </QueryClientProvider>
+      <TestProviders queryClient={queryClient} tenant={tenant}>
+        {children}
+      </TestProviders>
     );
   };
 }
@@ -74,9 +90,13 @@ export function createHookWrapper(queryClient: QueryClient, tenant: Tenant | nul
  * Wrapper component with all necessary providers for testing
  */
 function AllTheProviders({ children }: AllTheProvidersProps) {
-  const queryClient = createTestQueryClient();
-  const Wrapper = createHookWrapper(queryClient);
-  return <Wrapper>{children}</Wrapper>;
+  // One query client for the life of the rendered tree.
+  const [queryClient] = useState(createTestQueryClient);
+  return (
+    <TestProviders queryClient={queryClient} tenant={TEST_TENANT}>
+      {children}
+    </TestProviders>
+  );
 }
 
 /**

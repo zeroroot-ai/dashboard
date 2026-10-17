@@ -67,96 +67,99 @@ export function useGraphStream(
     }
   }, []);
 
-  const connect = useCallback(() => {
-    if (!mountedRef.current) return;
-    closeStream();
-
-    const es = new EventSource('/api/graph/stream');
-    esRef.current = es;
-
-    es.addEventListener('graph-update', (event: MessageEvent<string>) => {
-      if (!mountedRef.current) return;
-      const now = Date.now();
-      setHealthy(true);
-      setLastEventAt(now);
-      retryCountRef.current = 0; // reset backoff on successful event
-
-      try {
-        const raw = JSON.parse(event.data) as {
-          kind?: number;
-          at?: number | null;
-          node?: {
-            id: string;
-            labels: string[];
-            properties: Record<string, unknown>;
-            severity?: string;
-          };
-          edge?: {
-            id: string;
-            source: string;
-            target: string;
-            type: string;
-          };
-        };
-
-        const update: GraphStreamUpdate = {
-          kind: raw.kind ?? 0,
-          at: raw.at ?? null,
-        };
-
-        if (raw.node) {
-          update.node = {
-            id: raw.node.id,
-            labels: raw.node.labels,
-            properties: {
-              ...raw.node.properties,
-              severity: raw.node.severity,
-              // Tag with addedAt for fade-in animation
-              addedAt: now,
-            },
-          };
-        }
-
-        if (raw.edge) {
-          update.edge = {
-            id: raw.edge.id,
-            type: raw.edge.type,
-            source: raw.edge.source,
-            target: raw.edge.target,
-            properties: {},
-          };
-        }
-
-        onUpdateRef.current(update);
-      } catch {
-        // Malformed event, ignore, stream is still considered healthy
-      }
-    });
-
-    es.addEventListener('error', (_event: Event) => {
-      if (!mountedRef.current) return;
-      setHealthy(false);
-      closeStream();
-
-      // Schedule reconnect with exponential backoff
-      const delay = BACKOFF_SCHEDULE[Math.min(retryCountRef.current, BACKOFF_SCHEDULE.length - 1)];
-      retryCountRef.current += 1;
-
-      clearRetryTimer();
-      retryTimerRef.current = setTimeout(() => {
-        if (mountedRef.current) connect();
-      }, delay);
-    });
-
-    // Handle the custom 'error' SSE event (daemon-side error) as a named event
-    es.addEventListener('error', (_e: Event) => {
-      // Already handled above via EventSource onerror. Named events fall
-      // through to readyState checks. No additional handling needed.
-    });
-  }, [closeStream, clearRetryTimer]);
-
   useEffect(() => {
     mountedRef.current = true;
+
+    // connect opens the stream and, on an error, schedules itself again with
+    // backoff. It lives in the effect, so the reconnect timer calls the same
+    // function without a hook that refers to itself.
+    function connect() {
+      if (!mountedRef.current) return;
+      closeStream();
+
+      const es = new EventSource('/api/graph/stream');
+      esRef.current = es;
+
+      es.addEventListener('graph-update', (event: MessageEvent<string>) => {
+        if (!mountedRef.current) return;
+        const now = Date.now();
+        setHealthy(true);
+        setLastEventAt(now);
+        retryCountRef.current = 0; // reset backoff on successful event
+
+        try {
+          const raw = JSON.parse(event.data) as {
+            kind?: number;
+            at?: number | null;
+            node?: {
+              id: string;
+              labels: string[];
+              properties: Record<string, unknown>;
+              severity?: string;
+            };
+            edge?: {
+              id: string;
+              source: string;
+              target: string;
+              type: string;
+            };
+          };
+
+          const update: GraphStreamUpdate = {
+            kind: raw.kind ?? 0,
+            at: raw.at ?? null,
+          };
+
+          if (raw.node) {
+            update.node = {
+              id: raw.node.id,
+              labels: raw.node.labels,
+              properties: {
+                ...raw.node.properties,
+                severity: raw.node.severity,
+                // Tag with addedAt for fade-in animation
+                addedAt: now,
+              },
+            };
+          }
+
+          if (raw.edge) {
+            update.edge = {
+              id: raw.edge.id,
+              type: raw.edge.type,
+              source: raw.edge.source,
+              target: raw.edge.target,
+              properties: {},
+            };
+          }
+
+          onUpdateRef.current(update);
+        } catch {
+          // Malformed event, ignore, stream is still considered healthy
+        }
+      });
+
+      es.addEventListener('error', (_event: Event) => {
+        if (!mountedRef.current) return;
+        setHealthy(false);
+        closeStream();
+
+        // Schedule reconnect with exponential backoff
+        const delay = BACKOFF_SCHEDULE[Math.min(retryCountRef.current, BACKOFF_SCHEDULE.length - 1)];
+        retryCountRef.current += 1;
+
+        clearRetryTimer();
+        retryTimerRef.current = setTimeout(() => {
+          if (mountedRef.current) connect();
+        }, delay);
+      });
+
+      // Handle the custom 'error' SSE event (daemon-side error) as a named event
+      es.addEventListener('error', (_e: Event) => {
+        // Already handled above via EventSource onerror. Named events fall
+        // through to readyState checks. No additional handling needed.
+      });
+    }
 
     if (enabled) {
       connect();
@@ -168,7 +171,7 @@ export function useGraphStream(
       closeStream();
       setHealthy(false);
     };
-  }, [enabled, connect, clearRetryTimer, closeStream]);
+  }, [enabled, clearRetryTimer, closeStream]);
 
   return { healthy, lastEventAt };
 }

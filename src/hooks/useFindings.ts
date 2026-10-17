@@ -4,7 +4,7 @@
 'use client';
 
 import { useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { queryKeys } from '@/src/lib/query/keys';
 import { useTenantStore } from '@/src/stores/tenant-store';
 import type { Finding, FindingSeverity, PaginatedResponse } from '@/src/types';
@@ -263,6 +263,8 @@ export function useFindingsSSE(
   const queryClient = useQueryClient();
   const currentTenant = useTenantStore((state) => state.currentTenant);
   const tenantId = currentTenant?.id ?? '';
+  // Connection state comes from the stream events, not from a ref read during render.
+  const [isConnected, setIsConnected] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
@@ -283,6 +285,7 @@ export function useFindingsSSE(
 
         eventSource.onopen = () => {
           reconnectAttemptsRef.current = 0;
+          setIsConnected(true);
         };
 
         eventSource.onmessage = (event) => {
@@ -322,6 +325,7 @@ export function useFindingsSSE(
 
         eventSource.onerror = () => {
           eventSource.close();
+          setIsConnected(false);
 
           // Exponential backoff for reconnection
           const backoffMs = Math.min(
@@ -352,16 +356,18 @@ export function useFindingsSSE(
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
+      setIsConnected(false);
     };
   }, [filters.missionId, queryClient, onNewFinding]);
 
   return {
-    isConnected: typeof EventSource !== 'undefined' && eventSourceRef.current?.readyState === EventSource.OPEN,
+    isConnected,
     disconnect: () => {
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
       }
+      setIsConnected(false);
     },
   };
 }

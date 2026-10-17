@@ -55,17 +55,16 @@ export function MissionFlowTab({
 
   const [graph, setGraph] = React.useState<MissionGraphData | null>(null);
   const [version, setVersion] = React.useState("");
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+  // The definition of the last load that ended, and its error. Loading and
+  // the error derive during render, so the effect sets state only when a load
+  // ends.
+  const [settled, setSettled] = React.useState<{ id: string; error: string | null } | null>(null);
+  const loading = !!missionDefinitionId && settled?.id !== missionDefinitionId;
+  const error = !loading && settled && settled.id === missionDefinitionId ? settled.error : null;
 
   React.useEffect(() => {
-    if (!missionDefinitionId) {
-      setLoading(false);
-      return;
-    }
+    if (!missionDefinitionId) return;
     let cancelled = false;
-    setLoading(true);
-    setError(null);
     void (async () => {
       try {
         const [g, v] = await Promise.all([
@@ -75,14 +74,14 @@ export function MissionFlowTab({
         if (cancelled) return;
         setGraph(g);
         setVersion(v);
+        setSettled({ id: missionDefinitionId, error: null });
       } catch (err) {
         if (!cancelled) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load mission graph",
-          );
+          setSettled({
+            id: missionDefinitionId,
+            error: err instanceof Error ? err.message : "Failed to load mission graph",
+          });
         }
-      } finally {
-        if (!cancelled) setLoading(false);
       }
     })();
     return () => {

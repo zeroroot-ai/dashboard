@@ -67,14 +67,13 @@ function NodeAutocomplete({
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Update display when value changes externally
-  useEffect(() => {
-    if (value) {
-      setQuery((value.properties.name as string | undefined) ?? value.id);
-    } else {
-      setQuery('');
-    }
-  }, [value]);
+  // Update display when value changes externally. The check runs during
+  // render, so no effect sets state after the commit.
+  const [shownValue, setShownValue] = useState(value);
+  if (shownValue !== value) {
+    setShownValue(value);
+    setQuery(value ? ((value.properties.name as string | undefined) ?? value.id) : '');
+  }
 
   const filtered = query.length >= 1
     ? nodes.filter(n => {
@@ -149,13 +148,16 @@ export function PathQueryPanel({ nodes, initialSourceNode, onPathsFound }: PathQ
   // gate, surface the actionable prompt instead of a raw error string.
   const [embeddingGated, setEmbeddingGated] = useState(false);
 
-  // Wire initialSourceNode from NodeDetailPanel's "Find paths" button
-  useEffect(() => {
+  // Wire initialSourceNode from NodeDetailPanel's "Find paths" button. The
+  // check runs during render, so no effect sets state after the commit.
+  const [wiredSource, setWiredSource] = useState<GraphNode | null | undefined>(undefined);
+  if (wiredSource !== initialSourceNode) {
+    setWiredSource(initialSourceNode);
     if (initialSourceNode) {
       setSourceNode(initialSourceNode);
       setExpanded(true);
     }
-  }, [initialSourceNode]);
+  }
 
   const canSubmit = sourceNode !== null && (
     (targetMode === 'kind' && !!targetKind) ||

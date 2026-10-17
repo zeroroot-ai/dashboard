@@ -113,13 +113,29 @@ export default function CreateMissionPage() {
   const editor = useMissionEditor();
 
   const [terminalOpen, setTerminalOpen] = React.useState(false);
-  const [hydrating, setHydrating] = React.useState(false);
+  // The URL key each hydration last finished for, success or failure.
+  // `hydrating` derives from it during render, so no effect sets a loading
+  // flag before its request starts.
+  const [settled, setSettled] = React.useState<{
+    mission?: string;
+    clone?: string;
+    definition?: string;
+  }>({});
+  const settle = (key: "mission" | "clone" | "definition", value: string) =>
+    setSettled((prev) => ({ ...prev, [key]: value }));
 
   // Definition-related chrome (banner + picker), removed in D5/D4.
   const [currentDefinitionName, setCurrentDefinitionName] = React.useState<string | undefined>(undefined);
   const [currentDefinitionMeta, setCurrentDefinitionMeta] = React.useState<DefinitionMeta | undefined>(undefined);
   const [definitionLoadedFrom, setDefinitionLoadedFrom] = React.useState<"saved" | "template" | undefined>(undefined);
   const [hydratedDefinitionName, setHydratedDefinitionName] = React.useState<string | undefined>(undefined);
+
+  const hydrating =
+    (!!urlMissionId && urlMissionId !== editor.missionId && settled.mission !== urlMissionId) ||
+    (!!urlCloneMissionId && !urlMissionId && settled.clone !== urlCloneMissionId) ||
+    (!!urlDefinitionName &&
+      hydratedDefinitionName !== urlDefinitionName &&
+      settled.definition !== urlDefinitionName);
 
   // Keep the most recent loadSource so effects can hydrate without depending
   // on the editor identity (which is stable across renders anyway).
@@ -151,7 +167,6 @@ export default function CreateMissionPage() {
     if (!urlMissionId) return;
     if (urlMissionId === editor.missionId) return;
     let cancelled = false;
-    setHydrating(true);
     void (async () => {
       const res = await getMissionSourceAction(urlMissionId);
       if (cancelled) return;
@@ -171,7 +186,7 @@ export default function CreateMissionPage() {
             : "Could not load the mission"
         );
       }
-      setHydrating(false);
+      settle("mission", urlMissionId);
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -191,7 +206,6 @@ export default function CreateMissionPage() {
   React.useEffect(() => {
     if (!urlCloneMissionId || urlMissionId) return;
     let cancelled = false;
-    setHydrating(true);
     void (async () => {
       const res = await fetch(
         `/api/missions/${encodeURIComponent(urlCloneMissionId)}/clone`,
@@ -205,7 +219,7 @@ export default function CreateMissionPage() {
             : body.error ?? "Could not load the mission for cloning",
         );
         router.replace("/dashboard/missions/create");
-        setHydrating(false);
+        settle("clone", urlCloneMissionId);
         return;
       }
       const data = (await res.json()) as { cueSource?: string; name?: string };
@@ -219,7 +233,7 @@ export default function CreateMissionPage() {
         );
         loadSource({ cueSource: withCopyName });
       }
-      setHydrating(false);
+      settle("clone", urlCloneMissionId);
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -231,7 +245,6 @@ export default function CreateMissionPage() {
     if (hydratedDefinitionName === urlDefinitionName) return;
 
     let cancelled = false;
-    setHydrating(true);
 
     void (async () => {
       const defRes = await fetch(
@@ -246,7 +259,7 @@ export default function CreateMissionPage() {
         } else {
           toast.error("Could not load the mission definition");
         }
-        setHydrating(false);
+        settle("definition", urlDefinitionName);
         return;
       }
 
@@ -280,7 +293,7 @@ export default function CreateMissionPage() {
 
       setCurrentDefinitionName(urlDefinitionName);
       setHydratedDefinitionName(urlDefinitionName);
-      setHydrating(false);
+      settle("definition", urlDefinitionName);
     })();
 
     return () => { cancelled = true; };

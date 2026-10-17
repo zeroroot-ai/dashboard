@@ -3,7 +3,7 @@
 
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useLayoutEffect } from 'react';
 import { getThemeColors } from '@/src/lib/graph/theme-colors';
 import { getSeverityColor } from '@/src/lib/graph/entity-taxonomy';
 import { CANVAS_TEXT, CANVAS_TEXT_HALO } from '@/src/lib/graph/canvas-style';
@@ -57,8 +57,11 @@ export function WorldGlobe({
 
   // Keep the latest render inputs in a ref so the animation loop reads current
   // data without being torn down and rebuilt on every frame/prop change.
+  // The ref is written after each commit, not during render.
   const stateRef = useRef({ points, highlight });
-  stateRef.current = { points, highlight };
+  useLayoutEffect(() => {
+    stateRef.current = { points, highlight };
+  }, [points, highlight]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

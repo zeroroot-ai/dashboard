@@ -97,7 +97,8 @@ export function useGraph3DPerformance(
   const [autoLODActive, setAutoLODActive] = useState(false);
 
   const frameTimesRef = useRef<number[]>([]);
-  const lastFrameTimeRef = useRef<number>(performance.now());
+  // Set when monitoring starts (mount and tab visible), not during render.
+  const lastFrameTimeRef = useRef<number>(0);
   const animationFrameRef = useRef<number | null>(null);
   const lowFPSStartTimeRef = useRef<number | null>(null);
   const lastLODAdjustmentRef = useRef<number>(0);
@@ -249,7 +250,9 @@ export function useGraph3DPerformance(
   /**
    * Measure frame time
    */
-  const measureFrame = useCallback(() => {
+  // A named function expression, so the frame loop schedules itself without
+  // reading the hook variable before it is declared.
+  const measureFrame = useCallback(function measure() {
     const now = performance.now();
     const frameTime = now - lastFrameTimeRef.current;
     lastFrameTimeRef.current = now;
@@ -263,7 +266,7 @@ export function useGraph3DPerformance(
     }
 
     // Schedule next frame
-    animationFrameRef.current = requestAnimationFrame(measureFrame);
+    animationFrameRef.current = requestAnimationFrame(measure);
   }, []);
 
   // Start FPS monitoring on mount

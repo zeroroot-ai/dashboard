@@ -33,13 +33,19 @@ export function TeamsContent() {
   const [newName, setNewName] = useState("");
   const [loading, setLoading] = useState(true);
 
-  async function refresh() {
-    setLoading(true);
-    const r = await listTeamsAction();
+  // apply stores a result. The first state is already loading, so the mount
+  // effect only hands apply to the request and sets no state before it.
+  function apply(r: Awaited<ReturnType<typeof listTeamsAction>>) {
     if (r.ok) setTeams(r.data);
     setLoading(false);
   }
-  useEffect(() => { refresh(); }, []);
+  async function refresh() {
+    setLoading(true);
+    apply(await listTeamsAction());
+  }
+  useEffect(() => {
+    void listTeamsAction().then(apply);
+  }, []);
 
   async function onCreate() {
     if (!newId.trim() || !newName.trim()) {

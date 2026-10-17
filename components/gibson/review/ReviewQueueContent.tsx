@@ -138,6 +138,21 @@ function LabelControl({
   );
 }
 
+/** One read of the review queue: its items, or the error text. */
+async function fetchReviewQueue(): Promise<{ items: ReviewItem[] } | { error: string }> {
+  try {
+    const res = await fetch("/api/world/review", { cache: "no-store" });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body?.error?.message ?? `Request failed (${res.status})`);
+    }
+    const data = (await res.json()) as { items: ReviewItem[] };
+    return { items: data.items };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to load the review queue" };
+  }
+}
+
 // ── Main component ───────────────────────────────────────────────────────────
 
 export function ReviewQueueContent() {
@@ -145,25 +160,22 @@ export function ReviewQueueContent() {
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState<string | null>(null);
 
-  const load = React.useCallback(async () => {
-    setError(null);
-    try {
-      const res = await fetch("/api/world/review", { cache: "no-store" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error?.message ?? `Request failed (${res.status})`);
-      }
-      const data = (await res.json()) as { items: ReviewItem[] };
-      setItems(data.items);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load the review queue");
+  // apply stores the result of one read. The mount effect hands it to the
+  // request, so no state is set before the request ends.
+  const apply = React.useCallback((r: { items: ReviewItem[] } | { error: string }) => {
+    if ("error" in r) {
+      setError(r.error);
       setItems([]);
+    } else {
+      setError(null);
+      setItems(r.items);
     }
   }, []);
+  const load = React.useCallback(async () => apply(await fetchReviewQueue()), [apply]);
 
   React.useEffect(() => {
-    void load();
-  }, [load]);
+    void fetchReviewQueue().then(apply);
+  }, [apply]);
 
   const submit = React.useCallback(
     async (targetId: string, verdict: Verdict, category: string) => {

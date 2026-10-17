@@ -74,14 +74,17 @@ export function UsageContent({ fromParam, toParam, scopeParam }: Props) {
 
   const [scope, setScope] = useState<UsageScopeInput>(initialScope);
   const [rows, setRows] = useState<UsageRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [staleAsOfUnix, setStaleAsOfUnix] = useState<number>(0);
+  // The query of the last read that ended, its error, and how stale its data
+  // was when it arrived. Loading and the error derive during render, so the
+  // effect sets state only when a read ends.
+  const queryKey = `${scope}|${fromParam ?? ""}|${toParam ?? ""}`;
+  const [settled, setSettled] = useState<{ key: string; error: string | null } | null>(null);
+  const loading = settled?.key !== queryKey;
+  const error = loading ? null : (settled?.error ?? null);
+  const [staleMinutes, setStaleMinutes] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
     (async () => {
       const res = await getLlmUsageAction({
         scope,
@@ -91,15 +94,18 @@ export function UsageContent({ fromParam, toParam, scopeParam }: Props) {
       if (cancelled) return;
       if (res.ok) {
         setRows(res.data.rows);
-        setStaleAsOfUnix(res.data.staleAsOfUnix);
+        const stale = res.data.staleAsOfUnix;
+        setStaleMinutes(stale > 0 ? Math.round((Date.now() / 1000 - stale) / 60) : null);
+        setSettled({ key: queryKey, error: null });
       } else {
-        setError(res.error);
+        setSettled({ key: queryKey, error: res.error });
       }
-      setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
+    // queryKey is built from these three.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scope, fromParam, toParam]);
 
   return (
@@ -211,10 +217,10 @@ export function UsageContent({ fromParam, toParam, scopeParam }: Props) {
             ))}
           </Tabs>
 
-          {staleAsOfUnix > 0 && (
+          {staleMinutes !== null && (
             <p className="mt-4 text-xs text-alt">
               Data may be up to{" "}
-              {Math.round((Date.now() / 1000 - staleAsOfUnix) / 60)} minutes
+              {staleMinutes} minutes
               old, the upstream observability store was briefly unavailable.
             </p>
           )}

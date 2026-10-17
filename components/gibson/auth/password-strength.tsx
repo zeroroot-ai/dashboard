@@ -83,11 +83,21 @@ export function PasswordStrength({
   onCheckPassword,
   hibpEnabled = process.env.NEXT_PUBLIC_DASHBOARD_HIBP_ENABLED === "true",
 }: PasswordStrengthProps) {
-  const [breach, setBreach] = useState<BreachState>({ status: "idle" });
+  // The last finished check and the password it checked. The shown state
+  // derives from it during render: idle when no check applies, checking until
+  // a result for this exact password arrives.
+  const [checked, setChecked] = useState<{ password: string; breach: BreachState } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hibpActive = hibpEnabled && typeof onCheckPassword === "function";
+  const shouldCheck = hibpActive && password.length > 0 && allRulesPass(password);
+  const breach: BreachState = !shouldCheck
+    ? { status: "idle" }
+    : checked?.password === password
+      ? checked.breach
+      : { status: "checking" };
+  const setBreach = (next: BreachState) => setChecked({ password, breach: next });
 
   useEffect(() => {
     // Clear any pending debounce and abort any in-flight request.
@@ -100,19 +110,10 @@ export function PasswordStrength({
       abortRef.current = null;
     }
 
-    if (!hibpActive || password.length === 0) {
-      setBreach({ status: "idle" });
-      return;
-    }
+    if (!shouldCheck) return;
 
-    if (!allRulesPass(password)) {
-      setBreach({ status: "idle" });
-      return;
-    }
-
-    // Rules all pass, schedule a debounced HIBP check.
-    setBreach({ status: "checking" });
-
+    // Rules all pass, schedule a debounced HIBP check. The indicator shows
+    // "checking" until the result for this password arrives.
     timerRef.current = setTimeout(async () => {
       const controller = new AbortController();
       abortRef.current = controller;

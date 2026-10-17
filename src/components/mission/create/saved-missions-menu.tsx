@@ -82,11 +82,12 @@ export function SavedMissionsMenu({ currentMissionId, onDeleted }: SavedMissions
     }
   }, []);
 
-  React.useEffect(() => {
-    if (open && missions === null) {
-      void refresh();
-    }
-  }, [open, missions, refresh]);
+  // The first open of the menu loads the list. Opening is an event, so the
+  // load starts in the handler and no effect sets state.
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (next && missions === null) void refresh();
+  }
 
   function handleOpenMission(mission: MissionDraft) {
     setOpen(false);
@@ -115,7 +116,7 @@ export function SavedMissionsMenu({ currentMissionId, onDeleted }: SavedMissions
 
   return (
     <>
-      <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenu open={open} onOpenChange={handleOpenChange}>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="gap-1.5">
             <FolderOpen className="size-3.5" />
