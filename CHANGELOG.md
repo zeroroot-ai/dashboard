@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.133.1](https://github.com/zeroroot-ai/dashboard/compare/v0.133.0...v0.133.1) (2026-10-17)
+
+
+### Bug Fixes
+
+* **providers:** keep capabilities on a key edit, show only chat models in the chat menu ([#314](https://github.com/zeroroot-ai/dashboard/issues/314)) ([0d32079](https://github.com/zeroroot-ai/dashboard/commit/0d32079b6c71e5ffe238dbd4990e9b50a3a809c3)), closes [#310](https://github.com/zeroroot-ai/dashboard/issues/310) [#311](https://github.com/zeroroot-ai/dashboard/issues/311)
+
 ## [0.133.0](https://github.com/zeroroot-ai/dashboard/compare/v0.132.2...v0.133.0) (2026-10-14)
 
 
