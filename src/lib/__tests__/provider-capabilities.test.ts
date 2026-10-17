@@ -15,7 +15,10 @@ import {
   isEmbeddingOnlyProviderType,
   defaultCapabilitiesForType,
   selectableCapabilitiesForType,
+  modelCapabilitiesFromProto,
+  chatCapableModels,
 } from '@/src/lib/provider-capabilities';
+import type { ProviderCapability } from '@/src/lib/gibson-client-types';
 
 describe('provider-capabilities', () => {
   describe('toProtoCapabilities', () => {
@@ -142,5 +145,48 @@ describe('provider-capabilities', () => {
       expect([...selectableCapabilitiesForType('openai')]).toEqual([...PROVIDER_CAPABILITIES]);
       expect([...selectableCapabilitiesForType('anthropic')]).toEqual([...PROVIDER_CAPABILITIES]);
     });
+  });
+});
+
+// dashboard#311: the chat menu offered embedding and image models.
+describe('modelCapabilitiesFromProto', () => {
+  it('keeps an empty report absent instead of chat-only', () => {
+    expect(modelCapabilitiesFromProto([])).toBeUndefined();
+    expect(modelCapabilitiesFromProto([PROTO_CAPABILITY.UNSPECIFIED])).toBeUndefined();
+  });
+
+  it('does not turn an unknown capability into chat', () => {
+    expect(modelCapabilitiesFromProto([3])).toBeUndefined();
+    expect(modelCapabilitiesFromProto([3, PROTO_CAPABILITY.EMBEDDING])).toEqual(['embedding']);
+  });
+
+  it('maps a reported capability', () => {
+    expect(modelCapabilitiesFromProto([PROTO_CAPABILITY.EMBEDDING])).toEqual(['embedding']);
+    expect(modelCapabilitiesFromProto([PROTO_CAPABILITY.CHAT])).toEqual(['chat']);
+  });
+});
+
+describe('chatCapableModels', () => {
+  const openaiList: { name: string; capabilities?: ProviderCapability[] }[] = [
+    { name: 'gpt-4o', capabilities: ['chat'] },
+    { name: 'text-embedding-3-small', capabilities: ['embedding'] },
+    { name: 'dall-e-3' },
+  ];
+
+  it('drops a model that reports capabilities without chat', () => {
+    expect(chatCapableModels(openaiList).map((m) => m.name)).toEqual(['gpt-4o', 'dall-e-3']);
+  });
+
+  it('keeps every model when the provider reports no capabilities', () => {
+    const list: { name: string; capabilities?: ProviderCapability[] }[] = [
+      { name: 'llama3' },
+      { name: 'nomic-embed-text' },
+    ];
+    expect(chatCapableModels(list)).toEqual(list);
+  });
+
+  it('keeps a model that serves chat and embedding', () => {
+    const list = [{ name: 'm', capabilities: ['chat', 'embedding'] as ProviderCapability[] }];
+    expect(chatCapableModels(list)).toEqual(list);
   });
 });

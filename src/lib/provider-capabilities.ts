@@ -136,3 +136,35 @@ export function selectableCapabilitiesForType(type: string): readonly ProviderCa
     ? (['embedding'] as const)
     : PROVIDER_CAPABILITIES;
 }
+
+/**
+ * Convert the proto capabilities of one listed model (dashboard#311).
+ *
+ * Unlike {@link fromProtoCapabilities}, an empty report stays `undefined`, so
+ * the chat menu can tell "not reported" from "reported without chat".
+ */
+export function modelCapabilitiesFromProto(
+  caps: readonly number[],
+): ProviderCapability[] | undefined {
+  // Keep only the values this dashboard knows. An unknown value (a later
+  // enum entry) must not become chat through the chat-only default of
+  // fromProtoCapabilities.
+  const reported = caps.filter(
+    (c) => c === PROTO_CAPABILITY.CHAT || c === PROTO_CAPABILITY.EMBEDDING,
+  );
+  return reported.length > 0 ? fromProtoCapabilities(reported) : undefined;
+}
+
+/**
+ * The models of a live provider list that may serve chat (dashboard#311).
+ *
+ * OpenAI and Ollama list embedding, audio and image models next to chat
+ * models. The daemon sends the capabilities of a model when the provider
+ * reports them. A model that reports capabilities without chat is dropped. A
+ * model with no report stays, because nothing says it cannot chat.
+ */
+export function chatCapableModels<T extends { capabilities?: readonly ProviderCapability[] }>(
+  models: readonly T[],
+): T[] {
+  return models.filter((m) => !m.capabilities?.length || hasChatCapability(m.capabilities));
+}

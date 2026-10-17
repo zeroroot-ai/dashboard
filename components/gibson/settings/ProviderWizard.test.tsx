@@ -995,6 +995,61 @@ describe("ProviderWizard dual-capability provider embedding picker (dashboard#87
   });
 });
 
+describe("ProviderWizard chat model menu (dashboard#311)", () => {
+  beforeEach(() => {
+    Element.prototype.hasPointerCapture ??= vi.fn(() => false);
+    Element.prototype.setPointerCapture ??= vi.fn();
+    Element.prototype.releasePointerCapture ??= vi.fn();
+    if (!Element.prototype.scrollIntoView) {
+      Element.prototype.scrollIntoView = vi.fn();
+    }
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("does not offer an embedding model of an OpenAI test result as a chat model", async () => {
+    const user = userEvent.setup();
+    render(
+      <ProviderWizard supported={[openaiWithEmbeddingsDescriptor]} initialType="openai" />,
+      { wrapper },
+    );
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          result: {
+            ok: true,
+            latencyMs: 20,
+            models: [
+              { name: "text-embedding-3-small", family: "", contextWindow: 0, capabilities: ["embedding"] },
+              { name: "gpt-4o", family: "GPT-4o", contextWindow: 128000, capabilities: ["chat"] },
+            ],
+          },
+        }),
+      }),
+    );
+
+    await user.type(screen.getByPlaceholderText("sk-..."), "sk-test-key");
+    await act(async () => {
+      await user.click(screen.getByRole("button", { name: /test connection/i }));
+    });
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /edit credentials/i })).toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    fireEvent.click(screen.getByRole("combobox"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("option", { name: /gpt-4o/ })).toBeInTheDocument();
+    });
+    expect(screen.queryByRole("option", { name: /text-embedding-3-small/ })).not.toBeInTheDocument();
+  });
+});
+
 // ===========================================================================
 // Login shapes for bank members (gibson#1706 lane E6): Vertex and Foundry
 // ===========================================================================

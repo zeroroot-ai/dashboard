@@ -83,6 +83,7 @@ import {
   isEmbeddingOnlyProviderType,
   defaultCapabilitiesForType,
   selectableCapabilitiesForType,
+  chatCapableModels,
 } from "@/src/lib/provider-capabilities";
 import { apiFetch } from "@/src/lib/api/fetch";
 import { Textarea } from "@/components/ui/textarea";
@@ -97,6 +98,8 @@ interface FoundModel {
   name: string;
   family: string;
   contextWindow: number;
+  /** What the model can do, when the provider reports it (dashboard#311). */
+  capabilities?: ProviderCapability[];
 }
 
 export interface ProbeResult {
@@ -754,9 +757,10 @@ function ModelPickerAndSave({
   // capability must be selected.
   const embeddingReady = !servesEmbedding || Boolean(embeddingModel.trim());
 
-  // Chat model list: only what the provider itself reported to the test.
-  // With no list, the picker below takes a typed model ID (gibson#1193).
-  const chatModels: FoundModel[] = liveModels;
+  // Chat model list: only what the provider itself reported to the test, less
+  // each model that reports capabilities without chat (dashboard#311). With
+  // no list, the picker below takes a typed model ID (gibson#1193).
+  const chatModels: FoundModel[] = React.useMemo(() => chatCapableModels(liveModels), [liveModels]);
 
   // Embedding model list: from gibson#1072 SupportedProvider.embeddingModels
   // (field 7). For embedding-only providers this IS the complete catalog.

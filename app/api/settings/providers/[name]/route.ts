@@ -127,8 +127,10 @@ async function handleUpdate(req: NextRequest, { params }: RouteContext): Promise
 
   try {
     // If the client only supplied credentials (edit-credentials flow), fetch
-    // the existing record so we can merge name/type/defaultModel and send a
-    // complete ProviderConfigInput to the daemon.
+    // the existing record and carry each stored field forward that the request
+    // does not change. The daemon replaces the whole config, so a field left
+    // out here is a field the edit drops: an embedding-only provider without
+    // its capabilities and embedding model fails validation (dashboard#310).
     let merged: DaemonProviderConfigInput;
     if (!partial.type || !partial.name) {
       const existing = await daemonGetProvider(name, userId, tenantId);
@@ -138,6 +140,9 @@ async function handleUpdate(req: NextRequest, { params }: RouteContext): Promise
         defaultModel: partial.defaultModel ?? existing.defaultModel,
         credentials: { ...partial.credentials },
         setAsDefault: partial.setAsDefault ?? existing.isDefault,
+        capabilities: partial.capabilities ?? existing.capabilities,
+        defaultEmbeddingModel: partial.defaultEmbeddingModel ?? existing.defaultEmbeddingModel,
+        defaultModelContextWindow: partial.defaultModelContextWindow,
       };
     } else {
       merged = partial as DaemonProviderConfigInput;

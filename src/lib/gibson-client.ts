@@ -21,10 +21,12 @@ import type {
 import type { UserProfile } from '@/src/types/user';
 import type {
   DaemonProviderConfigInput,
+  ModelDescriptor,
   ProviderCapability,
 } from './gibson-client-types';
 import {
   fromProtoCapabilities,
+  modelCapabilitiesFromProto,
   toProtoCapabilities,
 } from './provider-capabilities';
 import { requireUserToken } from './auth/user-token';
@@ -1150,7 +1152,7 @@ interface DaemonProviderTestResult {
    * Empty for providers that don't expose a list endpoint, OR when ok is false.
    * Spec: providers-wizard.
    */
-  models: Array<{ name: string; family: string; contextWindow: number }>;
+  models: ModelDescriptor[];
   /**
    * True when an embedding probe was attempted and succeeded.
    * Populated from gibson#1072 TestProviderResponse.embedding_ok (field 6).
@@ -1306,6 +1308,23 @@ function fromProtoProviderRecord(
     updatedAt: p.updatedAt,
     capabilities: fromProtoCapabilities(p.capabilities ?? []),
     defaultEmbeddingModel: p.defaultEmbeddingModel,
+  };
+}
+
+/**
+ * Map one model of a TestProvider list. The capabilities stay absent when the
+ * provider reported none, so the chat menu can tell "not reported" from
+ * "reported without chat" (dashboard#311).
+ */
+function fromProtoTestedModel(
+  m: import('@/src/gen/gibson/tenant/v1/provider_pb').ModelDescriptor,
+): ModelDescriptor {
+  const capabilities = modelCapabilitiesFromProto(m.capabilities ?? []);
+  return {
+    name: m.name,
+    family: m.family ?? '',
+    contextWindow: m.contextWindow,
+    ...(capabilities ? { capabilities } : {}),
   };
 }
 
@@ -1514,11 +1533,7 @@ export async function daemonTestProvider(
     latencyMs: Number(resp.latencyMs),
     model: resp.model,
     error: resp.error || undefined,
-    models: (resp.models ?? []).map((m) => ({
-      name: m.name,
-      family: m.family ?? '',
-      contextWindow: m.contextWindow,
-    })),
+    models: (resp.models ?? []).map(fromProtoTestedModel),
     // Embedding probe results from gibson#1072 (fields 6–8).
     embeddingOk: resp.embeddingOk || undefined,
     embeddingDimension: resp.embeddingDimension > 0 ? resp.embeddingDimension : undefined,
