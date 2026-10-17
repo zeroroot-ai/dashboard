@@ -86,9 +86,9 @@ export interface ModelDescriptor {
   /** Maximum input tokens; 0 when unknown. */
   contextWindow: number;
   /**
-   * Capabilities this model supports. Mirrors proto `Capability` enum values
-   * (1=chat, 2=embedding). Absent/empty implies chat-only (legacy default).
-   * From gibson#1072: field 4 on ModelDescriptor.
+   * Capabilities this model supports, from proto ModelDescriptor field 4
+   * (gibson#1072). Absent means the provider did not report them, so the
+   * model may serve chat (dashboard#311). See modelCapabilitiesFromProto.
    */
   capabilities?: ProviderCapability[];
 }

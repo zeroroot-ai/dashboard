@@ -187,6 +187,67 @@ describe('PATCH /api/settings/providers/[name]', () => {
     expect(JSON.stringify(body)).not.toContain('sk-ant-api03-updated-key');
   });
 
+  it('keeps the capabilities and embedding model of an embedding-only provider on a key rotation', async () => {
+    // dashboard#310: a credentials-only edit sent no capabilities and no
+    // embedding model, so the daemon refused it for an embedding-only provider.
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    const voyage = {
+      ...mockProvider,
+      name: 'my-voyage',
+      type: 'voyage',
+      defaultModel: '',
+      capabilities: ['embedding'] as ProviderCapability[],
+      defaultEmbeddingModel: 'voyage-3',
+    };
+    vi.mocked(daemonGetProvider).mockResolvedValue(voyage);
+    vi.mocked(daemonUpdateProvider).mockResolvedValue(voyage);
+
+    const res = await PATCH(
+      makeRequest('PATCH', { config: { credentials: { api_key: 'pa-rotated-key' } } }) as Parameters<typeof PATCH>[0],
+      makeCtx('my-voyage'),
+    );
+
+    expect(res.status).toBe(200);
+    expect(daemonUpdateProvider).toHaveBeenCalledWith(
+      'my-voyage',
+      expect.objectContaining({
+        name: 'my-voyage',
+        type: 'voyage',
+        defaultModel: '',
+        credentials: { api_key: 'pa-rotated-key' },
+        capabilities: ['embedding'],
+        defaultEmbeddingModel: 'voyage-3',
+      }),
+      'user-1',
+      'tenant-1',
+    );
+  });
+
+  it('lets a credentials-only edit change the capabilities it names', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(daemonGetProvider).mockResolvedValue(mockProvider);
+    vi.mocked(daemonUpdateProvider).mockResolvedValue(mockProvider);
+
+    await PATCH(
+      makeRequest('PATCH', {
+        credentials: { api_key: 'sk-new' },
+        capabilities: ['chat', 'embedding'],
+        defaultEmbeddingModel: 'text-embedding-3-small',
+      }) as Parameters<typeof PATCH>[0],
+      makeCtx('my-anthropic'),
+    );
+
+    expect(daemonUpdateProvider).toHaveBeenCalledWith(
+      'my-anthropic',
+      expect.objectContaining({
+        capabilities: ['chat', 'embedding'],
+        defaultEmbeddingModel: 'text-embedding-3-small',
+      }),
+      'user-1',
+      'tenant-1',
+    );
+  });
+
   it('returns 400 on invalid JSON body', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
     const req = new Request('http://localhost/api/settings/providers/my-anthropic', {
