@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.133.2](https://github.com/zeroroot-ai/dashboard/compare/v0.133.1...v0.133.2) (2026-10-17)
+
+
+### Bug Fixes
+
+* **build:** a stale AI SDK override fails the build with the version to set ([#318](https://github.com/zeroroot-ai/dashboard/issues/318)) ([b864480](https://github.com/zeroroot-ai/dashboard/commit/b864480c45c31ac955109cda72ece27e590068a4))
+* **lint:** fix the 88 React Compiler sites and delete eslint-suppressions.json ([#320](https://github.com/zeroroot-ai/dashboard/issues/320)) ([e710952](https://github.com/zeroroot-ai/dashboard/commit/e710952d1c8bb6b53417dd5f79b9cd7194739dea))
+
 ## [0.133.1](https://github.com/zeroroot-ai/dashboard/compare/v0.133.0...v0.133.1) (2026-10-17)
 
 
