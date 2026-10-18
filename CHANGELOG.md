@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.133.3](https://github.com/zeroroot-ai/dashboard/compare/v0.133.2...v0.133.3) (2026-10-18)
+
+
+### Bug Fixes
+
+* **gen:** read the SDK protos at sdk v0.207.0 ([#322](https://github.com/zeroroot-ai/dashboard/issues/322)) ([8e8196e](https://github.com/zeroroot-ai/dashboard/commit/8e8196e962fe354483090c4f6f8309cf47197717))
+
 ## [0.133.2](https://github.com/zeroroot-ai/dashboard/compare/v0.133.1...v0.133.2) (2026-10-17)
 
 
