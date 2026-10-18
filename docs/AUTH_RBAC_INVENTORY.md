@@ -63,6 +63,14 @@ _(none rendered)_
 - ingressDeny rules: 0
 - egressDeny rules: 0
 
+### CiliumNetworkPolicy: `gibson-egress-fqdn-dashboard`
+- description: Pods of the dashboard egress group resolve and reach only these host names, on their ports.
+- selector: `{"matchLabels":{"gibson.zeroroot.ai/egress-fqdn":"dashboard"}}`
+- ingress rules: 0
+- egress rules: 2
+- ingressDeny rules: 0
+- egressDeny rules: 0
+
 ### CiliumNetworkPolicy: `gibson-metrics`
 - description: The cluster scraper reaches the metrics port 9464 of the pods that serve metrics there.
 - selector: `{"matchLabels":{"gibson.zeroroot.ai/metrics-port":"9464"}}`
