@@ -135,27 +135,60 @@ export interface GrantInput {
 }
 
 /**
- * Checks a grant target against the daemon's catalog of provider types. A
- * provider grant must name a listed type. A model grant must name a model
- * that the chosen listed type offers. Returns an error text, or null when
- * the target is valid.
+ * The chat model names of the tenant's configured providers of one type.
+ * GetSupportedProviders never fills default_models, so the live list from
+ * ListProviderModels is the source. It is keyed by the name of a provider
+ * config, so each config of the type is asked and the names are merged.
+ * A config that does not answer adds nothing.
+ */
+async function chatModelsForType(type: string): Promise<string[]> {
+  const client = userClient(ProviderService);
+  const { providers } = await client.listProviders({});
+  const names = new Set<string>();
+  for (const cfg of providers.filter((p) => p.type === type)) {
+    const resp = await client.listProviderModels({ name: cfg.name });
+    if (!resp.ok) continue;
+    for (const m of resp.models) names.add(m.name);
+  }
+  return [...names].sort();
+}
+
+/**
+ * Checks a grant target. A provider grant must name a type from the daemon
+ * catalog. A model grant must name a model that a configured provider of the
+ * chosen catalog type lists. Returns an error text, or null when valid.
  */
 async function checkGrantTarget(input: GrantInput): Promise<string | null> {
   const resp = await userClient(ProviderService).getSupportedProviders({});
-  const providers = resp.providers ?? [];
+  const types = (resp.providers ?? []).map((p) => p.type);
   if (input.targetKind === "provider") {
-    return providers.some((p) => p.type === input.targetId)
+    return types.includes(input.targetId)
       ? null
       : `"${input.targetId}" is not a supported provider type`;
   }
-  const owner = providers.find((p) => p.type === input.providerType);
-  if (!owner) {
-    return `"${input.providerType ?? ""}" is not a supported provider type`;
+  const type = input.providerType ?? "";
+  if (!types.includes(type)) {
+    return `"${type}" is not a supported provider type`;
   }
-  const models = [...(owner.defaultModels ?? []), ...(owner.embeddingModels ?? [])];
-  return models.some((m) => m.name === input.targetId)
+  const models = await chatModelsForType(type);
+  return models.includes(input.targetId)
     ? null
-    : `"${input.targetId}" is not a model of provider type ${owner.type}`;
+    : `"${input.targetId}" is not a model of provider type ${type}`;
+}
+
+/** Chat models for the grant form's model picker. */
+export async function listChatModelsForTypeAction(
+  providerType: string,
+): Promise<ActionResult<string[]>> {
+  const session = await getServerSession();
+  if (!session?.user) return { ok: false, error: "unauthenticated" };
+  try {
+    return { ok: true, data: await chatModelsForType(providerType) };
+  } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
 }
 
 export async function grantModelAccessAction(

@@ -20,6 +20,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { KeyIcon, ScrollTextIcon } from "lucide-react";
 import {
   Card,
@@ -53,12 +54,14 @@ import {
   grantModelAccessAction,
   revokeModelAccessAction,
   listModelAccessAction,
+  listChatModelsForTypeAction,
   listModelAccessAuditAction,
   type AccessGrantRow,
   type ModelResolutionEventRow,
   type SubjectKindInput,
   type TargetKindInput,
 } from "@/app/actions/crud/modelAccess";
+import { isEmbeddingOnlyProviderType } from "@/src/lib/provider-capabilities";
 import { useSupportedProviders } from "@/src/hooks/useSupportedProviders";
 import { MemberPicker } from "@/components/gibson/model-access/MemberPicker";
 
@@ -91,13 +94,20 @@ function GrantFormCard() {
   const [targetId, setTargetId] = useState("");
   const [providerType, setProviderType] = useState("");
   const supported = useSupportedProviders();
-  const providers = supported.data ?? [];
-  const chosenType = providers.find((p) => p.type === providerType);
-  const modelNames = chosenType
-    ? [...chosenType.defaultModels, ...(chosenType.embeddingModels ?? [])].map(
-        (m) => m.name,
-      )
-    : [];
+  // Embedding-only types never become a gate candidate, so they are not offered.
+  const providers = (supported.data ?? []).filter(
+    (p) => !isEmbeddingOnlyProviderType(p.type),
+  );
+  const modelsQuery = useQuery({
+    queryKey: ["modelAccessChatModels", providerType],
+    enabled: targetKind === "model" && providerType !== "",
+    queryFn: async () => {
+      const res = await listChatModelsForTypeAction(providerType);
+      if (!res.ok) throw new Error(res.error);
+      return res.data;
+    },
+  });
+  const modelNames = modelsQuery.data ?? [];
 
   function changeTargetKind(kind: TargetKindInput) {
     setTargetKind(kind);
@@ -221,7 +231,15 @@ function GrantFormCard() {
                 disabled={modelNames.length === 0}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Pick a model" />
+                  <SelectValue
+                    placeholder={
+                      modelsQuery.isLoading
+                        ? "Loading models"
+                        : providerType !== "" && modelNames.length === 0
+                          ? "No configured provider of this type lists models"
+                          : "Pick a model"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {modelNames.map((name) => (

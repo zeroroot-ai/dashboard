@@ -29,6 +29,8 @@ const {
   mockListAccess,
   mockGetModelAccessClient,
   mockGetSupportedProviders,
+  mockListProviders,
+  mockListProviderModels,
   mockGetServerSession,
   MockAuthzDeniedError,
 } = vi.hoisted(() => {
@@ -54,19 +56,30 @@ const {
       revokeAccess,
       listAccess,
     })),
+    // The real shape: GetSupportedProviders never fills default_models
+    // (gibson provider.proto), so chat models come from ListProviderModels.
     mockGetSupportedProviders: vi.fn(async () => ({
       providers: [
-        {
-          type: "anthropic",
-          defaultModels: [{ name: "claude-opus-4" }],
-          embeddingModels: [],
-        },
+        { type: "anthropic", defaultModels: [], embeddingModels: [] },
         {
           type: "openai",
-          defaultModels: [{ name: "gpt-5" }],
+          defaultModels: [],
           embeddingModels: [{ name: "text-embedding-3-large" }],
         },
       ],
+    })),
+    mockListProviders: vi.fn(async (_req?: unknown) => ({
+      providers: [
+        { name: "my-openai", type: "openai" },
+        { name: "work-anthropic", type: "anthropic" },
+      ],
+    })),
+    mockListProviderModels: vi.fn(async (req: { name: string }) => ({
+      ok: true,
+      models:
+        req.name === "my-openai"
+          ? [{ name: "gpt-5" }]
+          : [{ name: "claude-opus-4" }],
     })),
     mockGetServerSession: vi.fn(async () => ({
       user: { id: "user-1", tenantId: "tenant-abc" },
@@ -79,7 +92,11 @@ vi.mock("server-only", () => ({}));
 
 vi.mock("@/src/lib/gibson-client", () => ({
   getModelAccessClient: mockGetModelAccessClient,
-  userClient: vi.fn(() => ({ getSupportedProviders: mockGetSupportedProviders })),
+  userClient: vi.fn(() => ({
+    getSupportedProviders: mockGetSupportedProviders,
+    listProviders: mockListProviders,
+    listProviderModels: mockListProviderModels,
+  })),
 }));
 
 vi.mock("@/src/gen/gibson/tenant/v1/provider_pb", () => ({
@@ -113,6 +130,7 @@ vi.mock("@/src/gen/gibson/tenant/v1/model_access_pb", () => ({
 
 import {
   grantModelAccessAction,
+  listChatModelsForTypeAction,
   listModelAccessAction,
   revokeModelAccessAction,
   type GrantInput,
@@ -274,16 +292,44 @@ describe("grant target comes from the supported provider types", () => {
     expect(mockGrantAccess).not.toHaveBeenCalled();
   });
 
-  it("sends a model that the chosen provider type lists", async () => {
+  it("sends a chat model that ListProviderModels lists for the type", async () => {
+    const result = await grantModelAccessAction({
+      ...validInput,
+      targetKind: "model",
+      targetId: "gpt-5",
+      providerType: "openai",
+    });
+    expect(result.ok).toBe(true);
+    expect(mockListProviderModels).toHaveBeenCalledWith({ name: "my-openai" });
+    const req = mockGrantAccess.mock.calls[0][0] as { grant: { targetId: string } };
+    expect(req.grant.targetId).toBe("gpt-5");
+  });
+
+  it("does not send a model that no configured provider of the type lists", async () => {
+    const result = await grantModelAccessAction({
+      ...validInput,
+      targetKind: "model",
+      targetId: "gpt-4-unlisted",
+      providerType: "openai",
+    });
+    expect(result.ok).toBe(false);
+    expect(mockGrantAccess).not.toHaveBeenCalled();
+  });
+
+  it("does not send an embedding model, the gate checks chat models", async () => {
     const result = await grantModelAccessAction({
       ...validInput,
       targetKind: "model",
       targetId: "text-embedding-3-large",
       providerType: "openai",
     });
-    expect(result.ok).toBe(true);
-    const req = mockGrantAccess.mock.calls[0][0] as { grant: { targetId: string } };
-    expect(req.grant.targetId).toBe("text-embedding-3-large");
+    expect(result.ok).toBe(false);
+    expect(mockGrantAccess).not.toHaveBeenCalled();
+  });
+
+  it("lists the chat models of a type for the form", async () => {
+    const result = await listChatModelsForTypeAction("anthropic");
+    expect(result).toEqual({ ok: true, data: ["claude-opus-4"] });
   });
 
   it("does not send a model that another provider type lists", async () => {
