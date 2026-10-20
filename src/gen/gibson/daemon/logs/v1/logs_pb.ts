@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/daemon/logs/v1/logs.proto.
  */
 export const file_gibson_daemon_logs_v1_logs: GenFile = /*@__PURE__*/
-  fileDesc("CiBnaWJzb24vZGFlbW9uL2xvZ3MvdjEvbG9ncy5wcm90bxIVZ2lic29uLmRhZW1vbi5sb2dzLnYxIpgBCghMb2dFbnRyeRISCgp1bml4X25hbm9zGAEgASgDEgwKBGxpbmUYAiABKAkSOwoGbGFiZWxzGAMgAygLMisuZ2lic29uLmRhZW1vbi5sb2dzLnYxLkxvZ0VudHJ5LkxhYmVsc0VudHJ5Gi0KC0xhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiegoXUXVlcnlNaXNzaW9uTG9nc1JlcXVlc3QSHgoKbWlzc2lvbl9pZBgBIAEoCUIKukgHcgUQARiACBIYChBzdGFydF91bml4X25hbm9zGAIgASgDEhYKDmVuZF91bml4X25hbm9zGAMgASgDEg0KBWxpbWl0GAQgASgFIkwKGFF1ZXJ5TWlzc2lvbkxvZ3NSZXNwb25zZRIwCgdlbnRyaWVzGAEgAygLMh8uZ2lic29uLmRhZW1vbi5sb2dzLnYxLkxvZ0VudHJ5IrEBChZRdWVyeURhZW1vbkxvZ3NSZXF1ZXN0EjgKBWxldmVsGAEgASgOMh8uZ2lic29uLmRhZW1vbi5sb2dzLnYxLkxvZ0xldmVsQgi6SAWCAQIQARIcCgptaXNzaW9uX2lkGAIgASgJQgi6SAVyAxiACBIYChBzdGFydF91bml4X25hbm9zGAMgASgDEhYKDmVuZF91bml4X25hbm9zGAQgASgDEg0KBWxpbWl0GAUgASgFIksKF1F1ZXJ5RGFlbW9uTG9nc1Jlc3BvbnNlEjAKB2VudHJpZXMYASADKAsyHy5naWJzb24uZGFlbW9uLmxvZ3MudjEuTG9nRW50cnkqdwoITG9nTGV2ZWwSGQoVTE9HX0xFVkVMX1VOU1BFQ0lGSUVEEAASEwoPTE9HX0xFVkVMX0RFQlVHEAESEgoOTE9HX0xFVkVMX0lORk8QAhISCg5MT0dfTEVWRUxfV0FSThADEhMKD0xPR19MRVZFTF9FUlJPUhAEMtICCgtMb2dzU2VydmljZRKhAQoQUXVlcnlNaXNzaW9uTG9ncxIuLmdpYnNvbi5kYWVtb24ubG9ncy52MS5RdWVyeU1pc3Npb25Mb2dzUmVxdWVzdBovLmdpYnNvbi5kYWVtb24ubG9ncy52MS5RdWVyeU1pc3Npb25Mb2dzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEp4BCg9RdWVyeURhZW1vbkxvZ3MSLS5naWJzb24uZGFlbW9uLmxvZ3MudjEuUXVlcnlEYWVtb25Mb2dzUmVxdWVzdBouLmdpYnNvbi5kYWVtb24ubG9ncy52MS5RdWVyeURhZW1vbkxvZ3NSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IANCV1pVZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL2RhZW1vbi9sb2dzL3YxO2xvZ3N2MWIGcHJvdG8z", [file_gibson_auth_v1_options, file_buf_validate_validate]);
+  fileDesc("CiBnaWJzb24vZGFlbW9uL2xvZ3MvdjEvbG9ncy5wcm90bxIVZ2lic29uLmRhZW1vbi5sb2dzLnYxIpgBCghMb2dFbnRyeRISCgp1bml4X25hbm9zGAEgASgDEgwKBGxpbmUYAiABKAkSOwoGbGFiZWxzGAMgAygLMisuZ2lic29uLmRhZW1vbi5sb2dzLnYxLkxvZ0VudHJ5LkxhYmVsc0VudHJ5Gi0KC0xhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEitQEKF1F1ZXJ5TWlzc2lvbkxvZ3NSZXF1ZXN0Eh4KCm1pc3Npb25faWQYASABKAlCCrpIB3IFEAEYgAgSGAoQc3RhcnRfdW5peF9uYW5vcxgCIAEoAxIWCg5lbmRfdW5peF9uYW5vcxgDIAEoAxIdCglwYWdlX3NpemUYBSABKAVCCrpIBxoFGOgHKAASHAoKcGFnZV90b2tlbhgGIAEoCUIIukgFcgMYgAhKBAgEEAVSBWxpbWl0ImUKGFF1ZXJ5TWlzc2lvbkxvZ3NSZXNwb25zZRIwCgdlbnRyaWVzGAEgAygLMh8uZ2lic29uLmRhZW1vbi5sb2dzLnYxLkxvZ0VudHJ5EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSLsAQoWUXVlcnlEYWVtb25Mb2dzUmVxdWVzdBI4CgVsZXZlbBgBIAEoDjIfLmdpYnNvbi5kYWVtb24ubG9ncy52MS5Mb2dMZXZlbEIIukgFggECEAESHAoKbWlzc2lvbl9pZBgCIAEoCUIIukgFcgMYgAgSGAoQc3RhcnRfdW5peF9uYW5vcxgDIAEoAxIWCg5lbmRfdW5peF9uYW5vcxgEIAEoAxIdCglwYWdlX3NpemUYBiABKAVCCrpIBxoFGOgHKAASHAoKcGFnZV90b2tlbhgHIAEoCUIIukgFcgMYgAhKBAgFEAZSBWxpbWl0ImQKF1F1ZXJ5RGFlbW9uTG9nc1Jlc3BvbnNlEjAKB2VudHJpZXMYASADKAsyHy5naWJzb24uZGFlbW9uLmxvZ3MudjEuTG9nRW50cnkSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJKncKCExvZ0xldmVsEhkKFUxPR19MRVZFTF9VTlNQRUNJRklFRBAAEhMKD0xPR19MRVZFTF9ERUJVRxABEhIKDkxPR19MRVZFTF9JTkZPEAISEgoOTE9HX0xFVkVMX1dBUk4QAxITCg9MT0dfTEVWRUxfRVJST1IQBDLSAgoLTG9nc1NlcnZpY2USoQEKEFF1ZXJ5TWlzc2lvbkxvZ3MSLi5naWJzb24uZGFlbW9uLmxvZ3MudjEuUXVlcnlNaXNzaW9uTG9nc1JlcXVlc3QaLy5naWJzb24uZGFlbW9uLmxvZ3MudjEuUXVlcnlNaXNzaW9uTG9nc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKeAQoPUXVlcnlEYWVtb25Mb2dzEi0uZ2lic29uLmRhZW1vbi5sb2dzLnYxLlF1ZXJ5RGFlbW9uTG9nc1JlcXVlc3QaLi5naWJzb24uZGFlbW9uLmxvZ3MudjEuUXVlcnlEYWVtb25Mb2dzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADQldaVWdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi9kYWVtb24vbG9ncy92MTtsb2dzdjFiBnByb3RvMw", [file_gibson_auth_v1_options, file_buf_validate_validate]);
 
 /**
  * LogEntry is a single log line: when it was emitted, the raw line, and any
@@ -53,7 +53,8 @@ export const LogEntrySchema: GenMessage<LogEntry> = /*@__PURE__*/
 /**
  * QueryMissionLogsRequest asks for one mission's logs. start_unix_nanos /
  * end_unix_nanos bound the time range (0 means "use the server default
- * window"); limit caps the number of returned entries (0 means server default).
+ * window"); page_size caps the number of entries on one page (0 means the
+ * server default) and page_token continues a previous page (ADR-0028).
  *
  * @generated from message gibson.daemon.logs.v1.QueryMissionLogsRequest
  */
@@ -80,11 +81,18 @@ export type QueryMissionLogsRequest = Message<"gibson.daemon.logs.v1.QueryMissio
   endUnixNanos: bigint;
 
   /**
-   * optional cap on entries
+   * optional cap on entries per page
    *
-   * @generated from field: int32 limit = 4;
+   * @generated from field: int32 page_size = 5;
    */
-  limit: number;
+  pageSize: number;
+
+  /**
+   * next_page_token of the previous page
+   *
+   * @generated from field: string page_token = 6;
+   */
+  pageToken: string;
 };
 
 /**
@@ -102,6 +110,13 @@ export type QueryMissionLogsResponse = Message<"gibson.daemon.logs.v1.QueryMissi
    * @generated from field: repeated gibson.daemon.logs.v1.LogEntry entries = 1;
    */
   entries: LogEntry[];
+
+  /**
+   * next_page_token continues the list. Empty means this is the last page.
+   *
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
 };
 
 /**
@@ -147,11 +162,18 @@ export type QueryDaemonLogsRequest = Message<"gibson.daemon.logs.v1.QueryDaemonL
   endUnixNanos: bigint;
 
   /**
-   * optional cap on entries
+   * optional cap on entries per page
    *
-   * @generated from field: int32 limit = 5;
+   * @generated from field: int32 page_size = 6;
    */
-  limit: number;
+  pageSize: number;
+
+  /**
+   * next_page_token of the previous page
+   *
+   * @generated from field: string page_token = 7;
+   */
+  pageToken: string;
 };
 
 /**
@@ -169,6 +191,13 @@ export type QueryDaemonLogsResponse = Message<"gibson.daemon.logs.v1.QueryDaemon
    * @generated from field: repeated gibson.daemon.logs.v1.LogEntry entries = 1;
    */
   entries: LogEntry[];
+
+  /**
+   * next_page_token continues the list. Empty means this is the last page.
+   *
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
 };
 
 /**
