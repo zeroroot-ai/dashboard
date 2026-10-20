@@ -25,6 +25,8 @@
 import { getModelAccessClient, userClient } from "@/src/lib/gibson-client";
 import {
   chatCapableModels,
+  fromProtoCapabilities,
+  hasChatCapability,
   isEmbeddingOnlyProviderType,
   modelCapabilitiesFromProto,
 } from "@/src/lib/provider-capabilities";
@@ -143,14 +145,18 @@ export interface GrantInput {
 const LIST_MODELS_TIMEOUT_MS = 5000;
 
 /**
- * The tenant's provider configs that can become a grant target: enabled, and
- * of a type that can chat. This is the rule of the daemon. A catalog type
- * with no such config is not a target.
+ * The tenant's provider configs that can become a grant target: enabled, of a
+ * type that can chat, and saved with the chat capability. A config with no
+ * stored capabilities counts as chat. This is the rule of the daemon. A
+ * catalog type with no such config is not a target.
  */
 async function grantableConfigs() {
   const { providers } = await userClient(ProviderService).listProviders({});
   return providers.filter(
-    (p) => p.enabled && !isEmbeddingOnlyProviderType(p.type),
+    (p) =>
+      p.enabled &&
+      !isEmbeddingOnlyProviderType(p.type) &&
+      hasChatCapability(fromProtoCapabilities(p.capabilities ?? [])),
   );
 }
 

@@ -82,6 +82,8 @@ const {
         { name: "disabled-anthropic", type: "anthropic", enabled: false, defaultModel: "disabled-default" },
         // The only config of its type is disabled, so the type is not a target.
         { name: "disabled-google", type: "google", enabled: false, defaultModel: "" },
+        // An enabled config of a chat type, saved as embedding only.
+        { name: "emb-ollama", type: "ollama", enabled: true, defaultModel: "nomic-embed", capabilities: [2] },
         // An enabled config of an embedding-only type.
         { name: "my-voyage", type: "voyage", enabled: true, defaultModel: "" },
       ],
@@ -90,6 +92,9 @@ const {
       if (req.name === "broken-anthropic") throw new Error("unavailable");
       if (req.name === "off-anthropic") {
         return { ok: false, models: [{ name: "must-not-appear" }] };
+      }
+      if (req.name === "emb-ollama") {
+        return { ok: true, models: [{ name: "nomic-embed" }, { name: "llama-chat" }] };
       }
       if (req.name === "disabled-anthropic") {
         return { ok: true, models: [{ name: "disabled-only-model" }] };
@@ -324,6 +329,31 @@ describe("grant target comes from the enabled provider configs", () => {
   it("offers only the types of enabled, chat-capable configs", async () => {
     const result = await listGrantableProviderTypesAction();
     expect(result).toEqual({ ok: true, data: ["anthropic", "openai"] });
+  });
+
+  it("does not offer a config of a chat type that is saved as embedding only", async () => {
+    const types = await listGrantableProviderTypesAction();
+    expect(types).toEqual({ ok: true, data: ["anthropic", "openai"] });
+
+    const models = await listChatModelsForTypeAction("ollama");
+    expect(models).toEqual({ ok: true, data: [] });
+    expect(mockListProviderModels).not.toHaveBeenCalledWith(
+      { name: "emb-ollama" },
+      expect.anything(),
+    );
+
+    const provider = await grantModelAccessAction({ ...validInput, targetId: "ollama" });
+    expect(provider.ok).toBe(false);
+    for (const targetId of ["nomic-embed", "llama-chat"]) {
+      const model = await grantModelAccessAction({
+        ...validInput,
+        targetKind: "model",
+        targetId,
+        providerType: "ollama",
+      });
+      expect(model.ok).toBe(false);
+    }
+    expect(mockGrantAccess).not.toHaveBeenCalled();
   });
 
   it("does not offer or send the models of a disabled config", async () => {
