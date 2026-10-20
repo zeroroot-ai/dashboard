@@ -15,7 +15,7 @@ name: authz-registry-drift
 # This workflow has the gibson daemon-local protos on disk, so it is the one
 # that can catch that class of drift. It is intentionally NOT folded into
 # node-ci.yml: that would put a second-repo checkout and a buf module fetch on
-# the critical path of every dashboard PR. Scheduled + workflow_dispatch
+# the critical path of every dashboard PR. workflow_dispatch
 # instead, the same shape the org uses for cross-repo drift checks that must
 # not block every PR of the repo they run in.
 #
@@ -34,8 +34,6 @@ name: authz-registry-drift
 # check (dashboard#269).
 
 on:
-  schedule:
-    - cron: "17 6 * * *" # daily, off the hour so it doesn't compete with other repos' cron jobs
   workflow_dispatch: {}
   pull_request:
     paths:

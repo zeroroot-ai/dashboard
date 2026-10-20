@@ -105,7 +105,7 @@ Facts the verdicts rest on:
 - `/login` is a gate with one "Sign in" button. The inline email and
   password form every `loginAs()` helper filled does not exist.
 - Signup needs a verification mail. The daemon sends it through SES on
-  staging, and the lane cannot read it. The signup chain is proven daily
+  staging, and the lane cannot read it. The signup chain is proven
   on kind with Mailpit by hosted's `exit-test-signup.yml`.
 - `/api/gibson-proxy` does not exist. The admin pages are server
   components, and the data they show comes from server actions, so a

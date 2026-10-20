@@ -3,9 +3,7 @@ name: security
 # Epic: cicd-efficiency (board #44), slice S11a (dashboard#940). Scanner
 # cadence mirrors
 # gibson's S5 (gibson#1130): the authoritative pre-merge gate moves to
-# merge_group instead of double-firing on every `push` and `pull_request`,
-# plus a weekly deep scan so an advisory published between merges is still
-# caught within a week.
+# merge_group instead of double-firing on every `push` and `pull_request`.
 #
 # Queue-entry compat (epic cicd-efficiency, board #44, merge-queue-entry
 # follow-up): a `merge_group`-only trigger produces NO check run at all on
@@ -17,13 +15,11 @@ name: security
 # rulesets/repo/dashboard.json). Add `pull_request` to the trigger and skip
 # the real audit there via job-level `if:` -- skipped is free (no runner
 # spin-up), and the authoritative scan still only runs on merge_group plus
-# the weekly schedule.
+# workflow_dispatch.
 
 on:
   pull_request:
   merge_group:
-  schedule:
-    - cron: "0 10 * * 3"
   workflow_dispatch:
 
 permissions:
@@ -33,7 +29,7 @@ jobs:
   npm-audit:
     name: npm audit
     # Real audit only outside pull_request (merge_group is the authoritative
-    # gate, schedule is the weekly deep scan, workflow_dispatch is manual).
+    # gate, workflow_dispatch is manual).
     # Reports `skipped` on PRs so this context satisfies merge-queue entry.
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest

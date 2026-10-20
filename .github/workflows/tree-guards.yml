@@ -4,7 +4,7 @@
 #   brand-guard  fails on a retired brand string anywhere in the tracked tree
 #   link-check   fails on a broken link in any Markdown file
 #   exit-tests-off-pr  fails when an `exit-test-*.yml` workflow has a
-#                pull_request or a merge_group trigger, or no schedule
+#                pull_request or a merge_group trigger
 #                (ADR-0080). The same code guards gibson, setec and hosted.
 #
 # Each reusable lives in zeroroot-ai/.github. None needs a secret: the

@@ -5,8 +5,7 @@ name: CodeQL
 # organization. This repo keeps no CodeQL config file and no query list.
 #
 # Cadence: merge_group is the gate before a merge. A push to main scans
-# refs/heads/main, so an alert closes when its fix merges, not at the next
-# weekly run. The weekly schedule is the deep scan. workflow_dispatch forces a
+# refs/heads/main, so an alert closes when its fix merges. workflow_dispatch forces a
 # scan of refs/heads/main on demand.
 #
 # On a pull_request the job runs with `scan: false`. It skips each step and
@@ -21,8 +20,6 @@ on:
   push:
     branches: [main]
   merge_group:
-  schedule:
-    - cron: "0 8 * * 2"
   workflow_dispatch:
 
 permissions:
