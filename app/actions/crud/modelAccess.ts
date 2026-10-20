@@ -23,7 +23,13 @@
  */
 
 import { getModelAccessClient, userClient } from "@/src/lib/gibson-client";
-import { isEmbeddingOnlyProviderType } from "@/src/lib/provider-capabilities";
+import {
+  chatCapableModels,
+  fromProtoCapabilities,
+  hasChatCapability,
+  isEmbeddingOnlyProviderType,
+  modelCapabilitiesFromProto,
+} from "@/src/lib/provider-capabilities";
 import { ProviderService } from "@/src/gen/gibson/tenant/v1/provider_pb";
 import { getServerSession } from "@/src/lib/auth";
 import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
@@ -139,18 +145,39 @@ export interface GrantInput {
 const LIST_MODELS_TIMEOUT_MS = 5000;
 
 /**
- * The chat model names of the tenant's configured providers of one type.
- * GetSupportedProviders never fills default_models, so the live list from
- * ListProviderModels is the source. It is keyed by the name of a provider
- * config, so each config of the type is asked in parallel and the names are
- * merged. A config that throws, times out or replies ok:false adds nothing.
- * The saved default model of each config is also allowed, so a default that
- * the live list no longer returns can still be granted.
+ * The tenant's provider configs that can become a grant target: enabled, of a
+ * type that can chat, and saved with the chat capability. A config with no
+ * stored capabilities counts as chat. This is the rule of the daemon. A
+ * catalog type with no such config is not a target.
+ */
+async function grantableConfigs() {
+  const { providers } = await userClient(ProviderService).listProviders({});
+  return providers.filter(
+    (p) =>
+      p.enabled &&
+      !isEmbeddingOnlyProviderType(p.type) &&
+      hasChatCapability(fromProtoCapabilities(p.capabilities ?? [])),
+  );
+}
+
+/** The provider types the form may offer, one for each grantable config type. */
+async function grantableTypes(): Promise<string[]> {
+  const configs = await grantableConfigs();
+  return [...new Set(configs.map((c) => c.type))].sort();
+}
+
+/**
+ * The chat model names of the tenant's enabled configs of one type. The live
+ * list from ListProviderModels is the source. It is keyed by the name of a
+ * provider config, so each enabled config of the type is asked in parallel and
+ * the names are merged. A config that throws, times out or replies ok:false
+ * adds nothing. A model that reports capabilities without chat is dropped. The
+ * saved default model of each config is also allowed, so a default that the
+ * live list no longer returns can still be granted.
  */
 async function chatModelsForType(type: string): Promise<string[]> {
   const client = userClient(ProviderService);
-  const { providers } = await client.listProviders({});
-  const configs = providers.filter((p) => p.type === type);
+  const configs = (await grantableConfigs()).filter((c) => c.type === type);
   const names = new Set<string>();
   for (const cfg of configs) {
     if (cfg.defaultModel) names.add(cfg.defaultModel);
@@ -165,35 +192,48 @@ async function chatModelsForType(type: string): Promise<string[]> {
   );
   for (const reply of replies) {
     if (reply.status !== "fulfilled" || !reply.value.ok) continue;
-    for (const m of reply.value.models) names.add(m.name);
+    const models = reply.value.models.map((m) => ({
+      name: m.name,
+      capabilities: modelCapabilitiesFromProto(m.capabilities ?? []),
+    }));
+    for (const m of chatCapableModels(models)) names.add(m.name);
   }
   return [...names].sort();
 }
 
 /**
- * Checks a grant target. A provider grant must name a type from the daemon
- * catalog. A model grant must name a model that a configured provider of the
- * chosen catalog type lists. Returns an error text, or null when valid.
+ * Checks a grant target against the tenant's enabled configs. A provider
+ * grant must name the type of an enabled, chat-capable config. A model grant
+ * must also name a chat model that an enabled config of that type lists.
+ * Returns an error text, or null when valid.
  */
 async function checkGrantTarget(input: GrantInput): Promise<string | null> {
-  const resp = await userClient(ProviderService).getSupportedProviders({});
-  const types = (resp.providers ?? []).map((p) => p.type);
-  if (input.targetKind === "provider") {
-    if (isEmbeddingOnlyProviderType(input.targetId)) {
-      return `"${input.targetId}" serves embeddings only and cannot be granted`;
-    }
-    return types.includes(input.targetId)
-      ? null
-      : `"${input.targetId}" is not a supported provider type`;
+  const type = input.targetKind === "provider" ? input.targetId : input.providerType ?? "";
+  if (isEmbeddingOnlyProviderType(type)) {
+    return `"${type}" serves embeddings only and cannot be granted`;
   }
-  const type = input.providerType ?? "";
+  const types = await grantableTypes();
   if (!types.includes(type)) {
-    return `"${type}" is not a supported provider type`;
+    return `"${type}" has no enabled provider config`;
   }
+  if (input.targetKind === "provider") return null;
   const models = await chatModelsForType(type);
   return models.includes(input.targetId)
     ? null
-    : `"${input.targetId}" is not a model of provider type ${type}`;
+    : `"${input.targetId}" is not a chat model of an enabled ${type} config`;
+}
+
+/** Provider types for the grant form's type picker. */
+export async function listGrantableProviderTypesAction(): Promise<ActionResult<string[]>> {
+  const session = await getServerSession();
+  if (!session?.user) return { ok: false, error: "unauthenticated" };
+  try {
+    return { ok: true, data: await grantableTypes() };
+  } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
 }
 
 /** Chat models for the grant form's model picker. */
