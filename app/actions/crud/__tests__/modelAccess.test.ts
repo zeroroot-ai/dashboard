@@ -28,6 +28,7 @@ const {
   mockRevokeAccess,
   mockListAccess,
   mockGetModelAccessClient,
+  mockGetSupportedProviders,
   mockGetServerSession,
   MockAuthzDeniedError,
 } = vi.hoisted(() => {
@@ -41,8 +42,8 @@ const {
       this.reason = reason;
     }
   }
-  const grantAccess = vi.fn(async () => ({}));
-  const revokeAccess = vi.fn(async () => ({}));
+  const grantAccess = vi.fn(async (_req?: unknown) => ({}));
+  const revokeAccess = vi.fn(async (_req?: unknown) => ({}));
   const listAccess = vi.fn(async () => ({ grants: [] as unknown[] }));
   return {
     mockGrantAccess: grantAccess,
@@ -52,6 +53,20 @@ const {
       grantAccess,
       revokeAccess,
       listAccess,
+    })),
+    mockGetSupportedProviders: vi.fn(async () => ({
+      providers: [
+        {
+          type: "anthropic",
+          defaultModels: [{ name: "claude-opus-4" }],
+          embeddingModels: [],
+        },
+        {
+          type: "openai",
+          defaultModels: [{ name: "gpt-5" }],
+          embeddingModels: [{ name: "text-embedding-3-large" }],
+        },
+      ],
     })),
     mockGetServerSession: vi.fn(async () => ({
       user: { id: "user-1", tenantId: "tenant-abc" },
@@ -64,6 +79,11 @@ vi.mock("server-only", () => ({}));
 
 vi.mock("@/src/lib/gibson-client", () => ({
   getModelAccessClient: mockGetModelAccessClient,
+  userClient: vi.fn(() => ({ getSupportedProviders: mockGetSupportedProviders })),
+}));
+
+vi.mock("@/src/gen/gibson/tenant/v1/provider_pb", () => ({
+  ProviderService: {},
 }));
 
 vi.mock("@/src/lib/auth", () => ({
@@ -226,5 +246,75 @@ describe("the tenant subject needs no id", () => {
   it("keeps the id of a user subject", async () => {
     await listModelAccessAction("user", "user-2");
     expect(mockListAccess).toHaveBeenCalledWith({ subjectKind: 1, subjectId: "user-2" });
+  });
+});
+
+describe("grant target comes from the supported provider types", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("sends a provider type name that is in the catalog", async () => {
+    const result = await grantModelAccessAction({
+      ...validInput,
+      targetId: "openai",
+    });
+    expect(result.ok).toBe(true);
+    expect(mockGrantAccess).toHaveBeenCalledOnce();
+    const req = mockGrantAccess.mock.calls[0][0] as { grant: { targetId: string } };
+    expect(req.grant.targetId).toBe("openai");
+  });
+
+  it("does not send a tenant provider config name", async () => {
+    const result = await grantModelAccessAction({
+      ...validInput,
+      targetId: "my-openai",
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected not-ok");
+    expect(result.code).toBe("invalid_target");
+    expect(mockGrantAccess).not.toHaveBeenCalled();
+  });
+
+  it("sends a model that the chosen provider type lists", async () => {
+    const result = await grantModelAccessAction({
+      ...validInput,
+      targetKind: "model",
+      targetId: "text-embedding-3-large",
+      providerType: "openai",
+    });
+    expect(result.ok).toBe(true);
+    const req = mockGrantAccess.mock.calls[0][0] as { grant: { targetId: string } };
+    expect(req.grant.targetId).toBe("text-embedding-3-large");
+  });
+
+  it("does not send a model that another provider type lists", async () => {
+    const result = await grantModelAccessAction({
+      ...validInput,
+      targetKind: "model",
+      targetId: "gpt-5",
+      providerType: "anthropic",
+    });
+    expect(result.ok).toBe(false);
+    expect(mockGrantAccess).not.toHaveBeenCalled();
+  });
+
+  it("does not send a model grant with no provider type", async () => {
+    const result = await grantModelAccessAction({
+      ...validInput,
+      targetKind: "model",
+      targetId: "claude-opus-4",
+    });
+    expect(result.ok).toBe(false);
+    expect(mockGrantAccess).not.toHaveBeenCalled();
+  });
+
+  it("revoke keeps the listed row target id with no catalog check", async () => {
+    const result = await revokeModelAccessAction({
+      ...validInput,
+      targetId: "my-openai",
+    });
+    expect(result.ok).toBe(true);
+    expect(mockGetSupportedProviders).not.toHaveBeenCalled();
+    const req = mockRevokeAccess.mock.calls[0][0] as { targetId: string };
+    expect(req.targetId).toBe("my-openai");
   });
 });

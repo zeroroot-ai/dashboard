@@ -22,7 +22,8 @@
  * registry (the same source ext-authz enforces); it is never hand-picked here.
  */
 
-import { getModelAccessClient } from "@/src/lib/gibson-client";
+import { getModelAccessClient, userClient } from "@/src/lib/gibson-client";
+import { ProviderService } from "@/src/gen/gibson/tenant/v1/provider_pb";
 import { getServerSession } from "@/src/lib/auth";
 import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
 import {
@@ -120,7 +121,41 @@ export interface GrantInput {
   subjectKind: SubjectKindInput;
   subjectId: string;
   targetKind: TargetKindInput;
+  /**
+   * A provider type name for a provider grant (for example "anthropic"), or a
+   * model name for a model grant. Gibson matches grants against the provider
+   * type, never against the name of a tenant's own provider config.
+   */
   targetId: string;
+  /**
+   * The provider type that lists the model. A model grant needs it, and the
+   * action does not send it. A provider grant ignores it.
+   */
+  providerType?: string;
+}
+
+/**
+ * Checks a grant target against the daemon's catalog of provider types. A
+ * provider grant must name a listed type. A model grant must name a model
+ * that the chosen listed type offers. Returns an error text, or null when
+ * the target is valid.
+ */
+async function checkGrantTarget(input: GrantInput): Promise<string | null> {
+  const resp = await userClient(ProviderService).getSupportedProviders({});
+  const providers = resp.providers ?? [];
+  if (input.targetKind === "provider") {
+    return providers.some((p) => p.type === input.targetId)
+      ? null
+      : `"${input.targetId}" is not a supported provider type`;
+  }
+  const owner = providers.find((p) => p.type === input.providerType);
+  if (!owner) {
+    return `"${input.providerType ?? ""}" is not a supported provider type`;
+  }
+  const models = [...(owner.defaultModels ?? []), ...(owner.embeddingModels ?? [])];
+  return models.some((m) => m.name === input.targetId)
+    ? null
+    : `"${input.targetId}" is not a model of provider type ${owner.type}`;
 }
 
 export async function grantModelAccessAction(
@@ -129,6 +164,8 @@ export async function grantModelAccessAction(
   const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
+    const invalid = await checkGrantTarget(input);
+    if (invalid) return { ok: false, error: invalid, code: "invalid_target" };
     const client = await getModelAccessClient();
     await client.grantAccess({
       grant: {
