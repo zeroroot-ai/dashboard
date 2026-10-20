@@ -39,7 +39,8 @@ describe('walkPages', () => {
   });
 
   it('stops at the page bound and reports truncated', async () => {
-    const fetchPage = vi.fn().mockResolvedValue({ items: [1], nextPageToken: 'more' });
+    let n = 0;
+    const fetchPage = vi.fn(async () => ({ items: [1], nextPageToken: `more${++n}` }));
 
     const out = await walkPages(fetchPage);
 
@@ -121,5 +122,24 @@ describe('walkPages', () => {
     await expect(
       walkPages(fetchPage, { restartOnce: isInvalidArgument }),
     ).rejects.toBe(down);
+  });
+
+  it('throws when the daemon returns the token it was just sent', async () => {
+    const fetchPage = vi.fn().mockResolvedValue({ items: [1], nextPageToken: 't' });
+
+    await expect(walkPages(fetchPage)).rejects.toThrow(
+      'the daemon returned the same page token twice',
+    );
+    expect(fetchPage).toHaveBeenCalledTimes(2);
+  });
+
+  it('treats maxPages of zero or less as the default bound', async () => {
+    for (const maxPages of [0, -3]) {
+      let n = 0;
+      const fetchPage = vi.fn(async () => ({ items: [1], nextPageToken: `t${++n}` }));
+      const out = await walkPages(fetchPage, { maxPages });
+      expect(fetchPage).toHaveBeenCalledTimes(DEFAULT_MAX_PAGES);
+      expect(out.items).toHaveLength(DEFAULT_MAX_PAGES);
+    }
   });
 });

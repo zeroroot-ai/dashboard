@@ -175,10 +175,11 @@ describe('paging', () => {
   });
 
   it('stops after DEFAULT_MAX_PAGES pages', async () => {
-    mockLogsClient.queryMissionLogs.mockResolvedValue({
+    let n = 0;
+    mockLogsClient.queryMissionLogs.mockImplementation(async () => ({
       entries: [entry(1)],
-      nextPageToken: 'again',
-    });
+      nextPageToken: `again${++n}`,
+    }));
 
     const out = await queryMissionLogs('m1', { limit: 5000 });
 

@@ -37,7 +37,7 @@ export interface Page<T> {
 interface WalkOptions {
   /** Maximum rows to return in total. Omit it to read up to the page bound. */
   limit?: number;
-  /** Bound on pages read. Defaults to DEFAULT_MAX_PAGES. */
+  /** Bound on pages read. Zero or less, or no value, means DEFAULT_MAX_PAGES. */
   maxPages?: number;
   /**
    * Called with the error of a page request that carried a page token. When
@@ -65,7 +65,8 @@ export async function walkPages<T>(
   options: WalkOptions = {},
 ): Promise<WalkResult<T>> {
   const want = options.limit && options.limit > 0 ? options.limit : 0;
-  const maxPages = options.maxPages ?? DEFAULT_MAX_PAGES;
+  const maxPages =
+    options.maxPages && options.maxPages > 0 ? options.maxPages : DEFAULT_MAX_PAGES;
   let items: T[] = [];
   let pageToken = '';
   let restarted = false;
@@ -88,8 +89,13 @@ export async function walkPages<T>(
       throw err;
     }
     pages++;
+    const next = page.nextPageToken ?? '';
+    // A daemon that repeats a token would return the same rows on every page.
+    if (next !== '' && next === pageToken) {
+      throw new Error('the daemon returned the same page token twice');
+    }
     items.push(...page.items);
-    pageToken = page.nextPageToken ?? '';
+    pageToken = next;
     if (pageToken === '' || (want > 0 && items.length >= want)) break;
   }
 
