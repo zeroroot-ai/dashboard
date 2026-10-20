@@ -25,6 +25,7 @@ import 'server-only';
 
 import { create } from '@bufbuild/protobuf';
 import { userClient } from '../gibson-client';
+import { walkItems, type Page } from './paging';
 import {
   LogsService,
   LogLevel,
@@ -81,49 +82,25 @@ function toProtoLevel(level?: DashboardLogLevel): LogLevel {
   }
 }
 
+/** Reads the pages of one log query and maps the entries to the dashboard shape. */
+async function collectLogs(
+  label: string,
+  fetchPage: (pageSize: number, pageToken: string) => Promise<Page<LogEntry>>,
+  limit?: number,
+): Promise<DashboardLogEntry[]> {
+  const entries = await walkItems(label, fetchPage, { limit });
+  return entries.map(fromProtoEntry);
+}
+
 interface QueryLogsOptions {
   start?: Date;
   end?: Date;
   /**
    * Maximum number of entries to return in total. The client walks pages
-   * until it has this many, the daemon has no more, or LOG_MAX_PAGES pages
-   * were read. Omit it to read one page of the daemon default size.
+   * (see walkItems) until it has this many, the daemon has no more, or the
+   * page bound is reached. Omit it to read up to the page bound.
    */
   limit?: number;
-}
-
-/** Largest page the daemon accepts (page_size is capped at 1000). */
-export const LOG_MAX_PAGE_SIZE = 1000;
-
-/** Bound on pages read for one call, so a caller can never loop without end. */
-export const LOG_MAX_PAGES = 5;
-
-interface LogPage {
-  entries: LogEntry[];
-  nextPageToken: string;
-}
-
-/**
- * Reads pages with page_token until `limit` entries are in hand, the daemon
- * returns an empty next_page_token, or LOG_MAX_PAGES pages were read.
- * With no limit it reads exactly one page of the daemon default size.
- */
-async function collectPages(
-  fetchPage: (pageSize: number, pageToken: string) => Promise<LogPage>,
-  limit?: number,
-): Promise<DashboardLogEntry[]> {
-  const want = limit && limit > 0 ? limit : 0;
-  const out: DashboardLogEntry[] = [];
-  let pageToken = '';
-  for (let page = 0; page < LOG_MAX_PAGES; page++) {
-    const remaining = want > 0 ? want - out.length : 0;
-    const pageSize = Math.min(remaining, LOG_MAX_PAGE_SIZE);
-    const resp = await fetchPage(pageSize, pageToken);
-    for (const entry of resp.entries) out.push(fromProtoEntry(entry));
-    pageToken = resp.nextPageToken ?? '';
-    if (want === 0 || out.length >= want || pageToken === '') break;
-  }
-  return want > 0 ? out.slice(0, want) : out;
 }
 
 /**
@@ -135,7 +112,7 @@ export async function queryMissionLogs(
   missionId: string,
   options?: QueryLogsOptions,
 ): Promise<DashboardLogEntry[]> {
-  return collectPages(async (pageSize, pageToken) => {
+  return collectLogs('logs.mission', async (pageSize, pageToken) => {
     const req = create(QueryMissionLogsRequestSchema, {
       missionId,
       startUnixNanos: options?.start ? dateToUnixNanos(options.start) : BigInt(0),
@@ -143,7 +120,8 @@ export async function queryMissionLogs(
       pageSize,
       pageToken,
     });
-    return userClient(LogsService).queryMissionLogs(req);
+    const r = await userClient(LogsService).queryMissionLogs(req);
+    return { items: r.entries, nextPageToken: r.nextPageToken };
   }, options?.limit);
 }
 
@@ -159,7 +137,7 @@ interface QueryDaemonLogsOptions extends QueryLogsOptions {
 export async function queryDaemonLogs(
   options?: QueryDaemonLogsOptions,
 ): Promise<DashboardLogEntry[]> {
-  return collectPages(async (pageSize, pageToken) => {
+  return collectLogs('logs.daemon', async (pageSize, pageToken) => {
     const req = create(QueryDaemonLogsRequestSchema, {
       level: toProtoLevel(options?.level),
       missionId: options?.missionId ?? '',
@@ -168,6 +146,7 @@ export async function queryDaemonLogs(
       pageSize,
       pageToken,
     });
-    return userClient(LogsService).queryDaemonLogs(req);
+    const r = await userClient(LogsService).queryDaemonLogs(req);
+    return { items: r.entries, nextPageToken: r.nextPageToken };
   }, options?.limit);
 }

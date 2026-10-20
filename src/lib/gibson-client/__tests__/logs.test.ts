@@ -32,9 +32,8 @@ vi.mock('@/src/lib/gibson-client', () => ({
 import {
   queryMissionLogs,
   queryDaemonLogs,
-  LOG_MAX_PAGES,
-  LOG_MAX_PAGE_SIZE,
-} from '../logs';
+  } from '../logs';
+import { DEFAULT_MAX_PAGES, MAX_PAGE_SIZE } from '../paging';
 import { LogLevel } from '@/src/gen/gibson/daemon/logs/v1/logs_pb';
 
 const NS_PER_MS = BigInt(1_000_000);
@@ -64,7 +63,7 @@ describe('queryMissionLogs', () => {
     expect('tenantId' in req).toBe(false);
   });
 
-  it('defaults the time range + limit to 0 (server default window) when omitted', async () => {
+  it('defaults the time range to 0 (server default window) and asks for the largest page when no limit is given', async () => {
     mockLogsClient.queryMissionLogs.mockResolvedValue({ entries: [] });
 
     await queryMissionLogs('m1');
@@ -72,7 +71,7 @@ describe('queryMissionLogs', () => {
     const req = mockLogsClient.queryMissionLogs.mock.calls[0][0];
     expect(req.startUnixNanos).toBe(BigInt(0));
     expect(req.endUnixNanos).toBe(BigInt(0));
-    expect(req.pageSize).toBe(0);
+    expect(req.pageSize).toBe(MAX_PAGE_SIZE);
   });
 
   it('maps LogEntry unix_nanos → Date and preserves line + labels', async () => {
@@ -175,27 +174,16 @@ describe('paging', () => {
     expect(mockLogsClient.queryDaemonLogs).toHaveBeenCalledTimes(1);
   });
 
-  it('reads one page only when no limit is given', async () => {
-    mockLogsClient.queryDaemonLogs.mockResolvedValue({
-      entries: [entry(1)],
-      nextPageToken: 'more',
-    });
-
-    await queryDaemonLogs({});
-
-    expect(mockLogsClient.queryDaemonLogs).toHaveBeenCalledTimes(1);
-  });
-
-  it('stops after LOG_MAX_PAGES pages', async () => {
+  it('stops after DEFAULT_MAX_PAGES pages', async () => {
     mockLogsClient.queryMissionLogs.mockResolvedValue({
       entries: [entry(1)],
       nextPageToken: 'again',
     });
 
-    const out = await queryMissionLogs('m1', { limit: 500 });
+    const out = await queryMissionLogs('m1', { limit: 5000 });
 
-    expect(mockLogsClient.queryMissionLogs).toHaveBeenCalledTimes(LOG_MAX_PAGES);
-    expect(out).toHaveLength(LOG_MAX_PAGES);
+    expect(mockLogsClient.queryMissionLogs).toHaveBeenCalledTimes(DEFAULT_MAX_PAGES);
+    expect(out).toHaveLength(DEFAULT_MAX_PAGES);
   });
 
   it('caps page_size at the daemon maximum', async () => {
@@ -207,7 +195,7 @@ describe('paging', () => {
     await queryMissionLogs('m1', { limit: 5000 });
 
     expect(mockLogsClient.queryMissionLogs.mock.calls[0][0].pageSize).toBe(
-      LOG_MAX_PAGE_SIZE,
+      MAX_PAGE_SIZE,
     );
   });
 });
