@@ -4,6 +4,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
+import { walkItems } from '@/src/lib/gibson-client/paging';
 import { userClient } from '@/src/lib/gibson-client';
 import { WorldService } from '@/src/gen/gibson/world/v1/world_pb';
 
@@ -21,8 +22,12 @@ export async function GET() {
         { status: 401 },
       );
     }
-    const resp = await userClient(WorldService).listHosts({});
-    const scopes = [...new Set(resp.hosts.map((h) => h.scopeId).filter(Boolean))].sort();
+    const client = userClient(WorldService);
+    const hosts = await walkItems('world.hosts', async (pageSize, pageToken) => {
+      const r = await client.listHosts({ pageSize, pageToken });
+      return { items: r.hosts, nextPageToken: r.nextPageToken };
+    });
+    const scopes = [...new Set(hosts.map((h) => h.scopeId).filter(Boolean))].sort();
     return NextResponse.json({ scopes });
   } catch (error) {
     return daemonErrorResponse(error);

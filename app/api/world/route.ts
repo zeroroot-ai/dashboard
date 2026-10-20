@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { userClient } from '@/src/lib/gibson-client';
+import { isInvalidArgument, walkItems } from '@/src/lib/gibson-client/paging';
 import { WorldService } from '@/src/gen/gibson/world/v1/world_pb';
 
 /**
@@ -33,21 +34,42 @@ export async function GET(req: NextRequest) {
 
     const client = userClient(WorldService);
     const [missions, hosts, findings, llmCalls, timeline] = await Promise.all([
-      client.listMissions({}),
-      client.listHosts({}),
-      client.listFindings({}),
-      client.listLlmCalls({}),
-      client.getTimeline({ missionId }),
+      walkItems('world.missions', async (pageSize, pageToken) => {
+        const r = await client.listMissions({ pageSize, pageToken });
+        return { items: r.missions, nextPageToken: r.nextPageToken };
+      }),
+      walkItems('world.hosts', async (pageSize, pageToken) => {
+        const r = await client.listHosts({ pageSize, pageToken });
+        return { items: r.hosts, nextPageToken: r.nextPageToken };
+      }),
+      walkItems('world.findings', async (pageSize, pageToken) => {
+        const r = await client.listFindings({ pageSize, pageToken });
+        return { items: r.findings, nextPageToken: r.nextPageToken };
+      }),
+      walkItems('world.llmCalls', async (pageSize, pageToken) => {
+        const r = await client.listLlmCalls({ pageSize, pageToken });
+        return { items: r.llmCalls, nextPageToken: r.nextPageToken };
+      }),
+      // A timeline token is bound to one mission run. When the daemon
+      // refuses a token, the walk restarts once from the first event.
+      walkItems(
+        'world.timeline',
+        async (pageSize, pageToken) => {
+          const r = await client.getTimeline({ missionId, pageSize, pageToken });
+          return { items: r.events, nextPageToken: r.nextPageToken };
+        },
+        { restartOnce: isInvalidArgument },
+      ),
     ]);
 
     return NextResponse.json({
-      missions: missions.missions.map((m) => ({
+      missions: missions.map((m) => ({
         id: m.id,
         goal: m.goal,
         status: m.status,
         reason: m.reason,
       })),
-      hosts: hosts.hosts.map((h) => ({
+      hosts: hosts.map((h) => ({
         scopeId: h.scopeId,
         address: h.address,
         openPorts: h.openPorts,
@@ -55,21 +77,21 @@ export async function GET(req: NextRequest) {
         attention: h.attention,
         surprise: h.surprise,
       })),
-      findings: findings.findings.map((f) => ({
+      findings: findings.map((f) => ({
         id: f.id,
         title: f.title,
         scopeId: f.scopeId,
         address: f.address,
         severity: f.severity,
       })),
-      llmCalls: llmCalls.llmCalls.map((c) => ({
+      llmCalls: llmCalls.map((c) => ({
         callId: c.callId,
         runId: c.runId,
         model: c.model,
         promptTokens: c.promptTokens,
         completionTokens: c.completionTokens,
       })),
-      timeline: timeline.events.map((e) => ({
+      timeline: timeline.map((e) => ({
         seq: Number(e.seq),
         kind: e.kind,
         summary: e.summary,

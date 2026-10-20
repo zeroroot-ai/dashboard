@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
+import { walkItems } from '@/src/lib/gibson-client/paging';
 import { userClient } from '@/src/lib/gibson-client';
 import { WorldService } from '@/src/gen/gibson/world/v1/world_pb';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
@@ -32,10 +33,13 @@ export async function GET() {
     }
 
     const client = userClient(WorldService);
-    const queue = await client.listReviewQueue({});
+    const items = await walkItems('world.reviewQueue', async (pageSize, pageToken) => {
+      const r = await client.listReviewQueue({ pageSize, pageToken });
+      return { items: r.items, nextPageToken: r.nextPageToken };
+    });
 
     return NextResponse.json({
-      items: queue.items.map((it) => ({
+      items: items.map((it) => ({
         targetId: it.targetId,
         kind: it.kind,
         title: it.title,

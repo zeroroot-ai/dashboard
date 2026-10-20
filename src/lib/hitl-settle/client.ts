@@ -3,6 +3,7 @@
 
 import "server-only";
 
+import { walkItems } from '@/src/lib/gibson-client/paging';
 import { userClient } from "@/src/lib/gibson-client";
 import { WorldService } from "@/src/gen/gibson/world/v1/world_pb";
 import type { OpenBet } from "@/src/gen/gibson/world/v1/world_pb";
@@ -61,8 +62,12 @@ function effectFor(verdict: BetVerdict, didSettle: boolean): string {
 
 class WorldServiceHitlSettleClient implements HitlSettleClient {
   async listOpenBets(): Promise<OpenBetForReview[]> {
-    const res = await userClient(WorldService).listOpenBets({});
-    return res.bets.map(mapBet);
+    const client = userClient(WorldService);
+    const bets = await walkItems('world.openBets', async (pageSize, pageToken) => {
+      const r = await client.listOpenBets({ pageSize, pageToken });
+      return { items: r.bets, nextPageToken: r.nextPageToken };
+    });
+    return bets.map(mapBet);
   }
 
   async submitVerdict(id: string, verdict: BetVerdict): Promise<HitlSettleVerdictResponse> {

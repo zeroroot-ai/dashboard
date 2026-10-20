@@ -46,7 +46,10 @@ const {
   }
   const grantAccess = vi.fn(async (_req?: unknown) => ({}));
   const revokeAccess = vi.fn(async (_req?: unknown) => ({}));
-  const listAccess = vi.fn(async () => ({ grants: [] as unknown[] }));
+  const listAccess = vi.fn(async (_req?: unknown) => ({
+    grants: [] as unknown[],
+    nextPageToken: "",
+  }));
   return {
     mockGrantAccess: grantAccess,
     mockRevokeAccess: revokeAccess,
@@ -261,9 +264,10 @@ describe("the tenant subject needs no id", () => {
           grantedByUserId: "",
         },
       ],
+      nextPageToken: "",
     });
     const result = await listModelAccessAction("tenant", "");
-    expect(mockListAccess).toHaveBeenCalledWith({ subjectKind: 3, subjectId: "" });
+    expect(mockListAccess).toHaveBeenCalledWith({ subjectKind: 3, subjectId: "", pageSize: 1000, pageToken: "" });
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error("expected ok");
     expect(result.data).toEqual([
@@ -273,7 +277,7 @@ describe("the tenant subject needs no id", () => {
 
   it("drops a typed id for the tenant subject, so the caller's own tenant is used", async () => {
     await listModelAccessAction("tenant", "other-tenant");
-    expect(mockListAccess).toHaveBeenCalledWith({ subjectKind: 3, subjectId: "" });
+    expect(mockListAccess).toHaveBeenCalledWith({ subjectKind: 3, subjectId: "", pageSize: 1000, pageToken: "" });
   });
 
   it("revokes the default grant of a provider with an empty subject id", async () => {
@@ -294,7 +298,7 @@ describe("the tenant subject needs no id", () => {
 
   it("keeps the id of a user subject", async () => {
     await listModelAccessAction("user", "user-2");
-    expect(mockListAccess).toHaveBeenCalledWith({ subjectKind: 1, subjectId: "user-2" });
+    expect(mockListAccess).toHaveBeenCalledWith({ subjectKind: 1, subjectId: "user-2", pageSize: 1000, pageToken: "" });
   });
 });
 
@@ -511,5 +515,30 @@ describe("grant target comes from the enabled provider configs", () => {
     expect(mockGetSupportedProviders).not.toHaveBeenCalled();
     const req = mockRevokeAccess.mock.calls[0][0] as { targetId: string };
     expect(req.targetId).toBe("my-openai");
+  });
+});
+
+describe("listModelAccessAction paging", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("follows next_page_token and returns the grants of every page", async () => {
+    const grant = (id: string) => ({
+      tenantId: "t",
+      subjectKind: 1,
+      subjectId: "user-2",
+      targetKind: 1,
+      targetId: id,
+      grantedAtUnix: BigInt(0),
+      grantedByUserId: "",
+    });
+    mockListAccess
+      .mockResolvedValueOnce({ grants: [grant("anthropic")], nextPageToken: "n2" })
+      .mockResolvedValueOnce({ grants: [grant("openai")], nextPageToken: "" });
+
+    const result = await listModelAccessAction("user", "user-2");
+
+    if (!result.ok) throw new Error("expected ok");
+    expect(result.data.map((g) => g.targetId)).toEqual(["anthropic", "openai"]);
+    expect(mockListAccess.mock.calls[1][0]).toMatchObject({ pageToken: "n2" });
   });
 });

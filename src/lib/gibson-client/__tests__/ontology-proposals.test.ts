@@ -113,4 +113,27 @@ describe('ontology proposal client', () => {
       idempotencyKey: 'k1',
     });
   });
+
+  it('follows next_page_token and returns the proposals of every page', async () => {
+    const p = (label: string) => ({
+      kind: OntologyProposalKind.NODE_LABEL,
+      label,
+      sightingCount: 1,
+      latestProposer: '',
+      latestClaim: '',
+      status: OntologyProposalStatus.PENDING,
+      reviewer: '',
+      rejectionReason: '',
+      isPromoted: false,
+      taxonomyVersion: 0,
+    });
+    list
+      .mockResolvedValueOnce({ ontologyProposals: [p('A')], nextPageToken: 'n2' })
+      .mockResolvedValueOnce({ ontologyProposals: [p('B')], nextPageToken: '' });
+
+    const out = await daemonListOntologyProposals();
+
+    expect(out.map((x) => x.label)).toEqual(['A', 'B']);
+    expect(list.mock.calls[1][0]).toMatchObject({ pageToken: 'n2' });
+  });
 });
