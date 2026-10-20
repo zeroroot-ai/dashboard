@@ -61,6 +61,7 @@ const {
     mockGetSupportedProviders: vi.fn(async () => ({
       providers: [
         { type: "anthropic", defaultModels: [], embeddingModels: [] },
+        { type: "voyage", defaultModels: [], embeddingModels: [{ name: "voyage-3" }] },
         {
           type: "openai",
           defaultModels: [],
@@ -70,17 +71,25 @@ const {
     })),
     mockListProviders: vi.fn(async (_req?: unknown) => ({
       providers: [
-        { name: "my-openai", type: "openai" },
-        { name: "work-anthropic", type: "anthropic" },
+        { name: "my-openai", type: "openai", defaultModel: "gpt-5-saved" },
+        { name: "work-anthropic", type: "anthropic", defaultModel: "" },
+        { name: "broken-anthropic", type: "anthropic", defaultModel: "" },
+        { name: "off-anthropic", type: "anthropic", defaultModel: "" },
       ],
     })),
-    mockListProviderModels: vi.fn(async (req: { name: string }) => ({
-      ok: true,
-      models:
-        req.name === "my-openai"
-          ? [{ name: "gpt-5" }]
-          : [{ name: "claude-opus-4" }],
-    })),
+    mockListProviderModels: vi.fn(async (req: { name: string }, _opts?: unknown) => {
+      if (req.name === "broken-anthropic") throw new Error("unavailable");
+      if (req.name === "off-anthropic") {
+        return { ok: false, models: [{ name: "must-not-appear" }] };
+      }
+      return {
+        ok: true,
+        models:
+          req.name === "my-openai"
+            ? [{ name: "gpt-5" }]
+            : [{ name: "claude-opus-4" }],
+      };
+    }),
     mockGetServerSession: vi.fn(async () => ({
       user: { id: "user-1", tenantId: "tenant-abc" },
     })),
@@ -300,7 +309,10 @@ describe("grant target comes from the supported provider types", () => {
       providerType: "openai",
     });
     expect(result.ok).toBe(true);
-    expect(mockListProviderModels).toHaveBeenCalledWith({ name: "my-openai" });
+    expect(mockListProviderModels).toHaveBeenCalledWith(
+      { name: "my-openai" },
+      { timeoutMs: 5000 },
+    );
     const req = mockGrantAccess.mock.calls[0][0] as { grant: { targetId: string } };
     expect(req.grant.targetId).toBe("gpt-5");
   });
@@ -327,9 +339,50 @@ describe("grant target comes from the supported provider types", () => {
     expect(mockGrantAccess).not.toHaveBeenCalled();
   });
 
-  it("lists the chat models of a type for the form", async () => {
+  it("lists the chat models of a type, skipping a config that throws or replies ok:false", async () => {
     const result = await listChatModelsForTypeAction("anthropic");
     expect(result).toEqual({ ok: true, data: ["claude-opus-4"] });
+  });
+
+  it("still grants when one config of the type throws", async () => {
+    const result = await grantModelAccessAction({
+      ...validInput,
+      targetKind: "model",
+      targetId: "claude-opus-4",
+      providerType: "anthropic",
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("does not take models from an ok:false reply", async () => {
+    const result = await grantModelAccessAction({
+      ...validInput,
+      targetKind: "model",
+      targetId: "must-not-appear",
+      providerType: "anthropic",
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("grants the saved default model that the live list no longer returns", async () => {
+    const result = await grantModelAccessAction({
+      ...validInput,
+      targetKind: "model",
+      targetId: "gpt-5-saved",
+      providerType: "openai",
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("refuses an embedding-only type for a provider grant", async () => {
+    const result = await grantModelAccessAction({
+      ...validInput,
+      targetId: "voyage",
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected not-ok");
+    expect(result.code).toBe("invalid_target");
+    expect(mockGrantAccess).not.toHaveBeenCalled();
   });
 
   it("does not send a model that another provider type lists", async () => {

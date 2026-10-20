@@ -23,6 +23,7 @@
  */
 
 import { getModelAccessClient, userClient } from "@/src/lib/gibson-client";
+import { isEmbeddingOnlyProviderType } from "@/src/lib/provider-capabilities";
 import { ProviderService } from "@/src/gen/gibson/tenant/v1/provider_pb";
 import { getServerSession } from "@/src/lib/auth";
 import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
@@ -134,21 +135,37 @@ export interface GrantInput {
   providerType?: string;
 }
 
+/** Deadline for one ListProviderModels call, so a slow config cannot stall the form. */
+const LIST_MODELS_TIMEOUT_MS = 5000;
+
 /**
  * The chat model names of the tenant's configured providers of one type.
  * GetSupportedProviders never fills default_models, so the live list from
  * ListProviderModels is the source. It is keyed by the name of a provider
- * config, so each config of the type is asked and the names are merged.
- * A config that does not answer adds nothing.
+ * config, so each config of the type is asked in parallel and the names are
+ * merged. A config that throws, times out or replies ok:false adds nothing.
+ * The saved default model of each config is also allowed, so a default that
+ * the live list no longer returns can still be granted.
  */
 async function chatModelsForType(type: string): Promise<string[]> {
   const client = userClient(ProviderService);
   const { providers } = await client.listProviders({});
+  const configs = providers.filter((p) => p.type === type);
   const names = new Set<string>();
-  for (const cfg of providers.filter((p) => p.type === type)) {
-    const resp = await client.listProviderModels({ name: cfg.name });
-    if (!resp.ok) continue;
-    for (const m of resp.models) names.add(m.name);
+  for (const cfg of configs) {
+    if (cfg.defaultModel) names.add(cfg.defaultModel);
+  }
+  const replies = await Promise.allSettled(
+    configs.map((cfg) =>
+      client.listProviderModels(
+        { name: cfg.name },
+        { timeoutMs: LIST_MODELS_TIMEOUT_MS },
+      ),
+    ),
+  );
+  for (const reply of replies) {
+    if (reply.status !== "fulfilled" || !reply.value.ok) continue;
+    for (const m of reply.value.models) names.add(m.name);
   }
   return [...names].sort();
 }
@@ -162,6 +179,9 @@ async function checkGrantTarget(input: GrantInput): Promise<string | null> {
   const resp = await userClient(ProviderService).getSupportedProviders({});
   const types = (resp.providers ?? []).map((p) => p.type);
   if (input.targetKind === "provider") {
+    if (isEmbeddingOnlyProviderType(input.targetId)) {
+      return `"${input.targetId}" serves embeddings only and cannot be granted`;
+    }
     return types.includes(input.targetId)
       ? null
       : `"${input.targetId}" is not a supported provider type`;
