@@ -98,13 +98,13 @@ afterEach(() => {
 });
 
 describe('transport RPC loop does not leak (dashboard#107 regression)', () => {
-  it('heap growth after 2000 real RPCs stays within a small, bounded envelope', async () => {
+  it('heap growth after 5000 real RPCs stays within a small, bounded envelope', async () => {
     process.env['ADMIN_ENVOY_BASE_URL'] = baseUrl;
     const { userClient } = await import('../transport');
     const { DaemonService } = await import('@/src/gen/gibson/daemon/v1/daemon_pb');
 
     // Warm up: let JIT/module-init one-time costs happen before baselining.
-    for (let i = 0; i < 100; i += 1) {
+    for (let i = 0; i < 300; i += 1) {
       await userClient(DaemonService).listMyMemberships({});
     }
 
@@ -117,25 +117,34 @@ describe('transport RPC loop does not leak (dashboard#107 regression)', () => {
     const forceGc = (): void => {
       v8.writeHeapSnapshot('/dev/null');
     };
+    // Every vi.fn() above records the arguments and the result of each call.
+    // Over thousands of calls that record is about 780 bytes per call of
+    // retained heap, and it has nothing to do with the transport. Clear it
+    // before the baseline and every 100 calls, so the test measures the
+    // transport and not the mock bookkeeping.
+    vi.clearAllMocks();
     forceGc();
     const before = process.memoryUsage().heapUsed;
 
-    const ITERATIONS = 2000;
+    const ITERATIONS = 5000;
     for (let i = 0; i < ITERATIONS; i += 1) {
       await userClient(DaemonService).listMyMemberships({});
+      if (i % 100 === 99) vi.clearAllMocks();
     }
+    vi.clearAllMocks();
 
     forceGc();
     const after = process.memoryUsage().heapUsed;
     const growthPerCall = (after - before) / ITERATIONS;
 
     // A shared, well-behaved transport does a handful of allocations per
-    // call (headers, promises) that GC reclaims. This budget is generous
-    // (2 KB/call) precisely so it fails on a real retained-object leak (a
-    // Transport, Client, or session held onto per call) rather than on
-    // GC-timing noise: a real per-call leak (a fresh Http2SessionManager,
-    // the #107 bug) costs kilobytes of TLS/session state per call, not
-    // bytes.
+    // call (headers, promises) that GC reclaims. With the mock records
+    // cleared, the measured growth over a run is about one megabyte of
+    // one-time cost (JIT, caches), which is under 250 bytes per call over
+    // 5000 calls. The 2 KB/call budget is far above that and far below a real
+    // retained-object leak (a Transport, Client, or session held onto per
+    // call, the #107 bug), which costs kilobytes of TLS/session state per
+    // call.
     expect(growthPerCall).toBeLessThan(2_000);
   }, 30_000);
 });
