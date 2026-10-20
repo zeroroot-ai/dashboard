@@ -29,7 +29,11 @@ vi.mock('@/src/lib/gibson-client', () => ({
   userClient: vi.fn(() => mockLogsClient),
 }));
 
-import { queryMissionLogs, queryDaemonLogs } from '../logs';
+import {
+  queryMissionLogs,
+  queryDaemonLogs,
+  } from '../logs';
+import { DEFAULT_MAX_PAGES, MAX_PAGE_SIZE } from '../paging';
 import { LogLevel } from '@/src/gen/gibson/daemon/logs/v1/logs_pb';
 
 const NS_PER_MS = BigInt(1_000_000);
@@ -41,7 +45,7 @@ beforeEach(() => {
 
 describe('queryMissionLogs', () => {
   it('sends mission id + time range as unix-nanos, no tenant scope', async () => {
-    mockLogsClient.queryMissionLogs.mockResolvedValue({ entries: [] });
+    mockLogsClient.queryMissionLogs.mockResolvedValue({ entries: [], nextPageToken: '' });
 
     const start = new Date('2026-06-21T00:00:00.000Z');
     const end = new Date('2026-06-21T01:00:00.000Z');
@@ -52,12 +56,14 @@ describe('queryMissionLogs', () => {
     expect(req.missionId).toBe('m1');
     expect(req.startUnixNanos).toBe(BigInt(start.getTime()) * NS_PER_MS);
     expect(req.endUnixNanos).toBe(BigInt(end.getTime()) * NS_PER_MS);
-    expect(req.limit).toBe(50);
+    expect(req.pageSize).toBe(50);
+    expect(req.pageToken).toBe('');
+    expect('limit' in req).toBe(false);
     // The request carries no tenant field at all — scope is server-derived.
     expect('tenantId' in req).toBe(false);
   });
 
-  it('defaults the time range + limit to 0 (server default window) when omitted', async () => {
+  it('defaults the time range to 0 (server default window) and asks for the largest page when no limit is given', async () => {
     mockLogsClient.queryMissionLogs.mockResolvedValue({ entries: [] });
 
     await queryMissionLogs('m1');
@@ -65,7 +71,7 @@ describe('queryMissionLogs', () => {
     const req = mockLogsClient.queryMissionLogs.mock.calls[0][0];
     expect(req.startUnixNanos).toBe(BigInt(0));
     expect(req.endUnixNanos).toBe(BigInt(0));
-    expect(req.limit).toBe(0);
+    expect(req.pageSize).toBe(MAX_PAGE_SIZE);
   });
 
   it('maps LogEntry unix_nanos → Date and preserves line + labels', async () => {
@@ -99,7 +105,7 @@ describe('queryDaemonLogs', () => {
     const req = mockLogsClient.queryDaemonLogs.mock.calls[0][0];
     expect(req.level).toBe(LogLevel.ERROR);
     expect(req.missionId).toBe('m9');
-    expect(req.limit).toBe(100);
+    expect(req.pageSize).toBe(100);
     expect('tenantId' in req).toBe(false);
   });
 
@@ -130,5 +136,67 @@ describe('queryDaemonLogs', () => {
     expect(out[0].timestamp.getTime()).toBe(tsMs);
     expect(out[0].line).toBe('plain line');
     expect(out[0].labels).toEqual({});
+  });
+});
+
+describe('paging', () => {
+  const entry = (n: number) => ({
+    unixNanos: BigInt(n) * NS_PER_MS,
+    line: `line ${n}`,
+    labels: {},
+  });
+
+  it('walks pages with page_token until the limit is met', async () => {
+    mockLogsClient.queryMissionLogs
+      .mockResolvedValueOnce({ entries: [entry(1), entry(2)], nextPageToken: 't1' })
+      .mockResolvedValueOnce({ entries: [entry(3), entry(4)], nextPageToken: 't2' });
+
+    const out = await queryMissionLogs('m1', { limit: 3 });
+
+    expect(out.map((e) => e.line)).toEqual(['line 1', 'line 2', 'line 3']);
+    const calls = mockLogsClient.queryMissionLogs.mock.calls;
+    expect(calls).toHaveLength(2);
+    expect(calls[0][0].pageToken).toBe('');
+    expect(calls[0][0].pageSize).toBe(3);
+    expect(calls[1][0].pageToken).toBe('t1');
+    expect(calls[1][0].pageSize).toBe(1);
+  });
+
+  it('stops when the daemon returns an empty next_page_token', async () => {
+    mockLogsClient.queryDaemonLogs.mockResolvedValueOnce({
+      entries: [entry(1)],
+      nextPageToken: '',
+    });
+
+    const out = await queryDaemonLogs({ limit: 50 });
+
+    expect(out).toHaveLength(1);
+    expect(mockLogsClient.queryDaemonLogs).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops after DEFAULT_MAX_PAGES pages', async () => {
+    let n = 0;
+    mockLogsClient.queryMissionLogs.mockImplementation(async () => ({
+      entries: [entry(1)],
+      nextPageToken: `again${++n}`,
+    }));
+
+    const out = await queryMissionLogs('m1', { limit: 5000 });
+
+    expect(mockLogsClient.queryMissionLogs).toHaveBeenCalledTimes(DEFAULT_MAX_PAGES);
+    expect(out).toHaveLength(DEFAULT_MAX_PAGES);
+  });
+
+  it('caps page_size at the daemon maximum', async () => {
+    mockLogsClient.queryMissionLogs.mockResolvedValue({
+      entries: [],
+      nextPageToken: '',
+    });
+
+    await queryMissionLogs('m1', { limit: 5000 });
+
+    expect(mockLogsClient.queryMissionLogs.mock.calls[0][0].pageSize).toBe(
+      MAX_PAGE_SIZE,
+    );
   });
 });

@@ -25,6 +25,7 @@ import 'server-only';
 
 import { create } from '@bufbuild/protobuf';
 import { userClient } from '../gibson-client';
+import { walkItems, type Page } from './paging';
 import {
   LogsService,
   LogLevel,
@@ -81,9 +82,24 @@ function toProtoLevel(level?: DashboardLogLevel): LogLevel {
   }
 }
 
+/** Reads the pages of one log query and maps the entries to the dashboard shape. */
+async function collectLogs(
+  label: string,
+  fetchPage: (pageSize: number, pageToken: string) => Promise<Page<LogEntry>>,
+  limit?: number,
+): Promise<DashboardLogEntry[]> {
+  const entries = await walkItems(label, fetchPage, { limit });
+  return entries.map(fromProtoEntry);
+}
+
 interface QueryLogsOptions {
   start?: Date;
   end?: Date;
+  /**
+   * Maximum number of entries to return in total. The client walks pages
+   * (see walkItems) until it has this many, the daemon has no more, or the
+   * page bound is reached. Omit it to read up to the page bound.
+   */
   limit?: number;
 }
 
@@ -96,14 +112,17 @@ export async function queryMissionLogs(
   missionId: string,
   options?: QueryLogsOptions,
 ): Promise<DashboardLogEntry[]> {
-  const req = create(QueryMissionLogsRequestSchema, {
-    missionId,
-    startUnixNanos: options?.start ? dateToUnixNanos(options.start) : BigInt(0),
-    endUnixNanos: options?.end ? dateToUnixNanos(options.end) : BigInt(0),
-    limit: options?.limit ?? 0,
-  });
-  const resp = await userClient(LogsService).queryMissionLogs(req);
-  return resp.entries.map(fromProtoEntry);
+  return collectLogs('logs.mission', async (pageSize, pageToken) => {
+    const req = create(QueryMissionLogsRequestSchema, {
+      missionId,
+      startUnixNanos: options?.start ? dateToUnixNanos(options.start) : BigInt(0),
+      endUnixNanos: options?.end ? dateToUnixNanos(options.end) : BigInt(0),
+      pageSize,
+      pageToken,
+    });
+    const r = await userClient(LogsService).queryMissionLogs(req);
+    return { items: r.entries, nextPageToken: r.nextPageToken };
+  }, options?.limit);
 }
 
 interface QueryDaemonLogsOptions extends QueryLogsOptions {
@@ -118,13 +137,16 @@ interface QueryDaemonLogsOptions extends QueryLogsOptions {
 export async function queryDaemonLogs(
   options?: QueryDaemonLogsOptions,
 ): Promise<DashboardLogEntry[]> {
-  const req = create(QueryDaemonLogsRequestSchema, {
-    level: toProtoLevel(options?.level),
-    missionId: options?.missionId ?? '',
-    startUnixNanos: options?.start ? dateToUnixNanos(options.start) : BigInt(0),
-    endUnixNanos: options?.end ? dateToUnixNanos(options.end) : BigInt(0),
-    limit: options?.limit ?? 0,
-  });
-  const resp = await userClient(LogsService).queryDaemonLogs(req);
-  return resp.entries.map(fromProtoEntry);
+  return collectLogs('logs.daemon', async (pageSize, pageToken) => {
+    const req = create(QueryDaemonLogsRequestSchema, {
+      level: toProtoLevel(options?.level),
+      missionId: options?.missionId ?? '',
+      startUnixNanos: options?.start ? dateToUnixNanos(options.start) : BigInt(0),
+      endUnixNanos: options?.end ? dateToUnixNanos(options.end) : BigInt(0),
+      pageSize,
+      pageToken,
+    });
+    const r = await userClient(LogsService).queryDaemonLogs(req);
+    return { items: r.entries, nextPageToken: r.nextPageToken };
+  }, options?.limit);
 }
