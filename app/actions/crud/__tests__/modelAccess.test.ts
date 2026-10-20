@@ -62,6 +62,9 @@ const {
       providers: [
         { type: "anthropic", defaultModels: [], embeddingModels: [] },
         { type: "voyage", defaultModels: [], embeddingModels: [{ name: "voyage-3" }] },
+        // A catalog type that the tenant has no config for.
+        { type: "cohere", defaultModels: [], embeddingModels: [] },
+        { type: "google", defaultModels: [], embeddingModels: [] },
         {
           type: "openai",
           defaultModels: [],
@@ -71,10 +74,16 @@ const {
     })),
     mockListProviders: vi.fn(async (_req?: unknown) => ({
       providers: [
-        { name: "my-openai", type: "openai", defaultModel: "gpt-5-saved" },
-        { name: "work-anthropic", type: "anthropic", defaultModel: "" },
-        { name: "broken-anthropic", type: "anthropic", defaultModel: "" },
-        { name: "off-anthropic", type: "anthropic", defaultModel: "" },
+        { name: "my-openai", type: "openai", enabled: true, defaultModel: "gpt-5-saved" },
+        { name: "work-anthropic", type: "anthropic", enabled: true, defaultModel: "" },
+        { name: "broken-anthropic", type: "anthropic", enabled: true, defaultModel: "" },
+        { name: "off-anthropic", type: "anthropic", enabled: true, defaultModel: "" },
+        // A disabled config: its models and its default model are not offered.
+        { name: "disabled-anthropic", type: "anthropic", enabled: false, defaultModel: "disabled-default" },
+        // The only config of its type is disabled, so the type is not a target.
+        { name: "disabled-google", type: "google", enabled: false, defaultModel: "" },
+        // An enabled config of an embedding-only type.
+        { name: "my-voyage", type: "voyage", enabled: true, defaultModel: "" },
       ],
     })),
     mockListProviderModels: vi.fn(async (req: { name: string }, _opts?: unknown) => {
@@ -82,11 +91,18 @@ const {
       if (req.name === "off-anthropic") {
         return { ok: false, models: [{ name: "must-not-appear" }] };
       }
+      if (req.name === "disabled-anthropic") {
+        return { ok: true, models: [{ name: "disabled-only-model" }] };
+      }
       return {
         ok: true,
         models:
           req.name === "my-openai"
-            ? [{ name: "gpt-5" }]
+            ? [
+                { name: "gpt-5" },
+                // The provider reports an embedding capability for this model.
+                { name: "text-embedding-3-large", capabilities: [2] },
+              ]
             : [{ name: "claude-opus-4" }],
       };
     }),
@@ -140,6 +156,7 @@ vi.mock("@/src/gen/gibson/tenant/v1/model_access_pb", () => ({
 import {
   grantModelAccessAction,
   listChatModelsForTypeAction,
+  listGrantableProviderTypesAction,
   listModelAccessAction,
   revokeModelAccessAction,
   type GrantInput,
@@ -276,7 +293,7 @@ describe("the tenant subject needs no id", () => {
   });
 });
 
-describe("grant target comes from the supported provider types", () => {
+describe("grant target comes from the enabled provider configs", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("sends a provider type name that is in the catalog", async () => {
@@ -288,6 +305,55 @@ describe("grant target comes from the supported provider types", () => {
     expect(mockGrantAccess).toHaveBeenCalledOnce();
     const req = mockGrantAccess.mock.calls[0][0] as { grant: { targetId: string } };
     expect(req.grant.targetId).toBe("openai");
+  });
+
+  it("does not send a catalog type that the tenant has no config for", async () => {
+    const result = await grantModelAccessAction({ ...validInput, targetId: "cohere" });
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected not-ok");
+    expect(result.code).toBe("invalid_target");
+    expect(mockGrantAccess).not.toHaveBeenCalled();
+  });
+
+  it("does not send a type whose only config is disabled", async () => {
+    const result = await grantModelAccessAction({ ...validInput, targetId: "google" });
+    expect(result.ok).toBe(false);
+    expect(mockGrantAccess).not.toHaveBeenCalled();
+  });
+
+  it("offers only the types of enabled, chat-capable configs", async () => {
+    const result = await listGrantableProviderTypesAction();
+    expect(result).toEqual({ ok: true, data: ["anthropic", "openai"] });
+  });
+
+  it("does not offer or send the models of a disabled config", async () => {
+    const offered = await listChatModelsForTypeAction("anthropic");
+    expect(offered).toEqual({ ok: true, data: ["claude-opus-4"] });
+    expect(mockListProviderModels).not.toHaveBeenCalledWith(
+      { name: "disabled-anthropic" },
+      expect.anything(),
+    );
+    for (const targetId of ["disabled-only-model", "disabled-default"]) {
+      const result = await grantModelAccessAction({
+        ...validInput,
+        targetKind: "model",
+        targetId,
+        providerType: "anthropic",
+      });
+      expect(result.ok).toBe(false);
+    }
+    expect(mockGrantAccess).not.toHaveBeenCalled();
+  });
+
+  it("does not send an embedding model that an enabled config lists", async () => {
+    const result = await grantModelAccessAction({
+      ...validInput,
+      targetKind: "model",
+      targetId: "text-embedding-3-large",
+      providerType: "openai",
+    });
+    expect(result.ok).toBe(false);
+    expect(mockGrantAccess).not.toHaveBeenCalled();
   });
 
   it("does not send a tenant provider config name", async () => {

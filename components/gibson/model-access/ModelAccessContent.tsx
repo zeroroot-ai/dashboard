@@ -55,13 +55,13 @@ import {
   revokeModelAccessAction,
   listModelAccessAction,
   listChatModelsForTypeAction,
+  listGrantableProviderTypesAction,
   listModelAccessAuditAction,
   type AccessGrantRow,
   type ModelResolutionEventRow,
   type SubjectKindInput,
   type TargetKindInput,
 } from "@/app/actions/crud/modelAccess";
-import { isEmbeddingOnlyProviderType } from "@/src/lib/provider-capabilities";
 import { useSupportedProviders } from "@/src/hooks/useSupportedProviders";
 import { MemberPicker } from "@/components/gibson/model-access/MemberPicker";
 
@@ -94,10 +94,24 @@ function GrantFormCard() {
   const [targetId, setTargetId] = useState("");
   const [providerType, setProviderType] = useState("");
   const supported = useSupportedProviders();
-  // Embedding-only types never become a gate candidate, so they are not offered.
-  const providers = (supported.data ?? []).filter(
-    (p) => !isEmbeddingOnlyProviderType(p.type),
+  // Only a type with an enabled, chat-capable config can become a grant
+  // target (the rule of the daemon), so the picker lists those types and not
+  // the whole catalog. The catalog gives the display names.
+  const typesQuery = useQuery({
+    queryKey: ["modelAccessGrantableTypes"],
+    queryFn: async () => {
+      const res = await listGrantableProviderTypesAction();
+      if (!res.ok) throw new Error(res.error);
+      return res.data;
+    },
+  });
+  const displayNames = new Map(
+    (supported.data ?? []).map((p) => [p.type, p.displayName] as const),
   );
+  const providers = (typesQuery.data ?? []).map((type) => ({
+    type,
+    displayName: displayNames.get(type) || type,
+  }));
   const modelsQuery = useQuery({
     queryKey: ["modelAccessChatModels", providerType],
     enabled: targetKind === "model" && providerType !== "",
@@ -204,19 +218,23 @@ function GrantFormCard() {
                 setProviderType(v);
                 setTargetId(targetKind === "provider" ? v : "");
               }}
-              disabled={supported.isLoading || providers.length === 0}
+              disabled={typesQuery.isLoading || providers.length === 0}
             >
               <SelectTrigger>
                 <SelectValue
                   placeholder={
-                    supported.isError ? "Could not load provider types" : "Pick a type"
+                    typesQuery.isError
+                      ? "Could not load provider types"
+                      : typesQuery.isSuccess && providers.length === 0
+                        ? "No enabled provider config"
+                        : "Pick a type"
                   }
                 />
               </SelectTrigger>
               <SelectContent>
                 {providers.map((p) => (
                   <SelectItem key={p.type} value={p.type}>
-                    {p.displayName || p.type}
+                    {p.displayName}
                   </SelectItem>
                 ))}
               </SelectContent>
