@@ -22,7 +22,9 @@
  * registry (the same source ext-authz enforces); it is never hand-picked here.
  */
 
-import { getModelAccessClient } from "@/src/lib/gibson-client";
+import { getModelAccessClient, userClient } from "@/src/lib/gibson-client";
+import { isEmbeddingOnlyProviderType } from "@/src/lib/provider-capabilities";
+import { ProviderService } from "@/src/gen/gibson/tenant/v1/provider_pb";
 import { getServerSession } from "@/src/lib/auth";
 import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
 import {
@@ -120,7 +122,93 @@ export interface GrantInput {
   subjectKind: SubjectKindInput;
   subjectId: string;
   targetKind: TargetKindInput;
+  /**
+   * A provider type name for a provider grant (for example "anthropic"), or a
+   * model name for a model grant. Gibson matches grants against the provider
+   * type, never against the name of a tenant's own provider config.
+   */
   targetId: string;
+  /**
+   * The provider type that lists the model. A model grant needs it, and the
+   * action does not send it. A provider grant ignores it.
+   */
+  providerType?: string;
+}
+
+/** Deadline for one ListProviderModels call, so a slow config cannot stall the form. */
+const LIST_MODELS_TIMEOUT_MS = 5000;
+
+/**
+ * The chat model names of the tenant's configured providers of one type.
+ * GetSupportedProviders never fills default_models, so the live list from
+ * ListProviderModels is the source. It is keyed by the name of a provider
+ * config, so each config of the type is asked in parallel and the names are
+ * merged. A config that throws, times out or replies ok:false adds nothing.
+ * The saved default model of each config is also allowed, so a default that
+ * the live list no longer returns can still be granted.
+ */
+async function chatModelsForType(type: string): Promise<string[]> {
+  const client = userClient(ProviderService);
+  const { providers } = await client.listProviders({});
+  const configs = providers.filter((p) => p.type === type);
+  const names = new Set<string>();
+  for (const cfg of configs) {
+    if (cfg.defaultModel) names.add(cfg.defaultModel);
+  }
+  const replies = await Promise.allSettled(
+    configs.map((cfg) =>
+      client.listProviderModels(
+        { name: cfg.name },
+        { timeoutMs: LIST_MODELS_TIMEOUT_MS },
+      ),
+    ),
+  );
+  for (const reply of replies) {
+    if (reply.status !== "fulfilled" || !reply.value.ok) continue;
+    for (const m of reply.value.models) names.add(m.name);
+  }
+  return [...names].sort();
+}
+
+/**
+ * Checks a grant target. A provider grant must name a type from the daemon
+ * catalog. A model grant must name a model that a configured provider of the
+ * chosen catalog type lists. Returns an error text, or null when valid.
+ */
+async function checkGrantTarget(input: GrantInput): Promise<string | null> {
+  const resp = await userClient(ProviderService).getSupportedProviders({});
+  const types = (resp.providers ?? []).map((p) => p.type);
+  if (input.targetKind === "provider") {
+    if (isEmbeddingOnlyProviderType(input.targetId)) {
+      return `"${input.targetId}" serves embeddings only and cannot be granted`;
+    }
+    return types.includes(input.targetId)
+      ? null
+      : `"${input.targetId}" is not a supported provider type`;
+  }
+  const type = input.providerType ?? "";
+  if (!types.includes(type)) {
+    return `"${type}" is not a supported provider type`;
+  }
+  const models = await chatModelsForType(type);
+  return models.includes(input.targetId)
+    ? null
+    : `"${input.targetId}" is not a model of provider type ${type}`;
+}
+
+/** Chat models for the grant form's model picker. */
+export async function listChatModelsForTypeAction(
+  providerType: string,
+): Promise<ActionResult<string[]>> {
+  const session = await getServerSession();
+  if (!session?.user) return { ok: false, error: "unauthenticated" };
+  try {
+    return { ok: true, data: await chatModelsForType(providerType) };
+  } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
 }
 
 export async function grantModelAccessAction(
@@ -129,6 +217,8 @@ export async function grantModelAccessAction(
   const session = await getServerSession();
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
+    const invalid = await checkGrantTarget(input);
+    if (invalid) return { ok: false, error: invalid, code: "invalid_target" };
     const client = await getModelAccessClient();
     await client.grantAccess({
       grant: {
