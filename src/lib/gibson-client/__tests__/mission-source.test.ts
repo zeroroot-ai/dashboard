@@ -116,3 +116,21 @@ describe('listMissionDrafts error mapping', () => {
     expect((err as MissionDraftRpcError).code).toBe('unknown');
   });
 });
+
+describe('listMissionDrafts paging', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('follows next_page_token and returns the drafts of every page', async () => {
+    mockTenantClient.listMissionDrafts
+      .mockResolvedValueOnce({ drafts: [{ id: 'd1' }], nextPageToken: 'n2' })
+      .mockResolvedValueOnce({ drafts: [{ id: 'd2' }], nextPageToken: '' });
+
+    const out = await listMissionDrafts('t1');
+
+    expect(out.map((d) => d.id)).toEqual(['d1', 'd2']);
+    expect(mockTenantClient.listMissionDrafts.mock.calls[1][0]).toMatchObject({
+      tenantId: 't1',
+      pageToken: 'n2',
+    });
+  });
+});

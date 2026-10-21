@@ -17,6 +17,7 @@
 
 import { getUsageClient } from "@/src/lib/gibson-client";
 import { getServerSession } from "@/src/lib/auth";
+import { walkItems } from "@/src/lib/gibson-client/paging";
 import { UsageScope } from "@/src/gen/gibson/tenant/v1/usage_pb";
 
 export type UsageRow = {
@@ -76,17 +77,28 @@ export async function getLlmUsageAction(
 
   try {
     const client = await getUsageClient();
-    const resp = await client.listUsage({
-      scope: scopeToProto(req.scope),
-      startTimeUnix: BigInt(req.fromUnix ?? monthStartUnix()),
-      endTimeUnix: BigInt(req.toUnix ?? Math.floor(Date.now() / 1000)),
-      subjectFilter: req.subjectFilter ?? "",
+    const scope = scopeToProto(req.scope);
+    const startTimeUnix = BigInt(req.fromUnix ?? monthStartUnix());
+    const endTimeUnix = BigInt(req.toUnix ?? Math.floor(Date.now() / 1000));
+    const subjectFilter = req.subjectFilter ?? "";
+    let staleAsOfUnix = BigInt(0);
+    const rows = await walkItems("tenant.usage", async (pageSize, pageToken) => {
+      const r = await client.listUsage({
+        scope,
+        startTimeUnix,
+        endTimeUnix,
+        subjectFilter,
+        pageSize,
+        pageToken,
+      });
+      staleAsOfUnix = r.staleAsOfUnix;
+      return { items: r.rows, nextPageToken: r.nextPageToken };
     });
 
     return {
       ok: true,
       data: {
-        rows: resp.rows.map((r) => ({
+        rows: rows.map((r) => ({
           subjectId: r.subjectId,
           displayName: r.displayName,
           inputTokens: Number(r.inputTokens),
@@ -94,7 +106,7 @@ export async function getLlmUsageAction(
           costUsdCents: Number(r.costUsdCents),
           traceCount: Number(r.traceCount),
         })),
-        staleAsOfUnix: Number(resp.staleAsOfUnix),
+        staleAsOfUnix: Number(staleAsOfUnix),
       },
     };
   } catch (err) {

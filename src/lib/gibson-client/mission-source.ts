@@ -15,6 +15,7 @@ import 'server-only';
 
 import { Code, ConnectError } from '@connectrpc/connect';
 import { userClient } from '../gibson-client';
+import { walkItems } from './paging';
 import { authzDenial } from '../auth/assert-authorized';
 import { TenantService } from '@/src/gen/gibson/tenant/v1/tenant_pb';
 import type {
@@ -95,8 +96,10 @@ export async function saveMissionDraft(
 export async function listMissionDrafts(tenantId: string): Promise<MissionDraft[]> {
   try {
     const client = userClient(TenantService);
-    const res = await client.listMissionDrafts({ tenantId });
-    return res.drafts;
+    return await walkItems('tenant.missionDrafts', async (pageSize, pageToken) => {
+      const r = await client.listMissionDrafts({ tenantId, pageSize, pageToken });
+      return { items: r.drafts, nextPageToken: r.nextPageToken };
+    });
   } catch (err) {
     mapErr(err);
   }

@@ -51,7 +51,7 @@ describe("getHitlSettleClient (real, WorldService-backed)", () => {
     });
 
     const bets = await getHitlSettleClient().listOpenBets();
-    expect(mockListOpenBets).toHaveBeenCalledWith({});
+    expect(mockListOpenBets).toHaveBeenCalledWith({ pageSize: 1000, pageToken: "" });
     expect(bets).toEqual([
       {
         id: "hyp-1",
@@ -114,5 +114,24 @@ describe("__setHitlSettleClientForTest", () => {
     __resetHitlSettleClientForTest();
     mockListOpenBets.mockResolvedValue({ bets: [] });
     await expect(getHitlSettleClient().listOpenBets()).resolves.toEqual([]);
+  });
+
+  it("follows next_page_token and returns the bets of every page", async () => {
+    const bet = (id: string) => ({
+      hypothesisId: id,
+      claim: "c",
+      proposer: "p",
+      confidence: 0.5,
+      evidence: [],
+      runId: "r",
+    });
+    mockListOpenBets
+      .mockResolvedValueOnce({ bets: [bet("a")], nextPageToken: "t2" })
+      .mockResolvedValueOnce({ bets: [bet("b")], nextPageToken: "" });
+
+    const out = await getHitlSettleClient().listOpenBets();
+
+    expect(out.map((b) => b.hypothesisId)).toEqual(["a", "b"]);
+    expect(mockListOpenBets.mock.calls[1][0]).toMatchObject({ pageToken: "t2" });
   });
 });

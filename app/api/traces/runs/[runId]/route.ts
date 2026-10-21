@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
+import { walkItems } from '@/src/lib/gibson-client/paging';
 import { userClient } from '@/src/lib/gibson-client';
 import { WorldService } from '@/src/gen/gibson/world/v1/world_pb';
 import { adaptCallView, groupCallsIntoRuns, aggregateCalls } from '@/src/lib/world-traces';
@@ -41,8 +42,12 @@ export async function GET(
       return activeTenantApiResponse(err);
     }
 
-    const resp = await userClient(WorldService).listLlmCalls({});
-    const calls = resp.llmCalls.map(adaptCallView).filter((c) => (c.runId || '') === runId);
+    const client = userClient(WorldService);
+    const llmCalls = await walkItems('traces.llmCalls', async (pageSize, pageToken) => {
+      const r = await client.listLlmCalls({ pageSize, pageToken });
+      return { items: r.llmCalls, nextPageToken: r.nextPageToken };
+    });
+    const calls = llmCalls.map(adaptCallView).filter((c) => (c.runId || '') === runId);
 
     if (calls.length === 0) {
       return NextResponse.json(

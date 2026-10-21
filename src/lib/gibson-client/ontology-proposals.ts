@@ -19,6 +19,7 @@ import {
 } from '@/src/gen/gibson/tenant/v1/ontology_extension_pb';
 
 import { userClient } from '../gibson-client';
+import { walkItems } from './paging';
 
 export type ProposalKind = 'node_label' | 'relationship_type';
 export type ProposalStatus = 'pending' | 'approved' | 'rejected' | 'unspecified';
@@ -75,8 +76,12 @@ function statusOf(s: OntologyProposalStatus): ProposalStatus {
 
 /** Every proposal of the tenant, pending and decided. */
 export async function daemonListOntologyProposals(): Promise<OntologyProposalDTO[]> {
-  const resp = await userClient(OntologyExtensionService).listOntologyExtensionProposals({});
-  return resp.ontologyProposals.map((p) => ({
+  const client = userClient(OntologyExtensionService);
+  const proposals = await walkItems('tenant.ontologyProposals', async (pageSize, pageToken) => {
+    const r = await client.listOntologyExtensionProposals({ pageSize, pageToken });
+    return { items: r.ontologyProposals, nextPageToken: r.nextPageToken };
+  });
+  return proposals.map((p) => ({
     kind: kindOf(p.kind),
     label: p.label,
     recurrence: p.sightingCount,

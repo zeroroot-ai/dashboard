@@ -30,6 +30,7 @@ import {
   isEmbeddingOnlyProviderType,
   modelCapabilitiesFromProto,
 } from "@/src/lib/provider-capabilities";
+import { walkItems } from "@/src/lib/gibson-client/paging";
 import { ProviderService } from "@/src/gen/gibson/tenant/v1/provider_pb";
 import { getServerSession } from "@/src/lib/auth";
 import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
@@ -313,13 +314,18 @@ export async function listModelAccessAction(
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
     const client = await getModelAccessClient();
-    const resp = await client.listAccess({
-      subjectKind: subjectToProto(subjectKind),
-      subjectId: subjectIdForProto(subjectKind, subjectId),
+    const grants = await walkItems("tenant.modelAccess", async (pageSize, pageToken) => {
+      const r = await client.listAccess({
+        subjectKind: subjectToProto(subjectKind),
+        subjectId: subjectIdForProto(subjectKind, subjectId),
+        pageSize,
+        pageToken,
+      });
+      return { items: r.grants, nextPageToken: r.nextPageToken };
     });
     return {
       ok: true,
-      data: resp.grants.map((g) => ({
+      data: grants.map((g) => ({
         tenantId: g.tenantId,
         subjectKind: subjectFromProto(g.subjectKind),
         subjectId: g.subjectId,
@@ -352,15 +358,20 @@ export async function listModelAccessAuditAction(
   if (!session?.user) return { ok: false, error: "unauthenticated" };
   try {
     const client = await getModelAccessClient();
-    const resp = await client.listModelResolutionEvents({
-      startTimeUnix: BigInt(input.fromUnix),
-      endTimeUnix: BigInt(input.toUnix),
-      userId: input.userId ?? "",
-      slotName: input.slotName ?? "",
+    const events = await walkItems("tenant.modelResolutionEvents", async (pageSize, pageToken) => {
+      const r = await client.listModelResolutionEvents({
+        startTimeUnix: BigInt(input.fromUnix),
+        endTimeUnix: BigInt(input.toUnix),
+        userId: input.userId ?? "",
+        slotName: input.slotName ?? "",
+        pageSize,
+        pageToken,
+      });
+      return { items: r.events, nextPageToken: r.nextPageToken };
     });
     return {
       ok: true,
-      data: resp.events.map((e) => ({
+      data: events.map((e) => ({
         tenantId: e.tenantId,
         userId: e.userId,
         missionId: e.missionId,

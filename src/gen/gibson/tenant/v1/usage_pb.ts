@@ -24,7 +24,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/usage.proto.
  */
 export const file_gibson_tenant_v1_usage: GenFile = /*@__PURE__*/
-  fileDesc("ChxnaWJzb24vdGVuYW50L3YxL3VzYWdlLnByb3RvEhBnaWJzb24udGVuYW50LnYxIo4BCghVc2FnZVJvdxISCgpzdWJqZWN0X2lkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRIUCgxpbnB1dF90b2tlbnMYAyABKAMSFQoNb3V0cHV0X3Rva2VucxgEIAEoAxIWCg5jb3N0X3VzZF9jZW50cxgFIAEoAxITCgt0cmFjZV9jb3VudBgGIAEoAyKbAQoQTGlzdFVzYWdlUmVxdWVzdBI1CgVzY29wZRgBIAEoDjIcLmdpYnNvbi50ZW5hbnQudjEuVXNhZ2VTY29wZUIIukgFggECEAESFwoPc3RhcnRfdGltZV91bml4GAIgASgDEhUKDWVuZF90aW1lX3VuaXgYAyABKAMSIAoOc3ViamVjdF9maWx0ZXIYBCABKAlCCLpIBXIDGIAgIlcKEUxpc3RVc2FnZVJlc3BvbnNlEigKBHJvd3MYASADKAsyGi5naWJzb24udGVuYW50LnYxLlVzYWdlUm93EhgKEHN0YWxlX2FzX29mX3VuaXgYAiABKAMqhQEKClVzYWdlU2NvcGUSGwoXVVNBR0VfU0NPUEVfVU5TUEVDSUZJRUQQABIUChBVU0FHRV9TQ09QRV9VU0VSEAESFAoQVVNBR0VfU0NPUEVfVEVBTRACEhUKEVVTQUdFX1NDT1BFX0FHRU5UEAMSFwoTVVNBR0VfU0NPUEVfTUlTU0lPThAEMpMBCgxVc2FnZVNlcnZpY2USggEKCUxpc3RVc2FnZRIiLmdpYnNvbi50ZW5hbnQudjEuTGlzdFVzYWdlUmVxdWVzdBojLmdpYnNvbi50ZW5hbnQudjEuTGlzdFVzYWdlUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADQlRaUmdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi90ZW5hbnQvdjE7dGVuYW50djFiBnByb3RvMw", [file_gibson_auth_v1_options, file_buf_validate_validate]);
+  fileDesc("ChxnaWJzb24vdGVuYW50L3YxL3VzYWdlLnByb3RvEhBnaWJzb24udGVuYW50LnYxIo4BCghVc2FnZVJvdxISCgpzdWJqZWN0X2lkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRIUCgxpbnB1dF90b2tlbnMYAyABKAMSFQoNb3V0cHV0X3Rva2VucxgEIAEoAxIWCg5jb3N0X3VzZF9jZW50cxgFIAEoAxITCgt0cmFjZV9jb3VudBgGIAEoAyLYAQoQTGlzdFVzYWdlUmVxdWVzdBI1CgVzY29wZRgBIAEoDjIcLmdpYnNvbi50ZW5hbnQudjEuVXNhZ2VTY29wZUIIukgFggECEAESFwoPc3RhcnRfdGltZV91bml4GAIgASgDEhUKDWVuZF90aW1lX3VuaXgYAyABKAMSIAoOc3ViamVjdF9maWx0ZXIYBCABKAlCCLpIBXIDGIAgEh0KCXBhZ2Vfc2l6ZRgFIAEoBUIKukgHGgUY6AcoABIcCgpwYWdlX3Rva2VuGAYgASgJQgi6SAVyAxiACCJwChFMaXN0VXNhZ2VSZXNwb25zZRIoCgRyb3dzGAEgAygLMhouZ2lic29uLnRlbmFudC52MS5Vc2FnZVJvdxIYChBzdGFsZV9hc19vZl91bml4GAIgASgDEhcKD25leHRfcGFnZV90b2tlbhgDIAEoCSqFAQoKVXNhZ2VTY29wZRIbChdVU0FHRV9TQ09QRV9VTlNQRUNJRklFRBAAEhQKEFVTQUdFX1NDT1BFX1VTRVIQARIUChBVU0FHRV9TQ09QRV9URUFNEAISFQoRVVNBR0VfU0NPUEVfQUdFTlQQAxIXChNVU0FHRV9TQ09QRV9NSVNTSU9OEAQykwEKDFVzYWdlU2VydmljZRKCAQoJTGlzdFVzYWdlEiIuZ2lic29uLnRlbmFudC52MS5MaXN0VXNhZ2VSZXF1ZXN0GiMuZ2lic29uLnRlbmFudC52MS5MaXN0VXNhZ2VSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IANCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_gibson_auth_v1_options, file_buf_validate_validate]);
 
 /**
  * UsageRow is one aggregated bucket: totals for a single (subject, window) pair.
@@ -98,6 +98,21 @@ export type ListUsageRequest = Message<"gibson.tenant.v1.ListUsageRequest"> & {
    * @generated from field: string subject_filter = 4;
    */
   subjectFilter: string;
+
+  /**
+   * page_size is the largest number of rows on one page. Zero means 100.
+   *
+   * @generated from field: int32 page_size = 5;
+   */
+  pageSize: number;
+
+  /**
+   * page_token is the next_page_token of the previous page of the same
+   * query. Empty for the first page.
+   *
+   * @generated from field: string page_token = 6;
+   */
+  pageToken: string;
 };
 
 /**
@@ -123,6 +138,13 @@ export type ListUsageResponse = Message<"gibson.tenant.v1.ListUsageResponse"> & 
    * @generated from field: int64 stale_as_of_unix = 2;
    */
   staleAsOfUnix: bigint;
+
+  /**
+   * next_page_token is empty on the last page.
+   *
+   * @generated from field: string next_page_token = 3;
+   */
+  nextPageToken: string;
 };
 
 /**

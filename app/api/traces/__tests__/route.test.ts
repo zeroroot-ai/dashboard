@@ -133,3 +133,16 @@ describe('GET /api/traces', () => {
     expect(body.runs).toEqual([]);
   });
 });
+
+describe('GET /api/traces paging', () => {
+  it('groups the LLM calls of every page', async () => {
+    mockListLlmCalls
+      .mockResolvedValueOnce({ llmCalls: [call({ callId: 'c1', runId: 'run-1' })], nextPageToken: 'p2' })
+      .mockResolvedValueOnce({ llmCalls: [call({ callId: 'c2', runId: 'run-2' })], nextPageToken: '' });
+
+    const body = await (await GET(req())).json();
+
+    expect(body.runs).toHaveLength(2);
+    expect(mockListLlmCalls.mock.calls[1][0]).toMatchObject({ pageToken: 'p2' });
+  });
+});
