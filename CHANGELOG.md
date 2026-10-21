@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.134.0](https://github.com/zeroroot-ai/dashboard/compare/v0.133.3...v0.134.0) (2026-10-21)
+
+
+### Features
+
+* **logs:** page the daemon log queries with page_size and page_token ([#331](https://github.com/zeroroot-ai/dashboard/issues/331)) ([9356aa1](https://github.com/zeroroot-ai/dashboard/commit/9356aa1111b2c7085bf764d45d2b2ac9a664b193))
+* **paging:** walk every page of the tenant list RPCs ([#334](https://github.com/zeroroot-ai/dashboard/issues/334)) ([7a5186c](https://github.com/zeroroot-ai/dashboard/commit/7a5186c3091cb22bfe8a016960ad4f84219c4f63))
+
+
+### Bug Fixes
+
+* **model-access:** pick the grant target from the provider types ([#328](https://github.com/zeroroot-ai/dashboard/issues/328)) ([f4d6079](https://github.com/zeroroot-ai/dashboard/commit/f4d60794e7b70bf4fdd6518dc3898e1dca28cf91))
+* **rework:** offer only types and models of enabled configs ([#330](https://github.com/zeroroot-ai/dashboard/issues/330)) ([b4d683b](https://github.com/zeroroot-ai/dashboard/commit/b4d683b52f5dd5e625f0027e4be0ce3c76de1b5b))
+* **test:** measure the transport and not the mock records in the RPC loop test ([#333](https://github.com/zeroroot-ai/dashboard/issues/333)) ([5205df6](https://github.com/zeroroot-ai/dashboard/commit/5205df6dc004f7ebc4aab7b377c70d5e677aa66b))
+
 ## [0.133.3](https://github.com/zeroroot-ai/dashboard/compare/v0.133.2...v0.133.3) (2026-10-18)
 
 
