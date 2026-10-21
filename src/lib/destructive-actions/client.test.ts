@@ -40,6 +40,18 @@ afterEach(() => {
 });
 
 describe("getDestructiveActionsClient (real, DestructiveAuthorizationService-backed)", () => {
+  it("follows next_page_token until it is empty", async () => {
+    const row = (id: string) => ({ actionId: id, hypothesisId: id, reversibility: Reversibility.REVERSIBLE });
+    mockListPending
+      .mockResolvedValueOnce({ actions: [row("a1")], nextPageToken: "t1" })
+      .mockResolvedValueOnce({ actions: [row("a2")], nextPageToken: "" });
+
+    const actions = await getDestructiveActionsClient().listPending();
+    expect(actions.map((a) => a.id)).toEqual(["a1", "a2"]);
+    expect(mockListPending).toHaveBeenCalledTimes(2);
+    expect(mockListPending).toHaveBeenLastCalledWith({ pageSize: 1000, pageToken: "t1" });
+  });
+
   it("maps pending actions, including the reversibility enum and unix-ms timestamp", async () => {
     const ts = Date.parse("2026-09-28T00:00:00.000Z");
     mockListPending.mockResolvedValue({
@@ -59,7 +71,7 @@ describe("getDestructiveActionsClient (real, DestructiveAuthorizationService-bac
     });
 
     const actions = await getDestructiveActionsClient().listPending();
-    expect(mockListPending).toHaveBeenCalledWith({});
+    expect(mockListPending).toHaveBeenCalledWith({ pageSize: 1000, pageToken: "" });
     expect(actions).toEqual([
       {
         id: "hyp-1",

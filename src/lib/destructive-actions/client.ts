@@ -4,6 +4,7 @@
 import "server-only";
 
 import { userClient } from "@/src/lib/gibson-client";
+import { walkItems } from "@/src/lib/gibson-client/paging";
 import {
   DestructiveAuthorizationService,
   Reversibility,
@@ -70,8 +71,12 @@ function mapAction(a: PbPendingDestructiveAction): PendingDestructiveAction {
 
 class DaemonDestructiveActionsClient implements DestructiveActionsClient {
   async listPending(): Promise<PendingDestructiveAction[]> {
-    const res = await userClient(DestructiveAuthorizationService).listPendingDestructiveActions({});
-    return res.actions.map(mapAction);
+    const client = userClient(DestructiveAuthorizationService);
+    const actions = await walkItems("tenant.pendingDestructiveActions", async (pageSize, pageToken) => {
+      const res = await client.listPendingDestructiveActions({ pageSize, pageToken });
+      return { items: res.actions, nextPageToken: res.nextPageToken };
+    });
+    return actions.map(mapAction);
   }
 
   async decide(id: string, decision: DestructiveActionDecision): Promise<void> {
