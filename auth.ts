@@ -51,6 +51,7 @@ import { cookies } from "next/headers";
 
 import { resolvePostSignInRedirect } from "@/src/lib/auth/post-signin-redirect";
 import { evaluateMfaGate } from "@/src/lib/auth/mfa-gate";
+import { sessionSubjectFromAccount } from "@/src/lib/auth/session-subject";
 import { zitadelProvider } from "@/src/lib/auth/zitadel-provider";
 import { authSecrets } from "@/src/lib/auth/auth-secrets";
 import { zitadelFetch } from "@/src/lib/zitadel/conn";
@@ -280,6 +281,15 @@ const config: NextAuthConfig = {
       }
 
       if (account) {
+        // Auth.js puts a random UUID for each sign-in in token.sub. The
+        // session must carry the Zitadel user id, the id the daemon records
+        // as the owner of what this person creates. No id means no session.
+        const subject = sessionSubjectFromAccount(account);
+        if (subject === null) {
+          return null;
+        }
+        token.sub = subject;
+
         // account is populated only on the initial sign-in callback.
         // Copy the Zitadel access token into the encrypted JWT so that
         // gibson-client.ts can forward it as Authorization: Bearer on every
