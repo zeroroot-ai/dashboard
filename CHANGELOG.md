@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.134.1](https://github.com/zeroroot-ai/dashboard/compare/v0.134.0...v0.134.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* **auth:** the session user id is the Zitadel user id ([#336](https://github.com/zeroroot-ai/dashboard/issues/336)) ([77ae438](https://github.com/zeroroot-ai/dashboard/commit/77ae43821711231af4fc72732236e32cdede4c5c))
+* **deps:** move next to 16.4.3 and dompurify to 3.4.17 ([#337](https://github.com/zeroroot-ai/dashboard/issues/337)) ([59c5127](https://github.com/zeroroot-ai/dashboard/commit/59c51273a7e1e575a75ce40feb756a1d78fccdbb))
+
 ## [0.134.0](https://github.com/zeroroot-ai/dashboard/compare/v0.133.3...v0.134.0) (2026-10-21)
 
 
