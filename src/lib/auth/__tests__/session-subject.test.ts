@@ -6,21 +6,25 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { sessionSubjectFromAccount } from "../session-subject";
+import { sessionSubject } from "../session-subject";
 
-describe("sessionSubjectFromAccount", () => {
-  it("is the Zitadel user id that Auth.js keeps as providerAccountId", () => {
-    expect(sessionSubjectFromAccount({ providerAccountId: "395121752285380837" })).toBe("395121752285380837");
+const ID = "395121752285380837";
+
+describe("sessionSubject", () => {
+  it("is the Zitadel user id when the profile and the account name it", () => {
+    expect(sessionSubject({ providerAccountId: ID }, { sub: ID })).toBe(ID);
   });
 
-  it("is null when the account is missing", () => {
-    expect(sessionSubjectFromAccount(undefined)).toBeNull();
-    expect(sessionSubjectFromAccount(null)).toBeNull();
+  it("is null when the profile names no sub, even if the account names an id", () => {
+    // Auth.js fills providerAccountId with a random UUID when the profile has no id.
+    expect(sessionSubject({ providerAccountId: "7f9c2b1e-0000-4000-8000-000000000000" }, {})).toBeNull();
+    expect(sessionSubject({ providerAccountId: ID }, { sub: "" })).toBeNull();
+    expect(sessionSubject({ providerAccountId: ID }, undefined)).toBeNull();
   });
 
-  it("is null when the account names no provider id", () => {
-    expect(sessionSubjectFromAccount({})).toBeNull();
-    expect(sessionSubjectFromAccount({ providerAccountId: "" })).toBeNull();
-    expect(sessionSubjectFromAccount({ providerAccountId: 395121752285380837 })).toBeNull();
+  it("is null when the account names a different id", () => {
+    expect(sessionSubject({ providerAccountId: "other" }, { sub: ID })).toBeNull();
+    expect(sessionSubject({}, { sub: ID })).toBeNull();
+    expect(sessionSubject(null, { sub: ID })).toBeNull();
   });
 });

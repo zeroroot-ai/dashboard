@@ -51,7 +51,7 @@ import { cookies } from "next/headers";
 
 import { resolvePostSignInRedirect } from "@/src/lib/auth/post-signin-redirect";
 import { evaluateMfaGate } from "@/src/lib/auth/mfa-gate";
-import { sessionSubjectFromAccount } from "@/src/lib/auth/session-subject";
+import { sessionSubject } from "@/src/lib/auth/session-subject";
 import { zitadelProvider } from "@/src/lib/auth/zitadel-provider";
 import { authSecrets } from "@/src/lib/auth/auth-secrets";
 import { zitadelFetch } from "@/src/lib/zitadel/conn";
@@ -265,7 +265,7 @@ const config: NextAuthConfig = {
      * its own tenant: the `session` argument `unstable_update()` callers pass
      * is never consulted for it, only the stored access token is.
      */
-    async jwt({ token, account, trigger }) {
+    async jwt({ token, account, profile, trigger }) {
       const signinStartedAt = Date.now();
       if (account) {
         // Stamp the start of this login. Written ONCE, on the initial sign-in
@@ -284,7 +284,7 @@ const config: NextAuthConfig = {
         // Auth.js puts a random UUID for each sign-in in token.sub. The
         // session must carry the Zitadel user id, the id the daemon records
         // as the owner of what this person creates. No id means no session.
-        const subject = sessionSubjectFromAccount(account);
+        const subject = sessionSubject(account, profile);
         if (subject === null) {
           return null;
         }
