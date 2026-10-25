@@ -13,7 +13,7 @@
 import { z } from "zod";
 import { LOGIN_SHAPES, SPILL_POLICIES, shapeNeedsProviderConfig } from "./view";
 
-const count = z.coerce.number().int().min(0, "Must be zero or more");
+const count = z.coerce.number<number>().int().min(0, "Must be zero or more");
 
 export const createBankSchema = z
   .object({

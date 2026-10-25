@@ -66,9 +66,7 @@ const secretNameSchema = z
     "Secret name may only contain letters, digits, hyphens, underscores, colons, and dots",
   );
 
-const secretCategorySchema = z.enum(["cred", "provider_config"], {
-  required_error: "Category is required",
-});
+const secretCategorySchema = z.enum(["cred", "provider_config"], { error: "Category is required" });
 
 /**
  * createSecretSchema validates the FormData fields for createSecretAction.

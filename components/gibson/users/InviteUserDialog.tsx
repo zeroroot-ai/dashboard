@@ -42,9 +42,7 @@ import { ASSIGNABLE_TENANT_ROLES, TENANT_ROLE_HINT, isAssignableTenantRole, tena
 
 const inviteSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  role: z.enum(ASSIGNABLE_TENANT_ROLES, {
-    required_error: "Please select a role",
-  }),
+  role: z.enum(ASSIGNABLE_TENANT_ROLES, { error: "Please select a role" }),
   message: z.string().max(500).optional(),
 });
 
