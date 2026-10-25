@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.135.3](https://github.com/zeroroot-ai/dashboard/compare/v0.135.2...v0.135.3) (2026-10-25)
+
+
+### Bug Fixes
+
+* **banks:** keep the sign-in dialog inside the screen ([#352](https://github.com/zeroroot-ai/dashboard/issues/352)) ([db44222](https://github.com/zeroroot-ai/dashboard/commit/db44222a34cf4f7ab7d1a0927313f76c0be5adaf)), closes [#351](https://github.com/zeroroot-ai/dashboard/issues/351)
+* **console:** open wall terminals one per frame and batch replay writes ([#347](https://github.com/zeroroot-ai/dashboard/issues/347)) ([de308d5](https://github.com/zeroroot-ai/dashboard/commit/de308d50dc26216ae5a338f9937646b191716e13))
+* **console:** resume the agent events stream after Last-Event-ID ([#348](https://github.com/zeroroot-ai/dashboard/issues/348)) ([029c282](https://github.com/zeroroot-ai/dashboard/commit/029c2829e32cec1ba9d8b70cfd5d72e3e5ee8c44))
+
 ## [0.135.2](https://github.com/zeroroot-ai/dashboard/compare/v0.135.1...v0.135.2) (2026-10-25)
 
 
