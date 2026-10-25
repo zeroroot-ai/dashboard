@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.135.0](https://github.com/zeroroot-ai/dashboard/compare/v0.134.1...v0.135.0) (2026-10-25)
+
+
+### Features
+
+* **brand:** the favicon is the green CRT mark ([#340](https://github.com/zeroroot-ai/dashboard/issues/340)) ([d5100e7](https://github.com/zeroroot-ai/dashboard/commit/d5100e79e773ad44ae02f306f7907ceeed9e1e17)), closes [#339](https://github.com/zeroroot-ai/dashboard/issues/339)
+
 ## [0.134.1](https://github.com/zeroroot-ai/dashboard/compare/v0.134.0...v0.134.1) (2026-10-23)
 
 
