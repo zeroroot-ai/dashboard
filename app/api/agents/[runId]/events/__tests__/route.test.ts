@@ -7,7 +7,7 @@
  *
  * The `since` cursor reaches the daemon client as `sinceSeq`, every chunk
  * frame carries the daemon's `seq` as its payload and as the SSE id, and a
- * bad cursor is a 400.
+ * bad cursor is a 400. `Last-Event-ID` resumes a native reconnect.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
@@ -34,8 +34,8 @@ vi.mock('@/src/lib/logger', () => ({
 
 import { GET } from '../route';
 
-function makeRequest(query = ''): NextRequest {
-  return new NextRequest('http://test.local/api/agents/run-1/events' + query);
+function makeRequest(query = '', headers: Record<string, string> = {}): NextRequest {
+  return new NextRequest('http://test.local/api/agents/run-1/events' + query, { headers });
 }
 
 function makeParams(runId: string): { params: Promise<{ runId: string }> } {
@@ -99,6 +99,33 @@ describe('GET /api/agents/:runId/events', () => {
     const res = await GET(makeRequest(), makeParams('run-1'));
     expect(res.status).toBe(200);
     expect(mockStreamAgentEvents).toHaveBeenCalledWith('run-1', BigInt(0), expect.any(AbortSignal));
+    await readAll(res.body as ReadableStream<Uint8Array>);
+  });
+
+  it('resumes after Last-Event-ID on a native reconnect', async () => {
+    mockStreamAgentEvents.mockReturnValue(events());
+    const res = await GET(makeRequest('', { 'Last-Event-ID': '2048' }), makeParams('run-1'));
+    expect(res.status).toBe(200);
+    expect(mockStreamAgentEvents).toHaveBeenCalledWith('run-1', BigInt(2048), expect.any(AbortSignal));
+    await readAll(res.body as ReadableStream<Uint8Array>);
+  });
+
+  it('uses the later of since and Last-Event-ID', async () => {
+    mockStreamAgentEvents.mockReturnValue(events());
+    let res = await GET(makeRequest('?since=10', { 'Last-Event-ID': '50' }), makeParams('run-1'));
+    expect(mockStreamAgentEvents).toHaveBeenLastCalledWith('run-1', BigInt(50), expect.any(AbortSignal));
+    await readAll(res.body as ReadableStream<Uint8Array>);
+    mockStreamAgentEvents.mockReturnValue(events());
+    res = await GET(makeRequest('?since=90', { 'Last-Event-ID': '50' }), makeParams('run-1'));
+    expect(mockStreamAgentEvents).toHaveBeenLastCalledWith('run-1', BigInt(90), expect.any(AbortSignal));
+    await readAll(res.body as ReadableStream<Uint8Array>);
+  });
+
+  it('ignores a Last-Event-ID that is not a non-negative integer', async () => {
+    mockStreamAgentEvents.mockReturnValue(events());
+    const res = await GET(makeRequest('?since=5', { 'Last-Event-ID': 'abc' }), makeParams('run-1'));
+    expect(res.status).toBe(200);
+    expect(mockStreamAgentEvents).toHaveBeenCalledWith('run-1', BigInt(5), expect.any(AbortSignal));
     await readAll(res.body as ReadableStream<Uint8Array>);
   });
 
