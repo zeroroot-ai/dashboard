@@ -15,6 +15,8 @@
 
 import * as React from "react";
 import { openConsoleTerminal, type ConsoleTerminal } from "@/src/lib/agent-console/terminal";
+import { terminalOpenQueue } from "@/src/lib/agent-console/open-queue";
+import { createBatchedWriter, type BatchedWriter } from "@/src/lib/agent-console/batched-writer";
 import type { MissionTerminalHandle } from "@/src/components/missions/MissionTerminal";
 import "@xterm/xterm/css/xterm.css";
 
@@ -31,22 +33,33 @@ export const TileTerminal = React.forwardRef<MissionTerminalHandle, TileTerminal
   function TileTerminal({ title, height, fontSize }, ref) {
     const containerRef = React.useRef<HTMLDivElement>(null);
     const openedRef = React.useRef<ConsoleTerminal | null>(null);
-    const pendingWritesRef = React.useRef<string[]>([]);
+    // Text joins here and reaches xterm once per frame. Before xterm opens
+    // the text waits here, so a replay never touches the DOM early.
+    const writerRef = React.useRef<BatchedWriter | null>(null);
+    if (writerRef.current === null) {
+      writerRef.current = createBatchedWriter(
+        (text) => openedRef.current?.terminal.write(text),
+        () => openedRef.current !== null,
+      );
+    }
 
     React.useEffect(() => {
       const container = containerRef.current;
       if (!container) return;
-      const opened = openConsoleTerminal(container, { fontSize, lineHeight: 1.3 });
-      openedRef.current = opened;
-      for (const text of pendingWritesRef.current) {
-        opened.terminal.write(text);
-      }
-      pendingWritesRef.current = [];
-      const observer = new ResizeObserver(() => opened.fit());
-      observer.observe(container);
+      let observer: ResizeObserver | null = null;
+      // The open waits its turn in the shared queue, one terminal per frame.
+      const cancelOpen = terminalOpenQueue.enqueue(() => {
+        const opened = openConsoleTerminal(container, { fontSize, lineHeight: 1.3 });
+        openedRef.current = opened;
+        writerRef.current?.flush();
+        observer = new ResizeObserver(() => opened.fit());
+        observer.observe(container);
+      });
       return () => {
-        observer.disconnect();
-        opened.dispose();
+        cancelOpen();
+        observer?.disconnect();
+        writerRef.current?.clear();
+        openedRef.current?.dispose();
         openedRef.current = null;
       };
       // The terminal opens once. Font size and height changes apply below.
@@ -62,16 +75,11 @@ export const TileTerminal = React.forwardRef<MissionTerminalHandle, TileTerminal
 
     React.useImperativeHandle(ref, () => ({
       write(text: string) {
-        const opened = openedRef.current;
-        if (opened) {
-          opened.terminal.write(text);
-        } else {
-          pendingWritesRef.current.push(text);
-        }
+        writerRef.current?.push(text);
       },
       clear() {
+        writerRef.current?.clear();
         openedRef.current?.terminal.clear();
-        pendingWritesRef.current = [];
       },
     }));
 
