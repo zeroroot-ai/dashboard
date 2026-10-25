@@ -57,17 +57,11 @@ export const signupInputSchema = z.object({
       "Company name may only contain letters, numbers, spaces, hyphens, and underscores",
     ),
 
-  tier: z.enum(tierTuple, {
-    errorMap: () => ({ message: "Select a valid plan" }),
-  }),
+  tier: z.enum(tierTuple, { error: "Select a valid plan" }),
 
-  acceptToS: z.literal(true, {
-    errorMap: () => ({ message: "Please accept the Terms of Service to continue" }),
-  }),
+  acceptToS: z.literal(true, { error: "Please accept the Terms of Service to continue" }),
 
-  acceptPrivacy: z.literal(true, {
-    errorMap: () => ({ message: "Please accept the Privacy Policy to continue" }),
-  }),
+  acceptPrivacy: z.literal(true, { error: "Please accept the Privacy Policy to continue" }),
 });
 
 export type SignupInput = z.infer<typeof signupInputSchema>;
@@ -120,7 +114,7 @@ export const registerInputSchema = z
     email: signupInputSchema.shape.email,
     workspaceName: signupInputSchema.shape.workspaceName,
     tier: signupInputSchema.shape.tier,
-    password: completeSignupInputSchema.innerType().shape.password,
+    password: completeSignupInputSchema.shape.password,
     passwordConfirm: z.string(),
   })
   .superRefine((data, ctx) => {

@@ -11,19 +11,20 @@
  */
 
 import { z } from "zod";
+import { NOT_AN_INTEGER, NOT_A_NUMBER, stringTooLong } from "@/src/lib/zod3-messages";
 import { LOGIN_SHAPES, SPILL_POLICIES, shapeNeedsProviderConfig } from "./view";
 
-const count = z.coerce.number().int().min(0, "Must be zero or more");
+const count = z.coerce.number<number>({ error: NOT_A_NUMBER }).int(NOT_AN_INTEGER).min(0, "Must be zero or more");
 
 export const createBankSchema = z
   .object({
-    name: z.string().trim().min(1, "Name is required").max(120),
+    name: z.string().trim().min(1, "Name is required").max(120, stringTooLong(120)),
     tenantOwned: z.boolean(),
     desiredCount: count,
     loginShape: z.enum(LOGIN_SHAPES as [string, ...string[]]),
     providerConfigName: z.string().trim(),
-    agentName: z.string().trim().max(120),
-    model: z.string().trim().max(200),
+    agentName: z.string().trim().max(120, stringTooLong(120)),
+    model: z.string().trim().max(200, stringTooLong(200)),
     maxJobsInFlight: count,
     /** Minutes in the form. Zero means the daemon default. */
     staleLimitMinutes: count,

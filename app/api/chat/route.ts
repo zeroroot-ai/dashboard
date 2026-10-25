@@ -40,15 +40,15 @@ import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 const uiMessageSchema = z.object({
   id: z.string(),
   role: z.enum(['user', 'assistant', 'system']),
-  parts: z.array(z.record(z.unknown())).default([]),
-  metadata: z.record(z.unknown()).optional(),
+  parts: z.array(z.record(z.string(), z.unknown())).default([]),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 const chatRequestSchema = z.object({
   messages: z.array(uiMessageSchema).min(1).max(50),
   agentId: z.string().optional(),
-  context: z.record(z.unknown()).optional(),
-  attachmentId: z.string().uuid().optional(),
+  context: z.record(z.string(), z.unknown()).optional(),
+  attachmentId: z.string().uuid("Invalid uuid").optional(),
 });
 
 // ============================================================================

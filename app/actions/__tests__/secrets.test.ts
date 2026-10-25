@@ -179,6 +179,7 @@ describe("createSecretAction, validation errors", () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected not-ok");
     expect(result.code).toBe("bad_input");
+    expect(result.error).toBe("Invalid enum value. Expected 'cred' | 'provider_config', received 'unknown_cat'");
   });
 });
 
