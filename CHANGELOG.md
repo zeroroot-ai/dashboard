@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.135.2](https://github.com/zeroroot-ai/dashboard/compare/v0.135.1...v0.135.2) (2026-10-25)
+
+
+### Bug Fixes
+
+* **deps:** move zod to 4.6.6 ([#344](https://github.com/zeroroot-ai/dashboard/issues/344)) ([ba20d95](https://github.com/zeroroot-ai/dashboard/commit/ba20d95a7f8db9a03fa551de0efe31d4a6947883))
+
 ## [0.135.1](https://github.com/zeroroot-ai/dashboard/compare/v0.135.0...v0.135.1) (2026-10-25)
 
 
