@@ -68,3 +68,16 @@ export function useAgentConsole(
 
   return status;
 }
+
+/**
+ * True while the run wants a live stream and the page has no free slot for
+ * it, so a tile can say it waits instead of showing an empty terminal.
+ */
+export function useStreamWaiting(runId: string | undefined): boolean {
+  const registry = React.useContext(AgentStreamRegistryContext);
+  return React.useSyncExternalStore(
+    (onChange) => registry.onStats(onChange),
+    () => (runId ? registry.isWaiting(runId) : false),
+    () => false,
+  );
+}

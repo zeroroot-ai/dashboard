@@ -224,8 +224,14 @@ export class AgentStream {
   }
 }
 
-/** Default cap on open EventSources per page. */
-export const DEFAULT_STREAM_CAP = 6;
+/**
+ * Default cap on open EventSources per page. It was 6, the HTTP/1.1 limit of
+ * connections to one origin. The edge speaks HTTP/2, which multiplexes 100
+ * streams on one connection, so 6 left half of a 12 tile wall empty. The cap
+ * stays as a bound on daemon streams for one page. Only tiles in view count
+ * against it.
+ */
+export const DEFAULT_STREAM_CAP = 24;
 
 /** What the wall header shows about the fan-out. */
 interface StreamStats {
@@ -334,6 +340,11 @@ export class AgentStreamRegistry {
     }
     const stats = this.stats();
     for (const fn of this.listeners) fn(stats);
+  }
+
+  /** True while the run wants a live connection and waits for a free slot. */
+  isWaiting(runId: string): boolean {
+    return this.queue.includes(runId);
   }
 
   private dequeue(runId: string): void {

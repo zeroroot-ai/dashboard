@@ -74,6 +74,21 @@ afterEach(() => {
 });
 
 describe("AgentConsole fan-out", () => {
+  it("streams all 12 tiles at once with no tile waiting", async () => {
+    useRunningAgentsMock.mockReturnValue({ data: agents(12), isLoading: false, error: null });
+    render(<AgentConsole />);
+    await waitFor(() => expect(FakeEventSource.open.size).toBe(12));
+    expect(screen.queryAllByTestId("agent-tile-waiting")).toHaveLength(0);
+  });
+
+  it("marks each tile beyond the cap as waiting", async () => {
+    render(<AgentConsole />);
+    await waitFor(() => expect(FakeEventSource.open.size).toBe(DEFAULT_STREAM_CAP));
+    await waitFor(() =>
+      expect(screen.getAllByTestId("agent-tile-waiting")).toHaveLength(25 - DEFAULT_STREAM_CAP),
+    );
+  });
+
   it("holds at most the cap of open streams for 25 tiles and shows the queue", async () => {
     const view = render(<AgentConsole />);
     await waitFor(() => expect(FakeEventSource.open.size).toBe(DEFAULT_STREAM_CAP));

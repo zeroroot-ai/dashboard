@@ -19,7 +19,7 @@
 
 import * as React from "react";
 import dynamic from "next/dynamic";
-import { useAgentConsole, type AgentConsolePhase } from "@/src/hooks/useAgentConsole";
+import { useAgentConsole, useStreamWaiting, type AgentConsolePhase } from "@/src/hooks/useAgentConsole";
 import { formatCost, formatDuration, shortId } from "@/src/lib/agent-console/stream-json";
 import type { WallTileFacts } from "@/src/lib/agent-console/wall";
 import type { RunningAgentView } from "@/src/lib/gibson-client/agent-console";
@@ -116,6 +116,7 @@ export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function 
   const inView = useInView(sectionRef);
   const status = useAgentConsole(agent.runId, terminalRef, { live: inView });
   const running = status.phase === "streaming";
+  const waiting = useStreamWaiting(agent.runId) && running;
   const elapsed = useElapsed(agent.startedAt, running);
   const name = agent.agentName || agent.runId;
   const { costUsd, model, turns } = status.summary;
@@ -235,6 +236,14 @@ export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function 
             )}
           >
             {ribbon}
+          </div>
+        ) : null}
+        {waiting ? (
+          <div
+            data-testid="agent-tile-waiting"
+            className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-terminal/80 font-mono text-xs text-terminal-muted"
+          >
+            Waiting for a free live stream
           </div>
         ) : null}
         <TileTerminal
