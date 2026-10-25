@@ -54,7 +54,8 @@ import {
 import type { MemberWithBankView } from "@/src/lib/banks/view";
 import { useUserRefs } from "@/src/hooks/useUserRefs";
 import { userIdsToResolve, type UserRefView } from "@/src/lib/principals/label";
-import { formatDuration, shortId } from "@/src/lib/agent-console/stream-json";
+import { shortId } from "@/src/lib/agent-console/stream-json";
+import { Ago } from "./Ticking";
 import { cn } from "@/lib/utils";
 
 const STATE_CLASS: Record<string, string> = {
@@ -70,12 +71,6 @@ function JobStateChip({ state }: { state: JobView["state"] }) {
       {jobStateLabel(state)}
     </Badge>
   );
-}
-
-function ago(iso: string | null, now: number): string {
-  if (!iso) return "never";
-  const t = new Date(iso).getTime();
-  return isNaN(t) ? "unknown" : `${formatDuration(Math.max(0, now - t))} ago`;
 }
 
 function eventLine(ev: JobEventView, myUserId: string | null, refs?: ReadonlyMap<string, UserRefView>): string {
@@ -121,11 +116,6 @@ export function JobPanel({ member, compact = false }: JobPanelProps) {
     [openJobs, feed.events, myUserId],
   );
   const { data: userRefs } = useUserRefs(peopleIds);
-  const [now, setNow] = React.useState(() => Date.now());
-  React.useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, []);
   // A job that closed leaves the list; drop the selection with it. The check
   // runs during render, so no effect sets state after the commit.
   if (selectedId && !openJobs.some((j) => j.id === selectedId)) setSelectedId(null);
@@ -172,7 +162,7 @@ export function JobPanel({ member, compact = false }: JobPanelProps) {
                 <JobStateChip state={j.state} />
                 <span className="truncate" title={j.spec.goal}>{j.spec.goal || shortId(j.id)}</span>
                 <span className="ml-auto shrink-0">by {senderLabel(j.openedBy, myUserId, userRefs)}</span>
-                <span className="shrink-0" title="last input">{ago(j.lastInputAt, now)}</span>
+                <Ago iso={j.lastInputAt} className="shrink-0" />
               </button>
             </li>
           ))}

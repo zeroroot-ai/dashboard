@@ -20,13 +20,14 @@
 import * as React from "react";
 import dynamic from "next/dynamic";
 import { useAgentConsole, type AgentConsolePhase } from "@/src/hooks/useAgentConsole";
-import { formatCost, formatDuration, shortId } from "@/src/lib/agent-console/stream-json";
+import { formatCost, shortId } from "@/src/lib/agent-console/stream-json";
 import type { WallTileFacts } from "@/src/lib/agent-console/wall";
 import type { RunningAgentView } from "@/src/lib/gibson-client/agent-console";
 import type { MissionTerminalHandle } from "@/src/components/missions/MissionTerminal";
 import type { MemberWithBankView } from "@/src/lib/banks/view";
 import { MemberStateChip } from "@/components/gibson/banks/MemberStateChip";
 import { JobPanel } from "./JobPanel";
+import { Elapsed } from "./Ticking";
 import { cn } from "@/lib/utils";
 
 // xterm touches the DOM, so the terminal must load client-side only.
@@ -37,22 +38,6 @@ const TileTerminal = dynamic(
     ),
   { ssr: false },
 );
-
-/**
- * Elapsed time since `startedAt`, ticking once a second while the run
- * streams and frozen once it stops. Returns null for a bad start time.
- */
-function useElapsed(startedAt: string, running: boolean): string | null {
-  const start = new Date(startedAt).getTime();
-  const [now, setNow] = React.useState(() => Date.now());
-  React.useEffect(() => {
-    if (!running) return;
-    const id = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, [running]);
-  if (isNaN(start)) return null;
-  return formatDuration(Math.max(0, now - start));
-}
 
 const PHASE_LABEL: Record<AgentConsolePhase, string> = {
   streaming: "live",
@@ -116,7 +101,6 @@ export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function 
   const inView = useInView(sectionRef);
   const status = useAgentConsole(agent.runId, terminalRef, { live: inView });
   const running = status.phase === "streaming";
-  const elapsed = useElapsed(agent.startedAt, running);
   const name = agent.agentName || agent.runId;
   const { costUsd, model, turns } = status.summary;
 
@@ -211,11 +195,7 @@ export const AgentTile = React.forwardRef<HTMLElement, AgentTileProps>(function 
             </span>
           ) : null}
           {turns !== undefined ? <span title="turns">{turns}t</span> : null}
-          {elapsed !== null ? (
-            <span className="text-terminal-fg" title="elapsed">
-              {elapsed}
-            </span>
-          ) : null}
+          <Elapsed startedAt={agent.startedAt} running={running} className="text-terminal-fg" />
           {costUsd !== undefined ? (
             <span className="text-terminal-fg" title="cost so far">
               {formatCost(costUsd)}

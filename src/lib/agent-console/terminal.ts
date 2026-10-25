@@ -17,13 +17,21 @@ import { TERMINAL_THEME } from "@/src/lib/graph/theme-colors";
 
 const FALLBACK_MONO = '"JetBrains Mono", "Fira Code", "Cascadia Code", monospace';
 
+/**
+ * The resolved family. The value does not change while the page lives, and
+ * each read forces a style recalculation, so a wall of tiles reads it once.
+ */
+let resolvedMonoFamily: string | null = null;
+
 /** Resolves the brand mono font family for xterm. */
 function resolveMonoFontFamily(): string {
+  if (resolvedMonoFamily !== null) return resolvedMonoFamily;
   if (typeof document === "undefined") return FALLBACK_MONO;
   const v = getComputedStyle(document.documentElement)
     .getPropertyValue("--font-jetbrains-mono")
     .trim();
-  return v.length > 0 ? `${v}, ${FALLBACK_MONO}` : FALLBACK_MONO;
+  resolvedMonoFamily = v.length > 0 ? `${v}, ${FALLBACK_MONO}` : FALLBACK_MONO;
+  return resolvedMonoFamily;
 }
 
 interface ConsoleTerminalOptions {
