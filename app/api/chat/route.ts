@@ -48,7 +48,7 @@ const chatRequestSchema = z.object({
   messages: z.array(uiMessageSchema).min(1).max(50),
   agentId: z.string().optional(),
   context: z.record(z.string(), z.unknown()).optional(),
-  attachmentId: z.string().uuid().optional(),
+  attachmentId: z.string().uuid("Invalid uuid").optional(),
 });
 
 // ============================================================================

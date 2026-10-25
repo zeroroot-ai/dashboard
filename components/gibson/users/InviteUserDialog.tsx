@@ -38,11 +38,14 @@ import {
 } from "@/components/ui/select";
 import { inviteMemberAction } from "@/app/actions/crd/member";
 import type { MemberRole } from "@/app/actions/crd/types";
+import { invalidEnumValue } from "@/src/lib/zod3-messages";
 import { ASSIGNABLE_TENANT_ROLES, TENANT_ROLE_HINT, isAssignableTenantRole, tenantRoleLabel } from "@/src/lib/auth/tenant-roles";
 
 const inviteSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  role: z.enum(ASSIGNABLE_TENANT_ROLES, { error: "Please select a role" }),
+  role: z.enum(ASSIGNABLE_TENANT_ROLES, {
+    error: (issue) => (issue.input === undefined ? "Please select a role" : invalidEnumValue(ASSIGNABLE_TENANT_ROLES, issue.input)),
+  }),
   message: z.string().max(500).optional(),
 });
 

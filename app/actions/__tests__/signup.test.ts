@@ -289,6 +289,23 @@ describe('signupAction', () => {
     if (!result.ok) expect(result.code).toBe('RATE_LIMITED');
   });
 
+  it('maps a bad plan to INTERNAL_ERROR, not TOS_MISSING', async () => {
+    const result = await signupAction({ ...VALID_INPUT, tier: 'no-such-plan' });
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.code).toBe('INTERNAL_ERROR');
+    expect(!result.ok && result.fieldErrors?.tier).toBe('Select a valid plan');
+    expect(mockRequestSignupVerification).not.toHaveBeenCalled();
+  });
+
+  it.each(['acceptToS', 'acceptPrivacy'])('maps a missing %s to TOS_MISSING', async (field) => {
+    const result = await signupAction({ ...VALID_INPUT, [field]: false });
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.code).toBe('TOS_MISSING');
+    expect(mockRequestSignupVerification).not.toHaveBeenCalled();
+  });
+
   it('rejects a company name that is already taken before sending anything', async () => {
     vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
     const result = await signupAction(VALID_INPUT, ATTEMPT);

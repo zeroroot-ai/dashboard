@@ -200,7 +200,7 @@ export async function signupAction(
       return {
         ok: false,
         attemptId,
-        code: first?.code === "invalid_value" ? "TOS_MISSING" : "INTERNAL_ERROR",
+        code: first?.code === "invalid_value" && (first.path[0] === "acceptToS" || first.path[0] === "acceptPrivacy") ? "TOS_MISSING" : "INTERNAL_ERROR",
         userMessage: first?.message ?? "Invalid form submission",
         fieldErrors,
       };

@@ -38,6 +38,7 @@ import { getServerSession } from "@/src/lib/auth";
 import { SecretCategory } from "@/src/gen/gibson/secrets/v1/secrets_pb";
 import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
 import { serverActionError } from "@/src/lib/errors/server-action-error";
+import { invalidEnumValue } from "@/src/lib/zod3-messages";
 
 // ---------------------------------------------------------------------------
 // Shared result type (mirrors the existing ActionResult<T> convention)
@@ -66,7 +67,11 @@ const secretNameSchema = z
     "Secret name may only contain letters, digits, hyphens, underscores, colons, and dots",
   );
 
-const secretCategorySchema = z.enum(["cred", "provider_config"], { error: "Category is required" });
+const SECRET_CATEGORIES = ["cred", "provider_config"] as const;
+
+const secretCategorySchema = z.enum(SECRET_CATEGORIES, {
+  error: (issue) => (issue.input === undefined ? "Category is required" : invalidEnumValue(SECRET_CATEGORIES, issue.input)),
+});
 
 /**
  * createSecretSchema validates the FormData fields for createSecretAction.

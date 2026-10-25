@@ -19,6 +19,7 @@
  */
 
 import { z } from "zod";
+import { NOT_AN_INTEGER, NOT_A_NUMBER, stringTooLong, stringTooShort } from "@/src/lib/zod3-messages";
 
 const SLASH_REF = /^[a-z][a-z0-9_-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
@@ -40,7 +41,7 @@ const DELIVERABLE_CUE: Readonly<Record<DeliverableKindValue, string>> = {
   none: "DELIVERABLE_KIND_NONE",
 };
 
-const count = z.coerce.number().int().min(0, "Must be zero or more");
+const count = z.coerce.number<number>({ error: NOT_A_NUMBER }).int(NOT_AN_INTEGER).min(0, "Must be zero or more");
 
 const repositorySchema = z.object({
   name: z.string().trim().min(1, "Worktree name is required").max(64),
@@ -57,7 +58,7 @@ const repositorySchema = z.object({
 export const jobNodeSchema = z
   .object({
     nodeId: z.string().trim().regex(NODE_ID, "A node id starts with a lower-case letter and has no spaces"),
-    name: z.string().trim().max(120),
+    name: z.string().trim().max(120, stringTooLong(120)),
     bankRef: z
       .string()
       .trim()
@@ -65,13 +66,13 @@ export const jobNodeSchema = z
       .refine((v) => v !== BANK_REF_PLACEHOLDER, "A bank is required"),
     goal: z.string().trim().min(1, "Say what the job must achieve"),
     repositories: z.array(repositorySchema),
-    credentialNames: z.array(z.string().trim().min(1)),
-    inputs: z.array(z.string().trim().min(1)),
+    credentialNames: z.array(z.string().trim().min(1, stringTooShort(1))),
+    inputs: z.array(z.string().trim().min(1, stringTooShort(1))),
     verifierComponent: z
       .string()
       .trim()
       .refine((v) => v === "" || (SLASH_REF.test(v) && (v.startsWith("agent/") || v.startsWith("tool/"))), "Use the slash form, agent/<name> or tool/<name>"),
-    passingScore: z.coerce.number().min(0, "Score is 0 to 1").max(1, "Score is 0 to 1"),
+    passingScore: z.coerce.number({ error: NOT_A_NUMBER }).min(0, "Score is 0 to 1").max(1, "Score is 0 to 1"),
     maxPasses: count,
     maxTurns: count,
     maxTokens: count,
