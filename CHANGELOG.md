@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.135.1](https://github.com/zeroroot-ai/dashboard/compare/v0.135.0...v0.135.1) (2026-10-25)
+
+
+### Bug Fixes
+
+* **deps:** move undici to 7.30.1 and 8.12.3 ([#343](https://github.com/zeroroot-ai/dashboard/issues/343)) ([9ecbc18](https://github.com/zeroroot-ai/dashboard/commit/9ecbc1817e9835e56bc56c227fe55d9461a94fd5))
+
 ## [0.135.0](https://github.com/zeroroot-ai/dashboard/compare/v0.134.1...v0.135.0) (2026-10-25)
 
 
