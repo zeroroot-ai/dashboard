@@ -6,8 +6,8 @@
  * thread stall: a replayed backlog must reach xterm in a few writes, and a
  * wall of terminals must open one per frame.
  */
-import { describe, it, expect, vi } from "vitest";
-import { createBatchedWriter, type FrameScheduler } from "../batched-writer";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { createBatchedWriter, scheduleFrame, type FrameScheduler } from "../batched-writer";
 import { createOpenQueue } from "../open-queue";
 
 /** A scheduler the test steps by hand, one frame at a time. */
@@ -95,5 +95,63 @@ describe("createOpenQueue", () => {
     cancel();
     while (frames.count() > 0) frames.frame();
     expect(ran).not.toHaveBeenCalled();
+  });
+});
+
+describe("createOpenQueue with a failing task", () => {
+  it("still opens the next tile when one open throws", () => {
+    const frames = manualFrames();
+    const q = createOpenQueue(frames.schedule);
+    const second = vi.fn();
+    q.enqueue(() => {
+      throw new Error("open failed");
+    });
+    q.enqueue(second);
+    expect(() => frames.frame()).toThrow("open failed");
+    expect(frames.count()).toBe(1);
+    frames.frame();
+    expect(second).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("scheduleFrame", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("runs by timer when the tab is hidden and no frame comes", () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("requestAnimationFrame", () => 1);
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    const fn = vi.fn();
+    scheduleFrame(fn);
+    vi.advanceTimersByTime(1000);
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  it("runs once when the frame comes first", () => {
+    vi.useFakeTimers();
+    let frame: (() => void) | undefined;
+    vi.stubGlobal("requestAnimationFrame", (f: () => void) => {
+      frame = f;
+      return 1;
+    });
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    const fn = vi.fn();
+    scheduleFrame(fn);
+    frame?.();
+    vi.advanceTimersByTime(1000);
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not run after cancel", () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("requestAnimationFrame", () => 1);
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    const fn = vi.fn();
+    scheduleFrame(fn)();
+    vi.advanceTimersByTime(1000);
+    expect(fn).not.toHaveBeenCalled();
   });
 });

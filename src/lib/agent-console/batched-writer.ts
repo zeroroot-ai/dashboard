@@ -14,14 +14,29 @@
 /** Runs `fn` on the next frame and returns a function that cancels it. */
 export type FrameScheduler = (fn: () => void) => () => void;
 
-/** Uses requestAnimationFrame, or a 16 ms timer where it does not exist. */
+/** How long a frame may take before a timer runs the work instead. */
+const FRAME_FALLBACK_MS = 250;
+
+/**
+ * Uses requestAnimationFrame. A hidden tab does not run frames, so a timer
+ * runs the work when no frame comes in time. The first of the two wins.
+ */
 export const scheduleFrame: FrameScheduler = (fn) => {
-  if (typeof requestAnimationFrame === "function") {
-    const id = requestAnimationFrame(fn);
-    return () => cancelAnimationFrame(id);
-  }
-  const id = setTimeout(fn, 16);
-  return () => clearTimeout(id);
+  let done = false;
+  const run = (): void => {
+    if (done) return;
+    done = true;
+    cancel();
+    fn();
+  };
+  const raf = typeof requestAnimationFrame === "function" ? requestAnimationFrame(run) : null;
+  const timer = setTimeout(run, raf === null ? 16 : FRAME_FALLBACK_MS);
+  const cancel = (): void => {
+    done = true;
+    if (raf !== null) cancelAnimationFrame(raf);
+    clearTimeout(timer);
+  };
+  return cancel;
 };
 
 export interface BatchedWriter {

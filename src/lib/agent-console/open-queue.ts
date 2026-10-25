@@ -25,8 +25,12 @@ export function createOpenQueue(schedule: FrameScheduler = scheduleFrame): OpenQ
   const run = (): void => {
     cancel = null;
     const task = tasks.shift();
-    if (task) task();
-    if (tasks.length > 0) cancel = schedule(run);
+    try {
+      if (task) task();
+    } finally {
+      // A task that throws must not starve the tasks behind it.
+      if (tasks.length > 0) cancel = schedule(run);
+    }
   };
 
   return {
