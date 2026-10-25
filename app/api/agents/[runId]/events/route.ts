@@ -27,6 +27,11 @@
  *   - `event: error`            , any other upstream failure. The client
  *                                 closes.
  *
+ * Resume: the client sends `?since=<seq>` on a connection it opens. A
+ * native EventSource reconnect repeats the URL and sends `Last-Event-ID`
+ * with the `id:` of the last frame. The route resumes after the later of
+ * the two, so neither path replays the backlog.
+ *
  * Security model:
  *   - The call runs through `userClient` -> Envoy (JWT + SPIFFE mTLS) +
  *     ext-authz -> daemon, per dashboard `CLAUDE.md`. No direct daemon channel.
@@ -99,13 +104,21 @@ export async function GET(
   // `since` is the last event sequence the client saw. The daemon replays
   // its backlog after it, so a client that reconnects backfills its tail
   // without a gap or a duplicate. Missing or zero means the whole backlog.
-  const sinceSeq = parseSince(request.nextUrl.searchParams.get('since'));
-  if (sinceSeq === null) {
+  const querySince = parseSince(request.nextUrl.searchParams.get('since'));
+  if (querySince === null) {
     return new Response(JSON.stringify({ error: 'since must be a non-negative integer' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     });
   }
+
+  // A native EventSource reconnect repeats the original URL and sends the
+  // last frame id it saw in `Last-Event-ID`. Resume after the later of the
+  // two cursors, so a reconnect never replays the whole backlog. A bad
+  // header value is ignored: only the `since` query can fail the request.
+  const lastEventId = parseSince(request.headers.get('last-event-id'));
+  const sinceSeq =
+    lastEventId !== null && lastEventId > querySince ? lastEventId : querySince;
 
   const baseLog = { route: 'agents/events', runId, sinceSeq: sinceSeq.toString() } as const;
   const encoder = new TextEncoder();
