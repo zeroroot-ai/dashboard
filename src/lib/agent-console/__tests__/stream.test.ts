@@ -8,7 +8,7 @@
  * status phases. Chunk decoding and reassembly moved here from the hook.
  */
 import { describe, it, expect, vi } from "vitest";
-import { AgentStream, AgentStreamRegistry, type EventSourceLike } from "../stream";
+import { AgentStream, AgentStreamRegistry, DEFAULT_STREAM_CAP, type EventSourceLike } from "../stream";
 
 class FakeEventSource implements EventSourceLike {
   listeners: Record<string, ((e: MessageEvent<string>) => void)[]> = {};
@@ -238,6 +238,23 @@ describe("AgentStreamRegistry fan-out", () => {
     expect(r.stats()).toEqual({ cap: 3, live: 3, waiting: 22 });
   });
 
+  it("reports which runs wait for a slot", () => {
+    const { opener } = open();
+    const r = new AgentStreamRegistry({ open: opener, cap: 1 });
+    for (const id of ["a", "b"]) {
+      r.acquire(id);
+      r.setLive(id, true);
+    }
+    expect(r.isWaiting("a")).toBe(false);
+    expect(r.isWaiting("b")).toBe(true);
+    r.setLive("a", false);
+    expect(r.isWaiting("b")).toBe(false);
+  });
+
+  it("defaults the cap above a 12 tile wall", () => {
+    expect(new AgentStreamRegistry().cap).toBeGreaterThanOrEqual(12);
+  });
+
   it("frees a slot when demand goes and when a stream ends", () => {
     const { sources, opener } = open();
     const r = new AgentStreamRegistry({ open: opener, cap: 2 });
@@ -308,7 +325,7 @@ describe("AgentStreamRegistry fan-out", () => {
   it("accepts a bare opener for backward compatibility and enforces a cap of at least 1", () => {
     const { sources, opener } = open();
     const r = new AgentStreamRegistry(opener);
-    expect(r.cap).toBe(6);
+    expect(r.cap).toBe(DEFAULT_STREAM_CAP);
     const r0 = new AgentStreamRegistry({ open: opener, cap: 0 });
     expect(r0.cap).toBe(1);
     r.acquire("a");
