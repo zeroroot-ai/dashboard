@@ -79,6 +79,19 @@ describe("SignInAction", () => {
     expect(screen.getByTestId("sign-in-panel")).toHaveTextContent("claude.ai");
   });
 
+  it("keeps a long sign-in URL inside the dialog so Submit code stays on screen", async () => {
+    const src = await openAndStart();
+    const long = `https://claude.ai/oauth/authorize?code=true&state=${"x".repeat(400)}`;
+    act(() => src.emit("step", { url: long, codePrompt: "Paste code here if prompted", done: false, error: "" }));
+    await screen.findByTestId("sign-in-code-form");
+    // jsdom has no layout. The grid item and both rows must opt out of the
+    // min-content width, or the URL widens the dialog past the screen.
+    expect(screen.getByTestId("sign-in-flow")).toHaveClass("min-w-0");
+    expect(screen.getByTestId("sign-in-link").parentElement).toHaveClass("min-w-0");
+    expect(screen.getByTestId("sign-in-code").parentElement).toHaveClass("min-w-0");
+    expect(screen.getByTestId("sign-in-submit")).toHaveClass("shrink-0");
+  });
+
   it("starts the flow, shows the URL as a link with a copy button, then the code prompt, then done", async () => {
     const src = await openAndStart();
     expect(src.url).toBe("/api/banks/bank-1/members/member-12345678/sign-in/events");

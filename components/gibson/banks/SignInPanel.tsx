@@ -39,8 +39,8 @@ export function SignInAction({ bankId, member }: { bankId: string; member: Membe
         Sign in
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md" data-testid="sign-in-panel">
-          <DialogHeader>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md" data-testid="sign-in-panel">
+          <DialogHeader className="min-w-0">
             <DialogTitle className="text-sm">Sign in member {shortId(member.id)}</DialogTitle>
             <DialogDescription className="text-xs">
               The member runs the Anthropic sign-in inside its sandbox. Open the link, sign in on claude.ai, and paste the code back here. ZeroRoot never sees the token.
@@ -70,8 +70,12 @@ function SignInFlow({ bankId, memberId, onClose }: { bankId: string; memberId: s
 
   const busy = relay.phase === "starting" || relay.phase === "submitting";
 
+  // DialogContent is a grid. A grid item is as wide as its content unless it
+  // sets min-w-0, so without it the unbroken sign-in URL widened the dialog
+  // past the screen and pushed Submit code out of view.
+
   return (
-    <div className="space-y-3 text-xs" data-testid="sign-in-flow" data-phase={relay.phase}>
+    <div className="min-w-0 space-y-3 text-xs" data-testid="sign-in-flow" data-phase={relay.phase}>
       {relay.phase === "idle" ? (
         <Button type="button" size="sm" className="text-xs" onClick={() => void relay.start()} data-testid="sign-in-start">
           <KeyRoundIcon className="size-3" />
@@ -89,7 +93,7 @@ function SignInFlow({ bankId, memberId, onClose }: { bankId: string; memberId: s
       {relay.url ? (
         <div className="space-y-1" data-testid="sign-in-url">
           <p className="text-muted-foreground">Open this link and sign in on claude.ai:</p>
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <a href={relay.url} target="_blank" rel="noreferrer noopener" className="inline-flex min-w-0 items-center gap-1 truncate font-mono text-link underline-offset-2 hover:underline" data-testid="sign-in-link">
               <ExternalLinkIcon className="size-3 shrink-0" aria-hidden="true" />
               <span className="truncate">{relay.url}</span>
@@ -111,12 +115,12 @@ function SignInFlow({ bankId, memberId, onClose }: { bankId: string; memberId: s
             if (code.trim()) void relay.submitCode(code.trim());
           }}
         >
-          <label className="text-muted-foreground" htmlFor="sign-in-code">
+          <label className="block break-words text-muted-foreground" htmlFor="sign-in-code">
             {relay.codePrompt || "Paste the code from claude.ai"}
           </label>
-          <div className="flex items-center gap-2">
-            <Input id="sign-in-code" value={code} onChange={(e) => setCode(e.target.value)} className="font-mono text-xs" autoComplete="off" spellCheck={false} disabled={busy} data-testid="sign-in-code" />
-            <Button type="submit" size="sm" className="text-xs" disabled={busy || code.trim() === ""} data-testid="sign-in-submit">
+          <div className="flex min-w-0 items-center gap-2">
+            <Input id="sign-in-code" value={code} onChange={(e) => setCode(e.target.value)} className="min-w-0 flex-1 font-mono text-xs" autoComplete="off" spellCheck={false} disabled={busy} data-testid="sign-in-code" />
+            <Button type="submit" size="sm" className="shrink-0 text-xs" disabled={busy || code.trim() === ""} data-testid="sign-in-submit">
               {relay.phase === "submitting" ? <Loader2 className="size-3 animate-spin" /> : null}
               Submit code
             </Button>
@@ -133,7 +137,7 @@ function SignInFlow({ bankId, memberId, onClose }: { bankId: string; memberId: s
 
       {relay.phase === "error" ? (
         <div className="space-y-2" data-testid="sign-in-error">
-          <p className="text-destructive">{relay.error}</p>
+          <p className="break-words text-destructive">{relay.error}</p>
           <Button type="button" size="sm" variant="outline" className="text-xs" onClick={() => void relay.start()} data-testid="sign-in-retry">
             Sign in again
           </Button>
