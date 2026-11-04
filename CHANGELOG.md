@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.135.4](https://github.com/zeroroot-ai/dashboard/compare/v0.135.3...v0.135.4) (2026-11-04)
+
+
+### Bug Fixes
+
+* **nav:** remove the Deploy entry from the sidebar ([#362](https://github.com/zeroroot-ai/dashboard/issues/362)) ([aa5616b](https://github.com/zeroroot-ai/dashboard/commit/aa5616ba20b1db8cacdf5cfe637b132a75c4aca1))
+
 ## [0.135.3](https://github.com/zeroroot-ai/dashboard/compare/v0.135.2...v0.135.3) (2026-10-25)
 
 
