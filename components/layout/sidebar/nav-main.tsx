@@ -50,7 +50,6 @@ import {
   MessageSquareIcon,
   NetworkIcon,
   Plug2Icon,
-  RocketIcon,
   ScrollTextIcon,
   ServerIcon,
   SettingsIcon,
@@ -216,11 +215,6 @@ export const navItems: NavGroup[] = [
         title: "Domain Packs",
         href: "/dashboard/domain-packs",
         icon: BoxIcon
-      },
-      {
-        title: "Deploy",
-        href: "/dashboard/deploy",
-        icon: RocketIcon
       },
       {
         title: "Chat",
