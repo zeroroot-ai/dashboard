@@ -1213,3 +1213,47 @@ describe("ProviderWizard, the stored context window (gibson#1193)", () => {
     expect(screen.getByRole("button", { name: /save provider/i })).toBeEnabled();
   });
 });
+
+describe("ProviderWizard default-provider preselection (first provider)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  async function renderAndAdvance(preselectDefault: boolean) {
+    const user = userEvent.setup();
+    render(
+      <ProviderWizard
+        supported={[anthropicDescriptor]}
+        initialType="anthropic"
+        preselectDefault={preselectDefault}
+      />,
+      { wrapper },
+    );
+    await advanceToStep3Advisory(user, {
+      fetchBody: {
+        result: {
+          ok: true,
+          latencyMs: 42,
+          models: [
+            { name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000 },
+          ],
+        },
+      },
+      fetchOk: true,
+    });
+  }
+
+  it("checks 'set as default' when the tenant has no default yet", async () => {
+    await renderAndAdvance(true);
+    expect(
+      screen.getByRole("checkbox", { name: /set as default provider/i }),
+    ).toBeChecked();
+  });
+
+  it("leaves 'set as default' unchecked when a default already exists", async () => {
+    await renderAndAdvance(false);
+    expect(
+      screen.getByRole("checkbox", { name: /set as default provider/i }),
+    ).not.toBeChecked();
+  });
+});
