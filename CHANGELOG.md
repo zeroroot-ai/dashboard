@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.135.5](https://github.com/zeroroot-ai/dashboard/compare/v0.135.4...v0.135.5) (2026-11-04)
+
+
+### Bug Fixes
+
+* **providers:** default the tenant's first provider so the product sees it ([#365](https://github.com/zeroroot-ai/dashboard/issues/365)) ([2ffb17c](https://github.com/zeroroot-ai/dashboard/commit/2ffb17c1c26e9fe510f7d37e033c575d77b99f69)), closes [#364](https://github.com/zeroroot-ai/dashboard/issues/364)
+
 ## [0.135.4](https://github.com/zeroroot-ai/dashboard/compare/v0.135.3...v0.135.4) (2026-11-04)
 
 
