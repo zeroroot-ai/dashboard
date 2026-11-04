@@ -133,6 +133,14 @@ interface ProviderWizardProps {
   initialType?: string;
   /** Optional cancel button, present in the dialog form, absent in empty-state. */
   onCancel?: () => void;
+  /**
+   * Preselect the "set as default" checkbox. The parent passes true when the
+   * tenant has no default provider yet, so the first provider a tenant adds
+   * becomes the default without a second step. With no default provider the
+   * chat, the mission-create form and a bank all report "no provider
+   * configured" even though one exists.
+   */
+  preselectDefault?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -978,6 +986,7 @@ export function ProviderWizard({
   onComplete,
   initialType = "",
   onCancel,
+  preselectDefault = false,
 }: ProviderWizardProps) {
   const [selectedType, setSelectedType] = React.useState<string>(initialType);
   const [formValues, setFormValues] = React.useState<CredentialFormValues>({
@@ -986,7 +995,7 @@ export function ProviderWizard({
   });
   const [probeResult, setProbeResult] = React.useState<ProbeResult | null>(null);
   const [pickedModel, setPickedModel] = React.useState<string>("");
-  const [setAsDefault, setSetAsDefault] = React.useState<boolean>(false);
+  const [setAsDefault, setSetAsDefault] = React.useState<boolean>(preselectDefault);
   const [isTestPending, setIsTestPending] = React.useState<boolean>(false);
   // E11 BYO-embedder (gibson#810): a provider declares which services it
   // fulfills (chat and/or embedding) plus an independent default embedding

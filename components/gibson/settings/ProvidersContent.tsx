@@ -519,6 +519,10 @@ export function ProvidersContent() {
   const isLoading = isSupportedLoading || isProvidersLoading;
   const providers = data?.providers ?? [];
   const isEmpty = !isLoading && !isError && providers.length === 0;
+  // When the tenant has no default provider, the next one added should become
+  // the default. Without a default, the chat, the mission-create form and a
+  // bank all report "no provider configured" even though one exists.
+  const hasDefault = providers.some((p) => p.isDefault);
 
   function refresh() {
     void queryClient.invalidateQueries({ queryKey: providerQueryKeys.lists() });
@@ -553,6 +557,7 @@ export function ProvidersContent() {
               </DialogHeader>
               <ProviderWizard
                 supported={supported ?? []}
+                preselectDefault={!hasDefault}
                 onComplete={() => {
                   setWizardOpen(false);
                   refresh();
@@ -593,6 +598,7 @@ export function ProvidersContent() {
             <CardContent>
               <ProviderWizard
                 supported={supported ?? []}
+                preselectDefault={!hasDefault}
                 onComplete={refresh}
               />
             </CardContent>
