@@ -6,39 +6,32 @@
 /**
  * ProviderWizard
  *
- * Three-step flow for adding an LLM provider:
+ * Three-step flow for adding an LLM provider (gibson#1394). The wizard SAVES
+ * the provider first and tests it after. No call sends a credential that is
+ * not saved.
  *
  *   1. Pick provider type   , descriptors come from the daemon's
- *                              GetSupportedProviders RPC.
- *   2. Enter credentials +  , fields rendered from the descriptor's
- *      Test connection         CredentialField list. "Test" hits the daemon
- *                              TestProvider RPC, which returns the live model
- *                              catalog from the provider's API on success.
- *   3. Pick a default model , populated from the live model list the test
- *      and save                returned. With no list (the test failed), the
- *                              person types a model ID. The platform keeps no
- *                              hand-written model list (gibson#1193).
+ *                              GetSupportedProviders RPC. Only a type that
+ *                              the model gateway routes is offered.
+ *   2. Enter credentials,   , fields rendered from the descriptor's
+ *      model and context       CredentialField list. The name must be a valid
+ *      window, then save       Kubernetes name. A chat model needs a stated
+ *                              context window. Save calls CreateProvider.
+ *   3. Test the saved       , the route of the provider on the model gateway
+ *      provider                is made after the save. The panel waits for it,
+ *                              then tests. A failed test leaves the saved
+ *                              provider, which the person can edit or remove.
  *
  * The same component drives the empty-state first-run flow AND the
  * "Add Provider" dialog for subsequent providers, the only difference is
  * the surrounding chrome (full panel vs. dialog).
- *
- * Spec: providers-wizard.
  */
 
 import * as React from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { Control } from "react-hook-form";
 import { toast } from "sonner";
-import {
-  AlertCircle,
-  CheckCircle2,
-  ChevronLeft,
-  Loader2,
-  Plug,
-  Sparkles,
-  WifiOff,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, ChevronLeft, Loader2, Sparkles } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -83,9 +76,10 @@ import {
   isEmbeddingOnlyProviderType,
   defaultCapabilitiesForType,
   selectableCapabilitiesForType,
-  chatCapableModels,
 } from "@/src/lib/provider-capabilities";
-import { apiFetch } from "@/src/lib/api/fetch";
+import { isOfferedProviderType } from "@/src/lib/providers/offered-types";
+import { PROVIDER_NAME_MAX_LENGTH, providerNameError } from "@/src/lib/providers/provider-name";
+import { ProviderTestPanel } from "./ProviderTestPanel";
 import { Textarea } from "@/components/ui/textarea";
 import { loginShapeHint } from "@/src/lib/providers/login-shape";
 import { isSecretDocumentField, validateSecretDocument } from "@/src/lib/providers/secret-document";
@@ -102,27 +96,9 @@ interface FoundModel {
   capabilities?: ProviderCapability[];
 }
 
-export interface ProbeResult {
-  ok: boolean;
-  latencyMs: number;
-  error?: string;
-  models: FoundModel[];
-  /** True when an embedding probe was attempted and succeeded (gibson#1072). */
-  embeddingOk?: boolean;
-  /** Vector dimension from the embedding probe, 0/absent when not probed. */
-  embeddingDimension?: number;
-  /** Error from the embedding probe when embeddingOk=false. */
-  embeddingError?: string;
-}
-
 interface CredentialFormValues {
   name: string;
   credentials: Record<string, string>;
-  /**
-   * Optional. A provider with no model list call (a Microsoft Foundry
-   * deployment) is tested with one message to this model (gibson#1193).
-   */
-  testModel?: string;
 }
 
 interface ProviderWizardProps {
@@ -515,18 +491,15 @@ function IrsaAwareCredentialFields({
 }
 
 // ---------------------------------------------------------------------------
-// Step 2: credentials + test connection
+// Step 2: credentials (the test runs after the save)
 // ---------------------------------------------------------------------------
 
-interface CredentialsAndTestProps {
+interface CredentialsFormProps {
   descriptor: SupportedProviderDescriptor;
 
   // Wizard-mode props (used by ProviderWizard)
   formValues?: CredentialFormValues;
   setFormValues?: (v: CredentialFormValues) => void;
-  probeResult?: ProbeResult | null;
-  onTest?: (values: CredentialFormValues) => void;
-  isTestPending?: boolean;
 
   // Edit-dialog-mode props (used by ConfiguredProviderRow edit dialog)
   /** Pre-populate non-secret fields (secret fields always start blank). */
@@ -535,25 +508,24 @@ interface CredentialsAndTestProps {
   secretFieldPlaceholder?: string;
   /** Called after every form-value change, lets the parent read current values. */
   onValuesChange?: (values: CredentialFormValues) => void;
-  /** Called with the probe result banner data after a test. */
-  onTestResult?: (result: ProbeResult | null) => void;
   /** Override the provider name shown in the form's Name field (edit mode). */
   providerName?: string;
 }
 
-export function CredentialsAndTest({
+/**
+ * The name and the credential fields of a provider. The form has no test
+ * button: a provider is tested after it is saved (gibson#1394). The parent
+ * reads the values through setFormValues or onValuesChange.
+ */
+export function CredentialsForm({
   descriptor,
   formValues: externalFormValues,
   setFormValues,
-  probeResult: externalProbeResult,
-  onTest,
-  isTestPending: externalIsTestPending,
   initialValues,
   secretFieldPlaceholder,
   onValuesChange,
-  onTestResult,
   providerName,
-}: CredentialsAndTestProps) {
+}: CredentialsFormProps) {
   // Build default values: non-secret fields pre-populated from initialValues;
   // secret fields always start blank (user must re-enter to change).
   const defaultCredentials: Record<string, string> = {};
@@ -569,8 +541,8 @@ export function CredentialsAndTest({
     mode: "onChange",
   });
 
-  // Keep the parent's state in sync, needed so the model picker on step 3
-  // can read the credentials at "Save" time.
+  // Keep the parent's state in sync, needed so the save button can read the
+  // credentials.
   React.useEffect(() => {
     const sub = form.watch((value) => {
       const vals: CredentialFormValues = {
@@ -583,22 +555,15 @@ export function CredentialsAndTest({
     return () => sub.unsubscribe();
   }, [form, setFormValues, onValuesChange]);
 
-  function handleSubmit(values: CredentialFormValues) {
-    if (onTest) {
-      onTest(values);
-    }
-    // Edit-dialog mode: no-op submit (Save is triggered externally via DialogFooter)
-  }
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
         {/* Name field: shown only in wizard (create) mode */}
         {!providerName && (
         <FormField
           control={form.control}
           name="name"
-          rules={{ required: "Name is required" }}
+          rules={{ validate: (v) => providerNameError(v) ?? true }}
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-xs">Name</FormLabel>
@@ -606,12 +571,15 @@ export function CredentialsAndTest({
                 <Input
                   {...field}
                   placeholder={`${descriptor.type}-prod`}
+                  maxLength={PROVIDER_NAME_MAX_LENGTH}
                   className="font-mono text-xs"
                   autoComplete="off"
                 />
               </FormControl>
               <FormDescription className="text-xs">
-                Unique name for this provider instance. Used to reference it from agent slots.
+                Use lowercase letters, digits and hyphens, at most {PROVIDER_NAME_MAX_LENGTH}{" "}
+                characters. The name must be unique for this workspace. Agent slots use it to
+                reference this provider.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -619,104 +587,22 @@ export function CredentialsAndTest({
         />
         )}
 
-        <FormField
-          control={form.control}
-          name="testModel"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-xs">Model or deployment name (optional)</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  value={field.value ?? ""}
-                  placeholder="leave empty when the provider lists its models"
-                  className="font-mono text-xs"
-                  autoComplete="off"
-                />
-              </FormControl>
-              <FormDescription className="text-xs">
-                Needed only when the provider has no model list, such as a Foundry deployment.
-              </FormDescription>
-            </FormItem>
-          )}
-        />
-
         <IrsaAwareCredentialFields
           descriptor={descriptor}
           control={form.control}
           secretFieldPlaceholder={secretFieldPlaceholder}
         />
-
-        {/* Probe result banner */}
-        {externalProbeResult != null && externalProbeResult.ok && (
-          <Alert>
-            <CheckCircle2 className="size-4 text-highlight" />
-            <AlertDescription className="text-xs">
-              Connection verified ({externalProbeResult!.latencyMs} ms).{" "}
-              {externalProbeResult!.models.length > 0 ? (
-                <>Found {externalProbeResult!.models.length} model{externalProbeResult!.models.length === 1 ? "" : "s"}.</>
-              ) : (
-                "The provider listed no models. Type the model name on the next step."
-              )}
-              {externalProbeResult!.embeddingOk && externalProbeResult!.embeddingDimension ? (
-                <> Embedding probe passed ({externalProbeResult!.embeddingDimension}d).</>
-              ) : externalProbeResult!.embeddingError ? (
-                <> Embedding probe failed: {externalProbeResult!.embeddingError}</>
-              ) : null}
-            </AlertDescription>
-          </Alert>
-        )}
-        {externalProbeResult != null && !externalProbeResult.ok && (
-          <Alert variant="destructive">
-            <WifiOff className="size-4" />
-            <AlertDescription className="text-xs">
-              {externalProbeResult!.error ?? "Connection failed."}
-            </AlertDescription>
-            {externalProbeResult!.error?.includes("allow_private_llm_endpoints") && (
-              <p className="mt-2 text-xs">
-                To allow private or on-premise endpoints, set{" "}
-                <code className="font-mono">
-                  security.allow_private_llm_endpoints = true
-                </code>{" "}
-                in your daemon configuration.
-              </p>
-            )}
-          </Alert>
-        )}
-
-        <div className="flex items-center gap-2 pt-1">
-          <Button
-            type="submit"
-            size="sm"
-            variant="outline"
-            className="text-xs"
-            disabled={externalIsTestPending}
-          >
-            {externalIsTestPending ? (
-              <Loader2 className="size-3 animate-spin" />
-            ) : (
-              <Plug className="size-3" />
-            )}
-            Test connection
-          </Button>
-          {!descriptor.selfHosted && (
-            <p className="text-muted-foreground text-xs">
-              Validates the credentials and pulls the live model list.
-            </p>
-          )}
-        </div>
       </form>
     </Form>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Step 3: model picker + save
+// Step 2, second part: model, context window and save
 // ---------------------------------------------------------------------------
 
 function ModelPickerAndSave({
   descriptor,
-  liveModels,
   pickedModel,
   setPickedModel,
   setAsDefault,
@@ -729,9 +615,9 @@ function ModelPickerAndSave({
   setContextWindow,
   onSave,
   isSavePending,
+  blockedReason,
 }: {
   descriptor: SupportedProviderDescriptor;
-  liveModels: FoundModel[];
   pickedModel: string;
   setPickedModel: (m: string) => void;
   setAsDefault: boolean;
@@ -740,11 +626,13 @@ function ModelPickerAndSave({
   setCapabilities: (c: ProviderCapability[]) => void;
   embeddingModel: string;
   setEmbeddingModel: (m: string) => void;
-  /** The stated context window, used only when the provider reported none. */
+  /** The stated context window of the chat model. A chat model needs it. */
   contextWindow: string;
   setContextWindow: (w: string) => void;
   onSave: () => void;
   isSavePending: boolean;
+  /** Extra reason that the form is not ready, for example an invalid name. */
+  blockedReason?: string | null;
 }) {
   const servesChat = capabilities.includes("chat");
   const servesEmbedding = capabilities.includes("embedding");
@@ -766,11 +654,6 @@ function ModelPickerAndSave({
   // capability must be selected.
   const embeddingReady = !servesEmbedding || Boolean(embeddingModel.trim());
 
-  // Chat model list: only what the provider itself reported to the test, less
-  // each model that reports capabilities without chat (dashboard#311). With
-  // no list, the picker below takes a typed model ID (gibson#1193).
-  const chatModels: FoundModel[] = React.useMemo(() => chatCapableModels(liveModels), [liveModels]);
-
   // Embedding model list: from gibson#1072 SupportedProvider.embeddingModels
   // (field 7). For embedding-only providers this IS the complete catalog.
   // For dual-capability providers (openai, bedrock, cohere) it is pre-filtered
@@ -784,22 +667,19 @@ function ModelPickerAndSave({
     }));
   }, [descriptor.embeddingModels]);
 
-  const pickedModelMeta = chatModels.find((m) => m.name === pickedModel);
-  // The daemon stores the window of the chosen model (gibson#1193). When the
-  // provider reported none, the person states it once here.
-  const windowNeeded = servesChat && Boolean(pickedModel) && !(pickedModelMeta?.contextWindow);
+  // The provider is not saved yet, so no live model list exists. The person
+  // types the chat model and states its context window. The daemon refuses a
+  // chat model with no stated window (gibson#1394).
   const statedWindow = Number(contextWindow);
   const windowReady =
-    !windowNeeded || (Number.isInteger(statedWindow) && statedWindow >= 1 && statedWindow <= 10_000_000);
-  const chatReady = !servesChat || (Boolean(pickedModel) && windowReady);
+    Number.isInteger(statedWindow) && statedWindow >= 1 && statedWindow <= 10_000_000;
+  const chatReady = !servesChat || (pickedModel.trim() !== "" && windowReady);
   const saveDisabled =
-    isSavePending || capabilities.length === 0 || !chatReady || !embeddingReady;
-
-  React.useEffect(() => {
-    if (!pickedModel && chatModels.length > 0 && servesChat) {
-      setPickedModel(chatModels[0].name);
-    }
-  }, [chatModels, pickedModel, setPickedModel, servesChat]);
+    isSavePending ||
+    capabilities.length === 0 ||
+    !chatReady ||
+    !embeddingReady ||
+    Boolean(blockedReason);
 
   // When the provider is embedding-only, default the embedding model picker
   // to the first entry in the catalog if none has been selected yet.
@@ -849,67 +729,48 @@ function ModelPickerAndSave({
       </div>
 
       {servesChat && (
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium">Default chat model</label>
-          {chatModels.length === 0 ? (
-            <Alert>
-              <AlertCircle className="size-4" />
-              <AlertDescription className="text-xs">
-                The provider didn&apos;t return a model list. Type the model name
-                manually below, Gibson will use it for new agent slots that
-                reference this provider.
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <Select value={pickedModel} onValueChange={setPickedModel}>
-              <SelectTrigger className="w-full text-xs">
-                <SelectValue placeholder="Select model" />
-              </SelectTrigger>
-              <SelectContent>
-                {chatModels.map((m) => (
-                  <SelectItem key={m.name} value={m.name} className="font-mono text-xs">
-                    <div className="flex items-center justify-between gap-3">
-                      <span>{m.name}</span>
-                      <div className="flex items-center gap-1.5">
-                        {m.contextWindow > 0 && (
-                          <span className="text-muted-foreground text-[10px]">
-                            {m.contextWindow.toLocaleString()} ctx
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          {chatModels.length === 0 && (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <label htmlFor="chat-model" className="text-xs font-medium">
+              Default chat model
+            </label>
             <Input
+              id="chat-model"
               value={pickedModel}
               onChange={(e) => setPickedModel(e.target.value)}
               placeholder="model-name"
               className="font-mono text-xs"
+              autoComplete="off"
+              spellCheck={false}
             />
-          )}
-          {windowNeeded && (
-            <div className="space-y-1">
-              <label htmlFor="context-window" className="text-xs font-medium">
-                Context window (tokens)
-              </label>
-              <Input
-                id="context-window"
-                inputMode="numeric"
-                value={contextWindow}
-                onChange={(e) => setContextWindow(e.target.value.replace(/[^0-9]/g, ""))}
-                placeholder="200000"
-                className="font-mono text-xs"
-              />
-              <p className="text-muted-foreground text-[11px]">
-                The provider does not report a context window for this model. Agents that need a
-                minimum window use this value.
-              </p>
-            </div>
-          )}
+            <p className="text-muted-foreground text-[11px]">
+              Type the model name. The test after the save lists the models that the provider
+              offers.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <label htmlFor="context-window" className="text-xs font-medium">
+              Context window (tokens)
+            </label>
+            <Input
+              id="context-window"
+              type="number"
+              min={1}
+              max={10000000}
+              step={1}
+              inputMode="numeric"
+              value={contextWindow}
+              onChange={(e) => setContextWindow(e.target.value.replace(/[^0-9]/g, ""))}
+              placeholder="200000"
+              className="font-mono text-xs"
+              required
+            />
+            <p className="text-muted-foreground text-[11px]">
+              The largest number of tokens that the chat model reads in one request. Find it in
+              the documentation of the provider. Agents that need a minimum window use this value.
+              Required for a chat model.
+            </p>
+          </div>
         </div>
       )}
 
@@ -973,6 +834,11 @@ function ModelPickerAndSave({
         {isSavePending && <Loader2 className="size-3 animate-spin" />}
         Save provider
       </Button>
+      {blockedReason ? (
+        <p className="text-muted-foreground text-[11px]" data-testid="save-blocked">
+          {blockedReason}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -988,19 +854,26 @@ export function ProviderWizard({
   onCancel,
   preselectDefault = false,
 }: ProviderWizardProps) {
-  const [selectedType, setSelectedType] = React.useState<string>(initialType);
+  // The wizard offers only the types that the model gateway routes.
+  const offered = React.useMemo(
+    () => supported.filter((d) => isOfferedProviderType(d.type)),
+    [supported],
+  );
+  const [selectedType, setSelectedType] = React.useState<string>(
+    isOfferedProviderType(initialType) ? initialType : "",
+  );
   const [formValues, setFormValues] = React.useState<CredentialFormValues>({
     name: initialType,
     credentials: {},
   });
-  const [probeResult, setProbeResult] = React.useState<ProbeResult | null>(null);
   const [pickedModel, setPickedModel] = React.useState<string>("");
   const [setAsDefault, setSetAsDefault] = React.useState<boolean>(preselectDefault);
-  const [isTestPending, setIsTestPending] = React.useState<boolean>(false);
+  // The name of the provider after a successful save. It starts step 3.
+  const [savedName, setSavedName] = React.useState<string | null>(null);
   // E11 BYO-embedder (gibson#810): a provider declares which services it
   // fulfills (chat and/or embedding) plus an independent default embedding
   // model. Default to chat-only — the legacy behavior — unless the
-  // initialType is embedding-only (voyage/openai-compatible/tei, gibson#1072).
+  // initialType is embedding-only (openai-compatible, gibson#1072).
   const [capabilities, setCapabilities] = React.useState<ProviderCapability[]>(
     () => defaultCapabilitiesForType(initialType),
   );
@@ -1008,106 +881,48 @@ export function ProviderWizard({
   const [contextWindow, setContextWindow] = React.useState<string>("");
 
   const createMutation = useCreateProvider();
-  const descriptor = supported.find((d) => d.type === selectedType);
+  const descriptor = offered.find((d) => d.type === selectedType);
 
-  // step: 1 = pick type, 2 = creds, 3 = model + save.
-  // Any completed probe result (pass or fail) advances to step 3; the probe
-  // is advisory, a failed test does not block saving (dashboard#288).
-  const step: 1 | 2 | 3 = !selectedType ? 1 : probeResult !== null ? 3 : 2;
+  // step: 1 = pick type, 2 = credentials, model and save, 3 = test the saved provider.
+  const step: 1 | 2 | 3 = savedName !== null ? 3 : !selectedType ? 1 : 2;
 
   function reset() {
     setSelectedType("");
     setFormValues({ name: "", credentials: {} });
-    setProbeResult(null);
     setPickedModel("");
     setSetAsDefault(false);
     setCapabilities(["chat"]);
     setEmbeddingModel("");
+    setContextWindow("");
+    setSavedName(null);
   }
 
   function pickType(type: string) {
     setSelectedType(type);
     setFormValues({ name: type, credentials: {} });
-    setProbeResult(null);
     setPickedModel("");
-    // Embedding-only providers (voyage/openai-compatible/tei) default to
-    // embedding capability only; others default to chat.
+    setContextWindow("");
+    // Embedding-only providers default to embedding capability only; others
+    // default to chat.
     setCapabilities(defaultCapabilitiesForType(type));
     setEmbeddingModel("");
   }
 
-  async function runTest(values: CredentialFormValues) {
-    if (!descriptor) return;
-    setIsTestPending(true);
-    setProbeResult(null);
-    try {
-      const res = await apiFetch("/api/settings/providers/test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: descriptor.type,
-          name: values.name,
-          // The daemon checks the key with the provider's own model list and
-          // returns that list. A typed model is sent only for a provider with
-          // no list call (gibson#1193).
-          ...(values.testModel?.trim() ? { defaultModel: values.testModel.trim() } : {}),
-          credentials: values.credentials,
-        }),
-      });
-      const body = (await res.json().catch(() => ({}))) as {
-        result?: ProbeResult;
-        error?: { message?: string };
-      };
-      if (!res.ok) {
-        setProbeResult({
-          ok: false,
-          latencyMs: 0,
-          error:
-            body.error?.message ??
-            `Test failed (HTTP ${res.status})`,
-          models: [],
-        });
-        return;
-      }
-      const r = body.result;
-      if (!r) {
-        setProbeResult({
-          ok: false,
-          latencyMs: 0,
-          error: "Daemon returned no result",
-          models: [],
-        });
-        return;
-      }
-      setProbeResult({
-        ok: r.ok,
-        latencyMs: r.latencyMs ?? 0,
-        error: r.error,
-        models: r.models ?? [],
-        // Embedding probe results from gibson#1072.
-        embeddingOk: r.embeddingOk,
-        embeddingDimension: r.embeddingDimension,
-        embeddingError: r.embeddingError,
-      });
-    } catch (err) {
-      setProbeResult({
-        ok: false,
-        latencyMs: 0,
-        error: err instanceof Error ? err.message : "Network error",
-        models: [],
-      });
-    } finally {
-      setIsTestPending(false);
-    }
-  }
-
-  function reportedWindow(model: string): number {
-    return probeResult?.models.find((m) => m.name === model)?.contextWindow ?? 0;
-  }
+  // Why the form cannot save yet, from the name and the required credentials.
+  const blockedReason: string | null = React.useMemo(() => {
+    if (!descriptor) return null;
+    const nameProblem = providerNameError(formValues.name);
+    if (nameProblem) return `Name: ${nameProblem}`;
+    const missing = descriptor.credentials.find(
+      (cf) => cf.required && !(formValues.credentials[cf.key] ?? "").trim(),
+    );
+    return missing ? `${missing.label} is required.` : null;
+  }, [descriptor, formValues]);
 
   function save() {
     if (!descriptor) return;
     const servesEmbedding = capabilities.includes("embedding");
+    const servesChat = capabilities.includes("chat");
     createMutation.mutate(
       {
         config: {
@@ -1120,18 +935,15 @@ export function ProviderWizard({
           // Only send an embedding model when the provider serves embeddings;
           // otherwise leave it empty (provider is chat-only).
           defaultEmbeddingModel: servesEmbedding ? embeddingModel : "",
-          // Only a chat model whose window the provider did not report gets a
-          // stated window (gibson#1193).
-          ...(capabilities.includes("chat") && reportedWindow(pickedModel) === 0 && contextWindow
-            ? { defaultModelContextWindow: Number(contextWindow) }
-            : {}),
+          // A chat model needs its stated window. The daemon reads no live list
+          // at save time (gibson#1394).
+          ...(servesChat ? { defaultModelContextWindow: Number(contextWindow) } : {}),
         },
       },
       {
         onSuccess: () => {
-          toast.success(`${descriptor.displayName} connected`);
-          reset();
-          onComplete?.();
+          toast.success(`${descriptor.displayName} saved`);
+          setSavedName(formValues.name);
         },
         onError: (err) => {
           toast.error("Failed to save provider", {
@@ -1148,19 +960,17 @@ export function ProviderWizard({
       <div className="flex items-center gap-2 text-xs">
         <StepDot active={step >= 1} done={step > 1} label="Choose" />
         <StepConnector />
-        <StepDot active={step >= 2} done={step > 2} label="Connect" />
+        <StepDot active={step >= 2} done={step > 2} label="Connect and save" />
         <StepConnector />
-        <StepDot active={step >= 3} done={false} label="Confirm" />
+        <StepDot active={step >= 3} done={false} label="Test" />
       </div>
 
       <Separator />
 
-      {step === 1 && (
-        <ProviderTypePicker supported={supported} onPick={pickType} />
-      )}
+      {step === 1 && <ProviderTypePicker supported={offered} onPick={pickType} />}
 
       {step === 2 && descriptor && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <Sparkles className="size-3.5" />
@@ -1177,72 +987,13 @@ export function ProviderWizard({
               Choose a different provider
             </Button>
           </div>
-          <CredentialsAndTest
+          <CredentialsForm
             descriptor={descriptor}
             formValues={formValues}
             setFormValues={setFormValues}
-            probeResult={probeResult}
-            onTest={runTest}
-            isTestPending={isTestPending}
           />
-        </div>
-      )}
-
-      {step === 3 && descriptor && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              {probeResult?.ok ? (
-                <CheckCircle2 className="size-3.5 text-highlight" />
-              ) : (
-                <Sparkles className="size-3.5" />
-              )}
-              <span className="text-sm font-medium">
-                {probeResult?.ok
-                  ? `${descriptor.displayName} verified`
-                  : descriptor.displayName}
-              </span>
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => setProbeResult(null)}
-              className="text-xs"
-            >
-              <ChevronLeft className="size-3" />
-              Edit credentials
-            </Button>
-          </div>
-
-          {probeResult?.ok && (
-            <Alert variant="default" className="border-highlight">
-              <AlertDescription className="text-xs">
-                Connection test passed.
-                {probeResult.embeddingOk && probeResult.embeddingDimension ? (
-                  <> Embedding probe: {probeResult.embeddingDimension}d vector.</>
-                ) : probeResult.embeddingError ? (
-                  <> Embedding probe failed: {probeResult.embeddingError}</>
-                ) : null}
-              </AlertDescription>
-            </Alert>
-          )}
-          {probeResult && !probeResult.ok && (
-            <Alert>
-              <AlertDescription>
-                Connection test did not pass, you can still save and troubleshoot later.
-                {probeResult.error ? (
-                  <span className="mt-1 block font-mono text-xs" data-testid="probe-error">
-                    {probeResult.error}
-                  </span>
-                ) : null}
-              </AlertDescription>
-            </Alert>
-          )}
-
           <ModelPickerAndSave
             descriptor={descriptor}
-            liveModels={probeResult?.models ?? []}
             pickedModel={pickedModel}
             setPickedModel={setPickedModel}
             setAsDefault={setAsDefault}
@@ -1255,11 +1006,26 @@ export function ProviderWizard({
             setContextWindow={setContextWindow}
             onSave={save}
             isSavePending={createMutation.isPending}
+            blockedReason={blockedReason}
           />
         </div>
       )}
 
-      {onCancel && (
+      {step === 3 && savedName !== null && (
+        <ProviderTestPanel
+          name={savedName}
+          onDone={() => {
+            reset();
+            onComplete?.();
+          }}
+          onRemoved={() => {
+            reset();
+            onComplete?.();
+          }}
+        />
+      )}
+
+      {onCancel && step !== 3 && (
         <div className="flex justify-end pt-2">
           <Button
             type="button"

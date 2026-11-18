@@ -2,19 +2,22 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * ProviderWizard tests (merged S5 + S9).
+ * ProviderWizard tests.
  *
- * S5 (dashboard#286): URL/BOOL/REGION typed field rendering, OpenAI compat, SSRF hint.
+ * S5 (dashboard#286): URL/BOOL/REGION typed field rendering, OpenAI compat.
  * S9 (dashboard#287): Bedrock IRSA toggle hide/show logic.
+ * dashboard#374 (gibson#1394): the wizard saves first and tests after. Only a
+ * type that the gateway routes is offered. The name is a Kubernetes name. A
+ * chat model needs a stated context window.
  */
 
 import React from "react";
-import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { ProviderWizard, CredentialsAndTest } from "./ProviderWizard";
+import { ProviderWizard, CredentialsForm } from "./ProviderWizard";
 import { CREDENTIAL_FIELD_TYPE } from "@/src/lib/gibson-client-types";
 import type { SupportedProviderDescriptor } from "@/src/lib/gibson-client-types";
 
@@ -36,11 +39,19 @@ beforeAll(() => {
 // Mocks
 // ---------------------------------------------------------------------------
 
+const { createMutate, createState } = vi.hoisted(() => ({
+  createMutate: vi.fn(),
+  createState: { isPending: false },
+}));
+
 vi.mock("@/src/hooks/useProviderMutations", () => ({
-  useCreateProvider: vi.fn(() => ({
-    mutate: vi.fn(),
-    isPending: false,
-  })),
+  useCreateProvider: () => ({ mutate: createMutate, isPending: createState.isPending }),
+  useDeleteProvider: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
+// The test panel has its own tests. Here it only shows that step 3 started.
+vi.mock("./ProviderTestPanel", () => ({
+  ProviderTestPanel: ({ name }: { name: string }) => <div data-testid="test-panel">{name}</div>,
 }));
 
 vi.mock("sonner", () => ({
@@ -55,7 +66,7 @@ function makeDescriptor(
   overrides: Partial<SupportedProviderDescriptor> = {},
 ): SupportedProviderDescriptor {
   return {
-    type: "test-provider",
+    type: "anthropic",
     displayName: "Test Provider",
     docsUrl: "https://example.com",
     selfHosted: false,
@@ -78,7 +89,7 @@ function renderWizardAtStep2(descriptor: SupportedProviderDescriptor) {
 }
 
 // ---------------------------------------------------------------------------
-// Helpers, CredentialsAndTest direct tests (S9)
+// Helpers, CredentialsForm direct tests (S9)
 // ---------------------------------------------------------------------------
 
 function createTestQueryClient() {
@@ -87,22 +98,18 @@ function createTestQueryClient() {
   });
 }
 
-function renderCredentialsAndTest(descriptor: SupportedProviderDescriptor) {
-  const onTest = vi.fn();
+function renderCredentialsForm(descriptor: SupportedProviderDescriptor) {
   const setFormValues = vi.fn();
   render(
     <QueryClientProvider client={createTestQueryClient()}>
-      <CredentialsAndTest
+      <CredentialsForm
         descriptor={descriptor}
         formValues={{ name: descriptor.type, credentials: {} }}
         setFormValues={setFormValues}
-        probeResult={null}
-        onTest={onTest}
-        isTestPending={false}
       />
     </QueryClientProvider>,
   );
-  return { onTest, setFormValues };
+  return { setFormValues };
 }
 
 // ---------------------------------------------------------------------------
@@ -362,78 +369,6 @@ describe("Fallback behavior when fieldType is absent", () => {
   });
 });
 
-describe("SSRF hint", () => {
-  it("shows the SSRF hint when error includes allow_private_llm_endpoints", () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        result: {
-          ok: false,
-          latencyMs: 0,
-          error:
-            "Connection refused: SSRF guard blocked private endpoint (allow_private_llm_endpoints)",
-          models: [],
-        },
-      }),
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    const descriptor = makeDescriptor({
-      credentials: [
-        {
-          key: "api_key",
-          label: "API Key",
-          required: true,
-          secret: true,
-          placeholder: "sk-...",
-          help: "",
-        },
-      ],
-    });
-    renderWizardAtStep2(descriptor);
-
-    const testBtn = screen.getByRole("button", { name: /test connection/i });
-    fireEvent.click(testBtn);
-
-    vi.unstubAllGlobals();
-  });
-
-  it("does NOT show the SSRF hint for generic connection errors", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        result: {
-          ok: false,
-          latencyMs: 0,
-          error: "Connection refused: dial tcp timeout",
-          models: [],
-        },
-      }),
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    const descriptor = makeDescriptor({
-      credentials: [
-        {
-          key: "api_key",
-          label: "API Key",
-          required: true,
-          secret: true,
-          placeholder: "sk-...",
-          help: "",
-        },
-      ],
-    });
-    renderWizardAtStep2(descriptor);
-
-    expect(
-      document.body.textContent?.includes("security.allow_private_llm_endpoints"),
-    ).toBe(false);
-
-    vi.unstubAllGlobals();
-  });
-});
-
 describe("OpenAI-compatible guidance", () => {
   it("shows the compatibility note on the OpenAI card", () => {
     const supported: SupportedProviderDescriptor[] = [
@@ -471,12 +406,12 @@ describe("ProviderWizard, IRSA toggle (dashboard#287)", () => {
   });
 
   it("renders the IRSA checkbox when the descriptor has a BOOL `use_irsa` field", () => {
-    renderCredentialsAndTest(bedrockWithIrsa);
+    renderCredentialsForm(bedrockWithIrsa);
     expect(screen.getByRole("checkbox", { name: /use irsa/i })).toBeInTheDocument();
   });
 
   it("renders static key fields visible when IRSA is unchecked (default)", () => {
-    renderCredentialsAndTest(bedrockWithIrsa);
+    renderCredentialsForm(bedrockWithIrsa);
     expect(screen.getByLabelText(/AWS Access Key ID/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/AWS Secret Access Key/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/AWS Session Token/i)).toBeInTheDocument();
@@ -484,7 +419,7 @@ describe("ProviderWizard, IRSA toggle (dashboard#287)", () => {
 
   it("hides secret+optional fields after checking IRSA", async () => {
     const user = userEvent.setup();
-    renderCredentialsAndTest(bedrockWithIrsa);
+    renderCredentialsForm(bedrockWithIrsa);
 
     const irsaCheckbox = screen.getByRole("checkbox", { name: /use irsa/i });
     await user.click(irsaCheckbox);
@@ -496,7 +431,7 @@ describe("ProviderWizard, IRSA toggle (dashboard#287)", () => {
 
   it("keeps non-secret fields visible when IRSA is active", async () => {
     const user = userEvent.setup();
-    renderCredentialsAndTest(bedrockWithIrsa);
+    renderCredentialsForm(bedrockWithIrsa);
 
     const irsaCheckbox = screen.getByRole("checkbox", { name: /use irsa/i });
     await user.click(irsaCheckbox);
@@ -506,7 +441,7 @@ describe("ProviderWizard, IRSA toggle (dashboard#287)", () => {
 
   it("keeps required+secret fields visible when IRSA is active", async () => {
     const user = userEvent.setup();
-    renderCredentialsAndTest(requiredSecretDescriptor);
+    renderCredentialsForm(requiredSecretDescriptor);
 
     const irsaCheckbox = screen.getByRole("checkbox", { name: /use irsa/i });
     await user.click(irsaCheckbox);
@@ -516,7 +451,7 @@ describe("ProviderWizard, IRSA toggle (dashboard#287)", () => {
 
   it("restores hidden fields after unchecking IRSA", async () => {
     const user = userEvent.setup();
-    renderCredentialsAndTest(bedrockWithIrsa);
+    renderCredentialsForm(bedrockWithIrsa);
 
     const irsaCheckbox = screen.getByRole("checkbox", { name: /use irsa/i });
     await user.click(irsaCheckbox);
@@ -528,7 +463,7 @@ describe("ProviderWizard, IRSA toggle (dashboard#287)", () => {
 
   it("shows the IRSA help text when IRSA is checked", async () => {
     const user = userEvent.setup();
-    renderCredentialsAndTest(bedrockWithIrsa);
+    renderCredentialsForm(bedrockWithIrsa);
 
     const irsaCheckbox = screen.getByRole("checkbox", { name: /use irsa/i });
     await user.click(irsaCheckbox);
@@ -539,46 +474,29 @@ describe("ProviderWizard, IRSA toggle (dashboard#287)", () => {
   });
 
   it("hides the IRSA help text when IRSA is unchecked", () => {
-    renderCredentialsAndTest(bedrockWithIrsa);
+    renderCredentialsForm(bedrockWithIrsa);
     expect(screen.queryByText(/EKS service-account IAM role/i)).not.toBeInTheDocument();
   });
 
-  it("submits use_irsa: 'true' and retains hidden credential keys in the payload", async () => {
+  it("reports use_irsa: 'true' and keeps hidden credential keys in the values", async () => {
     const user = userEvent.setup();
-    const { onTest } = renderCredentialsAndTest(bedrockWithIrsa);
+    const { setFormValues } = renderCredentialsForm(bedrockWithIrsa);
 
-    const irsaCheckbox = screen.getByRole("checkbox", { name: /use irsa/i });
-    await user.click(irsaCheckbox);
+    await user.click(screen.getByRole("checkbox", { name: /use irsa/i }));
 
-    const submitBtn = screen.getByRole("button", { name: /test connection/i });
-    await user.click(submitBtn);
-
-    await waitFor(() => {
-      expect(onTest).toHaveBeenCalledTimes(1);
-    });
-
-    const submittedValues = onTest.mock.calls[0][0] as {
-      credentials: Record<string, string>;
-    };
-
-    expect(submittedValues.credentials.use_irsa).toBe("true");
-    // Hidden fields appear in the payload with empty string defaults -
-    // react-hook-form retains defaultValues for fields that return null.
-    expect(submittedValues.credentials).toHaveProperty("aws_access_key_id");
-    expect(submittedValues.credentials).toHaveProperty("aws_secret_access_key");
-    expect(submittedValues.credentials).toHaveProperty("aws_session_token");
+    await waitFor(() => expect(setFormValues).toHaveBeenCalled());
+    const last = setFormValues.mock.calls.at(-1)![0] as { credentials: Record<string, string> };
+    expect(last.credentials.use_irsa).toBe("true");
+    // Hidden fields stay in the values with empty defaults.
+    expect(last.credentials).toHaveProperty("aws_access_key_id");
+    expect(last.credentials).toHaveProperty("aws_secret_access_key");
+    expect(last.credentials).toHaveProperty("aws_session_token");
   });
 });
 
 // ===========================================================================
-// dashboard#288, probe result is advisory
+// Fixtures for the wizard flow
 // ===========================================================================
-//
-// After dashboard#288 the probe result is advisory: the Save button is
-// enabled whenever the wizard is on step 3 and not currently saving,
-// regardless of probe outcome. Step 3 is entered once ANY probe result is
-// received (ok OR failed). The wizard advances from step 2 → step 3 when
-// the user clicks "Test connection" and the fetch resolves (pass or fail).
 
 const anthropicDescriptor: SupportedProviderDescriptor = {
   type: "anthropic",
@@ -600,190 +518,6 @@ const anthropicDescriptor: SupportedProviderDescriptor = {
   ],
 };
 
-function makeFetchMock(responseBody: unknown, ok = true) {
-  return vi.fn().mockResolvedValue({
-    ok,
-    json: async () => responseBody,
-  });
-}
-
-function setupWizardAtStep2Advisory() {
-  const user = userEvent.setup();
-  render(
-    <ProviderWizard supported={[anthropicDescriptor]} initialType="anthropic" />,
-    { wrapper },
-  );
-  return { user };
-}
-
-/**
- * Stubs fetch with the given response, fills the required api_key field so
- * react-hook-form validation passes, clicks "Test connection", and waits
- * for the wizard to advance to step 3. The "Edit credentials" button in the
- * step-3 header is the indicator that step 3 is active.
- */
-async function advanceToStep3Advisory(
-  user: ReturnType<typeof userEvent.setup>,
-  opts: { fetchBody: unknown; fetchOk?: boolean },
-) {
-  vi.stubGlobal("fetch", makeFetchMock(opts.fetchBody, opts.fetchOk ?? true));
-
-  // Fill the required api_key field so the form's required-validation passes.
-  const apiKeyInput = screen.getByPlaceholderText("sk-ant-...");
-  await user.type(apiKeyInput, "sk-ant-test-key");
-
-  await act(async () => {
-    await user.click(screen.getByRole("button", { name: /test connection/i }));
-  });
-
-  // Wait for the async fetch + React state update to drive the wizard to step 3.
-  // "Edit credentials" only appears in the step-3 header.
-  await waitFor(() => {
-    expect(screen.getByRole("button", { name: /edit credentials/i })).toBeInTheDocument();
-  }, { timeout: 3000 });
-}
-
-describe("ProviderWizard step 3, probe result is advisory (dashboard#288)", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("Save button is enabled after a PASSING probe", async () => {
-    const { user } = setupWizardAtStep2Advisory();
-
-    await advanceToStep3Advisory(user, {
-      fetchBody: {
-        result: {
-          ok: true,
-          latencyMs: 42,
-          models: [{ name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000 }],
-        },
-      },
-      fetchOk: true,
-    });
-
-    expect(screen.getByRole("button", { name: /save provider/i })).toBeEnabled();
-  });
-
-  it("Save button is enabled after a FAILING probe (no longer gated on ok)", async () => {
-    const { user } = setupWizardAtStep2Advisory();
-
-    await advanceToStep3Advisory(user, {
-      fetchBody: { error: { message: "Connection refused" } },
-      fetchOk: false,
-    });
-
-    // No live model list after a failed test: the person types the model ID,
-    // and states its context window because the provider reported none.
-    await user.type(screen.getByPlaceholderText("model-name"), "claude-sonnet-4-6");
-    expect(screen.getByRole("button", { name: /save provider/i })).toBeDisabled();
-    await user.type(screen.getByLabelText(/context window/i), "200000");
-    expect(screen.getByRole("button", { name: /save provider/i })).toBeEnabled();
-  });
-
-  it("shows the provider's own error text on step 3 (gibson#1193)", async () => {
-    const { user } = setupWizardAtStep2Advisory();
-
-    await advanceToStep3Advisory(user, {
-      fetchBody: { result: { ok: false, latencyMs: 12, error: "401 invalid x-api-key", models: [] } },
-      fetchOk: true,
-    });
-
-    expect(screen.getByTestId("probe-error")).toHaveTextContent("401 invalid x-api-key");
-  });
-
-  it("advisory warning is shown when probe result is { ok: false }", async () => {
-    const { user } = setupWizardAtStep2Advisory();
-
-    await advanceToStep3Advisory(user, {
-      fetchBody: { error: { message: "Connection refused" } },
-      fetchOk: false,
-    });
-
-    expect(
-      screen.getByText(/connection test did not pass/i),
-    ).toBeInTheDocument();
-    expect(screen.queryByText(/connection test passed/i)).not.toBeInTheDocument();
-  });
-
-  it("advisory warning is NOT shown when probe result is { ok: true }", async () => {
-    const { user } = setupWizardAtStep2Advisory();
-
-    await advanceToStep3Advisory(user, {
-      fetchBody: {
-        result: {
-          ok: true,
-          latencyMs: 42,
-          models: [{ name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000 }],
-        },
-      },
-      fetchOk: true,
-    });
-
-    expect(screen.queryByText(/connection test did not pass/i)).not.toBeInTheDocument();
-  });
-
-  it("positive confirmation is shown when probe result is { ok: true }", async () => {
-    const { user } = setupWizardAtStep2Advisory();
-
-    await advanceToStep3Advisory(user, {
-      fetchBody: {
-        result: {
-          ok: true,
-          latencyMs: 42,
-          models: [{ name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000 }],
-        },
-      },
-      fetchOk: true,
-    });
-
-    expect(screen.getByText(/connection test passed/i)).toBeInTheDocument();
-    expect(screen.queryByText(/connection test did not pass/i)).not.toBeInTheDocument();
-  });
-
-  it("positive confirmation is NOT shown when probe result is { ok: false }", async () => {
-    const { user } = setupWizardAtStep2Advisory();
-
-    await advanceToStep3Advisory(user, {
-      fetchBody: { error: { message: "Connection refused" } },
-      fetchOk: false,
-    });
-
-    expect(screen.queryByText(/connection test passed/i)).not.toBeInTheDocument();
-  });
-});
-
-
-
-// ===========================================================================
-// dashboard#870 — BYO embedding UI wired to daemon catalog (gibson#1072)
-// ===========================================================================
-
-// ---------------------------------------------------------------------------
-// Embedding-only provider types (voyage/openai-compatible/tei)
-// ---------------------------------------------------------------------------
-
-const voyageDescriptor: SupportedProviderDescriptor = {
-  type: "voyage",
-  displayName: "Voyage AI",
-  docsUrl: "https://docs.voyageai.com/",
-  selfHosted: false,
-  credentials: [
-    {
-      key: "api_key",
-      label: "Voyage API Key",
-      required: true,
-      secret: true,
-      placeholder: "pa-...",
-      help: "Your Voyage AI API key.",
-    },
-  ],
-  defaultModels: [],
-  embeddingModels: [
-    { name: "voyage-3", family: "Voyage 3", contextWindow: 32000 },
-    { name: "voyage-3-lite", family: "Voyage 3", contextWindow: 32000 },
-  ],
-};
 
 const openaiWithEmbeddingsDescriptor: SupportedProviderDescriptor = {
   type: "openai",
@@ -809,246 +543,6 @@ const openaiWithEmbeddingsDescriptor: SupportedProviderDescriptor = {
     { name: "text-embedding-ada-002", family: "", contextWindow: 0 },
   ],
 };
-
-function setupVoyageWizard() {
-  const user = userEvent.setup();
-  render(
-    <ProviderWizard supported={[voyageDescriptor]} initialType="voyage" />,
-    { wrapper },
-  );
-  return { user };
-}
-
-async function advanceVoyageToStep3(user: ReturnType<typeof userEvent.setup>) {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        result: {
-          ok: true,
-          latencyMs: 15,
-          models: [],
-          embeddingOk: true,
-          embeddingDimension: 1024,
-        },
-      }),
-    }),
-  );
-
-  const apiKeyInput = screen.getByPlaceholderText("pa-...");
-  await user.type(apiKeyInput, "pa-test-key");
-
-  await act(async () => {
-    await user.click(screen.getByRole("button", { name: /test connection/i }));
-  });
-
-  await waitFor(() => {
-    expect(screen.getByRole("button", { name: /edit credentials/i })).toBeInTheDocument();
-  }, { timeout: 3000 });
-}
-
-describe("ProviderWizard embedding-only provider (dashboard#870)", () => {
-  beforeEach(() => {
-    Element.prototype.hasPointerCapture ??= vi.fn(() => false);
-    Element.prototype.setPointerCapture ??= vi.fn();
-    Element.prototype.releasePointerCapture ??= vi.fn();
-    if (!Element.prototype.scrollIntoView) {
-      Element.prototype.scrollIntoView = vi.fn();
-    }
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("shows the 'embeddings' badge on the provider card for voyage", () => {
-    const supported: SupportedProviderDescriptor[] = [voyageDescriptor];
-    render(<ProviderWizard supported={supported} />, { wrapper });
-    expect(screen.getByText("embeddings")).toBeInTheDocument();
-  });
-
-  it("defaults to embedding-only capability for voyage (not chat)", async () => {
-    const { user } = setupVoyageWizard();
-    await advanceVoyageToStep3(user);
-
-    // The embedding capability checkbox should be checked; chat should not appear.
-    const embeddingCheckbox = screen.getByTestId("capability-embedding");
-    expect(embeddingCheckbox.querySelector('[role="checkbox"]')).toBeInTheDocument();
-
-    // No chat capability checkbox since voyage is embedding-only.
-    expect(screen.queryByTestId("capability-chat")).not.toBeInTheDocument();
-  });
-
-  it("populates the embedding model picker from embeddingModels catalog", async () => {
-    const { user } = setupVoyageWizard();
-    await advanceVoyageToStep3(user);
-
-    // The select trigger should be present.
-    const selectTrigger = screen.getByTestId("embedding-model-select");
-    expect(selectTrigger).toBeInTheDocument();
-
-    // Open it to verify the models list.
-    fireEvent.click(selectTrigger);
-    await waitFor(() => {
-      expect(screen.getByRole("option", { name: "voyage-3" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "voyage-3-lite" })).toBeInTheDocument();
-    });
-  });
-
-  it("shows the embedding probe result in the step-3 banner (ok + dimension)", async () => {
-    const { user } = setupVoyageWizard();
-    await advanceVoyageToStep3(user);
-
-    await waitFor(() => {
-      expect(screen.getByText(/embedding probe: 1024d vector/i)).toBeInTheDocument();
-    });
-  });
-
-  it("Save button is enabled when embedding capability + model are set", async () => {
-    const { user } = setupVoyageWizard();
-    await advanceVoyageToStep3(user);
-
-    // Default embedding model auto-selects to voyage-3 (first in list).
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /save provider/i })).toBeEnabled();
-    });
-  });
-});
-
-describe("ProviderWizard dual-capability provider embedding picker (dashboard#870)", () => {
-  beforeEach(() => {
-    Element.prototype.hasPointerCapture ??= vi.fn(() => false);
-    Element.prototype.setPointerCapture ??= vi.fn();
-    Element.prototype.releasePointerCapture ??= vi.fn();
-    if (!Element.prototype.scrollIntoView) {
-      Element.prototype.scrollIntoView = vi.fn();
-    }
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  async function setupOpenAIStep3() {
-    const user = userEvent.setup();
-    render(
-      <ProviderWizard supported={[openaiWithEmbeddingsDescriptor]} initialType="openai" />,
-      { wrapper },
-    );
-
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          result: {
-            ok: true,
-            latencyMs: 20,
-            models: [{ name: "gpt-4o", family: "GPT-4o", contextWindow: 128000 }],
-            embeddingOk: true,
-            embeddingDimension: 1536,
-          },
-        }),
-      }),
-    );
-
-    const apiKeyInput = screen.getByPlaceholderText("sk-...");
-    await user.type(apiKeyInput, "sk-test-key");
-
-    await act(async () => {
-      await user.click(screen.getByRole("button", { name: /test connection/i }));
-    });
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /edit credentials/i })).toBeInTheDocument();
-    }, { timeout: 3000 });
-
-    return { user };
-  }
-
-  it("shows both chat and embedding capability checkboxes for openai", async () => {
-    await setupOpenAIStep3();
-
-    expect(screen.getByTestId("capability-chat")).toBeInTheDocument();
-    expect(screen.getByTestId("capability-embedding")).toBeInTheDocument();
-  });
-
-  it("populates embedding model picker from descriptor.embeddingModels when embedding is selected", async () => {
-    const { user } = await setupOpenAIStep3();
-
-    // Enable the embedding capability.
-    const embeddingCapLabel = screen.getByTestId("capability-embedding");
-    await user.click(embeddingCapLabel.querySelector('[role="checkbox"]')!);
-
-    await waitFor(() => {
-      expect(screen.getByTestId("embedding-model-select")).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByTestId("embedding-model-select"));
-
-    await waitFor(() => {
-      expect(screen.getByRole("option", { name: "text-embedding-3-small" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "text-embedding-3-large" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "text-embedding-ada-002" })).toBeInTheDocument();
-    });
-  });
-});
-
-describe("ProviderWizard chat model menu (dashboard#311)", () => {
-  beforeEach(() => {
-    Element.prototype.hasPointerCapture ??= vi.fn(() => false);
-    Element.prototype.setPointerCapture ??= vi.fn();
-    Element.prototype.releasePointerCapture ??= vi.fn();
-    if (!Element.prototype.scrollIntoView) {
-      Element.prototype.scrollIntoView = vi.fn();
-    }
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("does not offer an embedding model of an OpenAI test result as a chat model", async () => {
-    const user = userEvent.setup();
-    render(
-      <ProviderWizard supported={[openaiWithEmbeddingsDescriptor]} initialType="openai" />,
-      { wrapper },
-    );
-
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          result: {
-            ok: true,
-            latencyMs: 20,
-            models: [
-              { name: "text-embedding-3-small", family: "", contextWindow: 0, capabilities: ["embedding"] },
-              { name: "gpt-4o", family: "GPT-4o", contextWindow: 128000, capabilities: ["chat"] },
-            ],
-          },
-        }),
-      }),
-    );
-
-    await user.type(screen.getByPlaceholderText("sk-..."), "sk-test-key");
-    await act(async () => {
-      await user.click(screen.getByRole("button", { name: /test connection/i }));
-    });
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /edit credentials/i })).toBeInTheDocument();
-    }, { timeout: 3000 });
-
-    fireEvent.click(screen.getByRole("combobox"));
-
-    await waitFor(() => {
-      expect(screen.getByRole("option", { name: /gpt-4o/ })).toBeInTheDocument();
-    });
-    expect(screen.queryByRole("option", { name: /text-embedding-3-small/ })).not.toBeInTheDocument();
-  });
-});
 
 // ===========================================================================
 // Login shapes for bank members (gibson#1706 lane E6): Vertex and Foundry
@@ -1088,7 +582,7 @@ const foundryDescriptor: SupportedProviderDescriptor = {
 
 describe("Vertex login shape: the service-account document", () => {
   it("renders the JSON document as a multi-line box, not a one-line input", () => {
-    renderCredentialsAndTest(vertexDescriptor);
+    renderCredentialsForm(vertexDescriptor);
     const box = screen.getByTestId("secret-document-google_application_credentials_json");
     expect(box.tagName).toBe("TEXTAREA");
     expect(box).toHaveAttribute("spellcheck", "false");
@@ -1097,35 +591,27 @@ describe("Vertex login shape: the service-account document", () => {
     expect(screen.getByLabelText(/Vertex Region/)).toHaveAttribute("type", "text");
   });
 
-  it("refuses a truncated document before the test call leaves the browser", async () => {
-    const { onTest } = renderCredentialsAndTest(vertexDescriptor);
-    const user = userEvent.setup();
-    await user.type(screen.getByLabelText(/Google Cloud Project ID/), "proj");
-    await user.type(screen.getByLabelText(/Vertex Region/), "us-east5");
+  it("refuses a truncated document with a message", async () => {
+    renderCredentialsForm(vertexDescriptor);
     const box = screen.getByTestId("secret-document-google_application_credentials_json");
     fireEvent.change(box, { target: { value: '{"type":"service_account"' } });
-    await user.click(screen.getByRole("button", { name: /Test connection/ }));
     expect(await screen.findByText(/Paste the whole JSON document/)).toBeInTheDocument();
-    expect(onTest).not.toHaveBeenCalled();
   });
 
-  it("passes a whole document through to the test call as the raw text", async () => {
-    const { onTest } = renderCredentialsAndTest(vertexDescriptor);
-    const user = userEvent.setup();
-    await user.type(screen.getByLabelText(/Google Cloud Project ID/), "proj");
-    await user.type(screen.getByLabelText(/Vertex Region/), "us-east5");
+  it("reports a whole document as the raw text", async () => {
+    const { setFormValues } = renderCredentialsForm(vertexDescriptor);
     const doc = '{"type":"service_account","project_id":"proj","private_key":"-----BEGIN-----"}';
     const box = screen.getByTestId("secret-document-google_application_credentials_json");
     fireEvent.change(box, { target: { value: doc } });
-    await user.click(screen.getByRole("button", { name: /Test connection/ }));
-    await waitFor(() => expect(onTest).toHaveBeenCalledTimes(1));
-    expect(onTest.mock.calls[0][0].credentials.google_application_credentials_json).toBe(doc);
+    await waitFor(() => expect(setFormValues).toHaveBeenCalled());
+    const last = setFormValues.mock.calls.at(-1)![0] as { credentials: Record<string, string> };
+    expect(last.credentials.google_application_credentials_json).toBe(doc);
   });
 
   it("leaves the document blank in edit mode so the stored value is kept", () => {
     render(
       <QueryClientProvider client={createTestQueryClient()}>
-        <CredentialsAndTest
+        <CredentialsForm
           descriptor={vertexDescriptor}
           providerName="vertex-prod"
           secretFieldPlaceholder="Leave blank to keep existing value"
@@ -1142,7 +628,7 @@ describe("Vertex login shape: the service-account document", () => {
 
 describe("Foundry login shape", () => {
   it("masks the API key and shows the resource name as text", () => {
-    renderCredentialsAndTest(foundryDescriptor);
+    renderCredentialsForm(foundryDescriptor);
     expect(screen.getByLabelText(/Foundry API Key/)).toHaveAttribute("type", "password");
     expect(screen.getByLabelText(/Foundry Resource Name/)).toHaveAttribute("type", "text");
   });
@@ -1151,109 +637,193 @@ describe("Foundry login shape", () => {
 describe("Provider picker: login-shape hint", () => {
   it("says which configurations bank members can run on, and stays silent for the rest", () => {
     const openai = makeDescriptor({ type: "openai", displayName: "OpenAI" });
-    render(
-      <ProviderWizard supported={[vertexDescriptor, foundryDescriptor, bedrockWithIrsa, openai]} />,
-      { wrapper },
-    );
+    render(<ProviderWizard supported={[vertexDescriptor, bedrockWithIrsa, openai]} />, { wrapper });
     expect(screen.getByTestId("login-shape-hint-vertex")).toHaveTextContent("Google Vertex AI");
-    expect(screen.getByTestId("login-shape-hint-foundry")).toHaveTextContent("Microsoft Foundry");
     expect(screen.getByTestId("login-shape-hint-bedrock")).toHaveTextContent("Amazon Bedrock");
     expect(screen.queryByTestId("login-shape-hint-openai")).toBeNull();
   });
 });
 
-describe("ProviderWizard, model-free connection test (gibson#1193)", () => {
-  afterEach(() => vi.unstubAllGlobals());
+describe("Provider picker: only the types that the gateway routes (gibson#1394)", () => {
+  const all = [
+    "anthropic",
+    "openai",
+    "openai-compatible",
+    "bedrock",
+    "google",
+    "vertex",
+    "voyage",
+    "cloudflare",
+    "cohere",
+    "huggingface",
+    "llamafile",
+    "mistral",
+    "foundry",
+    "ollama",
+    "custom",
+    "tei",
+  ];
 
-  async function sentBody(typedModel: string | null) {
-    const { user } = setupWizardAtStep2Advisory();
-    if (typedModel !== null) {
-      await user.type(screen.getByPlaceholderText(/leave empty when the provider lists its models/i), typedModel);
-    }
-    await advanceToStep3Advisory(user, {
-      fetchBody: { result: { ok: true, latencyMs: 5, models: [{ name: "live-model", family: "", contextWindow: 0 }] } },
-    });
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>;
-    const call = fetchMock.mock.calls.find(([url]) => String(url).includes("/api/settings/providers/test"));
-    return JSON.parse(String((call?.[1] as { body: string }).body));
-  }
-
-  it("sends no model when the optional model field is empty", async () => {
-    expect((await sentBody(null)).defaultModel).toBeUndefined();
-  });
-
-  it("sends the typed model for a provider with no model list", async () => {
-    expect((await sentBody("my-foundry-deployment")).defaultModel).toBe("my-foundry-deployment");
-  });
-});
-
-describe("ProviderWizard, the stored context window (gibson#1193)", () => {
-  afterEach(() => vi.unstubAllGlobals());
-
-  it("asks for no window when the provider reported one", async () => {
-    const { user } = setupWizardAtStep2Advisory();
-    await advanceToStep3Advisory(user, {
-      fetchBody: { result: { ok: true, latencyMs: 5, models: [{ name: "m-reported", family: "", contextWindow: 200000 }] } },
-    });
-    expect(screen.queryByLabelText(/context window/i)).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /save provider/i })).toBeEnabled();
-  });
-
-  it("asks for the window when the provider reported none, and refuses nonsense", async () => {
-    const { user } = setupWizardAtStep2Advisory();
-    await advanceToStep3Advisory(user, {
-      fetchBody: { result: { ok: true, latencyMs: 5, models: [{ name: "m-unreported", family: "", contextWindow: 0 }] } },
-    });
-    const field = screen.getByLabelText(/context window/i);
-    expect(screen.getByRole("button", { name: /save provider/i })).toBeDisabled();
-    await user.type(field, "99999999");
-    expect(screen.getByRole("button", { name: /save provider/i })).toBeDisabled();
-    await user.clear(field);
-    await user.type(field, "128000");
-    expect(screen.getByRole("button", { name: /save provider/i })).toBeEnabled();
-  });
-});
-
-describe("ProviderWizard default-provider preselection (first provider)", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  async function renderAndAdvance(preselectDefault: boolean) {
-    const user = userEvent.setup();
+  it("offers the six routed types and none of the others, and never Voyage", () => {
     render(
       <ProviderWizard
-        supported={[anthropicDescriptor]}
-        initialType="anthropic"
-        preselectDefault={preselectDefault}
+        supported={all.map((t) => makeDescriptor({ type: t, displayName: `Name ${t}` }))}
       />,
       { wrapper },
     );
-    await advanceToStep3Advisory(user, {
-      fetchBody: {
-        result: {
-          ok: true,
-          latencyMs: 42,
-          models: [
-            { name: "claude-3-5-sonnet-20241022", family: "Claude 3.5", contextWindow: 200000 },
-          ],
-        },
-      },
-      fetchOk: true,
-    });
-  }
-
-  it("checks 'set as default' when the tenant has no default yet", async () => {
-    await renderAndAdvance(true);
-    expect(
-      screen.getByRole("checkbox", { name: /set as default provider/i }),
-    ).toBeChecked();
+    for (const t of ["anthropic", "openai", "openai-compatible", "bedrock", "google", "vertex"]) {
+      expect(screen.getByText(`Name ${t}`)).toBeInTheDocument();
+    }
+    for (const t of all.slice(6)) {
+      expect(screen.queryByText(`Name ${t}`)).toBeNull();
+    }
+    expect(screen.queryByText(/voyage/i)).toBeNull();
   });
 
-  it("leaves 'set as default' unchecked when a default already exists", async () => {
-    await renderAndAdvance(false);
-    expect(
-      screen.getByRole("checkbox", { name: /set as default provider/i }),
-    ).not.toBeChecked();
+  it("does not start at step 2 for a type that is not offered", () => {
+    render(
+      <ProviderWizard
+        supported={[makeDescriptor({ type: "voyage", displayName: "Voyage AI" })]}
+        initialType="voyage"
+      />,
+      { wrapper },
+    );
+    expect(screen.queryByText("Voyage AI")).toBeNull();
+  });
+});
+
+describe("ProviderWizard: save first, test after (gibson#1394)", () => {
+  beforeEach(() => {
+    createMutate.mockReset();
+    createState.isPending = false;
+  });
+
+  async function fillValid(user: ReturnType<typeof userEvent.setup>) {
+    await user.clear(screen.getByLabelText("Name"));
+    await user.type(screen.getByLabelText("Name"), "claude-prod");
+    await user.type(screen.getByPlaceholderText("sk-ant-..."), "sk-ant-test-key");
+    await user.type(screen.getByLabelText("Default chat model"), "claude-sonnet-4-5");
+    await user.type(screen.getByLabelText(/context window/i), "200000");
+  }
+
+  function renderAnthropic(props: { preselectDefault?: boolean } = {}) {
+    const user = userEvent.setup();
+    render(<ProviderWizard supported={[anthropicDescriptor]} initialType="anthropic" {...props} />, {
+      wrapper,
+    });
+    return user;
+  }
+
+  it("has no Test connection button before the save", () => {
+    renderAnthropic();
+    expect(screen.queryByRole("button", { name: /test connection/i })).toBeNull();
+    expect(screen.getByRole("button", { name: /save provider/i })).toBeInTheDocument();
+  });
+
+  it("sends the credentials only in CreateProvider, with the stated context window", async () => {
+    const user = renderAnthropic();
+    await fillValid(user);
+    const save = screen.getByRole("button", { name: /save provider/i });
+    expect(save).toBeEnabled();
+    await user.click(save);
+    expect(createMutate).toHaveBeenCalledTimes(1);
+    const config = createMutate.mock.calls[0][0].config;
+    expect(config).toMatchObject({
+      type: "anthropic",
+      name: "claude-prod",
+      defaultModel: "claude-sonnet-4-5",
+      credentials: { api_key: "sk-ant-test-key" },
+      defaultModelContextWindow: 200000,
+    });
+  });
+
+  it("calls no test endpoint from the form", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const user = renderAnthropic();
+    await fillValid(user);
+    await user.click(screen.getByRole("button", { name: /save provider/i }));
+    expect(fetchMock).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it("starts the test step with the saved name after a good save", async () => {
+    createMutate.mockImplementation((_vars, opts: { onSuccess: () => void }) => opts.onSuccess());
+    const user = renderAnthropic();
+    await fillValid(user);
+    await user.click(screen.getByRole("button", { name: /save provider/i }));
+    expect(await screen.findByTestId("test-panel")).toHaveTextContent("claude-prod");
+  });
+
+  it("stays on the form after a refused save, with the input kept", async () => {
+    createMutate.mockImplementation((_vars, opts: { onError: (e: Error) => void }) =>
+      opts.onError(new Error("name already exists")),
+    );
+    const user = renderAnthropic();
+    await fillValid(user);
+    await user.click(screen.getByRole("button", { name: /save provider/i }));
+    expect(screen.queryByTestId("test-panel")).toBeNull();
+    expect(screen.getByLabelText("Name")).toHaveValue("claude-prod");
+  });
+
+  it("needs the context window of a chat model", async () => {
+    const user = renderAnthropic();
+    await user.clear(screen.getByLabelText("Name"));
+    await user.type(screen.getByLabelText("Name"), "claude-prod");
+    await user.type(screen.getByPlaceholderText("sk-ant-..."), "k");
+    await user.type(screen.getByLabelText("Default chat model"), "m");
+    const save = screen.getByRole("button", { name: /save provider/i });
+    expect(save).toBeDisabled();
+    const field = screen.getByLabelText(/context window/i);
+    expect(field).toHaveAttribute("type", "number");
+    expect(screen.getByText(/Required for a chat model/i)).toBeInTheDocument();
+    await user.type(field, "99999999");
+    expect(save).toBeDisabled();
+    await user.clear(field);
+    await user.type(field, "0");
+    expect(save).toBeDisabled();
+    await user.clear(field);
+    await user.type(field, "128000");
+    expect(save).toBeEnabled();
+  });
+
+  it.each([
+    ["Claude", "Use lowercase"],
+    ["claude_prod", "Use lowercase"],
+    ["-claude", "Start and end"],
+    ["claude-", "Start and end"],
+    ["x".repeat(64), "at most 63"],
+  ])("refuses the name %j and keeps Save disabled", async (name, hint) => {
+    const user = renderAnthropic();
+    await user.type(screen.getByPlaceholderText("sk-ant-..."), "k");
+    await user.type(screen.getByLabelText("Default chat model"), "m");
+    await user.type(screen.getByLabelText(/context window/i), "1000");
+    const nameField = screen.getByLabelText("Name");
+    await user.clear(nameField);
+    // maxLength stops a long name in the browser, so set it as a change event.
+    fireEvent.change(nameField, { target: { value: name } });
+    expect(await screen.findByTestId("save-blocked")).toHaveTextContent(new RegExp(hint));
+    expect(screen.getByRole("button", { name: /save provider/i })).toBeDisabled();
+  });
+
+  it("keeps Save disabled until the required credential is filled", async () => {
+    const user = renderAnthropic();
+    await user.type(screen.getByLabelText("Default chat model"), "m");
+    await user.type(screen.getByLabelText(/context window/i), "1000");
+    expect(screen.getByRole("button", { name: /save provider/i })).toBeDisabled();
+    expect(screen.getByTestId("save-blocked")).toHaveTextContent(/Anthropic API Key is required/);
+  });
+
+  it("checks 'set as default' only when asked, and sends it", async () => {
+    const user = renderAnthropic({ preselectDefault: true });
+    expect(screen.getByRole("checkbox", { name: /set as default provider/i })).toBeChecked();
+    await fillValid(user);
+    await user.click(screen.getByRole("button", { name: /save provider/i }));
+    expect(createMutate.mock.calls[0][0].config.setAsDefault).toBe(true);
+  });
+
+  it("leaves 'set as default' unchecked when a default exists", () => {
+    renderAnthropic({ preselectDefault: false });
+    expect(screen.getByRole("checkbox", { name: /set as default provider/i })).not.toBeChecked();
   });
 });

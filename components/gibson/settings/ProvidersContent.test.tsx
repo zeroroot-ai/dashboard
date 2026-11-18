@@ -82,35 +82,24 @@ vi.mock("sonner", () => ({
   },
 }));
 
-// Stub ProviderWizard and CredentialsAndTest to isolate ProvidersContent tests.
-// CredentialsAndTest stub lets edit-flow tests drive onValuesChange.
+// Stub ProviderWizard and CredentialsForm to isolate ProvidersContent tests.
+// The CredentialsForm stub lets edit-flow tests drive onValuesChange.
 vi.mock("./ProviderWizard", () => ({
   ProviderWizard: () => null,
-  CredentialsAndTest: ({
+  CredentialsForm: ({
     onValuesChange,
-    onTest,
   }: {
     onValuesChange?: (v: { name: string; credentials: Record<string, string> }) => void;
-    onTest?: (v: { name: string; credentials: Record<string, string>; testModel?: string }) => void;
   }) => (
-    <>
-      <button
-        type="button"
-        data-testid="credentials-and-test-stub"
-        onClick={() =>
-          onValuesChange?.({ name: "my-anthropic", credentials: { api_key: "sk-ant-new-key" } })
-        }
-      >
-        Enter credentials
-      </button>
-      <button
-        type="button"
-        data-testid="credentials-and-test-run"
-        onClick={() => onTest?.({ name: "my-anthropic", credentials: { api_key: "sk-ant-new-key" } })}
-      >
-        Run test
-      </button>
-    </>
+    <button
+      type="button"
+      data-testid="credentials-form-stub"
+      onClick={() =>
+        onValuesChange?.({ name: "my-anthropic", credentials: { api_key: "sk-ant-new-key" } })
+      }
+    >
+      Enter credentials
+    </button>
   ),
 }));
 
@@ -552,32 +541,16 @@ describe("ConfiguredProviderRow, edit credentials", () => {
     expect(screen.getByText(/Leave secret fields blank/i)).toBeInTheDocument();
   });
 
-  it("renders CredentialsAndTest stub inside the edit dialog", async () => {
+  it("renders the credentials form inside the edit dialog, with no test button", async () => {
     const user = userEvent.setup();
     renderWithProviders(<ProvidersContent />);
 
     await user.click(screen.getByRole("button", { name: /edit credentials/i }));
 
-    expect(screen.getByTestId("credentials-and-test-stub")).toBeInTheDocument();
-  });
-
-  it("re-tests with the saved model, so a provider with no model list can pass (gibson#1193)", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ result: { ok: true, latencyMs: 3, models: [] } }),
-    });
-    vi.stubGlobal("fetch", fetchMock);
-    const user = userEvent.setup();
-    renderWithProviders(<ProvidersContent />);
-
-    await user.click(screen.getByRole("button", { name: /edit credentials/i }));
-    await user.click(screen.getByTestId("credentials-and-test-run"));
-
-    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
-    const call = fetchMock.mock.calls.find(([url]) => String(url).includes("/api/settings/providers/test"));
-    const sent = JSON.parse(String((call?.[1] as { body: string }).body));
-    expect(sent.defaultModel).toBe("claude-3-5-sonnet-20241022");
-    vi.unstubAllGlobals();
+    expect(screen.getByTestId("credentials-form-stub")).toBeInTheDocument();
+    // A credential that is not saved is never tested. The card tests the saved provider.
+    expect(screen.queryByTestId("credentials-and-test-run")).toBeNull();
+    expect(screen.getByText(/Save, then use Test connection on the card/i)).toBeInTheDocument();
   });
 
   it("calls updateProvider mutation with credentials when Save is clicked", async () => {
@@ -587,7 +560,7 @@ describe("ConfiguredProviderRow, edit credentials", () => {
     await user.click(screen.getByRole("button", { name: /edit credentials/i }));
 
     // Simulate credential entry via the stub, fires onValuesChange
-    await user.click(screen.getByTestId("credentials-and-test-stub"));
+    await user.click(screen.getByTestId("credentials-form-stub"));
 
     await user.click(screen.getByRole("button", { name: /^save$/i }));
 

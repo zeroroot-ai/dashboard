@@ -9,7 +9,6 @@
 import { apiFetch } from './fetch';
 import type {
   ProviderConfig,
-  ConnectionTestResult,
   ProviderAuditEvent,
   ProviderAuditEventType,
   ListProvidersResponse,
@@ -200,58 +199,6 @@ export async function deleteProvider(
   });
 
   return handleResponse<DeleteProviderResponse>(response);
-}
-
-// ============================================================================
-// Connection Testing
-// ============================================================================
-
-/**
- * Test connection to an existing provider
- */
-async function testProviderConnection(
-  name: string,
-  options?: { timeoutSeconds?: number }
-): Promise<ConnectionTestResult> {
-  const response = await apiFetch('/api/settings/providers/test', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name,
-      timeoutSeconds: options?.timeoutSeconds,
-    }),
-  });
-
-  return handleResponse<ConnectionTestResult>(response);
-}
-
-/**
- * Test connection with a new configuration (without saving)
- */
-async function testConnectionConfig(
-  config: DaemonProviderConfigInput,
-  options?: { timeoutSeconds?: number }
-): Promise<ConnectionTestResult> {
-  const response = await apiFetch('/api/settings/providers/test', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      config,
-      timeoutSeconds: options?.timeoutSeconds,
-    }),
-  });
-
-  return handleResponse<ConnectionTestResult>(response);
-}
-
-/**
- * Test connection with a new provider configuration (alias for testConnectionConfig)
- */
-async function testNewProviderConnection(
-  config: DaemonProviderConfigInput,
-  options?: { timeoutSeconds?: number }
-): Promise<ConnectionTestResult> {
-  return testConnectionConfig(config, options);
 }
 
 // ============================================================================

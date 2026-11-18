@@ -51,7 +51,7 @@ import type { ProviderConfig, ProviderHealthStatus } from "@/src/types/provider"
 import { HEALTH_STATUS_CONFIG } from "@/src/types/provider";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { ProviderWizard, CredentialsAndTest, type ProbeResult } from "./ProviderWizard";
+import { ProviderWizard, CredentialsForm } from "./ProviderWizard";
 import { apiFetch } from "@/src/lib/api/fetch";
 
 // ---------------------------------------------------------------------------
@@ -100,8 +100,6 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
   const queryClient = useQueryClient();
   const [editOpen, setEditOpen] = React.useState(false);
   const [editCredentials, setEditCredentials] = React.useState<Record<string, string>>({});
-  const [editProbeResult, setEditProbeResult] = React.useState<ProbeResult | null>(null);
-  const [isEditTestPending, setIsEditTestPending] = React.useState(false);
 
   // Live health badge, polls every 60 s, pauses when the tab is hidden.
   const { data: health } = useProviderHealth(provider.name);
@@ -124,7 +122,6 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
         onSuccess: () => {
           toast.success(`${provider.displayName} credentials updated`);
           setEditOpen(false);
-          setEditProbeResult(null);
           void queryClient.invalidateQueries({ queryKey: providerQueryKeys.lists() });
         },
         onError: (err) => {
@@ -134,49 +131,6 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
         },
       },
     );
-  }
-
-  async function runEditTest(values: { name: string; credentials: Record<string, string>; testModel?: string }) {
-    if (!descriptor) return;
-    setIsEditTestPending(true);
-    setEditProbeResult(null);
-    try {
-      const res = await apiFetch("/api/settings/providers/test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: descriptor.type,
-          name: provider.name,
-          // A provider with no model list (Foundry) is tested with a model:
-          // the typed one, else the saved one (gibson#1193).
-          ...((values.testModel?.trim() || provider.defaultModel)
-            ? { defaultModel: values.testModel?.trim() || provider.defaultModel }
-            : {}),
-          credentials: values.credentials,
-        }),
-      });
-      const body = (await res.json().catch(() => ({}))) as {
-        result?: ProbeResult;
-        error?: { message?: string } | string;
-      };
-      if (!res.ok) {
-        const msg = typeof body.error === "string"
-          ? body.error
-          : (body.error?.message ?? `Test failed (HTTP ${res.status})`);
-        setEditProbeResult({ ok: false, latencyMs: 0, error: msg, models: [] });
-      } else {
-        setEditProbeResult(body.result ?? { ok: false, latencyMs: 0, error: "No result", models: [] });
-      }
-    } catch (err) {
-      setEditProbeResult({
-        ok: false,
-        latencyMs: 0,
-        error: err instanceof Error ? err.message : "Unknown error",
-        models: [],
-      });
-    } finally {
-      setIsEditTestPending(false);
-    }
   }
 
   async function onTestConnection() {
@@ -407,24 +361,21 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
                 <Pencil className="size-3" />
                 Edit credentials
               </Button>
-              <Dialog open={editOpen} onOpenChange={(open) => { setEditOpen(open); if (!open) setEditProbeResult(null); }}>
+              <Dialog open={editOpen} onOpenChange={setEditOpen}>
                 <DialogContent className="sm:max-w-lg">
                   <DialogHeader>
                     <DialogTitle className="text-sm">
                       Edit {provider.displayName} credentials
                     </DialogTitle>
                     <DialogDescription className="text-xs">
-                      Leave secret fields blank to keep the existing stored value.
+                      Leave secret fields blank to keep the existing stored value. Save, then use Test connection on the card.
                     </DialogDescription>
                   </DialogHeader>
-                  <CredentialsAndTest
+                  <CredentialsForm
                     descriptor={descriptor}
                     providerName={provider.name}
                     secretFieldPlaceholder="Leave blank to keep existing value"
                     onValuesChange={(vals) => setEditCredentials(vals.credentials)}
-                    onTest={runEditTest}
-                    isTestPending={isEditTestPending}
-                    probeResult={editProbeResult}
                   />
                   <DialogFooter>
                     <Button

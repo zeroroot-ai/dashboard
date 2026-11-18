@@ -2,14 +2,12 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * POST /api/settings/providers/test, test a proposed provider config
+ * POST /api/settings/providers/test, test a SAVED provider
  *
- * Accepts a DaemonProviderConfigInput, invokes the daemon TestProvider RPC,
- * and returns the structured test result. The config is NEVER persisted -
- * it transits daemon process memory for one request only.
- *
- * IMPORTANT: Credentials in the request body are NEVER logged, even on error.
- * Only error metadata (code, message) is logged.
+ * Body: { name: string }. The name is the name of a provider that the tenant
+ * already saved. The daemon sends one GET of the model list through the route
+ * of the provider on the model gateway. No credential crosses this handler:
+ * the daemon reads the saved credential itself. An unsaved name gives 404.
  */
 
 import 'server-only';
@@ -19,7 +17,6 @@ import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/act
 import {
   daemonTestProvider,
 } from '@/src/lib/gibson-client';
-import type { DaemonProviderConfigInput } from '@/src/lib/gibson-client-types';
 import { translateError } from '@/src/lib/providers-route-error';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 
@@ -27,19 +24,27 @@ import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 // POST /api/settings/providers/test
 // ---------------------------------------------------------------------------
 
+/** Read the name from the JSON body. Any other field is ignored, never forwarded. */
+async function readProviderName(req: NextRequest): Promise<string | null> {
+  try {
+    const body = (await req.json()) as { name?: unknown };
+    return typeof body.name === 'string' && body.name.trim() !== '' ? body.name.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Test connectivity to an LLM provider with the given config.
- *
- * Request body shape matches DaemonProviderConfigInput (type + name + credentials).
- * The config is validated and probed by the daemon without being stored.
- *
  * Returns a DaemonProviderTestResult:
- *   ok         boolean , true when the upstream returned a successful response
- *   latencyMs  number  , round-trip time in milliseconds (always present)
- *   model      string  , model used for the test (when ok is true)
- *   error      string? , cleaned upstream error message (when ok is false)
+ *   ok         boolean , true when the model list answered
+ *   latencyMs  number  , round-trip time in milliseconds
+ *   model      string  , the default model of the provider (when ok is true)
+ *   error      string? , the reason (when ok is false)
+ *   models     the live model list (when ok is true)
  *
- * Rate-limited server-side by the daemon (ResourceExhausted → 429).
+ * A failed call is a 200 with ok false. The daemon answers
+ * "the route of the provider is not ready yet" until the tenant operator
+ * creates the route after the save.
  */
 export async function POST(req: NextRequest) {
   // CSRF, src/lib/auth/csrf.ts: the session cookie is sameSite=lax, so a
@@ -67,18 +72,16 @@ export async function POST(req: NextRequest) {
     return activeTenantApiResponse(err);
   }
 
-  let body: DaemonProviderConfigInput;
-  try {
-    body = await req.json() as DaemonProviderConfigInput;
-  } catch {
+  const name = await readProviderName(req);
+  if (!name) {
     return Response.json(
-      { error: { code: 'invalid_argument', message: 'Request body must be valid JSON' } },
+      { error: { code: 'invalid_argument', message: 'The body must be JSON with the name of a saved provider' } },
       { status: 400 },
     );
   }
 
   try {
-    const result = await daemonTestProvider(body, userId, tenantId);
+    const result = await daemonTestProvider(name, userId, tenantId);
     return Response.json({ result });
   } catch (err) {
     return translateError(err);
