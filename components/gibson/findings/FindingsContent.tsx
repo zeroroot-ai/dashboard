@@ -4,6 +4,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { ArrowUpDown, ChevronDown, ChevronUp, Download, Search, ShieldAlertIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -385,9 +386,12 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
                       <SeverityBadge severity={finding.severity} />
                     </TableCell>
                     <TableCell className="max-w-xs">
-                      <span className="text-foreground text-sm font-medium leading-snug">
+                      <Link
+                        href={`/dashboard/findings/${encodeURIComponent(finding.id)}`}
+                        className="text-foreground text-sm font-medium leading-snug underline-offset-2 hover:underline"
+                      >
                         {finding.title}
-                      </span>
+                      </Link>
                     </TableCell>
                     <TableCell>
                       <span className="text-muted-foreground text-xs capitalize">
