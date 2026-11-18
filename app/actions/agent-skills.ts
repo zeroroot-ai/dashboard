@@ -25,6 +25,7 @@ import {
   daemonEnableSharedAgentSkill,
   daemonGetAgentSkill,
   daemonGrantAgentSkill,
+  daemonListAgentSkillGrants,
   daemonListAgentSkills,
   daemonListSharedAgentSkills,
   daemonPublishAgentSkill,
@@ -33,9 +34,11 @@ import {
 import type {
   AgentSkillDTO,
   AgentSkillDetailDTO,
+  AgentSkillGrantDTO,
   SharedAgentSkillDTO,
 } from "@/src/lib/gibson-client/agent-skill-types";
 import { getServerSession } from "@/src/lib/auth";
+import { listMissions } from "@/src/lib/gibson-client";
 import { agentSkillFailure } from "@/src/lib/agent-skills/action-error";
 
 type AgentSkillActionResult<T = null> =
@@ -219,6 +222,46 @@ export async function revokeAgentSkillAction(input: {
     return { ok: true, data: null };
   } catch (err) {
     return agentSkillFailure(err, "revokeAgentSkillAction");
+  }
+}
+
+/** List each agent and each mission that may load an Agent Skill. */
+export async function listAgentSkillGrantsAction(
+  name: string,
+): Promise<AgentSkillActionResult<AgentSkillGrantDTO[]>> {
+  const session = await getServerSession();
+  if (!session?.user) return UNAUTHENTICATED;
+  const n = nameSchema.safeParse(name);
+  if (!n.success) return bad(n.error.issues[0]?.message);
+  try {
+    return { ok: true, data: await daemonListAgentSkillGrants(n.data) };
+  } catch (err) {
+    return agentSkillFailure(err, "listAgentSkillGrantsAction");
+  }
+}
+
+/** The id and the name of one mission, for the picker of a grant. */
+interface MissionOption {
+  id: string;
+  name: string;
+}
+
+/**
+ * List the missions of the tenant for the picker of a grant. It reads the
+ * same ListMissions call as the missions page. The picker is a convenience,
+ * and the form keeps a text field for an id that the list does not hold.
+ */
+export async function listMissionOptionsAction(): Promise<AgentSkillActionResult<MissionOption[]>> {
+  const session = await getServerSession();
+  if (!session?.user) return UNAUTHENTICATED;
+  try {
+    const resp = await listMissions(false, 200, session.user.id);
+    return {
+      ok: true,
+      data: resp.missions.map((m) => ({ id: m.id, name: m.name || m.id })),
+    };
+  } catch (err) {
+    return agentSkillFailure(err, "listMissionOptionsAction");
   }
 }
 

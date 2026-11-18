@@ -17,6 +17,7 @@ import "server-only";
 import { userClient } from "../gibson-client";
 import {
   AgentSkillService,
+  AgentSkillSource,
   AgentSkillSubjectKind,
 } from "@/src/gen/gibson/tenant/v1/agent_skill_pb";
 import type {
@@ -28,6 +29,7 @@ import type {
 import type {
   AgentSkillDTO,
   AgentSkillDetailDTO,
+  AgentSkillGrantDTO,
   AgentSkillSubjectKindDTO,
   SharedAgentSkillDTO,
 } from "./agent-skill-types";
@@ -50,6 +52,7 @@ function toAgentSkillDTO(e: AgentSkillEntry): AgentSkillDTO {
     allowedTools: [...e.allowedTools],
     publishedAt: isoOrEmpty(e.publishedAt),
     current: e.current,
+    source: e.source === AgentSkillSource.SHARED ? "shared" : "tenant",
   };
 }
 
@@ -148,4 +151,18 @@ export async function daemonListSharedAgentSkills(): Promise<SharedAgentSkillDTO
 export async function daemonEnableSharedAgentSkill(name: string): Promise<AgentSkillDTO | null> {
   const resp = await userClient(AgentSkillService).enableSharedAgentSkill({ name });
   return resp.entry ? toAgentSkillDTO(resp.entry) : null;
+}
+
+/** List each agent and each mission that may load an Agent Skill. */
+export async function daemonListAgentSkillGrants(name: string): Promise<AgentSkillGrantDTO[]> {
+  const resp = await userClient(AgentSkillService).listAgentSkillGrants({ name });
+  const out: AgentSkillGrantDTO[] = [];
+  for (const g of resp.grants) {
+    if (g.subjectKind === AgentSkillSubjectKind.AGENT) {
+      out.push({ kind: "agent", subjectId: g.subjectId });
+    } else if (g.subjectKind === AgentSkillSubjectKind.MISSION) {
+      out.push({ kind: "mission", subjectId: g.subjectId });
+    }
+  }
+  return out;
 }

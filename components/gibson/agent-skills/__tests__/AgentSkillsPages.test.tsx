@@ -19,6 +19,11 @@ const m = vi.hoisted(() => ({
   versions: vi.fn(),
   get: vi.fn(),
   del: vi.fn(),
+  grants: vi.fn(),
+  missions: vi.fn(),
+  agents: vi.fn(),
+  grant: vi.fn(),
+  revoke: vi.fn(),
 }));
 
 vi.mock("@/app/actions/agent-skills", () => ({
@@ -29,9 +34,12 @@ vi.mock("@/app/actions/agent-skills", () => ({
   getAgentSkillAction: m.get,
   deleteAgentSkillAction: m.del,
   publishAgentSkillAction: vi.fn(),
-  grantAgentSkillAction: vi.fn(),
-  revokeAgentSkillAction: vi.fn(),
+  grantAgentSkillAction: m.grant,
+  revokeAgentSkillAction: m.revoke,
+  listAgentSkillGrantsAction: m.grants,
+  listMissionOptionsAction: m.missions,
 }));
+vi.mock("@/app/actions/read/listAgentIdentities", () => ({ listAgentIdentitiesAction: m.agents }));
 vi.mock("@/app/actions/read/listSecretNames", () => ({
   listSecretNamesAction: vi.fn().mockResolvedValue({ ok: true, data: [] }),
 }));
@@ -56,24 +64,25 @@ function entry(over: Record<string, unknown> = {}) {
     allowedTools: [],
     publishedAt: "2026-11-18T10:00:00.000Z",
     current: true,
+    source: "tenant",
     ...over,
   };
 }
 
 beforeEach(() => {
   Object.values(m).forEach((f) => f.mockReset());
+  m.grants.mockResolvedValue({ ok: true, data: [] });
+  m.missions.mockResolvedValue({ ok: true, data: [] });
+  m.agents.mockResolvedValue({ ok: true, data: [] });
 });
 
 describe("AgentSkillsContent", () => {
   it("shows the name, the short digest and the source of each entry", async () => {
     m.list.mockResolvedValue({
       ok: true,
-      data: [entry(), entry({ name: "mine", digest: `sha256:${HEX_B}` })],
+      data: [entry({ source: "shared" }), entry({ name: "mine", digest: `sha256:${HEX_B}` })],
     });
-    m.shared.mockResolvedValue({
-      ok: true,
-      data: [{ name: "triage", description: "d", digest: `sha256:${HEX_A}`, enabled: true }],
-    });
+    m.shared.mockResolvedValue({ ok: true, data: [] });
     render(<AgentSkillsContent />);
     const rows = await screen.findAllByTestId("agent-skill-row");
     expect(rows).toHaveLength(2);
@@ -170,5 +179,102 @@ describe("AgentSkillDetail", () => {
     m.get.mockResolvedValue({ ok: false, error: "No such Agent Skill." });
     render(<AgentSkillDetail name="gone" />);
     expect(await screen.findByText("No such Agent Skill.")).toBeInTheDocument();
+  });
+});
+
+describe("grants on the detail page", () => {
+  function detailMocks() {
+    m.versions.mockResolvedValue({ ok: true, data: [entry()] });
+    m.get.mockResolvedValue({ ok: true, data: { entry: entry(), body: "b", files: [] } });
+  }
+
+  it("lists the present grants and revokes one", async () => {
+    detailMocks();
+    m.grants.mockResolvedValue({
+      ok: true,
+      data: [
+        { kind: "agent", subjectId: "agent-1" },
+        { kind: "mission", subjectId: "m-1" },
+      ],
+    });
+    m.revoke.mockResolvedValue({ ok: true, data: null });
+    const user = userEvent.setup();
+    render(<AgentSkillDetail name="triage" />);
+    const rows = await screen.findAllByTestId("grant-row");
+    expect(rows).toHaveLength(2);
+    await user.click(within(rows[0]).getByRole("button", { name: `${T.revokeButton} agent-1` }));
+    expect(m.revoke).toHaveBeenCalledWith({
+      name: "triage",
+      subjectKind: "agent",
+      subjectId: "agent-1",
+    });
+    await waitFor(() => expect(m.grants.mock.calls.length).toBeGreaterThan(1));
+  });
+
+  it("states that no grant exists", async () => {
+    detailMocks();
+    render(<AgentSkillDetail name="triage" />);
+    expect(await screen.findByTestId("grants-empty")).toHaveTextContent(T.grantsEmpty);
+  });
+
+  it("grants to an agent that the picker lists", async () => {
+    detailMocks();
+    m.agents.mockResolvedValue({ ok: true, data: [{ id: "agent-9", name: "Scout" }] });
+    m.grant.mockResolvedValue({ ok: true, data: null });
+    const user = userEvent.setup();
+    render(<AgentSkillDetail name="triage" />);
+    await screen.findByRole("option", { name: "Scout (agent-9)" });
+    await user.selectOptions(screen.getByLabelText(T.fieldSubjectPick), "agent-9");
+    await user.click(screen.getByRole("button", { name: T.grantButton }));
+    expect(m.grant).toHaveBeenCalledWith({
+      name: "triage",
+      subjectKind: "agent",
+      subjectId: "agent-9",
+    });
+  });
+
+  it("picks a mission, and falls back to a text field when the lists are empty", async () => {
+    detailMocks();
+    m.missions.mockResolvedValue({ ok: true, data: [{ id: "m-7", name: "Recon" }] });
+    m.grant.mockResolvedValue({ ok: true, data: null });
+    const user = userEvent.setup();
+    render(<AgentSkillDetail name="triage" />);
+    // No agent is listed, so the agent form starts with the text field.
+    expect(await screen.findByLabelText(T.fieldSubjectId)).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText(T.fieldSubjectKind), "mission");
+    await user.selectOptions(await screen.findByLabelText(T.fieldSubjectPick), "m-7");
+    await user.click(screen.getByRole("button", { name: T.grantButton }));
+    expect(m.grant).toHaveBeenCalledWith({
+      name: "triage",
+      subjectKind: "mission",
+      subjectId: "m-7",
+    });
+  });
+
+  it("lets the admin type an id when a list exists", async () => {
+    detailMocks();
+    m.agents.mockResolvedValue({ ok: true, data: [{ id: "agent-9", name: "Scout" }] });
+    m.grant.mockResolvedValue({ ok: true, data: null });
+    const user = userEvent.setup();
+    render(<AgentSkillDetail name="triage" />);
+    await screen.findByRole("option", { name: "Scout (agent-9)" });
+    await user.click(screen.getByRole("button", { name: T.pickerEnterId }));
+    await user.type(screen.getByLabelText(T.fieldSubjectId), "agent-x");
+    await user.click(screen.getByRole("button", { name: T.grantButton }));
+    expect(m.grant).toHaveBeenCalledWith({
+      name: "triage",
+      subjectKind: "agent",
+      subjectId: "agent-x",
+    });
+  });
+
+  it("shows the error of a refused grant as text", async () => {
+    detailMocks();
+    m.grant.mockResolvedValue({ ok: false, error: "No such agent.", code: "not_found" });
+    const user = userEvent.setup();
+    render(<AgentSkillDetail name="triage" />);
+    await user.type(await screen.findByLabelText(T.fieldSubjectId), "zz");
+    await user.click(screen.getByRole("button", { name: T.grantButton }));
+    expect(await screen.findByTestId("grant-error")).toHaveTextContent("No such agent.");
   });
 });

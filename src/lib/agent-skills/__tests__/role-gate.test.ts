@@ -28,6 +28,7 @@ const RPCS = [
   "DeleteAgentSkill",
   "GrantAgentSkill",
   "RevokeAgentSkill",
+  "ListAgentSkillGrants",
   "ListSharedAgentSkills",
   "EnableSharedAgentSkill",
 ];
@@ -42,7 +43,7 @@ describe("the registry entries of AgentSkillService", () => {
     expect(entry.allowedIdentities & IdentityClass.USER).toBeTruthy();
   });
 
-  it("holds no other AgentSkillService RPC than the eight that the pages use", () => {
+  it("holds no other AgentSkillService RPC than the nine that the pages use", () => {
     const found = Object.keys(AuthRegistry)
       .filter((k) => k.startsWith(SERVICE))
       .map((k) => k.slice(SERVICE.length))

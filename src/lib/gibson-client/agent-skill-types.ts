@@ -26,7 +26,12 @@ export interface AgentSkillDTO {
   publishedAt: string;
   /** True for the newest publish of the name. */
   current: boolean;
+  /** Where the version came from. */
+  source: AgentSkillSourceDTO;
 }
+
+/** Where a version came from: a publish of the tenant, or a Shared Agent Skill. */
+export type AgentSkillSourceDTO = "tenant" | "shared";
 
 /** One file of a version, besides SKILL.md. */
 interface AgentSkillFileDTO {
@@ -53,3 +58,10 @@ export interface SharedAgentSkillDTO {
 
 /** What a grant names. */
 export type AgentSkillSubjectKindDTO = "agent" | "mission";
+
+/** One grant of an Agent Skill. */
+export interface AgentSkillGrantDTO {
+  kind: AgentSkillSubjectKindDTO;
+  /** The id of the agent identity or of the mission. */
+  subjectId: string;
+}

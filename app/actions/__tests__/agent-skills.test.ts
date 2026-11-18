@@ -17,12 +17,16 @@ const m = vi.hoisted(() => ({
   grant: vi.fn(),
   revoke: vi.fn(),
   session: vi.fn(),
+  grants: vi.fn(),
+  missions: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/src/lib/auth", () => ({ getServerSession: m.session }));
+vi.mock("@/src/lib/gibson-client", () => ({ listMissions: m.missions }));
 vi.mock("@/src/lib/gibson-client/agent-skills", () => ({
   daemonListAgentSkills: m.list,
+  daemonListAgentSkillGrants: m.grants,
   daemonPublishAgentSkill: m.publish,
   daemonGrantAgentSkill: m.grant,
   daemonRevokeAgentSkill: m.revoke,
@@ -34,7 +38,9 @@ vi.mock("@/src/lib/gibson-client/agent-skills", () => ({
 
 import {
   grantAgentSkillAction,
+  listAgentSkillGrantsAction,
   listAgentSkillsAction,
+  listMissionOptionsAction,
   publishAgentSkillAction,
   revokeAgentSkillAction,
 } from "../agent-skills";
@@ -137,5 +143,38 @@ describe("grant and revoke", () => {
       code: "bad_input",
     });
     expect(m.grant).not.toHaveBeenCalled();
+  });
+});
+
+describe("grants list and mission picker", () => {
+  it("lists the grants of one name", async () => {
+    m.grants.mockResolvedValue([{ kind: "agent", subjectId: "a1" }]);
+    expect(await listAgentSkillGrantsAction(" triage ")).toEqual({
+      ok: true,
+      data: [{ kind: "agent", subjectId: "a1" }],
+    });
+    expect(m.grants).toHaveBeenCalledWith("triage");
+    expect(await listAgentSkillGrantsAction("")).toMatchObject({ ok: false, code: "bad_input" });
+  });
+
+  it("lists the missions as id and name, with the id as the name when empty", async () => {
+    m.missions.mockResolvedValue({
+      missions: [
+        { id: "m1", name: "Recon" },
+        { id: "m2", name: "" },
+      ],
+    });
+    expect(await listMissionOptionsAction()).toEqual({
+      ok: true,
+      data: [
+        { id: "m1", name: "Recon" },
+        { id: "m2", name: "m2" },
+      ],
+    });
+  });
+
+  it("needs a session", async () => {
+    m.session.mockResolvedValue(null);
+    expect(await listMissionOptionsAction()).toMatchObject({ ok: false, code: "unauthenticated" });
   });
 });

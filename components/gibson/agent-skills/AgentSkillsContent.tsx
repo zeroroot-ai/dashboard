@@ -38,7 +38,7 @@ import type {
   AgentSkillDTO,
   SharedAgentSkillDTO,
 } from "@/src/lib/gibson-client/agent-skill-types";
-import { agentSkillSource, formatPublishedAt, shortDigest } from "@/src/lib/agent-skills/view";
+import { formatPublishedAt, shortDigest } from "@/src/lib/agent-skills/view";
 import { PublishAgentSkillForm } from "./PublishAgentSkillForm";
 import { SharedAgentSkills } from "./SharedAgentSkills";
 import { AGENT_SKILL_TEXT as T } from "./texts";
@@ -134,7 +134,7 @@ export function AgentSkillsContent() {
                 </TableHeader>
                 <TableBody>
                   {data.entries.map((e) => {
-                    const source = agentSkillSource(e, data.shared);
+                    const source = e.source;
                     return (
                       <TableRow key={`${e.name}@${e.digest}`} data-testid="agent-skill-row">
                         <TableCell className="font-medium">

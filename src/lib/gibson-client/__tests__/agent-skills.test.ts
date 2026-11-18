@@ -22,6 +22,7 @@ const client = {
   grantAgentSkill: vi.fn(),
   revokeAgentSkill: vi.fn(),
   listSharedAgentSkills: vi.fn(),
+  listAgentSkillGrants: vi.fn(),
   enableSharedAgentSkill: vi.fn(),
 };
 
@@ -29,6 +30,7 @@ vi.mock("@/src/lib/gibson-client", () => ({ userClient: vi.fn(() => client) }));
 vi.mock("../../gibson-client", () => ({ userClient: vi.fn(() => client) }));
 vi.mock("@/src/gen/gibson/tenant/v1/agent_skill_pb", () => ({
   AgentSkillService: {},
+  AgentSkillSource: { UNSPECIFIED: 0, TENANT: 1, SHARED: 2 },
   AgentSkillSubjectKind: { UNSPECIFIED: 0, AGENT: 1, MISSION: 2 },
 }));
 
@@ -37,6 +39,7 @@ import {
   daemonEnableSharedAgentSkill,
   daemonGetAgentSkill,
   daemonGrantAgentSkill,
+  daemonListAgentSkillGrants,
   daemonListAgentSkills,
   daemonListSharedAgentSkills,
   daemonPublishAgentSkill,
@@ -54,6 +57,7 @@ const PROTO_ENTRY = {
   allowedTools: ["read"],
   publishedAt: { seconds: BigInt(1_700_000_000), nanos: 500_000_000 },
   current: true,
+  source: 2,
 };
 const DTO_ENTRY = {
   name: "triage",
@@ -66,6 +70,7 @@ const DTO_ENTRY = {
   allowedTools: ["read"],
   publishedAt: "2023-11-14T22:13:20.500Z",
   current: true,
+  source: "shared",
 };
 
 beforeEach(() => vi.clearAllMocks());
@@ -170,6 +175,33 @@ describe("delete, grant and revoke", () => {
       subjectKind: 1,
       subjectId: "agent-1",
     });
+  });
+});
+
+describe("source", () => {
+  it("maps a tenant version and an unspecified source to tenant", async () => {
+    client.listAgentSkills.mockResolvedValue({
+      entries: [{ ...PROTO_ENTRY, source: 1 }, { ...PROTO_ENTRY, source: 0 }],
+    });
+    const out = await daemonListAgentSkills();
+    expect(out.map((e) => e.source)).toEqual(["tenant", "tenant"]);
+  });
+});
+
+describe("daemonListAgentSkillGrants", () => {
+  it("maps each grant to a kind and an id, and drops an unknown kind", async () => {
+    client.listAgentSkillGrants.mockResolvedValue({
+      grants: [
+        { subjectKind: 1, subjectId: "agent-1" },
+        { subjectKind: 2, subjectId: "m-1" },
+        { subjectKind: 0, subjectId: "x" },
+      ],
+    });
+    expect(await daemonListAgentSkillGrants("triage")).toEqual([
+      { kind: "agent", subjectId: "agent-1" },
+      { kind: "mission", subjectId: "m-1" },
+    ]);
+    expect(client.listAgentSkillGrants).toHaveBeenCalledWith({ name: "triage" });
   });
 });
 
