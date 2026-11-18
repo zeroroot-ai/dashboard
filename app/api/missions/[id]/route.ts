@@ -8,6 +8,7 @@ import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/act
 import { listMissions, serializeMission, userClient, stopMission } from '@/src/lib/gibson-client';
 import { GraphService } from '@/src/gen/gibson/graph/v1/graph_pb';
 import type { Mission, MissionStatus } from '@/src/types';
+import { isActiveMission, parseMissionStatus } from '@/src/lib/missions/status';
 
 /**
  * GET /api/missions/:id
@@ -55,10 +56,7 @@ export async function GET(
     const serialized = serializeMission(gibsonMission);
 
     // Map status
-    const normalized = serialized.status.toLowerCase().replace('mission_status_', '');
-    const status = (['pending', 'running', 'paused', 'completed', 'failed', 'stopped'].includes(normalized)
-      ? normalized
-      : 'pending') as MissionStatus;
+    const status: MissionStatus = parseMissionStatus(serialized.status);
 
     // Calculate progress
     let progress = 0;
@@ -66,7 +64,7 @@ export async function GET(
       progress = Math.round(serialized.progress * 100);
     } else if (serialized.endTime && serialized.endTime > 0) {
       progress = 100;
-    } else if (status === 'running') {
+    } else if (isActiveMission(status)) {
       progress = Math.min(90, 10 + serialized.findingCount * 5);
     } else if (status === 'paused') {
       progress = 50;
@@ -140,7 +138,7 @@ export async function GET(
  * DELETE /api/missions/:id
  *
  * Stop a mission by ID. The daemon is authoritative; this calls StopMission
- * for running missions. The daemon-side Neo4j mirror is managed by the daemon.
+ * for active missions. The daemon-side Neo4j mirror is managed by the daemon.
  *
  * Spec: dashboard-neo4j-crud-removal (Phase 3, Task 12).
  */
@@ -187,21 +185,20 @@ export async function DELETE(
       );
     }
 
-    const missionStatus = mission.status?.toLowerCase().replace('mission_status_', '') || '';
-    if (missionStatus === 'running') {
+    if (isActiveMission(parseMissionStatus(mission.status))) {
       return NextResponse.json(
-        { error: { code: 'BAD_REQUEST', message: 'Cannot delete a running mission. Stop it first.' } },
+        { error: { code: 'BAD_REQUEST', message: 'Cannot delete an active mission. Stop it first.' } },
         { status: 400 }
       );
     }
 
     // Daemon does not yet expose a delete RPC; stop is the closest operation.
     // The daemon-side Neo4j mirror is managed by the daemon.
-    // For stopped/completed/failed missions this is a no-op at the daemon level.
+    // For canceled/completed/failed missions this is a no-op at the daemon level.
     try {
       await stopMission(id, false, session?.user?.id, deleteTenantId);
     } catch {
-      // Ignore stop errors for non-running missions, already stopped.
+      // Ignore stop errors for inactive missions, already canceled.
     }
 
     return NextResponse.json({ success: true });

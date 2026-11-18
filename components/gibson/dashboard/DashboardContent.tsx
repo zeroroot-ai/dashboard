@@ -24,6 +24,7 @@ import { useMissions } from '@/src/hooks/useMissions';
 import { useEventStream } from '@/src/hooks/useEventStream';
 import { useUIStore } from '@/src/stores/ui-store';
 import type { Finding, FindingSeverity, Mission, MissionStatus } from '@/src/types';
+import { MISSION_STATUS_LABELS, isActiveMission } from '@/src/lib/missions/status';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -47,12 +48,13 @@ const SEVERITY_STYLES: Record<FindingSeverity, string> = {
 };
 
 const STATUS_STYLES: Record<MissionStatus, string> = {
-  running:   'bg-highlight/10 text-highlight border-highlight/40',
-  paused:    'bg-alt/10 text-alt border-alt/40',
-  completed: 'bg-link/10 text-link border-link/40',
-  failed:    'bg-destructive/10 text-destructive border-destructive/40',
-  stopped:   'bg-muted text-muted-foreground border-border',
-  pending:   'bg-muted text-muted-foreground border-border',
+  working:        'bg-highlight/10 text-highlight border-highlight/40',
+  input_required: 'bg-warning/10 text-warning border-warning/40',
+  paused:         'bg-alt/10 text-alt border-alt/40',
+  completed:      'bg-link/10 text-link border-link/40',
+  failed:         'bg-destructive/10 text-destructive border-destructive/40',
+  canceled:       'bg-muted text-muted-foreground border-border',
+  submitted:      'bg-muted text-muted-foreground border-border',
 };
 
 function SeverityBadge({ severity }: { severity: FindingSeverity }) {
@@ -70,7 +72,7 @@ function StatusBadge({ status }: { status: MissionStatus }) {
     <span
       className={`inline-flex items-center rounded border px-1.5 py-0.5 text-xs font-mono uppercase tracking-wider ${STATUS_STYLES[status]}`}
     >
-      {status}
+      {MISSION_STATUS_LABELS[status]}
     </span>
   );
 }
@@ -115,7 +117,7 @@ function KpiCards() {
   const { data: counts } = useFindingsCounts();
   const { data: agents } = useAgents();
 
-  const activeMissions = (missions ?? []).filter((m) => m.status === 'running').length;
+  const activeMissions = (missions ?? []).filter((m) => isActiveMission(m.status)).length;
   const totalFindings = findingsPage?.total ?? 0;
   const criticalFindings = counts?.critical ?? 0;
   const agentsOnline = agents?.length ?? 0;

@@ -8,7 +8,7 @@
  *   - Status events write correct ANSI lines to the terminal ref
  *   - tool_started and tool_completed write tool lines
  *   - error frame writes a red error line
- *   - Terminal-status events (completed, failed, stopped) close the EventSource
+ *   - Terminal-status events (completed, failed, canceled) close the EventSource
  *   - When missionId is undefined, no EventSource is opened
  */
 
@@ -82,18 +82,18 @@ function makeRef(writeMock: (text: string) => void): React.RefObject<MissionTerm
 // ---------------------------------------------------------------------------
 
 describe("useMissionTerminal", () => {
-  it("writes the green running line on status: running, then green completed on status: completed", () => {
+  it("writes the green working line on status: working, then green completed on status: completed", () => {
     const writeMock = vi.fn();
     const ref = makeRef(writeMock);
 
     renderHook(() => useMissionTerminal("mission-abc", ref));
 
     act(() => {
-      fakeES.emit("status", { missionId: "mission-abc", status: "running" });
+      fakeES.emit("status", { missionId: "mission-abc", status: "working" });
     });
 
     expect(writeMock).toHaveBeenCalledWith(
-      "\x1b[32m▶ Mission running\x1b[0m\r\n",
+      "\x1b[32m▶ Mission working\x1b[0m\r\n",
     );
 
     act(() => {
@@ -177,14 +177,14 @@ describe("useMissionTerminal", () => {
     expect(fakeES.closeSpy).toHaveBeenCalled();
   });
 
-  it("calls es.close() when status: stopped is emitted", () => {
+  it("calls es.close() when status: canceled is emitted", () => {
     const writeMock = vi.fn();
     const ref = makeRef(writeMock);
 
     renderHook(() => useMissionTerminal("mission-stop", ref));
 
     act(() => {
-      fakeES.emit("status", { missionId: "mission-stop", status: "stopped" });
+      fakeES.emit("status", { missionId: "mission-stop", status: "canceled" });
     });
 
     expect(fakeES.closeSpy).toHaveBeenCalled();
@@ -217,14 +217,43 @@ describe("useMissionTerminal", () => {
     expect(writeMock).not.toHaveBeenCalled();
   });
 
-  it("does not write for status: pending (silent)", () => {
+  it("writes a line for status: input_required and keeps the stream open", () => {
     const writeMock = vi.fn();
     const ref = makeRef(writeMock);
 
-    renderHook(() => useMissionTerminal("mission-pending", ref));
+    renderHook(() => useMissionTerminal("mission-input", ref));
 
     act(() => {
-      fakeES.emit("status", { missionId: "mission-pending", status: "pending" });
+      fakeES.emit("status", { missionId: "mission-input", status: "input_required" });
+    });
+
+    expect(writeMock).toHaveBeenCalledWith("\x1b[33m? Mission needs input\x1b[0m\r\n");
+    expect(fakeES.closeSpy).not.toHaveBeenCalled();
+  });
+
+  it("does not close on the old status names, which the daemon no longer sends", () => {
+    const writeMock = vi.fn();
+    const ref = makeRef(writeMock);
+
+    renderHook(() => useMissionTerminal("mission-old", ref));
+
+    act(() => {
+      fakeES.emit("status", { missionId: "mission-old", status: "stopped" });
+      fakeES.emit("status", { missionId: "mission-old", status: "running" });
+    });
+
+    expect(writeMock).not.toHaveBeenCalled();
+    expect(fakeES.closeSpy).not.toHaveBeenCalled();
+  });
+
+  it("does not write for status: submitted (silent)", () => {
+    const writeMock = vi.fn();
+    const ref = makeRef(writeMock);
+
+    renderHook(() => useMissionTerminal("mission-submitted", ref));
+
+    act(() => {
+      fakeES.emit("status", { missionId: "mission-submitted", status: "submitted" });
     });
 
     expect(writeMock).not.toHaveBeenCalled();

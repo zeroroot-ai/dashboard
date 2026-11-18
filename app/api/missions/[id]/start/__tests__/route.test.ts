@@ -6,11 +6,11 @@
  *
  * Verifies the status-branching dispatch:
  *   - paused  → calls resumeMission(id) with the same id
- *   - pending → calls runMission(missionDefinitionId, targetId), returns NEW id
+ *   - submitted → calls runMission(missionDefinitionId, targetId), returns NEW id
  *   - other   → 409 Conflict
  *
  * Verifies the error-handling contract (auth, csrf, not-found, 422 on
- * pending-without-refs, canonical daemon error mapping via daemonErrorResponse).
+ * submitted-without-refs, canonical daemon error mapping via daemonErrorResponse).
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -102,13 +102,13 @@ describe('POST /api/missions/:id/start', () => {
     expect(mockRunMission).not.toHaveBeenCalled();
   });
 
-  it('dispatches pending mission via RunMission and surfaces the new id', async () => {
+  it('dispatches submitted mission via RunMission and surfaces the new id', async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: 'u1', tenantId: 't1' } });
     mockListMissions.mockResolvedValue({
       missions: [
         {
           id: 'm1',
-          status: 'MISSION_STATUS_PENDING',
+          status: 'MISSION_STATUS_SUBMITTED',
           missionDefinitionId: 'def1',
           targetId: 'tgt1',
         },
@@ -131,13 +131,13 @@ describe('POST /api/missions/:id/start', () => {
     expect(mockResumeMission).not.toHaveBeenCalled();
   });
 
-  it('returns 422 when a pending mission has no mission_definition_id/target_id', async () => {
+  it('returns 422 when a submitted mission has no mission_definition_id/target_id', async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: 'u1', tenantId: 't1' } });
     mockListMissions.mockResolvedValue({
       missions: [
         {
           id: 'm1',
-          status: 'MISSION_STATUS_PENDING',
+          status: 'MISSION_STATUS_SUBMITTED',
           missionDefinitionId: '',
           targetId: '',
         },
@@ -154,13 +154,13 @@ describe('POST /api/missions/:id/start', () => {
     expect(mockResumeMission).not.toHaveBeenCalled();
   });
 
-  it('returns 409 for a running mission', async () => {
+  it('returns 409 for a working mission', async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: 'u1', tenantId: 't1' } });
     mockListMissions.mockResolvedValue({
       missions: [
         {
           id: 'm1',
-          status: 'MISSION_STATUS_RUNNING',
+          status: 'MISSION_STATUS_WORKING',
           missionDefinitionId: 'def1',
           targetId: 'tgt1',
         },

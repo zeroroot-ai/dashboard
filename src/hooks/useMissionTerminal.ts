@@ -13,7 +13,7 @@
  * typed frames: status, tool_started, tool_completed, error, log.
  *
  * The EventSource is closed automatically when the mission reaches a terminal
- * status (completed, failed, stopped) and on useEffect cleanup.
+ * status (completed, failed, canceled) and on useEffect cleanup.
  *
  * Spec: dashboard#384, live SSE status and tool events in MissionTerminal.
  */
@@ -25,14 +25,15 @@ import type { MissionTerminalHandle } from "@/src/components/missions/MissionTer
 // ANSI line constants
 // ---------------------------------------------------------------------------
 
-const LINE_RUNNING = "\x1b[32m▶ Mission running\x1b[0m\r\n";
+const LINE_WORKING = "\x1b[32m▶ Mission working\x1b[0m\r\n";
+const LINE_INPUT_REQUIRED = "\x1b[33m? Mission needs input\x1b[0m\r\n";
 const LINE_PAUSED = "\x1b[33m⏸ Mission paused\x1b[0m\r\n";
 const LINE_COMPLETED = "\x1b[32m✓ Mission completed\x1b[0m\r\n";
 const LINE_FAILED = "\x1b[31m✗ Mission failed\x1b[0m\r\n";
-const LINE_STOPPED = "\x1b[33m⏹ Mission stopped\x1b[0m\r\n";
+const LINE_CANCELED = "\x1b[33m⏹ Mission canceled\x1b[0m\r\n";
 
 // Terminal statuses that should close the EventSource
-const TERMINAL_STATUSES = new Set(["completed", "failed", "stopped"]);
+const TERMINAL_STATUSES = new Set(["completed", "failed", "canceled"]);
 
 // ---------------------------------------------------------------------------
 // Payload shapes
@@ -123,8 +124,11 @@ export function useMissionTerminal(
       }
       const status = payload.status ?? "";
       switch (status) {
-        case "running":
-          write(LINE_RUNNING);
+        case "working":
+          write(LINE_WORKING);
+          break;
+        case "input_required":
+          write(LINE_INPUT_REQUIRED);
           break;
         case "paused":
           write(LINE_PAUSED);
@@ -137,11 +141,11 @@ export function useMissionTerminal(
           write(LINE_FAILED);
           close();
           break;
-        case "stopped":
-          write(LINE_STOPPED);
+        case "canceled":
+          write(LINE_CANCELED);
           close();
           break;
-        // pending and unknown statuses are silent
+        // submitted and unknown statuses are silent
         default:
           break;
       }

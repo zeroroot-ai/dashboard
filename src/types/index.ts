@@ -12,13 +12,15 @@ import type { PrincipalView } from '@/src/lib/banks/view';
 // Mission Types
 // ============================================================================
 
+/** The mission states of the daemon, named as the A2A Task states. */
 export type MissionStatus =
-  | 'pending'
-  | 'running'
+  | 'submitted'
+  | 'working'
+  | 'input_required'
   | 'paused'
   | 'completed'
   | 'failed'
-  | 'stopped';
+  | 'canceled';
 
 interface MissionConfig {
   target?: string;

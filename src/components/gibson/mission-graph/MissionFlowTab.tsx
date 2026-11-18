@@ -104,7 +104,7 @@ export function MissionFlowTab({
     const terminal =
       missionStatus === "completed" ||
       missionStatus === "failed" ||
-      missionStatus === "stopped";
+      missionStatus === "canceled";
     if (terminal) return;
 
     let es: EventSource;

@@ -35,6 +35,7 @@ import { requireUserToken } from './auth/user-token';
 // `createGrpcTransport` / `createClient` primitives are intentionally NOT
 // re-exported, this file consumes the sanctioned typed-client wrappers only.
 import { userClient, serviceClient } from './gibson-client/transport';
+import { isActiveMission, parseMissionStatus } from '@/src/lib/missions/status';
 export { userClient, serviceClient };
 
 // Tenant CRUD has moved to the daemon's AdminTenantService (operator-pull,
@@ -379,7 +380,7 @@ export async function deleteConversation(
 interface SerializedMission {
   id: string;
   name: string;
-  /** Plain status string from the proto (e.g. "running", "completed", "failed"). */
+  /** Plain status string from the proto (e.g. "working", "completed", "failed"). */
   status: string;
   /**
    * Mission start time as Unix epoch seconds (`number`), or `null` when the
@@ -559,7 +560,7 @@ function serializeCapabilities(c: Capabilities | undefined): SerializedCapabilit
  * All proto fields are mapped:
  * - `startTime` / `endTime`: `int64` BigInt Unix seconds → `number | null`
  *   (`null` when the proto default `0` indicates the field is not set).
- * - `status`: plain string (e.g. `"running"`, `"completed"`, `"failed"`).
+ * - `status`: plain string (e.g. `"working"`, `"completed"`, `"failed"`).
  * - `progress`: `double` in [0.0, 1.0], multiply by 100 for a percentage.
  * - String fields carry the proto zero value (`''`) when unset.
  */
@@ -872,7 +873,7 @@ export async function getKPIs(tenantId: string, userId?: string): Promise<KPIs> 
   const agents = agentsResp.agents ?? [];
   const tools = toolsResp.tools ?? [];
 
-  const activeMissions = missions.filter((m) => m.status === 'running').length;
+  const activeMissions = missions.filter((m) => isActiveMission(parseMissionStatus(m.status))).length;
   const agentsOnline = agents.filter((a) => a.health === 'healthy').length;
 
   let totalFindings = 0;

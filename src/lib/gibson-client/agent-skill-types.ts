@@ -31,7 +31,7 @@ export interface AgentSkillDTO {
 }
 
 /** Where a version came from: a publish of the tenant, or a Shared Agent Skill. */
-export type AgentSkillSourceDTO = "tenant" | "shared";
+type AgentSkillSourceDTO = "tenant" | "shared";
 
 /** One file of a version, besides SKILL.md. */
 interface AgentSkillFileDTO {
