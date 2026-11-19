@@ -15,6 +15,8 @@ export interface InboundMissionDTO {
   missionDefinitionId: string;
   /** The ids of the approved targets. */
   targetIds: string[];
+  /** The most missions of this publication that run or wait at one time. */
+  maxActiveMissions: number;
   /** The subject of the admin who published it. */
   publishedBy: string;
   /** ISO 8601 time, or an empty string. */

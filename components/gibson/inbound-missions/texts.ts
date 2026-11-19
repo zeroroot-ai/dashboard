@@ -39,7 +39,7 @@ export const INBOUND_MISSION_TEXT = {
   noTargets: "Your workspace has no target. Add a target first.",
   fieldMaxMissions: "Maximum missions at one time",
   maxMissionsHelp:
-    "The largest number of inbound missions of this publication that run or wait at one time. Enter a whole number, at least 1.",
+    "The largest number of inbound missions of this publication that run or wait at one time. Enter a whole number from 1 to 10000.",
   fieldCallerName: "Name of the new caller identity",
   callerNameHelp: "Use lowercase letters, digits and hyphens, at most 63 characters.",
   publishButton: "Publish",

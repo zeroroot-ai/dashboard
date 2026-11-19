@@ -52,6 +52,7 @@ const VALID = {
   agent: "recon",
   missionDefinitionId: "def-1",
   targetIds: ["t1", "t2"],
+  maxActiveMissions: 3,
   callerName: "partner",
 };
 const IDENTITY = {
@@ -149,6 +150,10 @@ describe("the publish flow", () => {
     [{ missionDefinitionId: " " }, /required/i],
     [{ targetIds: [] }, /at least one target/i],
     [{ targetIds: ["t1", "t1"] }, /two times/i],
+    [{ maxActiveMissions: 0 }, /at least 1/i],
+    [{ maxActiveMissions: 1.5 }, /whole number/i],
+    [{ maxActiveMissions: Number.NaN }, /maximum number of missions/i],
+    [{ maxActiveMissions: 10001 }, /at most 10000/i],
   ])("refuses the input %j and calls nothing", async (patch, message) => {
     const r = await publishInboundMissionAction({ ...VALID, ...patch });
     expect(r).toMatchObject({ ok: false, code: "bad_input" });
@@ -164,6 +169,7 @@ describe("the publish flow", () => {
       agent: "recon",
       missionDefinitionId: "def-1",
       targetIds: ["t1", "t2"],
+      maxActiveMissions: 3,
     });
     expect(m.grant).toHaveBeenCalledWith("recon", "agent_principal:id-1");
     expect(m.retire).not.toHaveBeenCalled();
@@ -230,7 +236,7 @@ describe("the publish flow", () => {
 });
 
 describe("publish again", () => {
-  const AGAIN = { agent: "recon", missionDefinitionId: "def-1", targetIds: ["t1", "t2"] };
+  const AGAIN = { agent: "recon", missionDefinitionId: "def-1", targetIds: ["t1", "t2"], maxActiveMissions: 3 };
 
   it("publishes the same fields, and makes no identity and no grant", async () => {
     m.publish.mockResolvedValue({ agent: "recon", stale: false });
@@ -248,8 +254,9 @@ describe("publish again", () => {
     });
   });
 
-  it("refuses an empty target list and calls nothing", async () => {
+  it("refuses an empty target list or no limit, and calls nothing", async () => {
     expect(await republishInboundMissionAction({ ...AGAIN, targetIds: [] })).toMatchObject({ code: "bad_input" });
+    expect(await republishInboundMissionAction({ ...AGAIN, maxActiveMissions: 0 })).toMatchObject({ code: "bad_input" });
     expect(m.publish).not.toHaveBeenCalled();
   });
 });

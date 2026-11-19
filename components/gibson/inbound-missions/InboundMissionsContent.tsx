@@ -66,7 +66,7 @@ const SELECT_CLASS =
   "border-input bg-background text-foreground focus-visible:ring-ring/50 h-9 w-full rounded-md border px-3 text-sm focus-visible:ring-[3px] focus-visible:outline-none";
 
 /** The number of columns of the list. A row that spans the table uses it. */
-const COLUMN_COUNT = 6;
+const COLUMN_COUNT = 7;
 
 type Failure = Extract<InboundCallerFlowResult, { ok: false }>;
 type Options = { definitions: InboundOptionDTO[]; targets: InboundOptionDTO[] };
@@ -108,6 +108,8 @@ function PublishForm({ options, onPublished }: { options: Options; onPublished: 
   const [agents, setAgents] = React.useState<AgentsRead | null>(null);
   const [agent, setAgent] = React.useState("");
   const [targetIds, setTargetIds] = React.useState<string[]>([]);
+  // The limit has no default. The admin must enter it.
+  const [maxMissions, setMaxMissions] = React.useState("");
   const [callerName, setCallerName] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [failure, setFailure] = React.useState<Failure | null>(null);
@@ -137,6 +139,7 @@ function PublishForm({ options, onPublished }: { options: Options; onPublished: 
         agent,
         missionDefinitionId: definitionId,
         targetIds,
+        maxActiveMissions: Number(maxMissions),
         callerName,
       });
       if (!res.ok) {
@@ -151,6 +154,7 @@ function PublishForm({ options, onPublished }: { options: Options; onPublished: 
       setAgents(null);
       setAgent("");
       setTargetIds([]);
+      setMaxMissions("");
       setCallerName("");
     } catch {
       setFailure({ ok: false, error: T.publishFailed });
@@ -173,7 +177,15 @@ function PublishForm({ options, onPublished }: { options: Options; onPublished: 
   }
 
   const agentNames = agents && "agents" in agents ? agents.agents : [];
-  const ready = definitionId !== "" && agent !== "" && targetIds.length > 0 && callerName.trim() !== "";
+  const limit = Number(maxMissions);
+  const ready =
+    definitionId !== "" &&
+    agent !== "" &&
+    targetIds.length > 0 &&
+    maxMissions.trim() !== "" &&
+    Number.isInteger(limit) &&
+    limit >= 1 &&
+    callerName.trim() !== "";
 
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="space-y-4" aria-label={T.publishTitle}>
@@ -257,6 +269,23 @@ function PublishForm({ options, onPublished }: { options: Options; onPublished: 
       </fieldset>
 
       <div className="max-w-md space-y-1.5">
+        <Label htmlFor="im-max-missions">{T.fieldMaxMissions}</Label>
+        <Input
+          id="im-max-missions"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={10000}
+          step={1}
+          value={maxMissions}
+          onChange={(e) => setMaxMissions(e.target.value)}
+          required
+          autoComplete="off"
+        />
+        <p className="text-muted-foreground text-xs">{T.maxMissionsHelp}</p>
+      </div>
+
+      <div className="max-w-md space-y-1.5">
         <Label htmlFor="im-caller-name">{T.fieldCallerName}</Label>
         <Input
           id="im-caller-name"
@@ -298,6 +327,7 @@ function PublicationRow({
         agent: entry.agent,
         missionDefinitionId: entry.missionDefinitionId,
         targetIds: entry.targetIds,
+        maxActiveMissions: entry.maxActiveMissions,
       });
       if (!res.ok) {
         setRepublishError(res.code === "unauthenticated" ? T.sessionExpired : res.error);
@@ -349,6 +379,7 @@ function PublicationRow({
             ))}
           </ul>
         </TableCell>
+        <TableCell data-testid="max-missions">{entry.maxActiveMissions}</TableCell>
         <TableCell className="font-mono text-xs break-all">{entry.publishedBy}</TableCell>
         <TableCell>{formatPublishedAt(entry.createdAt)}</TableCell>
         <TableCell>
@@ -504,6 +535,7 @@ export function InboundMissionsContent() {
               <TableHead>{T.columnAgent}</TableHead>
               <TableHead>{T.columnDefinition}</TableHead>
               <TableHead>{T.columnTargets}</TableHead>
+              <TableHead>{T.columnMaxMissions}</TableHead>
               <TableHead>{T.columnPublishedBy}</TableHead>
               <TableHead>{T.columnCreated}</TableHead>
               <TableHead />

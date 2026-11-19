@@ -72,6 +72,13 @@ const targetIdsSchema = z
   .max(100, "Choose at most 100 targets.")
   .refine((ids) => new Set(ids).size === ids.length, "A target appears two times.");
 
+// The daemon accepts 1 to 10000 and has no default.
+const maxActiveMissionsSchema = z
+  .number({ error: "Enter the maximum number of missions at one time." })
+  .int("The maximum number of missions must be a whole number.")
+  .min(1, "The maximum number of missions must be at least 1.")
+  .max(10000, "The maximum number of missions must be at most 10000.");
+
 function bad(message: string | undefined): { ok: false; error: string; code: string } {
   return { ok: false, error: message ?? "Invalid input", code: "bad_input" };
 }
@@ -140,6 +147,7 @@ export async function republishInboundMissionAction(input: {
   agent: string;
   missionDefinitionId: string;
   targetIds: string[];
+  maxActiveMissions: number;
 }): Promise<InboundActionResult<InboundMissionDTO | null>> {
   const session = await getServerSession();
   if (!session?.user) return UNAUTHENTICATED;
@@ -149,11 +157,14 @@ export async function republishInboundMissionAction(input: {
   if (!d.success) return bad(d.error.issues[0]?.message);
   const t = targetIdsSchema.safeParse(input.targetIds);
   if (!t.success) return bad(t.error.issues[0]?.message);
+  const n = maxActiveMissionsSchema.safeParse(input.maxActiveMissions);
+  if (!n.success) return bad(n.error.issues[0]?.message);
   try {
     const entry = await daemonPublishInboundMission({
       agent: a.data,
       missionDefinitionId: d.data,
       targetIds: t.data,
+      maxActiveMissions: n.data,
     });
     return { ok: true, data: entry };
   } catch (err) {
@@ -202,7 +213,7 @@ async function runCallerFlow(
   action: string,
   agent: string,
   callerName: string,
-  publish: { missionDefinitionId: string; targetIds: string[] } | null,
+  publish: { missionDefinitionId: string; targetIds: string[]; maxActiveMissions: number } | null,
 ): Promise<InboundCallerFlowResult> {
   let identity: InboundCallerIdentityDTO;
   try {
@@ -254,6 +265,7 @@ export async function publishInboundMissionAction(input: {
   agent: string;
   missionDefinitionId: string;
   targetIds: string[];
+  maxActiveMissions: number;
   callerName: string;
 }): Promise<InboundCallerFlowResult> {
   const session = await getServerSession();
@@ -264,11 +276,14 @@ export async function publishInboundMissionAction(input: {
   if (!d.success) return bad(d.error.issues[0]?.message);
   const t = targetIdsSchema.safeParse(input.targetIds);
   if (!t.success) return bad(t.error.issues[0]?.message);
+  const n = maxActiveMissionsSchema.safeParse(input.maxActiveMissions);
+  if (!n.success) return bad(n.error.issues[0]?.message);
   const c = nameSchema.safeParse(input.callerName);
   if (!c.success) return bad(c.error.issues[0]?.message);
   return runCallerFlow("publishInboundMissionAction", a.data, c.data, {
     missionDefinitionId: d.data,
     targetIds: t.data,
+    maxActiveMissions: n.data,
   });
 }
 
