@@ -11,7 +11,7 @@ import type {
   SetupTaskId,
   SetupTaskStatus,
 } from '@/src/types/onboarding';
-import { WIZARD_STEPS, DEFAULT_SETUP_TASKS } from '@/src/types/onboarding';
+import { WIZARD_STEPS, DEFAULT_SETUP_TASKS, withoutApiKey } from '@/src/types/onboarding';
 
 // ============================================================================
 // Store State Interface
@@ -129,7 +129,6 @@ interface OnboardingState {
   // Configuration actions
   setLLMConfig: (config: LLMConfig) => void;
   setLLMProvider: (provider: LLMConfig['provider']) => void;
-  setLLMApiKey: (apiKey: string) => void;
   setLLMBaseUrl: (baseUrl: string) => void;
   setLLMModel: (model: string) => void;
   setLLMValidated: (validated: boolean) => void;
@@ -278,6 +277,20 @@ const initialStepTimes: Record<WizardStepId, number> = {
  * - wizardInProgress
  * - currentStepStartedAt
  */
+/** The version of the persisted state. Version 1 holds no provider API key. */
+export const ONBOARDING_STORE_VERSION = 1;
+
+/**
+ * Remove the provider API key from a persisted state of an older version. The
+ * state of another shape passes unchanged.
+ */
+export function migrateOnboardingState(persisted: unknown): unknown {
+  if (typeof persisted !== 'object' || persisted === null) return persisted;
+  const state = persisted as { llmConfig?: unknown };
+  if (typeof state.llmConfig !== 'object' || state.llmConfig === null) return persisted;
+  return { ...state, llmConfig: withoutApiKey(state.llmConfig) };
+}
+
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
     (set, get) => ({
@@ -509,7 +522,8 @@ export const useOnboardingStore = create<OnboardingState>()(
       // ========================================
 
       setLLMConfig: (config: LLMConfig) => {
-        set({ llmConfig: config, llmProvider: config.provider });
+        // A config from an older stored state can hold an API key. Drop it.
+        set({ llmConfig: withoutApiKey(config), llmProvider: config.provider });
       },
 
       setLLMProvider: (provider: LLMConfig['provider']) => {
@@ -518,14 +532,6 @@ export const useOnboardingStore = create<OnboardingState>()(
             ? { ...state.llmConfig, provider }
             : { provider, model: '', isValidated: false },
           llmProvider: provider,
-        }));
-      },
-
-      setLLMApiKey: (apiKey: string) => {
-        set((state) => ({
-          llmConfig: state.llmConfig
-            ? { ...state.llmConfig, apiKey }
-            : { provider: 'anthropic', apiKey, model: '', isValidated: false },
         }));
       },
 
@@ -733,6 +739,11 @@ export const useOnboardingStore = create<OnboardingState>()(
     }),
     {
       name: 'gibson-onboarding',
+      // Version 1 removes the provider API key that version 0 kept in
+      // llmConfig. The migration runs one time on load, and zustand then
+      // writes the state back, so the key leaves localStorage.
+      version: ONBOARDING_STORE_VERSION,
+      migrate: (persisted) => migrateOnboardingState(persisted),
       // Persist most fields for wizard resumption
       partialize: (state) => ({
         currentStepId: state.currentStepId,
@@ -741,7 +752,8 @@ export const useOnboardingStore = create<OnboardingState>()(
         wizardCompleted: state.wizardCompleted,
         wizardSkipped: state.wizardSkipped,
         stepValidation: state.stepValidation,
-        llmConfig: state.llmConfig,
+        // Never an API key: see withoutApiKey.
+        llmConfig: state.llmConfig ? withoutApiKey(state.llmConfig) : null,
         llmValidated: state.llmValidated,
         selectedAgentId: state.selectedAgentId,
         createdMissionId: state.createdMissionId,
@@ -839,7 +851,6 @@ const useOnboardingLLMConfig = () =>
       llmValidated: state.llmValidated,
       setLLMConfig: state.setLLMConfig,
       setLLMProvider: state.setLLMProvider,
-      setLLMApiKey: state.setLLMApiKey,
       setLLMBaseUrl: state.setLLMBaseUrl,
       setLLMModel: state.setLLMModel,
       setLLMValidated: state.setLLMValidated,

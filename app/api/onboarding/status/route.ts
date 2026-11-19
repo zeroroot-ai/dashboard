@@ -33,7 +33,7 @@ import type {
   SetupTaskStatus,
   WizardStepId,
 } from '@/src/types/onboarding';
-import { DEFAULT_SETUP_TASKS } from '@/src/types/onboarding';
+import { DEFAULT_SETUP_TASKS, withoutApiKey } from '@/src/types/onboarding';
 
 // ============================================================================
 // Helpers, local-only presentation logic (no store access)
@@ -128,7 +128,9 @@ function protoToState(proto: UserOnboardingState): OnboardingState {
     completedSteps: [...proto.completedSteps] as WizardStepId[],
     skippedSteps: [...proto.skippedSteps] as WizardStepId[],
     setupTasks,
-    llmConfig: proto.llmConfigJson ? JSON.parse(proto.llmConfigJson) : undefined,
+    // An older dashboard stored the provider API key in this JSON. It never
+    // goes back to the browser, and the next write stores the config with no key.
+    llmConfig: proto.llmConfigJson ? withoutApiKey(JSON.parse(proto.llmConfigJson) as object) as OnboardingState['llmConfig'] : undefined,
     selectedAgentId: proto.selectedAgentId || undefined,
     createdMissionId: proto.createdMissionId || undefined,
     startedAt: proto.startedAt || new Date().toISOString(),
@@ -250,7 +252,7 @@ export async function POST(request: NextRequest) {
     }
     if (body.navigateToStep) state.currentStepId = body.navigateToStep;
     if (body.llmConfig) {
-      state.llmConfig = { ...state.llmConfig, ...body.llmConfig } as OnboardingState['llmConfig'];
+      state.llmConfig = withoutApiKey({ ...state.llmConfig, ...body.llmConfig }) as OnboardingState['llmConfig'];
       if (body.llmConfig.isValidated) {
         state.setupTasks = state.setupTasks.map((t) =>
           t.id === 'configure_llm' ? { ...t, status: 'completed' as SetupTaskStatus, completedAt: now } : t,

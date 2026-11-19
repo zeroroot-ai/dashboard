@@ -231,13 +231,25 @@ const LLM_PROVIDER_CONFIG: Record<LLMProviderType, LLMProviderConfig> = {
 const LLM_PROVIDER_TYPES: LLMProviderType[] = ['anthropic', 'openai', 'google', 'ollama'];
 
 /**
+ * Return an LLM config with no `apiKey`. Older versions kept the provider API
+ * key in this config, in localStorage and in the onboarding status of the
+ * daemon. Each path that reads a stored config removes the key with this.
+ */
+export function withoutApiKey<T extends object>(config: T): T {
+  if (!('apiKey' in config)) return config;
+  const copy = { ...config } as T & { apiKey?: unknown };
+  delete copy.apiKey;
+  return copy;
+}
+
+/**
  * LLM configuration during onboarding.
  */
 export interface LLMConfig {
   /** Selected provider type */
   provider: LLMProviderType;
-  /** API key (encrypted in storage) */
-  apiKey?: string;
+  // The config holds no API key. The key goes to the daemon in the save of the
+  // provider, and the browser and the onboarding status keep no copy.
   /** Custom base URL (for Ollama or custom endpoints) */
   baseUrl?: string;
   /** Selected model */
