@@ -35,10 +35,10 @@ import { requireUserToken } from './auth/user-token';
 // `createGrpcTransport` / `createClient` primitives are intentionally NOT
 // re-exported, this file consumes the sanctioned typed-client wrappers only.
 import { userClient, serviceClient, withCallDeadline } from './gibson-client/transport';
+import { isActiveMission, parseMissionStatus } from '@/src/lib/missions/status';
 
 /** Bound of the provider test: the daemon waits up to 45 seconds for the route (gibson#1394). */
 const TEST_PROVIDER_DEADLINE_MS = 60_000;
-import { isActiveMission, parseMissionStatus } from '@/src/lib/missions/status';
 export { userClient, serviceClient };
 
 // Tenant CRUD has moved to the daemon's AdminTenantService (operator-pull,

@@ -13,7 +13,7 @@
  * and ext-authz check the relation again.
  *
  * A validation error of the daemon is shown to the publisher as text. See
- * src/lib/agent-skil../shown-daemon-failure.ts.
+ * src/lib/errors/shown-daemon-failure.ts.
  */
 
 import "server-only";
