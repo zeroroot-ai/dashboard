@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/world/v1/world.proto.
  */
 export const file_gibson_world_v1_world: GenFile = /*@__PURE__*/
-  fileDesc("ChtnaWJzb24vd29ybGQvdjEvd29ybGQucHJvdG8SD2dpYnNvbi53b3JsZC52MSJdCgtNaXNzaW9uVmlldxIKCgJpZBgBIAEoCRIMCgRnb2FsGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIOCgZyZWFzb24YBCABKAkSFAoMYmVsaWVmX21vZGVsGAUgASgJInUKCEhvc3RWaWV3EhAKCHNjb3BlX2lkGAEgASgJEg8KB2FkZHJlc3MYAiABKAkSEgoKb3Blbl9wb3J0cxgDIAMoBRINCgVqdWljeRgEIAEoARIRCglhdHRlbnRpb24YBSABKAESEAoIc3VycHJpc2UYBiABKAkiXQoLRmluZGluZ1ZpZXcSCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSEAoIc2NvcGVfaWQYAyABKAkSDwoHYWRkcmVzcxgEIAEoCRIQCghzZXZlcml0eRgFIAEoCSJcCgxXb3JrSXRlbVZpZXcSCgoCaWQYASABKAkSEgoKbWlzc2lvbl9pZBgCIAEoCRIMCgRraW5kGAMgASgJEg4KBnRhcmdldBgEIAEoCRIOCgZzdGF0dXMYBSABKAkiRQoURGVjaXNpb25EaXNwYXRjaFZpZXcSDwoHd29ya19pZBgBIAEoCRIMCgRraW5kGAIgASgJEg4KBnRhcmdldBgDIAEoCSKtAQoMRGVjaXNpb25WaWV3EgoKAmlkGAEgASgJEhIKCm1pc3Npb25faWQYAiABKAkSDgoGY3Vyc29yGAMgASgDEg4KBnN0YXR1cxgEIAEoCRI5CgpkaXNwYXRjaGVzGAUgAygLMiUuZ2lic29uLndvcmxkLnYxLkRlY2lzaW9uRGlzcGF0Y2hWaWV3Eg8KB291dGNvbWUYBiABKAkSEQoJcmF0aW9uYWxlGAcgASgJIjsKDVRpbWVsaW5lRXZlbnQSCwoDc2VxGAEgASgEEgwKBGtpbmQYAiABKAkSDwoHc3VtbWFyeRgDIAEoCSKBAQoLTGxtQ2FsbFZpZXcSDwoHY2FsbF9pZBgBIAEoCRIOCgZydW5faWQYAiABKAkSDQoFbW9kZWwYAyABKAkSEAoIc2NvcGVfaWQYBCABKAkSFQoNcHJvbXB0X3Rva2VucxgFIAEoBRIZChFjb21wbGV0aW9uX3Rva2VucxgGIAEoBSJSChNMaXN0TWlzc2lvbnNSZXF1ZXN0Eh0KCXBhZ2Vfc2l6ZRgBIAEoBUIKukgHGgUY6AcoABIcCgpwYWdlX3Rva2VuGAIgASgJQgi6SAVyAxiACCJfChRMaXN0TWlzc2lvbnNSZXNwb25zZRIuCghtaXNzaW9ucxgBIAMoCzIcLmdpYnNvbi53b3JsZC52MS5NaXNzaW9uVmlldxIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiTwoQTGlzdEhvc3RzUmVxdWVzdBIdCglwYWdlX3NpemUYASABKAVCCrpIBxoFGOgHKAASHAoKcGFnZV90b2tlbhgCIAEoCUIIukgFcgMYgAgiVgoRTGlzdEhvc3RzUmVzcG9uc2USKAoFaG9zdHMYASADKAsyGS5naWJzb24ud29ybGQudjEuSG9zdFZpZXcSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIlIKE0xpc3RGaW5kaW5nc1JlcXVlc3QSHQoJcGFnZV9zaXplGAEgASgFQgq6SAcaBRjoBygAEhwKCnBhZ2VfdG9rZW4YAiABKAlCCLpIBXIDGIAIIl8KFExpc3RGaW5kaW5nc1Jlc3BvbnNlEi4KCGZpbmRpbmdzGAEgAygLMhwuZ2lic29uLndvcmxkLnYxLkZpbmRpbmdWaWV3EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJSChNMaXN0TGxtQ2FsbHNSZXF1ZXN0Eh0KCXBhZ2Vfc2l6ZRgBIAEoBUIKukgHGgUY6AcoABIcCgpwYWdlX3Rva2VuGAIgASgJQgi6SAVyAxiACCJgChRMaXN0TGxtQ2FsbHNSZXNwb25zZRIvCglsbG1fY2FsbHMYASADKAsyHC5naWJzb24ud29ybGQudjEuTGxtQ2FsbFZpZXcSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIisKCkxsbU1lc3NhZ2USDAoEcm9sZRgBIAEoCRIPCgdjb250ZW50GAIgASgJIsYBCg1MbG1DYWxsRGV0YWlsEg8KB2NhbGxfaWQYASABKAkSDgoGcnVuX2lkGAIgASgJEg0KBW1vZGVsGAMgASgJEhAKCHNjb3BlX2lkGAQgASgJEhUKDXByb21wdF90b2tlbnMYBSABKAUSGQoRY29tcGxldGlvbl90b2tlbnMYBiABKAUSLQoIbWVzc2FnZXMYByADKAsyGy5naWJzb24ud29ybGQudjEuTGxtTWVzc2FnZRISCgpjb21wbGV0aW9uGAggASgJIi4KEUdldExsbUNhbGxSZXF1ZXN0EhkKB2NhbGxfaWQYASABKAlCCLpIBXIDGIAIIkIKEkdldExsbUNhbGxSZXNwb25zZRIsCgRjYWxsGAEgASgLMh4uZ2lic29uLndvcmxkLnYxLkxsbUNhbGxEZXRhaWwibwoSR2V0VGltZWxpbmVSZXF1ZXN0EhwKCm1pc3Npb25faWQYASABKAlCCLpIBXIDGIAIEh0KCXBhZ2Vfc2l6ZRgCIAEoBUIKukgHGgUY6AcoABIcCgpwYWdlX3Rva2VuGAMgASgJQgi6SAVyAxiACCJeChNHZXRUaW1lbGluZVJlc3BvbnNlEi4KBmV2ZW50cxgBIAMoCzIeLmdpYnNvbi53b3JsZC52MS5UaW1lbGluZUV2ZW50EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSI+ChFHZXRGcmFtZUF0UmVxdWVzdBILCgNzZXEYASABKAQSHAoKbWlzc2lvbl9pZBgCIAEoCUIIukgFcgMYgAgiygIKEkdldEZyYW1lQXRSZXNwb25zZRILCgNzZXEYASABKAQSDQoFdG90YWwYAiABKAQSLgoIbWlzc2lvbnMYAyADKAsyHC5naWJzb24ud29ybGQudjEuTWlzc2lvblZpZXcSKAoFaG9zdHMYBCADKAsyGS5naWJzb24ud29ybGQudjEuSG9zdFZpZXcSLgoIZmluZGluZ3MYBSADKAsyHC5naWJzb24ud29ybGQudjEuRmluZGluZ1ZpZXcSKwoEd29yaxgGIAMoCzIdLmdpYnNvbi53b3JsZC52MS5Xb3JrSXRlbVZpZXcSMAoJZGVjaXNpb25zGAcgAygLMh0uZ2lic29uLndvcmxkLnYxLkRlY2lzaW9uVmlldxIvCglsbG1fY2FsbHMYCCADKAsyHC5naWJzb24ud29ybGQudjEuTGxtQ2FsbFZpZXciZAoJTGFiZWxWaWV3EhEKCXRhcmdldF9pZBgBIAEoCRIPCgd2ZXJkaWN0GAIgASgJEhAKCHNldmVyaXR5GAMgASgJEhAKCGNhdGVnb3J5GAQgASgJEg8KB3VzZXJfaWQYBSABKAkirgEKClJldmlld0l0ZW0SEQoJdGFyZ2V0X2lkGAEgASgJEgwKBGtpbmQYAiABKAkSDQoFdGl0bGUYAyABKAkSEAoIc2NvcGVfaWQYBCABKAkSDwoHYWRkcmVzcxgFIAEoCRIQCghzZXZlcml0eRgGIAEoCRIQCghsYWJlbGxlZBgHIAEoCBIpCgVsYWJlbBgIIAEoCzIaLmdpYnNvbi53b3JsZC52MS5MYWJlbFZpZXciVQoWTGlzdFJldmlld1F1ZXVlUmVxdWVzdBIdCglwYWdlX3NpemUYASABKAVCCrpIBxoFGOgHKAASHAoKcGFnZV90b2tlbhgCIAEoCUIIukgFcgMYgAgiXgoXTGlzdFJldmlld1F1ZXVlUmVzcG9uc2USKgoFaXRlbXMYASADKAsyGy5naWJzb24ud29ybGQudjEuUmV2aWV3SXRlbRIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiqQEKElN1Ym1pdExhYmVsUmVxdWVzdBIdCgl0YXJnZXRfaWQYASABKAlCCrpIB3IFEAEYgAgSGQoHdmVyZGljdBgCIAEoCUIIukgFcgMYgCASGgoIc2V2ZXJpdHkYAyABKAlCCLpIBXIDGIAgEhoKCGNhdGVnb3J5GAQgASgJQgi6SAVyAxiAIBIhCg9pZGVtcG90ZW5jeV9rZXkYBSABKAlCCLpIBXIDGIABIhUKE1N1Ym1pdExhYmVsUmVzcG9uc2UiUAoRTGlzdExhYmVsc1JlcXVlc3QSHQoJcGFnZV9zaXplGAEgASgFQgq6SAcaBRjoBygAEhwKCnBhZ2VfdG9rZW4YAiABKAlCCLpIBXIDGIAIIlkKEkxpc3RMYWJlbHNSZXNwb25zZRIqCgZsYWJlbHMYASADKAsyGi5naWJzb24ud29ybGQudjEuTGFiZWxWaWV3EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSIlChVHZXRDYWxpYnJhdGlvblJlcXVlc3QSDAoEYmlucxgBIAEoBSJuChJDYWxpYnJhdGlvbkJpblZpZXcSCwoDbG93GAEgASgBEgwKBGhpZ2gYAiABKAESCQoBbhgDIAEoBRIWCg5tZWFuX3ByZWRpY3RlZBgEIAEoARIaChJvYnNlcnZlZF9mcmVxdWVuY3kYBSABKAEitAEKGFRlY2huaXF1ZUNhbGlicmF0aW9uVmlldxIRCgl0ZWNobmlxdWUYASABKAkSCQoBbhgCIAEoBRIWCg5tZWFuX3ByZWRpY3RlZBgDIAEoARIaChJvYnNlcnZlZF9mcmVxdWVuY3kYBCABKAESEwoLYnJpZXJfc2NvcmUYBSABKAESMQoEYmlucxgGIAMoCzIjLmdpYnNvbi53b3JsZC52MS5DYWxpYnJhdGlvbkJpblZpZXcitwEKFkdldENhbGlicmF0aW9uUmVzcG9uc2USDgoGdGVuYW50GAEgASgJEjoKB292ZXJhbGwYAiABKAsyKS5naWJzb24ud29ybGQudjEuVGVjaG5pcXVlQ2FsaWJyYXRpb25WaWV3Ej8KDGJ5X3RlY2huaXF1ZRgDIAMoCzIpLmdpYnNvbi53b3JsZC52MS5UZWNobmlxdWVDYWxpYnJhdGlvblZpZXcSEAoIdW5zY29yZWQYBCABKAUiUgoTTGlzdE9wZW5CZXRzUmVxdWVzdBIdCglwYWdlX3NpemUYASABKAVCCrpIBxoFGOgHKAASHAoKcGFnZV90b2tlbhgCIAEoCUIIukgFcgMYgAgiqgEKFFJlZmVyZW5jZWRFbnRpdHlWaWV3Eg0KBWxhYmVsGAEgASgJEk4KDWlkX3Byb3BlcnRpZXMYAiADKAsyNy5naWJzb24ud29ybGQudjEuUmVmZXJlbmNlZEVudGl0eVZpZXcuSWRQcm9wZXJ0aWVzRW50cnkaMwoRSWRQcm9wZXJ0aWVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKeAQoHT3BlbkJldBIVCg1oeXBvdGhlc2lzX2lkGAEgASgJEg0KBWNsYWltGAIgASgJEhAKCHByb3Bvc2VyGAMgASgJEhIKCmNvbmZpZGVuY2UYBCABKAESNwoIZXZpZGVuY2UYBSADKAsyJS5naWJzb24ud29ybGQudjEuUmVmZXJlbmNlZEVudGl0eVZpZXcSDgoGcnVuX2lkGAYgASgJIlcKFExpc3RPcGVuQmV0c1Jlc3BvbnNlEiYKBGJldHMYASADKAsyGC5naWJzb24ud29ybGQudjEuT3BlbkJldBIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiUwoXTGlzdFByb29mUmV2aWV3c1JlcXVlc3QSGgoJcGFnZV9zaXplGAEgASgFQge6SAQaAigAEhwKCnBhZ2VfdG9rZW4YAiABKAlCCLpIBXIDGIAIIkEKEVByb29mRXZpZGVuY2VWaWV3EgwKBHR5cGUYASABKAkSDQoFdGl0bGUYAiABKAkSDwoHY29udGVudBgDIAEoCSKzAQoLUHJvb2ZSZXZpZXcSFQoNaHlwb3RoZXNpc19pZBgBIAEoCRISCgptaXNzaW9uX2lkGAIgASgJEhAKCHNjb3BlX2lkGAMgASgJEhEKCXRlY2huaXF1ZRgEIAEoCRI0CghldmlkZW5jZRgFIAMoCzIiLmdpYnNvbi53b3JsZC52MS5Qcm9vZkV2aWRlbmNlVmlldxIeChZzdWJtaXR0ZWRfYXRfdW5peF9uYW5vGAYgASgDImIKGExpc3RQcm9vZlJldmlld3NSZXNwb25zZRItCgdyZXZpZXdzGAEgAygLMhwuZ2lic29uLndvcmxkLnYxLlByb29mUmV2aWV3EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJUChZTZXR0bGVCZXRCeUhJVExSZXF1ZXN0Eh8KDWh5cG90aGVzaXNfaWQYASABKAlCCLpIBXIDGIAIEhkKB3ZlcmRpY3QYAiABKAlCCLpIBXIDGIAgIioKF1NldHRsZUJldEJ5SElUTFJlc3BvbnNlEg8KB3NldHRsZWQYASABKAgiTwoUR2V0UmVwdXRhdGlvblJlcXVlc3QSGwoJdGVjaG5pcXVlGAEgASgJQgi6SAVyAxiAIBIaCghzY29wZV9pZBgCIAEoCUIIukgFcgMYgAgiaAoVR2V0UmVwdXRhdGlvblJlc3BvbnNlEg0KBXByaW9yGAMgASgBEhIKCmhhc19yZWNvcmQYBCABKAhKBAgBEAJKBAgCEANSDnByaW9yX3N0cmVuZ3RoUhBoYXNfdHJhY2tfcmVjb3JkMsgQCgxXb3JsZFNlcnZpY2USiQEKDExpc3RNaXNzaW9ucxIkLmdpYnNvbi53b3JsZC52MS5MaXN0TWlzc2lvbnNSZXF1ZXN0GiUuZ2lic29uLndvcmxkLnYxLkxpc3RNaXNzaW9uc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKAAQoJTGlzdEhvc3RzEiEuZ2lic29uLndvcmxkLnYxLkxpc3RIb3N0c1JlcXVlc3QaIi5naWJzb24ud29ybGQudjEuTGlzdEhvc3RzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEokBCgxMaXN0RmluZGluZ3MSJC5naWJzb24ud29ybGQudjEuTGlzdEZpbmRpbmdzUmVxdWVzdBolLmdpYnNvbi53b3JsZC52MS5MaXN0RmluZGluZ3NSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSiQEKDExpc3RMbG1DYWxscxIkLmdpYnNvbi53b3JsZC52MS5MaXN0TGxtQ2FsbHNSZXF1ZXN0GiUuZ2lic29uLndvcmxkLnYxLkxpc3RMbG1DYWxsc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKDAQoKR2V0TGxtQ2FsbBIiLmdpYnNvbi53b3JsZC52MS5HZXRMbG1DYWxsUmVxdWVzdBojLmdpYnNvbi53b3JsZC52MS5HZXRMbG1DYWxsUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoYBCgtHZXRUaW1lbGluZRIjLmdpYnNvbi53b3JsZC52MS5HZXRUaW1lbGluZVJlcXVlc3QaJC5naWJzb24ud29ybGQudjEuR2V0VGltZWxpbmVSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgwEKCkdldEZyYW1lQXQSIi5naWJzb24ud29ybGQudjEuR2V0RnJhbWVBdFJlcXVlc3QaIy5naWJzb24ud29ybGQudjEuR2V0RnJhbWVBdFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKSAQoPTGlzdFJldmlld1F1ZXVlEicuZ2lic29uLndvcmxkLnYxLkxpc3RSZXZpZXdRdWV1ZVJlcXVlc3QaKC5naWJzb24ud29ybGQudjEuTGlzdFJldmlld1F1ZXVlUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoYBCgtTdWJtaXRMYWJlbBIjLmdpYnNvbi53b3JsZC52MS5TdWJtaXRMYWJlbFJlcXVlc3QaJC5naWJzb24ud29ybGQudjEuU3VibWl0TGFiZWxSZXNwb25zZSIsirUYKAoGd3JpdGVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgwEKCkxpc3RMYWJlbHMSIi5naWJzb24ud29ybGQudjEuTGlzdExhYmVsc1JlcXVlc3QaIy5naWJzb24ud29ybGQudjEuTGlzdExhYmVsc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKPAQoOR2V0Q2FsaWJyYXRpb24SJi5naWJzb24ud29ybGQudjEuR2V0Q2FsaWJyYXRpb25SZXF1ZXN0GicuZ2lic29uLndvcmxkLnYxLkdldENhbGlicmF0aW9uUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEowBCg1HZXRSZXB1dGF0aW9uEiUuZ2lic29uLndvcmxkLnYxLkdldFJlcHV0YXRpb25SZXF1ZXN0GiYuZ2lic29uLndvcmxkLnYxLkdldFJlcHV0YXRpb25SZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSiQEKDExpc3RPcGVuQmV0cxIkLmdpYnNvbi53b3JsZC52MS5MaXN0T3BlbkJldHNSZXF1ZXN0GiUuZ2lic29uLndvcmxkLnYxLkxpc3RPcGVuQmV0c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKVAQoQTGlzdFByb29mUmV2aWV3cxIoLmdpYnNvbi53b3JsZC52MS5MaXN0UHJvb2ZSZXZpZXdzUmVxdWVzdBopLmdpYnNvbi53b3JsZC52MS5MaXN0UHJvb2ZSZXZpZXdzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpIBCg9TZXR0bGVCZXRCeUhJVEwSJy5naWJzb24ud29ybGQudjEuU2V0dGxlQmV0QnlISVRMUmVxdWVzdBooLmdpYnNvbi53b3JsZC52MS5TZXR0bGVCZXRCeUhJVExSZXNwb25zZSIsirUYKAoGd3JpdGVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IANCUlpQZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3dvcmxkL3YxO3dvcmxkdjFiBnByb3RvMw", [file_gibson_auth_v1_options, file_buf_validate_validate]);
+  fileDesc("ChtnaWJzb24vd29ybGQvdjEvd29ybGQucHJvdG8SD2dpYnNvbi53b3JsZC52MSJdCgtNaXNzaW9uVmlldxIKCgJpZBgBIAEoCRIMCgRnb2FsGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIOCgZyZWFzb24YBCABKAkSFAoMYmVsaWVmX21vZGVsGAUgASgJInUKCEhvc3RWaWV3EhAKCHNjb3BlX2lkGAEgASgJEg8KB2FkZHJlc3MYAiABKAkSEgoKb3Blbl9wb3J0cxgDIAMoBRINCgVqdWljeRgEIAEoARIRCglhdHRlbnRpb24YBSABKAESEAoIc3VycHJpc2UYBiABKAkiXQoLRmluZGluZ1ZpZXcSCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSEAoIc2NvcGVfaWQYAyABKAkSDwoHYWRkcmVzcxgEIAEoCRIQCghzZXZlcml0eRgFIAEoCSJcCgxXb3JrSXRlbVZpZXcSCgoCaWQYASABKAkSEgoKbWlzc2lvbl9pZBgCIAEoCRIMCgRraW5kGAMgASgJEg4KBnRhcmdldBgEIAEoCRIOCgZzdGF0dXMYBSABKAkiRQoURGVjaXNpb25EaXNwYXRjaFZpZXcSDwoHd29ya19pZBgBIAEoCRIMCgRraW5kGAIgASgJEg4KBnRhcmdldBgDIAEoCSKtAQoMRGVjaXNpb25WaWV3EgoKAmlkGAEgASgJEhIKCm1pc3Npb25faWQYAiABKAkSDgoGY3Vyc29yGAMgASgDEg4KBnN0YXR1cxgEIAEoCRI5CgpkaXNwYXRjaGVzGAUgAygLMiUuZ2lic29uLndvcmxkLnYxLkRlY2lzaW9uRGlzcGF0Y2hWaWV3Eg8KB291dGNvbWUYBiABKAkSEQoJcmF0aW9uYWxlGAcgASgJIjsKDVRpbWVsaW5lRXZlbnQSCwoDc2VxGAEgASgEEgwKBGtpbmQYAiABKAkSDwoHc3VtbWFyeRgDIAEoCSKBAQoLTGxtQ2FsbFZpZXcSDwoHY2FsbF9pZBgBIAEoCRIOCgZydW5faWQYAiABKAkSDQoFbW9kZWwYAyABKAkSEAoIc2NvcGVfaWQYBCABKAkSFQoNcHJvbXB0X3Rva2VucxgFIAEoBRIZChFjb21wbGV0aW9uX3Rva2VucxgGIAEoBSJSChNMaXN0TWlzc2lvbnNSZXF1ZXN0Eh0KCXBhZ2Vfc2l6ZRgBIAEoBUIKukgHGgUY6AcoABIcCgpwYWdlX3Rva2VuGAIgASgJQgi6SAVyAxiACCJfChRMaXN0TWlzc2lvbnNSZXNwb25zZRIuCghtaXNzaW9ucxgBIAMoCzIcLmdpYnNvbi53b3JsZC52MS5NaXNzaW9uVmlldxIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiTwoQTGlzdEhvc3RzUmVxdWVzdBIdCglwYWdlX3NpemUYASABKAVCCrpIBxoFGOgHKAASHAoKcGFnZV90b2tlbhgCIAEoCUIIukgFcgMYgAgiVgoRTGlzdEhvc3RzUmVzcG9uc2USKAoFaG9zdHMYASADKAsyGS5naWJzb24ud29ybGQudjEuSG9zdFZpZXcSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIlIKE0xpc3RGaW5kaW5nc1JlcXVlc3QSHQoJcGFnZV9zaXplGAEgASgFQgq6SAcaBRjoBygAEhwKCnBhZ2VfdG9rZW4YAiABKAlCCLpIBXIDGIAIIl8KFExpc3RGaW5kaW5nc1Jlc3BvbnNlEi4KCGZpbmRpbmdzGAEgAygLMhwuZ2lic29uLndvcmxkLnYxLkZpbmRpbmdWaWV3EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJSChNMaXN0TGxtQ2FsbHNSZXF1ZXN0Eh0KCXBhZ2Vfc2l6ZRgBIAEoBUIKukgHGgUY6AcoABIcCgpwYWdlX3Rva2VuGAIgASgJQgi6SAVyAxiACCJgChRMaXN0TGxtQ2FsbHNSZXNwb25zZRIvCglsbG1fY2FsbHMYASADKAsyHC5naWJzb24ud29ybGQudjEuTGxtQ2FsbFZpZXcSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJItICCg1MbG1DYWxsRGV0YWlsEg8KB2NhbGxfaWQYASABKAkSDgoGcnVuX2lkGAIgASgJEg0KBW1vZGVsGAMgASgJEhAKCHNjb3BlX2lkGAQgASgJEhUKDXByb21wdF90b2tlbnMYBSABKAUSGQoRY29tcGxldGlvbl90b2tlbnMYBiABKAUSFQoNcmVxdWVzdF9pdGVtcxgJIAMoCRIUCgxvdXRwdXRfaXRlbXMYCiADKAkSEAoIcHJvdmlkZXIYCyABKAkSEwoLaHR0cF9zdGF0dXMYDCABKAUSGQoRY2FjaGVfcmVhZF90b2tlbnMYDSABKAUSGgoSY2FjaGVfd3JpdGVfdG9rZW5zGA4gASgFEgwKBGNvc3QYDyABKAkSEgoKZXJyb3JfdGV4dBgQIAEoCUoECAcQCEoECAgQCVIIbWVzc2FnZXNSCmNvbXBsZXRpb24iLgoRR2V0TGxtQ2FsbFJlcXVlc3QSGQoHY2FsbF9pZBgBIAEoCUIIukgFcgMYgAgiQgoSR2V0TGxtQ2FsbFJlc3BvbnNlEiwKBGNhbGwYASABKAsyHi5naWJzb24ud29ybGQudjEuTGxtQ2FsbERldGFpbCJvChJHZXRUaW1lbGluZVJlcXVlc3QSHAoKbWlzc2lvbl9pZBgBIAEoCUIIukgFcgMYgAgSHQoJcGFnZV9zaXplGAIgASgFQgq6SAcaBRjoBygAEhwKCnBhZ2VfdG9rZW4YAyABKAlCCLpIBXIDGIAIIl4KE0dldFRpbWVsaW5lUmVzcG9uc2USLgoGZXZlbnRzGAEgAygLMh4uZ2lic29uLndvcmxkLnYxLlRpbWVsaW5lRXZlbnQSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIj4KEUdldEZyYW1lQXRSZXF1ZXN0EgsKA3NlcRgBIAEoBBIcCgptaXNzaW9uX2lkGAIgASgJQgi6SAVyAxiACCLKAgoSR2V0RnJhbWVBdFJlc3BvbnNlEgsKA3NlcRgBIAEoBBINCgV0b3RhbBgCIAEoBBIuCghtaXNzaW9ucxgDIAMoCzIcLmdpYnNvbi53b3JsZC52MS5NaXNzaW9uVmlldxIoCgVob3N0cxgEIAMoCzIZLmdpYnNvbi53b3JsZC52MS5Ib3N0VmlldxIuCghmaW5kaW5ncxgFIAMoCzIcLmdpYnNvbi53b3JsZC52MS5GaW5kaW5nVmlldxIrCgR3b3JrGAYgAygLMh0uZ2lic29uLndvcmxkLnYxLldvcmtJdGVtVmlldxIwCglkZWNpc2lvbnMYByADKAsyHS5naWJzb24ud29ybGQudjEuRGVjaXNpb25WaWV3Ei8KCWxsbV9jYWxscxgIIAMoCzIcLmdpYnNvbi53b3JsZC52MS5MbG1DYWxsVmlldyJkCglMYWJlbFZpZXcSEQoJdGFyZ2V0X2lkGAEgASgJEg8KB3ZlcmRpY3QYAiABKAkSEAoIc2V2ZXJpdHkYAyABKAkSEAoIY2F0ZWdvcnkYBCABKAkSDwoHdXNlcl9pZBgFIAEoCSKuAQoKUmV2aWV3SXRlbRIRCgl0YXJnZXRfaWQYASABKAkSDAoEa2luZBgCIAEoCRINCgV0aXRsZRgDIAEoCRIQCghzY29wZV9pZBgEIAEoCRIPCgdhZGRyZXNzGAUgASgJEhAKCHNldmVyaXR5GAYgASgJEhAKCGxhYmVsbGVkGAcgASgIEikKBWxhYmVsGAggASgLMhouZ2lic29uLndvcmxkLnYxLkxhYmVsVmlldyJVChZMaXN0UmV2aWV3UXVldWVSZXF1ZXN0Eh0KCXBhZ2Vfc2l6ZRgBIAEoBUIKukgHGgUY6AcoABIcCgpwYWdlX3Rva2VuGAIgASgJQgi6SAVyAxiACCJeChdMaXN0UmV2aWV3UXVldWVSZXNwb25zZRIqCgVpdGVtcxgBIAMoCzIbLmdpYnNvbi53b3JsZC52MS5SZXZpZXdJdGVtEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSKpAQoSU3VibWl0TGFiZWxSZXF1ZXN0Eh0KCXRhcmdldF9pZBgBIAEoCUIKukgHcgUQARiACBIZCgd2ZXJkaWN0GAIgASgJQgi6SAVyAxiAIBIaCghzZXZlcml0eRgDIAEoCUIIukgFcgMYgCASGgoIY2F0ZWdvcnkYBCABKAlCCLpIBXIDGIAgEiEKD2lkZW1wb3RlbmN5X2tleRgFIAEoCUIIukgFcgMYgAEiFQoTU3VibWl0TGFiZWxSZXNwb25zZSJQChFMaXN0TGFiZWxzUmVxdWVzdBIdCglwYWdlX3NpemUYASABKAVCCrpIBxoFGOgHKAASHAoKcGFnZV90b2tlbhgCIAEoCUIIukgFcgMYgAgiWQoSTGlzdExhYmVsc1Jlc3BvbnNlEioKBmxhYmVscxgBIAMoCzIaLmdpYnNvbi53b3JsZC52MS5MYWJlbFZpZXcSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIiUKFUdldENhbGlicmF0aW9uUmVxdWVzdBIMCgRiaW5zGAEgASgFIm4KEkNhbGlicmF0aW9uQmluVmlldxILCgNsb3cYASABKAESDAoEaGlnaBgCIAEoARIJCgFuGAMgASgFEhYKDm1lYW5fcHJlZGljdGVkGAQgASgBEhoKEm9ic2VydmVkX2ZyZXF1ZW5jeRgFIAEoASK0AQoYVGVjaG5pcXVlQ2FsaWJyYXRpb25WaWV3EhEKCXRlY2huaXF1ZRgBIAEoCRIJCgFuGAIgASgFEhYKDm1lYW5fcHJlZGljdGVkGAMgASgBEhoKEm9ic2VydmVkX2ZyZXF1ZW5jeRgEIAEoARITCgticmllcl9zY29yZRgFIAEoARIxCgRiaW5zGAYgAygLMiMuZ2lic29uLndvcmxkLnYxLkNhbGlicmF0aW9uQmluVmlldyK3AQoWR2V0Q2FsaWJyYXRpb25SZXNwb25zZRIOCgZ0ZW5hbnQYASABKAkSOgoHb3ZlcmFsbBgCIAEoCzIpLmdpYnNvbi53b3JsZC52MS5UZWNobmlxdWVDYWxpYnJhdGlvblZpZXcSPwoMYnlfdGVjaG5pcXVlGAMgAygLMikuZ2lic29uLndvcmxkLnYxLlRlY2huaXF1ZUNhbGlicmF0aW9uVmlldxIQCgh1bnNjb3JlZBgEIAEoBSJSChNMaXN0T3BlbkJldHNSZXF1ZXN0Eh0KCXBhZ2Vfc2l6ZRgBIAEoBUIKukgHGgUY6AcoABIcCgpwYWdlX3Rva2VuGAIgASgJQgi6SAVyAxiACCKqAQoUUmVmZXJlbmNlZEVudGl0eVZpZXcSDQoFbGFiZWwYASABKAkSTgoNaWRfcHJvcGVydGllcxgCIAMoCzI3LmdpYnNvbi53b3JsZC52MS5SZWZlcmVuY2VkRW50aXR5Vmlldy5JZFByb3BlcnRpZXNFbnRyeRozChFJZFByb3BlcnRpZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIp4BCgdPcGVuQmV0EhUKDWh5cG90aGVzaXNfaWQYASABKAkSDQoFY2xhaW0YAiABKAkSEAoIcHJvcG9zZXIYAyABKAkSEgoKY29uZmlkZW5jZRgEIAEoARI3CghldmlkZW5jZRgFIAMoCzIlLmdpYnNvbi53b3JsZC52MS5SZWZlcmVuY2VkRW50aXR5VmlldxIOCgZydW5faWQYBiABKAkiVwoUTGlzdE9wZW5CZXRzUmVzcG9uc2USJgoEYmV0cxgBIAMoCzIYLmdpYnNvbi53b3JsZC52MS5PcGVuQmV0EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJTChdMaXN0UHJvb2ZSZXZpZXdzUmVxdWVzdBIaCglwYWdlX3NpemUYASABKAVCB7pIBBoCKAASHAoKcGFnZV90b2tlbhgCIAEoCUIIukgFcgMYgAgiQQoRUHJvb2ZFdmlkZW5jZVZpZXcSDAoEdHlwZRgBIAEoCRINCgV0aXRsZRgCIAEoCRIPCgdjb250ZW50GAMgASgJIrMBCgtQcm9vZlJldmlldxIVCg1oeXBvdGhlc2lzX2lkGAEgASgJEhIKCm1pc3Npb25faWQYAiABKAkSEAoIc2NvcGVfaWQYAyABKAkSEQoJdGVjaG5pcXVlGAQgASgJEjQKCGV2aWRlbmNlGAUgAygLMiIuZ2lic29uLndvcmxkLnYxLlByb29mRXZpZGVuY2VWaWV3Eh4KFnN1Ym1pdHRlZF9hdF91bml4X25hbm8YBiABKAMiYgoYTGlzdFByb29mUmV2aWV3c1Jlc3BvbnNlEi0KB3Jldmlld3MYASADKAsyHC5naWJzb24ud29ybGQudjEuUHJvb2ZSZXZpZXcSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIlQKFlNldHRsZUJldEJ5SElUTFJlcXVlc3QSHwoNaHlwb3RoZXNpc19pZBgBIAEoCUIIukgFcgMYgAgSGQoHdmVyZGljdBgCIAEoCUIIukgFcgMYgCAiKgoXU2V0dGxlQmV0QnlISVRMUmVzcG9uc2USDwoHc2V0dGxlZBgBIAEoCCJPChRHZXRSZXB1dGF0aW9uUmVxdWVzdBIbCgl0ZWNobmlxdWUYASABKAlCCLpIBXIDGIAgEhoKCHNjb3BlX2lkGAIgASgJQgi6SAVyAxiACCJoChVHZXRSZXB1dGF0aW9uUmVzcG9uc2USDQoFcHJpb3IYAyABKAESEgoKaGFzX3JlY29yZBgEIAEoCEoECAEQAkoECAIQA1IOcHJpb3Jfc3RyZW5ndGhSEGhhc190cmFja19yZWNvcmQyyBAKDFdvcmxkU2VydmljZRKJAQoMTGlzdE1pc3Npb25zEiQuZ2lic29uLndvcmxkLnYxLkxpc3RNaXNzaW9uc1JlcXVlc3QaJS5naWJzb24ud29ybGQudjEuTGlzdE1pc3Npb25zUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoABCglMaXN0SG9zdHMSIS5naWJzb24ud29ybGQudjEuTGlzdEhvc3RzUmVxdWVzdBoiLmdpYnNvbi53b3JsZC52MS5MaXN0SG9zdHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSiQEKDExpc3RGaW5kaW5ncxIkLmdpYnNvbi53b3JsZC52MS5MaXN0RmluZGluZ3NSZXF1ZXN0GiUuZ2lic29uLndvcmxkLnYxLkxpc3RGaW5kaW5nc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKJAQoMTGlzdExsbUNhbGxzEiQuZ2lic29uLndvcmxkLnYxLkxpc3RMbG1DYWxsc1JlcXVlc3QaJS5naWJzb24ud29ybGQudjEuTGlzdExsbUNhbGxzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoMBCgpHZXRMbG1DYWxsEiIuZ2lic29uLndvcmxkLnYxLkdldExsbUNhbGxSZXF1ZXN0GiMuZ2lic29uLndvcmxkLnYxLkdldExsbUNhbGxSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMShgEKC0dldFRpbWVsaW5lEiMuZ2lic29uLndvcmxkLnYxLkdldFRpbWVsaW5lUmVxdWVzdBokLmdpYnNvbi53b3JsZC52MS5HZXRUaW1lbGluZVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKDAQoKR2V0RnJhbWVBdBIiLmdpYnNvbi53b3JsZC52MS5HZXRGcmFtZUF0UmVxdWVzdBojLmdpYnNvbi53b3JsZC52MS5HZXRGcmFtZUF0UmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpIBCg9MaXN0UmV2aWV3UXVldWUSJy5naWJzb24ud29ybGQudjEuTGlzdFJldmlld1F1ZXVlUmVxdWVzdBooLmdpYnNvbi53b3JsZC52MS5MaXN0UmV2aWV3UXVldWVSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMShgEKC1N1Ym1pdExhYmVsEiMuZ2lic29uLndvcmxkLnYxLlN1Ym1pdExhYmVsUmVxdWVzdBokLmdpYnNvbi53b3JsZC52MS5TdWJtaXRMYWJlbFJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKDAQoKTGlzdExhYmVscxIiLmdpYnNvbi53b3JsZC52MS5MaXN0TGFiZWxzUmVxdWVzdBojLmdpYnNvbi53b3JsZC52MS5MaXN0TGFiZWxzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEo8BCg5HZXRDYWxpYnJhdGlvbhImLmdpYnNvbi53b3JsZC52MS5HZXRDYWxpYnJhdGlvblJlcXVlc3QaJy5naWJzb24ud29ybGQudjEuR2V0Q2FsaWJyYXRpb25SZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSjAEKDUdldFJlcHV0YXRpb24SJS5naWJzb24ud29ybGQudjEuR2V0UmVwdXRhdGlvblJlcXVlc3QaJi5naWJzb24ud29ybGQudjEuR2V0UmVwdXRhdGlvblJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKJAQoMTGlzdE9wZW5CZXRzEiQuZ2lic29uLndvcmxkLnYxLkxpc3RPcGVuQmV0c1JlcXVlc3QaJS5naWJzb24ud29ybGQudjEuTGlzdE9wZW5CZXRzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpUBChBMaXN0UHJvb2ZSZXZpZXdzEiguZ2lic29uLndvcmxkLnYxLkxpc3RQcm9vZlJldmlld3NSZXF1ZXN0GikuZ2lic29uLndvcmxkLnYxLkxpc3RQcm9vZlJldmlld3NSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkgEKD1NldHRsZUJldEJ5SElUTBInLmdpYnNvbi53b3JsZC52MS5TZXR0bGVCZXRCeUhJVExSZXF1ZXN0GiguZ2lic29uLndvcmxkLnYxLlNldHRsZUJldEJ5SElUTFJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgA0JSWlBnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vd29ybGQvdjE7d29ybGR2MWIGcHJvdG8z", [file_gibson_auth_v1_options, file_buf_validate_validate]);
 
 /**
  * MissionView is one mission as the World holds it.
@@ -598,32 +598,14 @@ export const ListLlmCallsResponseSchema: GenMessage<ListLlmCallsResponse> = /*@_
   messageDesc(file_gibson_world_v1_world, 15);
 
 /**
- * LlmMessage is one prompt message in an LlmCall transcript.
+ * LlmCallDetail is the full record of one model call: the metadata of the
+ * LlmCallView and the Open Responses record of the call, read from the gateway
+ * trace (ADR-0172, ADR-0173). The record of a call is immutable.
  *
- * @generated from message gibson.world.v1.LlmMessage
- */
-export type LlmMessage = Message<"gibson.world.v1.LlmMessage"> & {
-  /**
-   * @generated from field: string role = 1;
-   */
-  role: string;
-
-  /**
-   * @generated from field: string content = 2;
-   */
-  content: string;
-};
-
-/**
- * Describes the message gibson.world.v1.LlmMessage.
- * Use `create(LlmMessageSchema)` to create a new message.
- */
-export const LlmMessageSchema: GenMessage<LlmMessage> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 16);
-
-/**
- * LlmCallDetail is a single call's full record: the LlmCallView metadata plus the
- * transcript (prompt messages + assistant completion).
+ * Each element of request_items and output_items is one Open Responses item as
+ * JSON text, in the form that the Timeline stores. The strings of an item are
+ * redacted by the redaction policy of the tenant when the event is folded. A
+ * reader parses each element and shows it by its "type".
  *
  * @generated from message gibson.world.v1.LlmCallDetail
  */
@@ -649,6 +631,8 @@ export type LlmCallDetail = Message<"gibson.world.v1.LlmCallDetail"> & {
   scopeId: string;
 
   /**
+   * The input and the output token counts of the call. A failed call has 0.
+   *
    * @generated from field: int32 prompt_tokens = 5;
    */
   promptTokens: number;
@@ -659,14 +643,60 @@ export type LlmCallDetail = Message<"gibson.world.v1.LlmCallDetail"> & {
   completionTokens: number;
 
   /**
-   * @generated from field: repeated gibson.world.v1.LlmMessage messages = 7;
+   * The input items of the request, in order.
+   *
+   * @generated from field: repeated string request_items = 9;
    */
-  messages: LlmMessage[];
+  requestItems: string[];
 
   /**
-   * @generated from field: string completion = 8;
+   * The output items of the reply, in order. A failed call has none.
+   *
+   * @generated from field: repeated string output_items = 10;
    */
-  completion: string;
+  outputItems: string[];
+
+  /**
+   * The model provider that the gateway used, for example "openai".
+   *
+   * @generated from field: string provider = 11;
+   */
+  provider: string;
+
+  /**
+   * The HTTP status that the gateway answered. 0 means unknown. A status of 400
+   * or more is a failed call.
+   *
+   * @generated from field: int32 http_status = 12;
+   */
+  httpStatus: number;
+
+  /**
+   * @generated from field: int32 cache_read_tokens = 13;
+   */
+  cacheReadTokens: number;
+
+  /**
+   * @generated from field: int32 cache_write_tokens = 14;
+   */
+  cacheWriteTokens: number;
+
+  /**
+   * The cost in US dollars as a decimal string, from the gateway trace only.
+   * Empty means that the trace has no price for the model: show "Unknown". It is
+   * never "0" for an unpriced model.
+   *
+   * @generated from field: string cost = 15;
+   */
+  cost: string;
+
+  /**
+   * The text of the reply of a failed call (a status of 400 or more). Empty for
+   * a call that worked.
+   *
+   * @generated from field: string error_text = 16;
+   */
+  errorText: string;
 };
 
 /**
@@ -674,7 +704,7 @@ export type LlmCallDetail = Message<"gibson.world.v1.LlmCallDetail"> & {
  * Use `create(LlmCallDetailSchema)` to create a new message.
  */
 export const LlmCallDetailSchema: GenMessage<LlmCallDetail> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 17);
+  messageDesc(file_gibson_world_v1_world, 16);
 
 /**
  * @generated from message gibson.world.v1.GetLlmCallRequest
@@ -691,7 +721,7 @@ export type GetLlmCallRequest = Message<"gibson.world.v1.GetLlmCallRequest"> & {
  * Use `create(GetLlmCallRequestSchema)` to create a new message.
  */
 export const GetLlmCallRequestSchema: GenMessage<GetLlmCallRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 18);
+  messageDesc(file_gibson_world_v1_world, 17);
 
 /**
  * @generated from message gibson.world.v1.GetLlmCallResponse
@@ -708,7 +738,7 @@ export type GetLlmCallResponse = Message<"gibson.world.v1.GetLlmCallResponse"> &
  * Use `create(GetLlmCallResponseSchema)` to create a new message.
  */
 export const GetLlmCallResponseSchema: GenMessage<GetLlmCallResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 19);
+  messageDesc(file_gibson_world_v1_world, 18);
 
 /**
  * @generated from message gibson.world.v1.GetTimelineRequest
@@ -740,7 +770,7 @@ export type GetTimelineRequest = Message<"gibson.world.v1.GetTimelineRequest"> &
  * Use `create(GetTimelineRequestSchema)` to create a new message.
  */
 export const GetTimelineRequestSchema: GenMessage<GetTimelineRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 20);
+  messageDesc(file_gibson_world_v1_world, 19);
 
 /**
  * @generated from message gibson.world.v1.GetTimelineResponse
@@ -764,7 +794,7 @@ export type GetTimelineResponse = Message<"gibson.world.v1.GetTimelineResponse">
  * Use `create(GetTimelineResponseSchema)` to create a new message.
  */
 export const GetTimelineResponseSchema: GenMessage<GetTimelineResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 21);
+  messageDesc(file_gibson_world_v1_world, 20);
 
 /**
  * GetFrameAtRequest scrubs to a Timeline position: fold the first `seq` events.
@@ -793,7 +823,7 @@ export type GetFrameAtRequest = Message<"gibson.world.v1.GetFrameAtRequest"> & {
  * Use `create(GetFrameAtRequestSchema)` to create a new message.
  */
 export const GetFrameAtRequestSchema: GenMessage<GetFrameAtRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 22);
+  messageDesc(file_gibson_world_v1_world, 21);
 
 /**
  * GetFrameAtResponse is the World materialized at frame `seq` (a server-side fold).
@@ -870,7 +900,7 @@ export type GetFrameAtResponse = Message<"gibson.world.v1.GetFrameAtResponse"> &
  * Use `create(GetFrameAtResponseSchema)` to create a new message.
  */
 export const GetFrameAtResponseSchema: GenMessage<GetFrameAtResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 23);
+  messageDesc(file_gibson_world_v1_world, 22);
 
 /**
  * LabelView is one applied review label (a gibson.world.v1 view of a brain
@@ -921,7 +951,7 @@ export type LabelView = Message<"gibson.world.v1.LabelView"> & {
  * Use `create(LabelViewSchema)` to create a new message.
  */
 export const LabelViewSchema: GenMessage<LabelView> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 24);
+  messageDesc(file_gibson_world_v1_world, 23);
 
 /**
  * ReviewItem is one entry in the HITL review queue: a surfaced surprise or a
@@ -984,7 +1014,7 @@ export type ReviewItem = Message<"gibson.world.v1.ReviewItem"> & {
  * Use `create(ReviewItemSchema)` to create a new message.
  */
 export const ReviewItemSchema: GenMessage<ReviewItem> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 25);
+  messageDesc(file_gibson_world_v1_world, 24);
 
 /**
  * @generated from message gibson.world.v1.ListReviewQueueRequest
@@ -1012,7 +1042,7 @@ export type ListReviewQueueRequest = Message<"gibson.world.v1.ListReviewQueueReq
  * Use `create(ListReviewQueueRequestSchema)` to create a new message.
  */
 export const ListReviewQueueRequestSchema: GenMessage<ListReviewQueueRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 26);
+  messageDesc(file_gibson_world_v1_world, 25);
 
 /**
  * @generated from message gibson.world.v1.ListReviewQueueResponse
@@ -1036,7 +1066,7 @@ export type ListReviewQueueResponse = Message<"gibson.world.v1.ListReviewQueueRe
  * Use `create(ListReviewQueueResponseSchema)` to create a new message.
  */
 export const ListReviewQueueResponseSchema: GenMessage<ListReviewQueueResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 27);
+  messageDesc(file_gibson_world_v1_world, 26);
 
 /**
  * SubmitLabelRequest applies a label to a surfaced item. The daemon stamps the
@@ -1089,7 +1119,7 @@ export type SubmitLabelRequest = Message<"gibson.world.v1.SubmitLabelRequest"> &
  * Use `create(SubmitLabelRequestSchema)` to create a new message.
  */
 export const SubmitLabelRequestSchema: GenMessage<SubmitLabelRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 28);
+  messageDesc(file_gibson_world_v1_world, 27);
 
 /**
  * @generated from message gibson.world.v1.SubmitLabelResponse
@@ -1102,7 +1132,7 @@ export type SubmitLabelResponse = Message<"gibson.world.v1.SubmitLabelResponse">
  * Use `create(SubmitLabelResponseSchema)` to create a new message.
  */
 export const SubmitLabelResponseSchema: GenMessage<SubmitLabelResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 29);
+  messageDesc(file_gibson_world_v1_world, 28);
 
 /**
  * @generated from message gibson.world.v1.ListLabelsRequest
@@ -1130,7 +1160,7 @@ export type ListLabelsRequest = Message<"gibson.world.v1.ListLabelsRequest"> & {
  * Use `create(ListLabelsRequestSchema)` to create a new message.
  */
 export const ListLabelsRequestSchema: GenMessage<ListLabelsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 30);
+  messageDesc(file_gibson_world_v1_world, 29);
 
 /**
  * @generated from message gibson.world.v1.ListLabelsResponse
@@ -1154,7 +1184,7 @@ export type ListLabelsResponse = Message<"gibson.world.v1.ListLabelsResponse"> &
  * Use `create(ListLabelsResponseSchema)` to create a new message.
  */
 export const ListLabelsResponseSchema: GenMessage<ListLabelsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 31);
+  messageDesc(file_gibson_world_v1_world, 30);
 
 /**
  * GetCalibrationRequest asks for the tenant's reliability/calibration report.
@@ -1177,7 +1207,7 @@ export type GetCalibrationRequest = Message<"gibson.world.v1.GetCalibrationReque
  * Use `create(GetCalibrationRequestSchema)` to create a new message.
  */
 export const GetCalibrationRequestSchema: GenMessage<GetCalibrationRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 32);
+  messageDesc(file_gibson_world_v1_world, 31);
 
 /**
  * CalibrationBinView is one predicted-probability bucket of a reliability
@@ -1219,7 +1249,7 @@ export type CalibrationBinView = Message<"gibson.world.v1.CalibrationBinView"> &
  * Use `create(CalibrationBinViewSchema)` to create a new message.
  */
 export const CalibrationBinViewSchema: GenMessage<CalibrationBinView> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 33);
+  messageDesc(file_gibson_world_v1_world, 32);
 
 /**
  * TechniqueCalibrationView is the reliability/calibration measure for one
@@ -1270,7 +1300,7 @@ export type TechniqueCalibrationView = Message<"gibson.world.v1.TechniqueCalibra
  * Use `create(TechniqueCalibrationViewSchema)` to create a new message.
  */
 export const TechniqueCalibrationViewSchema: GenMessage<TechniqueCalibrationView> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 34);
+  messageDesc(file_gibson_world_v1_world, 33);
 
 /**
  * GetCalibrationResponse is gibson#284's full reliability answer for the
@@ -1310,7 +1340,7 @@ export type GetCalibrationResponse = Message<"gibson.world.v1.GetCalibrationResp
  * Use `create(GetCalibrationResponseSchema)` to create a new message.
  */
 export const GetCalibrationResponseSchema: GenMessage<GetCalibrationResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 35);
+  messageDesc(file_gibson_world_v1_world, 34);
 
 /**
  * ListOpenBetsRequest takes no fields: the caller's tenant resolves the same
@@ -1341,7 +1371,7 @@ export type ListOpenBetsRequest = Message<"gibson.world.v1.ListOpenBetsRequest">
  * Use `create(ListOpenBetsRequestSchema)` to create a new message.
  */
 export const ListOpenBetsRequestSchema: GenMessage<ListOpenBetsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 36);
+  messageDesc(file_gibson_world_v1_world, 35);
 
 /**
  * ReferencedEntityView is an entity a bet's claim is about, by Taxonomy label
@@ -1368,7 +1398,7 @@ export type ReferencedEntityView = Message<"gibson.world.v1.ReferencedEntityView
  * Use `create(ReferencedEntityViewSchema)` to create a new message.
  */
 export const ReferencedEntityViewSchema: GenMessage<ReferencedEntityView> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 37);
+  messageDesc(file_gibson_world_v1_world, 36);
 
 /**
  * OpenBet is one placed-but-unsettled bet (gibson#339): a Hypothesis that
@@ -1419,7 +1449,7 @@ export type OpenBet = Message<"gibson.world.v1.OpenBet"> & {
  * Use `create(OpenBetSchema)` to create a new message.
  */
 export const OpenBetSchema: GenMessage<OpenBet> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 38);
+  messageDesc(file_gibson_world_v1_world, 37);
 
 /**
  * @generated from message gibson.world.v1.ListOpenBetsResponse
@@ -1443,7 +1473,7 @@ export type ListOpenBetsResponse = Message<"gibson.world.v1.ListOpenBetsResponse
  * Use `create(ListOpenBetsResponseSchema)` to create a new message.
  */
 export const ListOpenBetsResponseSchema: GenMessage<ListOpenBetsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 39);
+  messageDesc(file_gibson_world_v1_world, 38);
 
 /**
  * ListProofReviewsRequest pages through the proofs that wait for a review,
@@ -1474,7 +1504,7 @@ export type ListProofReviewsRequest = Message<"gibson.world.v1.ListProofReviewsR
  * Use `create(ListProofReviewsRequestSchema)` to create a new message.
  */
 export const ListProofReviewsRequestSchema: GenMessage<ListProofReviewsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 40);
+  messageDesc(file_gibson_world_v1_world, 39);
 
 /**
  * ProofEvidenceView is one item of evidence as the agent typed it. The
@@ -1504,7 +1534,7 @@ export type ProofEvidenceView = Message<"gibson.world.v1.ProofEvidenceView"> & {
  * Use `create(ProofEvidenceViewSchema)` to create a new message.
  */
 export const ProofEvidenceViewSchema: GenMessage<ProofEvidenceView> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 41);
+  messageDesc(file_gibson_world_v1_world, 40);
 
 /**
  * ProofReview is one proof that waits for a human review. hypothesis_id is
@@ -1551,7 +1581,7 @@ export type ProofReview = Message<"gibson.world.v1.ProofReview"> & {
  * Use `create(ProofReviewSchema)` to create a new message.
  */
 export const ProofReviewSchema: GenMessage<ProofReview> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 42);
+  messageDesc(file_gibson_world_v1_world, 41);
 
 /**
  * @generated from message gibson.world.v1.ListProofReviewsResponse
@@ -1575,7 +1605,7 @@ export type ListProofReviewsResponse = Message<"gibson.world.v1.ListProofReviews
  * Use `create(ListProofReviewsResponseSchema)` to create a new message.
  */
 export const ListProofReviewsResponseSchema: GenMessage<ListProofReviewsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 43);
+  messageDesc(file_gibson_world_v1_world, 42);
 
 /**
  * SettleBetByHITLRequest names the bet and the reviewer's verdict.
@@ -1607,7 +1637,7 @@ export type SettleBetByHITLRequest = Message<"gibson.world.v1.SettleBetByHITLReq
  * Use `create(SettleBetByHITLRequestSchema)` to create a new message.
  */
 export const SettleBetByHITLRequestSchema: GenMessage<SettleBetByHITLRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 44);
+  messageDesc(file_gibson_world_v1_world, 43);
 
 /**
  * @generated from message gibson.world.v1.SettleBetByHITLResponse
@@ -1629,7 +1659,7 @@ export type SettleBetByHITLResponse = Message<"gibson.world.v1.SettleBetByHITLRe
  * Use `create(SettleBetByHITLResponseSchema)` to create a new message.
  */
 export const SettleBetByHITLResponseSchema: GenMessage<SettleBetByHITLResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 45);
+  messageDesc(file_gibson_world_v1_world, 44);
 
 /**
  * GetReputationRequest names the technique x environment key (ADR-0129 §3):
@@ -1656,7 +1686,7 @@ export type GetReputationRequest = Message<"gibson.world.v1.GetReputationRequest
  * Use `create(GetReputationRequestSchema)` to create a new message.
  */
 export const GetReputationRequestSchema: GenMessage<GetReputationRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 46);
+  messageDesc(file_gibson_world_v1_world, 45);
 
 /**
  * @generated from message gibson.world.v1.GetReputationResponse
@@ -1689,7 +1719,7 @@ export type GetReputationResponse = Message<"gibson.world.v1.GetReputationRespon
  * Use `create(GetReputationResponseSchema)` to create a new message.
  */
 export const GetReputationResponseSchema: GenMessage<GetReputationResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_world_v1_world, 47);
+  messageDesc(file_gibson_world_v1_world, 46);
 
 /**
  * WorldService is the daemon-mediated read path into the ECS brain (epic
@@ -1746,8 +1776,9 @@ export const WorldService: GenService<{
     output: typeof ListLlmCallsResponseSchema;
   },
   /**
-   * GetLlmCall returns one call's full detail including its transcript (prompt
-   * messages + completion) — the conversation-view source (gibson#755). ListLlmCalls
+   * GetLlmCall returns one call's full detail including its Open Responses
+   * record (request items and output items) — the conversation-view source
+   * (gibson#755, dashboard#373). ListLlmCalls
    * stays metadata-only so a busy World's list response is not transcript-heavy.
    *
    * @generated from rpc gibson.world.v1.WorldService.GetLlmCall
