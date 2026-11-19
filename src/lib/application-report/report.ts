@@ -35,6 +35,7 @@
 import type { GraphNode, GraphEdge } from '@/src/types/graph';
 import type { LlmCallSummary } from '@/src/types/trace';
 import { parseEntityType } from '@/src/lib/graph/entity-taxonomy';
+import { estimateCallCostUsd } from '@/src/lib/world-traces';
 
 // ---------------------------------------------------------------------------
 // Vocabulary
@@ -86,6 +87,7 @@ interface MergeRequestSummary {
 }
 
 interface ReportCost {
+  estimatedCostUsd: number;
   llmCallCount: number;
   /**
    * How the cost was attributed. `scope` means the calls carry this
@@ -207,7 +209,7 @@ export function deriveApplicationReport(input: ReportInput): ApplicationReport {
     unknownStatus: 0,
     vulnerabilities: [],
     mergeRequests: [],
-    cost: { llmCallCount: 0, attributedBy: 'none' },
+    cost: { estimatedCostUsd: 0, llmCallCount: 0, attributedBy: 'none' },
     timeToVerified: { measurable: false, reason: NO_FINDING_TIMESTAMPS },
     timeline: { measurable: false, reason: NO_FINDING_TIMESTAMPS },
   };
@@ -315,14 +317,14 @@ export function deriveApplicationReport(input: ReportInput): ApplicationReport {
     }))
     .sort((a, b) => b.fixesFindings - a.fixesFindings || a.key.localeCompare(b.key));
 
-  // Model calls, attributed by scope. With no scope there is nothing honest to
-  // claim. The report holds no amount of money: the call list has no cost
-  // field, and the dashboard does not estimate one.
+  // Cost, attributed by scope. With no scope there is nothing honest to claim.
+  let estimatedCostUsd = 0;
   let llmCallCount = 0;
   if (scope !== '') {
     for (const c of calls) {
       if (c.scopeId !== scope) continue;
       llmCallCount += 1;
+      estimatedCostUsd += estimateCallCostUsd(c.model, c.promptTokens, c.completionTokens);
     }
   }
 
@@ -336,6 +338,7 @@ export function deriveApplicationReport(input: ReportInput): ApplicationReport {
     vulnerabilities,
     mergeRequests,
     cost: {
+      estimatedCostUsd,
       llmCallCount,
       attributedBy: scope === '' ? 'none' : 'scope',
     },

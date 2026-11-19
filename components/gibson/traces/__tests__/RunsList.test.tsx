@@ -15,6 +15,7 @@ function run(over: Partial<LlmRun> & { id: string }): LlmRun {
     promptTokens: 60,
     completionTokens: 40,
     totalTokens: 100,
+    estimatedCostUsd: 0,
     calls: [],
     ...over,
   };
@@ -31,15 +32,6 @@ describe("RunsList", () => {
     render(<RunsList runs={[run({ id: "", label: "Ungrouped calls" })]} />);
     const link = screen.getByRole("link", { name: /Ungrouped calls/ });
     expect(link.getAttribute("href")).toBe("/dashboard/traces/_");
-  });
-
-  it("shows the tokens of a run and no cost", () => {
-    const { container } = render(
-      <RunsList runs={[run({ id: "run-1", models: ["claude-opus-4"], totalTokens: 2_000_000 })]} />,
-    );
-    expect(screen.getByTitle("total tokens")).toBeInTheDocument();
-    expect(screen.queryByTitle("estimated cost")).toBeNull();
-    expect(container.textContent).not.toContain("$");
   });
 
   it("shows the single model name when one model was used", () => {

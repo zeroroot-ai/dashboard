@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatTokenCount } from "@/src/lib/world-traces";
+import { formatTokenCount, formatUsd } from "@/src/lib/world-traces";
 import type { TokenSummary } from "@/src/types/trace";
 
 /**
@@ -40,10 +40,11 @@ interface TokenSummaryPanelProps {
 export function TokenSummaryPanel({ summary }: TokenSummaryPanelProps) {
   return (
     <div className="glass-hack rounded-lg p-3 space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Stat label="Total tokens" value={formatTokenCount(summary.totalTokens)} />
         <Stat label="Input" value={formatTokenCount(summary.inputTokens)} />
         <Stat label="Output" value={formatTokenCount(summary.outputTokens)} />
+        <Stat label="Est. cost" value={formatUsd(summary.estimatedCostUsd)} />
         <Stat label="LLM calls" value={summary.llmCallCount.toLocaleString()} />
       </div>
 
@@ -60,6 +61,7 @@ export function TokenSummaryPanel({ summary }: TokenSummaryPanelProps) {
                 <TableHead className="text-right">Output</TableHead>
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead className="text-right">Calls</TableHead>
+                <TableHead className="text-right">Cost</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -77,6 +79,9 @@ export function TokenSummaryPanel({ summary }: TokenSummaryPanelProps) {
                   </TableCell>
                   <TableCell className="text-right font-mono tabular-nums">
                     {row.callCount.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right font-mono tabular-nums">
+                    {formatUsd(row.estimatedCostUsd)}
                   </TableCell>
                 </TableRow>
               ))}

@@ -16,7 +16,7 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { formatTokenCount } from "@/src/lib/world-traces";
+import { formatTokenCount, formatUsd } from "@/src/lib/world-traces";
 import type { LlmRun } from "@/src/types/trace";
 
 /** The empty (ungrouped) run id routes to the URL-safe "_" segment. */
@@ -33,6 +33,11 @@ function RunRow({ run }: { run: LlmRun }) {
       <span className="font-mono tabular-nums" title="total tokens">
         {formatTokenCount(run.totalTokens)} tok
       </span>
+      {run.estimatedCostUsd > 0 && (
+        <span className="font-mono tabular-nums" title="estimated cost">
+          {formatUsd(run.estimatedCostUsd)}
+        </span>
+      )}
     </div>
   );
 

@@ -155,13 +155,13 @@ describe('deriveApplicationReport', () => {
     const r = deriveApplicationReport(input);
     expect(r.cost.attributedBy).toBe('scope');
     expect(r.cost.llmCallCount).toBe(2);
+    expect(r.cost.estimatedCostUsd).toBeGreaterThan(0);
 
     // The excluded call is 6x the tokens of both included ones, so a report
     // that leaked it would be obvious.
     const leaked = deriveApplicationReport({ ...input, applicationKey: 'treasury-api' });
     expect(leaked.cost.llmCallCount).toBe(1);
-    // The report holds a count of model calls and no amount of money.
-    expect(Object.keys(r.cost).sort()).toEqual(['attributedBy', 'llmCallCount']);
+    expect(leaked.cost.estimatedCostUsd).toBeGreaterThan(r.cost.estimatedCostUsd);
   });
 
   it('claims no cost when the Application has no scope to join on', () => {
@@ -169,7 +169,7 @@ describe('deriveApplicationReport', () => {
       n.id === 'app-cp' ? node('app-cp', 'Application', { key: 'customer-portal', name: 'Customer Portal' }) : n,
     );
     const r = deriveApplicationReport({ ...input, nodes: scopeless });
-    expect(r.cost).toEqual({ llmCallCount: 0, attributedBy: 'none' });
+    expect(r.cost).toEqual({ estimatedCostUsd: 0, llmCallCount: 0, attributedBy: 'none' });
   });
 
   it('reports both time measures as unmeasurable, with the reason', () => {

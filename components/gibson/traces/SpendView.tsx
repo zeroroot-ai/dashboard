@@ -7,14 +7,13 @@
  * SpendView, first-class spend breakdown for a run (gibson#755).
  *
  * Answers "where did the money go" using the already-aggregated TokenSummary:
- * a by-model table (model, calls, tokens), sorted by tokens so the large
- * contributors are obvious. The headline totals strip is rendered by
+ * a by-model table (model, calls, tokens, est. cost), sorted descending so the
+ * expensive contributors are obvious. The headline totals strip is rendered by
  * RunView above this. The World call log attributes calls by model only, so
- * there is no by-agent breakdown. The table shows no cost: the call list has
- * no cost field, and the dashboard does not estimate one.
+ * there is no by-agent breakdown. Costs are estimated from a static price table.
  */
 
-import { formatTokenCount } from "@/src/lib/world-traces";
+import { formatTokenCount, formatUsd } from "@/src/lib/world-traces";
 import type { TokenSummary } from "@/src/types/trace";
 
 function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
@@ -31,7 +30,7 @@ function Th({ children, right }: { children: React.ReactNode; right?: boolean })
 
 export function SpendView({ summary }: { summary: TokenSummary }) {
   const byModel = [...summary.byModel].sort(
-    (a, b) => b.totalTokens - a.totalTokens || a.model.localeCompare(b.model),
+    (a, b) => b.estimatedCostUsd - a.estimatedCostUsd || b.totalTokens - a.totalTokens,
   );
 
   if (byModel.length === 0) {
@@ -50,6 +49,9 @@ export function SpendView({ summary }: { summary: TokenSummary }) {
             <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
               By model
             </span>
+            <span className="text-[10px] text-muted-foreground">
+              costs are estimates
+            </span>
           </div>
           <table className="w-full text-xs">
             <thead>
@@ -57,6 +59,7 @@ export function SpendView({ summary }: { summary: TokenSummary }) {
                 <Th>Model</Th>
                 <Th right>Calls</Th>
                 <Th right>Tokens (in/out)</Th>
+                <Th right>Cost (est.)</Th>
               </tr>
             </thead>
             <tbody>
@@ -67,6 +70,9 @@ export function SpendView({ summary }: { summary: TokenSummary }) {
                   <td className="py-1.5 text-right font-mono tabular-nums text-muted-foreground">
                     {formatTokenCount(m.inputTokens)}/
                     {formatTokenCount(m.outputTokens)}
+                  </td>
+                  <td className="py-1.5 text-right font-mono tabular-nums">
+                    {m.estimatedCostUsd > 0 ? formatUsd(m.estimatedCostUsd) : "-"}
                   </td>
                 </tr>
               ))}

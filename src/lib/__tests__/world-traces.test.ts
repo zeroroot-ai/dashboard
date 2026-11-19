@@ -9,6 +9,8 @@ import {
   formatModelCallCost,
   groupCallsIntoRuns,
   aggregateCalls,
+  estimateCallCostUsd,
+  formatUsd,
   formatTokenCount,
 } from '@/src/lib/world-traces';
 import type { LlmCallSummary } from '@/src/types/trace';
@@ -247,14 +249,21 @@ describe('aggregateCalls', () => {
   });
 });
 
-describe('the summaries hold no cost', () => {
-  it('gives a run and a token summary no cost field, for a model that had a price', () => {
-    const calls = [summary({ model: 'claude-opus-4', promptTokens: 1_000_000, completionTokens: 1_000_000 })];
-    const run = groupCallsIntoRuns(calls)[0];
-    const ts = aggregateCalls(calls);
-    for (const value of [run, ts, ts.byModel[0]]) {
-      expect(Object.keys(value).filter((k) => /cost|usd|price/i.test(k))).toEqual([]);
-    }
+describe('estimateCallCostUsd', () => {
+  it('prices a known model from the table', () => {
+    // claude-opus-4: [15, 75] per 1M → 1M in + 1M out = 15 + 75 = 90.
+    expect(estimateCallCostUsd('claude-opus-4', 1_000_000, 1_000_000)).toBeCloseTo(90);
+  });
+  it('returns 0 for unknown models', () => {
+    expect(estimateCallCostUsd('mystery-model', 1000, 1000)).toBe(0);
+  });
+});
+
+describe('formatUsd', () => {
+  it('formats sub-cent, zero, and dollar amounts', () => {
+    expect(formatUsd(0)).toBe('$0.00');
+    expect(formatUsd(0.004)).toBe('<$0.01');
+    expect(formatUsd(1.2345)).toBe('$1.23');
   });
 });
 

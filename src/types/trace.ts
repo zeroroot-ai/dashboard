@@ -42,6 +42,7 @@ export interface LlmRun {
   promptTokens: number;
   completionTokens: number;
   totalTokens: number;
+  estimatedCostUsd: number;
   /** The run's calls, in observation order. */
   calls: LlmCallSummary[];
 }
@@ -56,10 +57,11 @@ export interface ModelTokenBreakdown {
   outputTokens: number;
   totalTokens: number;
   callCount: number;
+  estimatedCostUsd: number;
 }
 
 /**
- * Aggregate token summary for a run. It holds no cost. The World attributes calls by
+ * Aggregate token + cost summary for a run. The World attributes calls by
  * model only (there is no per-agent token attribution in the call log), so the
  * breakdown is by-model.
  */
@@ -67,6 +69,7 @@ export interface TokenSummary {
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
+  estimatedCostUsd: number;
   llmCallCount: number;
   byModel: ModelTokenBreakdown[];
 }
