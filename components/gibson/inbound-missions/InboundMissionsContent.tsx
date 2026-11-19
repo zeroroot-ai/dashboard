@@ -323,12 +323,8 @@ function PublicationRow({
   async function republish() {
     setRepublishError(null);
     try {
-      const res = await republishInboundMissionAction({
-        agent: entry.agent,
-        missionDefinitionId: entry.missionDefinitionId,
-        targetIds: entry.targetIds,
-        maxActiveMissions: entry.maxActiveMissions,
-      });
+      // The server reads the stored entry. The browser sends only the name.
+      const res = await republishInboundMissionAction(entry.agent);
       if (!res.ok) {
         setRepublishError(res.code === "unauthenticated" ? T.sessionExpired : res.error);
         return;
@@ -437,7 +433,15 @@ function PublicationRow({
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>{T.republishTitle}</AlertDialogTitle>
-                    <AlertDialogDescription>{T.republishBody}</AlertDialogDescription>
+                    <AlertDialogDescription asChild>
+                      <div className="space-y-2">
+                        <p>{T.republishBody}</p>
+                        <p>{T.republishReasonLabel}</p>
+                        <p data-testid="republish-reason" className="text-foreground font-medium break-words">
+                          {entry.staleReason || T.republishReasonMissing}
+                        </p>
+                      </div>
+                    </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>{T.cancel}</AlertDialogCancel>

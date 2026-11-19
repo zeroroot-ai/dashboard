@@ -150,13 +150,13 @@ describe("a stale publication", () => {
     expect(row).toHaveTextContent(T.staleBody);
     expect(within(row).getByTestId("stale-reason")).toHaveTextContent(stale.staleReason);
     await user.click(within(row).getByRole("button", { name: `${T.republishButton} recon` }));
+    // The dialog states what the admin approves: the reason of the daemon.
+    expect(within(screen.getByRole("alertdialog")).getByTestId("republish-reason")).toHaveTextContent(
+      stale.staleReason,
+    );
     await user.click(screen.getByRole("button", { name: T.republishConfirm }));
-    expect(m.republish).toHaveBeenCalledWith({
-      agent: "recon",
-      missionDefinitionId: "def-1",
-      targetIds: ["t1", "t-gone"],
-      maxActiveMissions: 3,
-    });
+    // The page sends the agent name only. The server reads the stored entry.
+    expect(m.republish).toHaveBeenCalledWith("recon");
     await waitFor(() => expect(m.list.mock.calls.length).toBeGreaterThan(1));
   });
 

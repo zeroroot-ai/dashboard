@@ -75,6 +75,8 @@ export const INBOUND_MISSION_TEXT = {
   republishTitle: "Publish this definition again?",
   republishBody:
     "This approves the mission definition and the targets as they are now. The callers keep their grants.",
+  republishReasonLabel: "The daemon gives this reason:",
+  republishReasonMissing: "The daemon gave no reason.",
   republishConfirm: "Publish again",
   republished: (agent: string) => `${agent} is published again.`,
   republishFailed: "The definition was not published again.",

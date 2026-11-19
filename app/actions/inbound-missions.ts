@@ -142,32 +142,36 @@ export async function unpublishInboundMissionAction(agent: string): Promise<Inbo
 }
 
 /**
- * Publish a stale publication again with the same agent, definition and
- * targets. The daemon approves the present state of the definition and the
- * targets. The flow makes no identity, and the callers keep their grants.
+ * Publish a stale publication again. The browser sends only the agent name.
+ * The action reads the stored entry and sends its definition, its targets and
+ * its limit, so a changed value from the browser changes nothing. It refuses
+ * an entry that is not stale, because that publish would approve nothing new.
+ * The flow makes no identity, and the callers keep their grants.
  */
-export async function republishInboundMissionAction(input: {
-  agent: string;
-  missionDefinitionId: string;
-  targetIds: string[];
-  maxActiveMissions: number;
-}): Promise<InboundActionResult<InboundMissionDTO | null>> {
+export async function republishInboundMissionAction(
+  agent: string,
+): Promise<InboundActionResult<InboundMissionDTO | null>> {
   const session = await getServerSession();
   if (!session?.user) return UNAUTHENTICATED;
-  const a = nameSchema.safeParse(input.agent);
+  const a = nameSchema.safeParse(agent);
   if (!a.success) return bad(a.error.issues[0]?.message);
-  const d = idSchema.safeParse(input.missionDefinitionId);
-  if (!d.success) return bad(d.error.issues[0]?.message);
-  const t = targetIdsSchema.safeParse(input.targetIds);
-  if (!t.success) return bad(t.error.issues[0]?.message);
-  const n = maxActiveMissionsSchema.safeParse(input.maxActiveMissions);
-  if (!n.success) return bad(n.error.issues[0]?.message);
   try {
+    const stored = (await daemonListInboundMissions()).find((e) => e.agent === a.data);
+    if (!stored) {
+      return { ok: false, error: `The agent ${a.data} is not published.`, code: "not_found" };
+    }
+    if (!stored.stale) {
+      return {
+        ok: false,
+        error: `The publication of ${a.data} is not stale. It needs no new approval.`,
+        code: "not_stale",
+      };
+    }
     const entry = await daemonPublishInboundMission({
-      agent: a.data,
-      missionDefinitionId: d.data,
-      targetIds: t.data,
-      maxActiveMissions: n.data,
+      agent: stored.agent,
+      missionDefinitionId: stored.missionDefinitionId,
+      targetIds: stored.targetIds,
+      maxActiveMissions: stored.maxActiveMissions,
     });
     return { ok: true, data: entry };
   } catch (err) {

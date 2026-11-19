@@ -333,28 +333,64 @@ describe("a caller who is not a tenant admin", () => {
 });
 
 describe("publish again", () => {
-  const AGAIN = { agent: "recon", missionDefinitionId: "def-1", targetIds: ["t1", "t2"], maxActiveMissions: 3 };
+  const STORED = {
+    agent: "recon",
+    missionDefinitionId: "def-1",
+    targetIds: ["t1", "t2"],
+    maxActiveMissions: 3,
+    stale: true,
+    staleReason: "an approved target changed after it was published",
+  };
 
-  it("publishes the same fields, and makes no identity and no grant", async () => {
+  it("sends the stored definition, targets and limit, and makes no identity and no grant", async () => {
+    m.list.mockResolvedValue([{ ...STORED, agent: "scan" }, STORED]);
     m.publish.mockResolvedValue({ agent: "recon", stale: false });
-    expect(await republishInboundMissionAction(AGAIN)).toEqual({ ok: true, data: { agent: "recon", stale: false } });
-    expect(m.publish).toHaveBeenCalledWith(AGAIN);
+    expect(await republishInboundMissionAction(" recon ")).toEqual({
+      ok: true,
+      data: { agent: "recon", stale: false },
+    });
+    expect(m.publish).toHaveBeenCalledWith({
+      agent: "recon",
+      missionDefinitionId: "def-1",
+      targetIds: ["t1", "t2"],
+      maxActiveMissions: 3,
+    });
     expect(order()).toEqual(["publish"]);
   });
 
+  it("ignores a definition, a target list and a limit that the browser sends", async () => {
+    m.list.mockResolvedValue([STORED]);
+    m.publish.mockResolvedValue({ agent: "recon" });
+    const forged = {
+      agent: "recon",
+      missionDefinitionId: "def-evil",
+      targetIds: ["t-evil"],
+      maxActiveMissions: 10000,
+    };
+    // A direct call can pass any value. The action takes the agent name only.
+    const call = republishInboundMissionAction as unknown as (input: unknown) => Promise<{ ok: boolean }>;
+    expect(await call(forged)).toMatchObject({ ok: false, code: "bad_input" });
+    expect(m.publish).not.toHaveBeenCalled();
+    await republishInboundMissionAction("recon");
+    expect(m.publish).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(m.publish.mock.calls[0])).not.toMatch(/def-evil|t-evil|10000/);
+  });
+
+  it("refuses a publication that is not stale, and one that does not exist", async () => {
+    m.list.mockResolvedValue([{ ...STORED, stale: false, staleReason: "" }]);
+    expect(await republishInboundMissionAction("recon")).toMatchObject({ ok: false, code: "not_stale" });
+    expect(await republishInboundMissionAction("scan")).toMatchObject({ ok: false, code: "not_found" });
+    expect(m.publish).not.toHaveBeenCalled();
+  });
+
   it("shows the refusal of the daemon, for example a target that was deleted", async () => {
+    m.list.mockResolvedValue([STORED]);
     m.publish.mockRejectedValue(new ConnectError("the target does not exist: t2", Code.NotFound));
-    expect(await republishInboundMissionAction(AGAIN)).toEqual({
+    expect(await republishInboundMissionAction("recon")).toEqual({
       ok: false,
       error: "the target does not exist: t2",
       code: "not_found",
     });
-  });
-
-  it("refuses an empty target list or no limit, and calls nothing", async () => {
-    expect(await republishInboundMissionAction({ ...AGAIN, targetIds: [] })).toMatchObject({ code: "bad_input" });
-    expect(await republishInboundMissionAction({ ...AGAIN, maxActiveMissions: 0 })).toMatchObject({ code: "bad_input" });
-    expect(m.publish).not.toHaveBeenCalled();
   });
 });
 
