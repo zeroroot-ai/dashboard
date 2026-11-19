@@ -54,6 +54,7 @@ import {
   listInboundPublishOptionsAction,
   publishInboundMissionAction,
   republishInboundMissionAction,
+  retryRevokeInboundCallerIdentityAction,
   revokeInboundCallerAction,
   unpublishInboundMissionAction,
 } from "../inbound-missions";
@@ -405,6 +406,51 @@ describe("a caller who is not a tenant admin", () => {
     await publishInboundMissionAction(VALID);
     expect(m.assert.mock.calls.map((c) => c[0])).toEqual([PUBLISH, GRANT]);
     expect(m.assert.mock.invocationCallOrder[1]).toBeLessThan(m.create.mock.invocationCallOrder[0]);
+  });
+});
+
+describe("the retry of the revoke of a caller identity", () => {
+  const ID = "agent_principal:id-1";
+  const ENVOY = "upstream connect error or disconnect/reset before headers. reset reason: 10.0.3.4:8443";
+
+  it("revokes on the server and returns no text", async () => {
+    expect(await retryRevokeInboundCallerIdentityAction(` ${ID} `)).toEqual({ ok: true, data: null });
+    expect(m.retire).toHaveBeenCalledWith(ID);
+  });
+
+  it("returns only a fixed text for a proxy error, for each code", async () => {
+    for (const code of [Code.Unavailable, Code.Internal, Code.Unknown, Code.DeadlineExceeded]) {
+      m.retire.mockRejectedValue(new ConnectError(ENVOY, code));
+      const r = await retryRevokeInboundCallerIdentityAction(ID);
+      expect(r).toEqual({ ok: false, error: "The identity was not revoked.", code: "revoke_failed" });
+      expect(JSON.stringify(r)).not.toMatch(/upstream|10\.0\.3\.4/);
+    }
+    m.retire.mockRejectedValue(new Error(ENVOY));
+    expect(JSON.stringify(await retryRevokeInboundCallerIdentityAction(ID))).not.toMatch(/upstream|10\.0\.3\.4/);
+  });
+
+  it("returns the fixed note for the cleanup message of the daemon", async () => {
+    m.retire.mockRejectedValue(
+      new ConnectError("the cleanup did not finish at 10.0.3.4. Retry the revoke to finish the cleanup", Code.Unavailable),
+    );
+    expect(await retryRevokeInboundCallerIdentityAction(ID)).toEqual({
+      ok: false,
+      error: REVOKE_CLEANUP_NOTE,
+      code: "cleanup_unfinished",
+    });
+  });
+
+  it("counts an identity that is gone as revoked", async () => {
+    m.retire.mockRejectedValue(new ConnectError("not found", Code.NotFound));
+    expect(await retryRevokeInboundCallerIdentityAction(ID)).toEqual({ ok: true, data: null });
+  });
+
+  it("refuses a principal that is not an agent identity, and needs a session", async () => {
+    expect(await retryRevokeInboundCallerIdentityAction("user:alice")).toMatchObject({ code: "bad_input" });
+    expect(await retryRevokeInboundCallerIdentityAction("agent_principal:")).toMatchObject({ code: "bad_input" });
+    m.session.mockResolvedValue(null);
+    expect(await retryRevokeInboundCallerIdentityAction(ID)).toMatchObject({ code: "unauthenticated" });
+    expect(m.retire).not.toHaveBeenCalled();
   });
 });
 

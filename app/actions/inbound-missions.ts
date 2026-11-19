@@ -48,9 +48,10 @@ import type {
   InboundOptionDTO,
 } from "@/src/lib/gibson-client/inbound-mission-types";
 import { getServerSession } from "@/src/lib/auth";
-import { assertAuthorized } from "@/src/lib/auth/assert-authorized";
+import { assertAuthorized, permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
 import { shownDaemonFailure } from "@/src/lib/errors/shown-daemon-failure";
 import { revokeCleanupNote } from "@/src/lib/inbound-missions/revoke-note";
+import { logger } from "@/src/lib/logger";
 import { providerNameError } from "@/src/lib/providers/provider-name";
 
 type InboundActionResult<T = null> =
@@ -416,4 +417,39 @@ export async function addInboundCallerAction(input: {
   const denied = await refuseUnlessAllowed("addInboundCallerAction", [GRANT_METHOD]);
   if (denied) return denied;
   return runCallerFlow("addInboundCallerAction", a.data, c.data, null);
+}
+
+const principalSchema = z
+  .string()
+  .trim()
+  .max(255)
+  .refine((v) => v.startsWith(AGENT_PRINCIPAL_PREFIX) && v.length > AGENT_PRINCIPAL_PREFIX.length, "Invalid identity");
+
+/**
+ * Send the revoke again for an identity that a caller flow made and could not
+ * revoke. The revoke runs on the server, and the result holds only fixed text.
+ * The error of the revoke can hold proxy or transport text with addresses, so
+ * it never leaves the server. The daemon answers NotFound for an identity that
+ * is revoked already, and that is the wanted state.
+ */
+export async function retryRevokeInboundCallerIdentityAction(principalId: string): Promise<InboundActionResult> {
+  const session = await getServerSession();
+  if (!session?.user) return UNAUTHENTICATED;
+  const p = principalSchema.safeParse(principalId);
+  if (!p.success) return bad(p.error.issues[0]?.message);
+  try {
+    await daemonRevokeInboundCallerIdentity(p.data);
+    return { ok: true, data: null };
+  } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
+    if (err instanceof ConnectError && err.code === Code.NotFound) return { ok: true, data: null };
+    const note = err instanceof ConnectError && err.code === Code.Unavailable ? revokeCleanupNote(err.rawMessage) : null;
+    if (note) return { ok: false, error: note, code: "cleanup_unfinished" };
+    logger.error(
+      { action: "retryRevokeInboundCallerIdentityAction", rpcCode: err instanceof ConnectError ? err.code : undefined },
+      "the revoke of a caller identity failed",
+    );
+    return { ok: false, error: "The identity was not revoked.", code: "revoke_failed" };
+  }
 }

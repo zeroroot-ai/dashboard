@@ -30,8 +30,8 @@ vi.mock("@/app/actions/inbound-missions", () => ({
   listInboundCallersAction: m.callers,
   revokeInboundCallerAction: m.revoke,
   addInboundCallerAction: m.add,
+  retryRevokeInboundCallerIdentityAction: m.retire,
 }));
-vi.mock("@/app/actions/crd/member", () => ({ retireAgentIdentityAction: m.retire }));
 vi.mock("next/navigation", () => ({
   redirect: (to: string) => {
     throw new Error(`NEXT_REDIRECT:${to}`);
@@ -299,19 +299,18 @@ describe("the publish form", () => {
       published: false,
     });
     m.retire
-      .mockResolvedValueOnce({ ok: false, error: "[unavailable] upstream reset 10.0.3.4", code: "INTERNAL" })
-      .mockResolvedValueOnce({ ok: false, error: "[unavailable] " + note, code: "INTERNAL" })
-      .mockResolvedValueOnce({ ok: true, data: undefined });
+      .mockResolvedValueOnce({ ok: false, error: "The identity was not revoked.", code: "revoke_failed" })
+      .mockResolvedValueOnce({ ok: false, error: note, code: "cleanup_unfinished" })
+      .mockResolvedValueOnce({ ok: true, data: null });
     const user = userEvent.setup();
     render(<InboundMissionsContent />);
     await fillPublishForm(user);
     await user.click(screen.getByRole("button", { name: T.publishButton }));
     expect(await screen.findByTestId("flow-revoke-note")).toHaveTextContent("Retry the revoke to finish the cleanup");
     await user.click(screen.getByRole("button", { name: T.retryRevokeButton }));
-    expect(m.retire).toHaveBeenCalledWith({ principalId: CALLER });
-    // A proxy error shows as a fixed text, with no detail of the network.
-    expect(await screen.findByTestId("flow-revoke-error")).toHaveTextContent(T.retryRevokeFailed);
-    expect(screen.getByTestId("flow-failure")).not.toHaveTextContent("10.0.3.4");
+    // The retry runs through the inbound action, which returns only fixed text.
+    expect(m.retire).toHaveBeenCalledWith(CALLER);
+    expect(await screen.findByTestId("flow-revoke-error")).toHaveTextContent("The identity was not revoked.");
     await user.click(screen.getByRole("button", { name: T.retryRevokeButton }));
     await waitFor(() =>
       expect(screen.getByTestId("flow-revoke-error")).toHaveTextContent("Retry the revoke to finish the cleanup"),

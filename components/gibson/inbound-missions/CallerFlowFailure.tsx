@@ -14,11 +14,10 @@
 import * as React from "react";
 import { AlertTriangle } from "lucide-react";
 
-import { retireAgentIdentityAction } from "@/app/actions/crd/member";
+import { retryRevokeInboundCallerIdentityAction } from "@/app/actions/inbound-missions";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { InboundCallerFlowResult } from "@/src/lib/gibson-client/inbound-mission-types";
-import { revokeCleanupNote } from "@/src/lib/inbound-missions/revoke-note";
 import { INBOUND_MISSION_TEXT as T } from "./texts";
 
 type Failure = Extract<InboundCallerFlowResult, { ok: false }>;
@@ -41,13 +40,12 @@ function IdentityLeft({ identity }: { identity: LeftIdentity }) {
     setBusy(true);
     setError(null);
     try {
-      const res = await retireAgentIdentityAction({ principalId: identity.identityId });
+      // The action returns only fixed text. No error of the proxy comes back.
+      const res = await retryRevokeInboundCallerIdentityAction(identity.identityId);
       if (res.ok) {
         setRevoked(true);
       } else {
-        // The error of the revoke can hold proxy or transport text. Only the
-        // cleanup message of the daemon shows, as its fixed note.
-        setError(revokeCleanupNote(res.error) ?? T.retryRevokeFailed);
+        setError(res.code === "unauthenticated" ? T.sessionExpired : res.error || T.retryRevokeFailed);
       }
     } catch {
       setError(T.retryRevokeFailed);
