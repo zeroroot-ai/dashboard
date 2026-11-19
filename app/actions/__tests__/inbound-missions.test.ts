@@ -22,6 +22,7 @@ const m = vi.hoisted(() => ({
 vi.mock("server-only", () => ({}));
 vi.mock("@/src/lib/auth", () => ({ getServerSession: m.session }));
 vi.mock("@/src/lib/gibson-client/inbound-missions", () => ({
+  AGENT_PRINCIPAL_PREFIX: "agent_principal:",
   daemonListInboundMissions: m.list,
   daemonPublishInboundMission: m.publish,
   daemonUnpublishInboundMission: m.unpublish,
@@ -194,6 +195,20 @@ describe("the publish flow", () => {
       failedStep: "identity",
       published: false,
     });
+  });
+
+  it("revokes a new principal that is not an agent identity, and reports it as made", async () => {
+    m.create.mockResolvedValue({ ...IDENTITY, principalId: "tool_principal:id-1" });
+    const r = await publishInboundMissionAction(VALID);
+    expect(order()).toEqual(["create", "retire"]);
+    expect(m.retire).toHaveBeenCalledWith("tool_principal:id-1");
+    expect(r).toMatchObject({
+      ok: false,
+      failedStep: "identity",
+      identity: { identityId: "tool_principal:id-1", name: "partner", removed: true },
+      published: false,
+    });
+    expect(JSON.stringify(r)).not.toContain("tok");
   });
 
   it("revokes the new identity when the publish fails, and returns no token", async () => {

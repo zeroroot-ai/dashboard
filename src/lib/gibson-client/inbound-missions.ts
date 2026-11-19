@@ -32,7 +32,8 @@ import type {
  */
 export const INBOUND_CALLER_CEILING = "mission:originate";
 
-const AGENT_PRINCIPAL_PREFIX = "agent_principal:";
+/** The type prefix of the principal id of an agent identity. */
+export const AGENT_PRINCIPAL_PREFIX = "agent_principal:";
 
 function toDTO(e: InboundMissionEntry): InboundMissionDTO {
   const ms = e.createdAt ? Number(e.createdAt.seconds) * 1000 + Math.floor(e.createdAt.nanos / 1e6) : 0;
@@ -112,7 +113,8 @@ export async function daemonListInboundCallers(agent: string): Promise<WalkResul
 /**
  * Make the identity of one new caller: kind agent, the ceiling
  * "mission:originate" and no component grant. The response holds the one-time
- * bootstrap token.
+ * bootstrap token. The caller checks the type of the principal, because the
+ * identity exists when this function returns.
  */
 export async function daemonCreateInboundCallerIdentity(name: string): Promise<InboundCallerIdentityDTO> {
   const resp = await userClient(AgentIdentityService).createAgentIdentity({
@@ -123,9 +125,6 @@ export async function daemonCreateInboundCallerIdentity(name: string): Promise<I
     capabilityCeiling: [INBOUND_CALLER_CEILING],
     idempotencyKey: randomUUID(),
   });
-  if (!resp.principalId.startsWith(AGENT_PRINCIPAL_PREFIX)) {
-    throw new Error("the daemon returned a principal that is not an agent identity");
-  }
   return {
     principalId: resp.principalId,
     name: resp.name || name,

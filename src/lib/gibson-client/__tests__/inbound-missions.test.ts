@@ -171,9 +171,10 @@ describe("inbound mission client", () => {
     });
   });
 
-  it("refuses a new principal that is not an agent identity", async () => {
+  it("returns the principal of the new identity as the daemon sent it", async () => {
     identity.createAgentIdentity.mockResolvedValue({ principalId: "tool_principal:id-1", name: "partner" });
-    await expect(daemonCreateInboundCallerIdentity("partner")).rejects.toThrow(/not an agent identity/);
+    // The identity exists now, so this function does not throw. The flow checks the type and revokes.
+    expect((await daemonCreateInboundCallerIdentity("partner")).principalId).toBe("tool_principal:id-1");
   });
 
   it("revokes an identity by its principal", async () => {

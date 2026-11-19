@@ -24,6 +24,7 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import { z } from "zod";
 
 import {
+  AGENT_PRINCIPAL_PREFIX,
   daemonCreateInboundCallerIdentity,
   daemonGrantInboundCaller,
   daemonListDefinitionAgents,
@@ -232,15 +233,21 @@ async function runCallerFlow(
   }
   const caller: InboundCallerDTO = { identityId: identity.principalId, name: identity.name };
 
-  let step: InboundFlowStep = publish ? "publish" : "grant";
+  let step: InboundFlowStep = "identity";
   // The flow that only adds a caller works on a definition that is published.
   let published = publish === null;
   try {
+    // The identity exists now. A principal of another type is a failure of the
+    // identity step, and the flow revokes it like each later failure.
+    if (!identity.principalId.startsWith(AGENT_PRINCIPAL_PREFIX)) {
+      throw new Error("the daemon returned a principal that is not an agent identity");
+    }
     if (publish) {
+      step = "publish";
       await daemonPublishInboundMission({ agent, ...publish });
       published = true;
-      step = "grant";
     }
+    step = "grant";
     await daemonGrantInboundCaller(agent, identity.principalId);
   } catch (err) {
     // The token of this identity never reaches the browser, so the identity
