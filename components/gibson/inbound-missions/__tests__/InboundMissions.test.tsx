@@ -38,7 +38,8 @@ vi.mock("next/navigation", () => ({
   },
   usePathname: () => "/dashboard",
 }));
-vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+vi.mock("sonner", () => ({ toast }));
 vi.mock("@/src/lib/auth/assert-authorized", () => ({
   assertAuthorized: m.assert,
   authzDenial: (e: unknown) => (e instanceof Error && e.name === "Denied" ? e : null),
@@ -69,6 +70,8 @@ const CREDENTIALS = { bootstrapToken: "tok-123", gibsonUrl: "https://gibson.exam
 
 beforeEach(() => {
   Object.values(m).forEach((f) => f.mockReset());
+  toast.success.mockReset();
+  toast.error.mockReset();
   m.list.mockResolvedValue({ ok: true, data: [] });
   m.options.mockResolvedValue({
     ok: true,
@@ -206,6 +209,7 @@ describe("the publish form", () => {
     expect(screen.getByLabelText("Bootstrap token")).toHaveValue("tok-123");
     expect(screen.getByLabelText("Platform URL")).toHaveValue("https://gibson.example.com");
     await waitFor(() => expect(m.list.mock.calls.length).toBeGreaterThan(1));
+    expect(toast.success).toHaveBeenCalledWith(T.published("recon"));
     await user.click(screen.getByRole("button", { name: "I have saved them" }));
     expect(screen.queryByLabelText("Bootstrap token")).not.toBeInTheDocument();
     expect(screen.getByLabelText(T.fieldCallerName)).toHaveValue("");
@@ -276,6 +280,8 @@ describe("the publish form", () => {
     expect(screen.getByTestId("flow-identity-state")).toHaveTextContent(T.identityLeft("partner", CALLER));
     expect(screen.getByTestId("flow-publication-state")).toHaveTextContent(T.definitionPublished);
     await waitFor(() => expect(m.list.mock.calls.length).toBeGreaterThan(1));
+    // The flow failed, so no message of success shows next to the failure.
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it("shows the note of a revoke that did not finish, and sends the revoke again", async () => {

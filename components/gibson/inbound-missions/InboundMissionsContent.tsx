@@ -103,7 +103,17 @@ function nameOf(options: InboundOptionDTO[], id: string): string {
   return options.find((o) => o.id === id)?.name ?? id;
 }
 
-function PublishForm({ options, onPublished }: { options: Options; onPublished: (agent: string) => void }) {
+function PublishForm({
+  options,
+  onPublished,
+  onListChanged,
+}: {
+  options: Options;
+  /** The whole flow passed. */
+  onPublished: (agent: string) => void;
+  /** The flow failed after the publish, so the list has a new row. */
+  onListChanged: () => void;
+}) {
   const [definitionId, setDefinitionId] = React.useState("");
   const [agents, setAgents] = React.useState<AgentsRead | null>(null);
   const [agent, setAgent] = React.useState("");
@@ -145,7 +155,8 @@ function PublishForm({ options, onPublished }: { options: Options; onPublished: 
       if (!res.ok) {
         setFailure(res);
         // A failed grant leaves the publication in place, so the list changes.
-        if (res.published) onPublished(agent);
+        // The flow did not pass, so no message of success shows.
+        if (res.published) onListChanged();
         return;
       }
       setMade({ name: res.caller.name, credentials: res.credentials });
@@ -519,6 +530,7 @@ export function InboundMissionsContent() {
                 toast.success(T.published(agent));
                 reload();
               }}
+              onListChanged={reload}
             />
           )}
         </CardContent>
