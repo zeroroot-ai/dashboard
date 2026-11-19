@@ -20,7 +20,9 @@ export type MissionStatus =
   | 'paused'
   | 'completed'
   | 'failed'
-  | 'canceled';
+  | 'canceled'
+  // The daemon sent no state, or a state that the dashboard does not know.
+  | 'unknown';
 
 interface MissionConfig {
   target?: string;

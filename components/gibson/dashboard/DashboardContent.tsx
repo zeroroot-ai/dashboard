@@ -55,6 +55,7 @@ const STATUS_STYLES: Record<MissionStatus, string> = {
   failed:         'bg-destructive/10 text-destructive border-destructive/40',
   canceled:       'bg-muted text-muted-foreground border-border',
   submitted:      'bg-muted text-muted-foreground border-border',
+  unknown:        'bg-muted text-muted-foreground border-border',
 };
 
 function SeverityBadge({ severity }: { severity: FindingSeverity }) {

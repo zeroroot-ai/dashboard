@@ -64,6 +64,20 @@ export async function POST(
 
     const status = parseMissionStatus(mission.status);
 
+    // A state that the daemon did not send, or that the dashboard does not
+    // know, starts no run. It is not "submitted".
+    if (status === 'unknown') {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'UNKNOWN_STATE',
+            message: 'The state of the mission is unknown, so the mission cannot be started',
+          },
+        },
+        { status: 409 }
+      );
+    }
+
     if (status === 'paused') {
       const result = await resumeMission(id, session?.user?.id);
       return NextResponse.json({

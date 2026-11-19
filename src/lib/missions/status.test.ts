@@ -27,15 +27,24 @@ describe("parseMissionStatus", () => {
     expect(parseMissionStatus(raw)).toBe(want);
   });
 
-  it("reads an unknown, an empty and a missing state as submitted", () => {
-    expect(parseMissionStatus("garbage")).toBe("submitted");
-    expect(parseMissionStatus("")).toBe("submitted");
-    expect(parseMissionStatus(undefined)).toBe("submitted");
+  it("reads an unknown, an unspecified, an empty and a missing state as unknown", () => {
+    expect(parseMissionStatus("garbage")).toBe("unknown");
+    expect(parseMissionStatus("MISSION_STATUS_UNSPECIFIED")).toBe("unknown");
+    expect(parseMissionStatus("")).toBe("unknown");
+    expect(parseMissionStatus(undefined)).toBe("unknown");
+    expect(parseMissionStatus(null)).toBe("unknown");
+  });
+
+  it("lets no person start or stop a mission in the unknown state", () => {
+    expect(canStartMission("unknown")).toBe(false);
+    expect(canStopMission("unknown")).toBe(false);
+    expect(isActiveMission("unknown")).toBe(false);
+    expect(MISSION_STATUS_LABELS.unknown).toBe("Unknown");
   });
 
   it("does not accept a name that the daemon no longer sends", () => {
     for (const old of ["pending", "running", "cancelled", "stopped"]) {
-      expect(parseMissionStatus(old)).toBe("submitted");
+      expect(parseMissionStatus(old)).toBe("unknown");
     }
   });
 });
@@ -65,7 +74,7 @@ describe("the state rules", () => {
 });
 
 describe("MISSION_STATUS_LABELS", () => {
-  it("holds the seven labels of the UI", () => {
+  it("holds the label of each state and of the unknown state", () => {
     expect(MISSION_STATUS_LABELS).toEqual({
       submitted: "Submitted",
       working: "Working",
@@ -74,6 +83,7 @@ describe("MISSION_STATUS_LABELS", () => {
       failed: "Failed",
       canceled: "Canceled",
       paused: "Paused",
+      unknown: "Unknown",
     });
   });
 });

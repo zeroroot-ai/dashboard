@@ -71,6 +71,7 @@ const STATUS_BADGE_CLASSES: Record<MissionStatus, string> = {
   completed: "border-link/50 bg-link/10 text-link",
   failed: "border-destructive/50 bg-destructive/10 text-destructive",
   canceled: "border-border text-muted-foreground",
+  unknown: "border-border text-muted-foreground",
 };
 
 interface MissionDetailPageProps {
