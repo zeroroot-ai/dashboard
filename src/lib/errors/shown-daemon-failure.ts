@@ -2,9 +2,9 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Map an error from an Agent Skill RPC to a result for the browser.
+ * Map an error from a daemon RPC of a form to a result for the browser.
  *
- * A rejected publish carries a reason that the publisher can fix: a tag
+ * A rejected save carries a reason that the person can fix: a tag
  * instead of a digest, a folder that fails validation, a registry that
  * refuses the credential. The generic server action mapper hides the daemon
  * text. This mapper shows it for the codes below, as the mission and agent
@@ -16,7 +16,7 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
 import { serverActionError } from "@/src/lib/errors/server-action-error";
 
-export type AgentSkillFailure = { ok: false; error: string; code?: string };
+export type ShownDaemonFailure = { ok: false; error: string; code?: string };
 
 /** The codes whose daemon message the publisher may read. */
 const SHOWN_CODES: ReadonlyMap<Code, string> = new Map([
@@ -26,7 +26,7 @@ const SHOWN_CODES: ReadonlyMap<Code, string> = new Map([
   [Code.AlreadyExists, "already_exists"],
 ]);
 
-export function agentSkillFailure(err: unknown, action: string): AgentSkillFailure {
+export function shownDaemonFailure(err: unknown, action: string): ShownDaemonFailure {
   const denied = permissionDeniedResult(err);
   if (denied) return denied;
   if (err instanceof ConnectError) {

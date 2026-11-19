@@ -13,7 +13,7 @@
  * and ext-authz check the relation again.
  *
  * A validation error of the daemon is shown to the publisher as text. See
- * src/lib/agent-skills/action-error.ts.
+ * src/lib/agent-skil../shown-daemon-failure.ts.
  */
 
 import "server-only";
@@ -39,7 +39,7 @@ import type {
 } from "@/src/lib/gibson-client/agent-skill-types";
 import { getServerSession } from "@/src/lib/auth";
 import { listMissions } from "@/src/lib/gibson-client";
-import { agentSkillFailure } from "@/src/lib/agent-skills/action-error";
+import { shownDaemonFailure } from "@/src/lib/errors/shown-daemon-failure";
 
 type AgentSkillActionResult<T = null> =
   | { ok: true; data: T }
@@ -103,7 +103,7 @@ export async function listAgentSkillsAction(): Promise<AgentSkillActionResult<Ag
   try {
     return { ok: true, data: await daemonListAgentSkills() };
   } catch (err) {
-    return agentSkillFailure(err, "listAgentSkillsAction");
+    return shownDaemonFailure(err, "listAgentSkillsAction");
   }
 }
 
@@ -118,7 +118,7 @@ export async function listAgentSkillVersionsAction(
   try {
     return { ok: true, data: await daemonListAgentSkills({ name: n.data, allVersions: true }) };
   } catch (err) {
-    return agentSkillFailure(err, "listAgentSkillVersionsAction");
+    return shownDaemonFailure(err, "listAgentSkillVersionsAction");
   }
 }
 
@@ -136,7 +136,7 @@ export async function getAgentSkillAction(
   try {
     return { ok: true, data: await daemonGetAgentSkill(n.data, d.data) };
   } catch (err) {
-    return agentSkillFailure(err, "getAgentSkillAction");
+    return shownDaemonFailure(err, "getAgentSkillAction");
   }
 }
 
@@ -162,7 +162,7 @@ export async function publishAgentSkillAction(input: {
     });
     return { ok: true, data: entry };
   } catch (err) {
-    return agentSkillFailure(err, "publishAgentSkillAction");
+    return shownDaemonFailure(err, "publishAgentSkillAction");
   }
 }
 
@@ -177,7 +177,7 @@ export async function deleteAgentSkillAction(
   try {
     return { ok: true, data: { deletedVersions: await daemonDeleteAgentSkill(n.data) } };
   } catch (err) {
-    return agentSkillFailure(err, "deleteAgentSkillAction");
+    return shownDaemonFailure(err, "deleteAgentSkillAction");
   }
 }
 
@@ -199,7 +199,7 @@ export async function grantAgentSkillAction(input: {
     await daemonGrantAgentSkill(n.data, k.data, id.data);
     return { ok: true, data: null };
   } catch (err) {
-    return agentSkillFailure(err, "grantAgentSkillAction");
+    return shownDaemonFailure(err, "grantAgentSkillAction");
   }
 }
 
@@ -221,7 +221,7 @@ export async function revokeAgentSkillAction(input: {
     await daemonRevokeAgentSkill(n.data, k.data, id.data);
     return { ok: true, data: null };
   } catch (err) {
-    return agentSkillFailure(err, "revokeAgentSkillAction");
+    return shownDaemonFailure(err, "revokeAgentSkillAction");
   }
 }
 
@@ -236,7 +236,7 @@ export async function listAgentSkillGrantsAction(
   try {
     return { ok: true, data: await daemonListAgentSkillGrants(n.data) };
   } catch (err) {
-    return agentSkillFailure(err, "listAgentSkillGrantsAction");
+    return shownDaemonFailure(err, "listAgentSkillGrantsAction");
   }
 }
 
@@ -261,7 +261,7 @@ export async function listMissionOptionsAction(): Promise<AgentSkillActionResult
       data: resp.missions.map((m) => ({ id: m.id, name: m.name || m.id })),
     };
   } catch (err) {
-    return agentSkillFailure(err, "listMissionOptionsAction");
+    return shownDaemonFailure(err, "listMissionOptionsAction");
   }
 }
 
@@ -274,7 +274,7 @@ export async function listSharedAgentSkillsAction(): Promise<
   try {
     return { ok: true, data: await daemonListSharedAgentSkills() };
   } catch (err) {
-    return agentSkillFailure(err, "listSharedAgentSkillsAction");
+    return shownDaemonFailure(err, "listSharedAgentSkillsAction");
   }
 }
 
@@ -289,6 +289,6 @@ export async function enableSharedAgentSkillAction(
   try {
     return { ok: true, data: await daemonEnableSharedAgentSkill(n.data) };
   } catch (err) {
-    return agentSkillFailure(err, "enableSharedAgentSkillAction");
+    return shownDaemonFailure(err, "enableSharedAgentSkillAction");
   }
 }
