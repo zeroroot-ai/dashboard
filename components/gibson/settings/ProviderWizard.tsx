@@ -102,6 +102,14 @@ interface CredentialFormValues {
   credentials: Record<string, string>;
 }
 
+/**
+ * The form values after a good save: the name stays, and each credential
+ * value is gone. The test step needs only the name of the saved provider.
+ */
+export function withoutCredentials(values: CredentialFormValues): CredentialFormValues {
+  return { name: values.name, credentials: {} };
+}
+
 interface ProviderWizardProps {
   supported: SupportedProviderDescriptor[];
   /** Called when the user's provider is successfully created. */
@@ -944,6 +952,8 @@ export function ProviderWizard({
       {
         onSuccess: () => {
           toast.success(`${descriptor.displayName} saved`);
+          // The daemon holds the credential now. The browser keeps no copy.
+          setFormValues(withoutCredentials(formValues));
           setSavedName(formValues.name);
         },
         onError: (err) => {
