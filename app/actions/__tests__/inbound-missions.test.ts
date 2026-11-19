@@ -18,6 +18,11 @@ const m = vi.hoisted(() => ({
   targets: vi.fn(),
   agents: vi.fn(),
   session: vi.fn(),
+  assert: vi.fn(),
+}));
+vi.mock("@/src/lib/auth/assert-authorized", async (orig) => ({
+  ...(await orig<typeof import("@/src/lib/auth/assert-authorized")>()),
+  assertAuthorized: m.assert,
 }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/src/lib/auth", () => ({ getServerSession: m.session }));
@@ -37,6 +42,7 @@ vi.mock("@/src/lib/gibson-client/inbound-missions", () => ({
   daemonListDefinitionAgents: m.agents,
 }));
 
+import { AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
 import {
   addInboundCallerAction,
   listDefinitionAgentsAction,
@@ -80,6 +86,8 @@ function order(): string[] {
 beforeEach(() => {
   vi.clearAllMocks();
   m.session.mockResolvedValue({ user: { id: "u1" } });
+  m.assert.mockResolvedValue(undefined);
+  m.list.mockResolvedValue([]);
   m.create.mockResolvedValue(IDENTITY);
   m.publish.mockResolvedValue({ agent: "recon" });
   m.grant.mockResolvedValue(undefined);
@@ -273,6 +281,33 @@ describe("a revoke of the new identity that does not finish", () => {
     m.retire.mockRejectedValue(new ConnectError("pq: connection refused", Code.Internal));
     const r = await publishInboundMissionAction(VALID);
     expect(r.ok ? null : r.identity).toEqual({ identityId: "agent_principal:id-1", name: "partner", removed: false });
+  });
+});
+
+describe("a caller who is not a tenant admin", () => {
+  const PUBLISH = "/gibson.tenant.v1.InboundMissionService/PublishInboundMission";
+  const GRANT = "/gibson.tenant.v1.InboundMissionService/GrantInboundCaller";
+  const denyAll = () => m.assert.mockRejectedValue(new AuthzDeniedError(PUBLISH, "relation-not-met"));
+
+  it("gets no identity made by the publish flow", async () => {
+    denyAll();
+    const r = await publishInboundMissionAction(VALID);
+    expect(r).toEqual({ ok: false, error: "Permission denied", code: "permission_denied" });
+    expect(order()).toEqual([]);
+    expect(m.assert).toHaveBeenCalledWith(PUBLISH);
+  });
+
+  it("gets no identity made by the flow that adds a caller", async () => {
+    denyAll();
+    const r = await addInboundCallerAction({ agent: "recon", callerName: "second" });
+    expect(r).toMatchObject({ ok: false, code: "permission_denied" });
+    expect(order()).toEqual([]);
+  });
+
+  it("is checked for the publish and for the grant before the create", async () => {
+    await publishInboundMissionAction(VALID);
+    expect(m.assert.mock.calls.map((c) => c[0])).toEqual([PUBLISH, GRANT]);
+    expect(m.assert.mock.invocationCallOrder[1]).toBeLessThan(m.create.mock.invocationCallOrder[0]);
   });
 });
 

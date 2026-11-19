@@ -47,6 +47,7 @@ import type {
   InboundOptionDTO,
 } from "@/src/lib/gibson-client/inbound-mission-types";
 import { getServerSession } from "@/src/lib/auth";
+import { assertAuthorized } from "@/src/lib/auth/assert-authorized";
 import { shownDaemonFailure } from "@/src/lib/errors/shown-daemon-failure";
 import { providerNameError } from "@/src/lib/providers/provider-name";
 
@@ -215,6 +216,25 @@ export async function revokeInboundCallerAction(input: {
   }
 }
 
+const PUBLISH_METHOD = "/gibson.tenant.v1.InboundMissionService/PublishInboundMission";
+const GRANT_METHOD = "/gibson.tenant.v1.InboundMissionService/GrantInboundCaller";
+
+/**
+ * Check that the caller may publish and grant, before the flow makes an
+ * identity. CreateAgentIdentity needs only the "writer" relation. Without this
+ * check a writer who calls the action directly gets an identity made, and only
+ * then the publish is refused.
+ */
+async function refuseUnlessAdmin(action: string): Promise<InboundCallerFlowResult | null> {
+  try {
+    await assertAuthorized(PUBLISH_METHOD);
+    await assertAuthorized(GRANT_METHOD);
+    return null;
+  } catch (err) {
+    return shownDaemonFailure(err, action);
+  }
+}
+
 /**
  * Make one new identity, publish when `publish` is set, and grant the identity
  * to the published definition. The calls run in that order.
@@ -303,6 +323,8 @@ export async function publishInboundMissionAction(input: {
   if (!n.success) return bad(n.error.issues[0]?.message);
   const c = nameSchema.safeParse(input.callerName);
   if (!c.success) return bad(c.error.issues[0]?.message);
+  const denied = await refuseUnlessAdmin("publishInboundMissionAction");
+  if (denied) return denied;
   return runCallerFlow("publishInboundMissionAction", a.data, c.data, {
     missionDefinitionId: d.data,
     targetIds: t.data,
@@ -321,5 +343,7 @@ export async function addInboundCallerAction(input: {
   if (!a.success) return bad(a.error.issues[0]?.message);
   const c = nameSchema.safeParse(input.callerName);
   if (!c.success) return bad(c.error.issues[0]?.message);
+  const denied = await refuseUnlessAdmin("addInboundCallerAction");
+  if (denied) return denied;
   return runCallerFlow("addInboundCallerAction", a.data, c.data, null);
 }
