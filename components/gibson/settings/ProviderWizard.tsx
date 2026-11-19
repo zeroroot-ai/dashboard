@@ -79,6 +79,7 @@ import {
 } from "@/src/lib/provider-capabilities";
 import { isOfferedProviderType } from "@/src/lib/providers/offered-types";
 import { PROVIDER_NAME_MAX_LENGTH, providerNameError } from "@/src/lib/providers/provider-name";
+import { EditCredentialsDialog } from "./EditCredentialsDialog";
 import { ProviderTestPanel } from "./ProviderTestPanel";
 import { Textarea } from "@/components/ui/textarea";
 import { loginShapeHint } from "@/src/lib/providers/login-shape";
@@ -1014,6 +1015,20 @@ export function ProviderWizard({
       {step === 3 && savedName !== null && (
         <ProviderTestPanel
           name={savedName}
+          renderEdit={
+            descriptor
+              ? (ctl) => (
+                  <EditCredentialsDialog
+                    descriptor={descriptor}
+                    providerName={savedName}
+                    displayName={descriptor.displayName}
+                    open={ctl.open}
+                    onOpenChange={ctl.onOpenChange}
+                    onSaved={ctl.onSaved}
+                  />
+                )
+              : undefined
+          }
           onDone={() => {
             reset();
             onComplete?.();

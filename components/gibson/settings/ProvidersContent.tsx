@@ -26,7 +26,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -43,7 +42,7 @@ import { formatDistanceToNow } from "date-fns";
 
 import { useSupportedProviders } from "@/src/hooks/useSupportedProviders";
 import { useProviders, providerQueryKeys } from "@/src/hooks/useProviders";
-import { useDeleteProvider, useSetDefaultProvider, useUpdateProvider } from "@/src/hooks/useProviderMutations";
+import { useDeleteProvider, useSetDefaultProvider } from "@/src/hooks/useProviderMutations";
 import { useProviderHealth } from "@/src/hooks/useProviderHealth";
 import type { SupportedProviderDescriptor } from '@/src/lib/gibson-client-types';
 import { capabilityLabel } from '@/src/lib/provider-capabilities';
@@ -51,7 +50,8 @@ import type { ProviderConfig, ProviderHealthStatus } from "@/src/types/provider"
 import { HEALTH_STATUS_CONFIG } from "@/src/types/provider";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { ProviderWizard, CredentialsForm } from "./ProviderWizard";
+import { EditCredentialsDialog } from "./EditCredentialsDialog";
+import { ProviderWizard } from "./ProviderWizard";
 import { apiFetch } from "@/src/lib/api/fetch";
 
 // ---------------------------------------------------------------------------
@@ -96,10 +96,7 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
 
   const { mutate: deleteProvider, isPending: isDeleting } = useDeleteProvider();
   const { mutate: setDefault, isPending: isSettingDefault } = useSetDefaultProvider();
-  const { mutate: updateProvider, isPending: isUpdating } = useUpdateProvider();
-  const queryClient = useQueryClient();
   const [editOpen, setEditOpen] = React.useState(false);
-  const [editCredentials, setEditCredentials] = React.useState<Record<string, string>>({});
 
   // Live health badge, polls every 60 s, pauses when the tab is hidden.
   const { data: health } = useProviderHealth(provider.name);
@@ -114,24 +111,6 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
     ? Object.values(provider.credentialsMasked).some((v) => v !== "")
     : false;
   const isConfigured = hasCredentials || provider.isEnabled;
-
-  function onSaveCredentials() {
-    updateProvider(
-      { name: provider.name, config: { credentials: editCredentials } },
-      {
-        onSuccess: () => {
-          toast.success(`${provider.displayName} credentials updated`);
-          setEditOpen(false);
-          void queryClient.invalidateQueries({ queryKey: providerQueryKeys.lists() });
-        },
-        onError: (err) => {
-          toast.error(`Failed to update ${provider.displayName} credentials`, {
-            description: err.message,
-          });
-        },
-      },
-    );
-  }
 
   async function onTestConnection() {
     setTestState("testing");
@@ -361,46 +340,13 @@ function ConfiguredProviderRow({ provider, descriptor }: ConfiguredProviderRowPr
                 <Pencil className="size-3" />
                 Edit credentials
               </Button>
-              <Dialog open={editOpen} onOpenChange={setEditOpen}>
-                <DialogContent className="sm:max-w-lg">
-                  <DialogHeader>
-                    <DialogTitle className="text-sm">
-                      Edit {provider.displayName} credentials
-                    </DialogTitle>
-                    <DialogDescription className="text-xs">
-                      Leave secret fields blank to keep the existing stored value. Save, then use Test connection on the card.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <CredentialsForm
-                    descriptor={descriptor}
-                    providerName={provider.name}
-                    secretFieldPlaceholder="Leave blank to keep existing value"
-                    onValuesChange={(vals) => setEditCredentials(vals.credentials)}
-                  />
-                  <DialogFooter>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditOpen(false)}
-                      disabled={isUpdating}
-                      className="text-xs"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={onSaveCredentials}
-                      disabled={isUpdating}
-                      className="text-xs"
-                    >
-                      {isUpdating && <Loader2 className="size-3 animate-spin" />}
-                      Save
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+              <EditCredentialsDialog
+                descriptor={descriptor}
+                providerName={provider.name}
+                displayName={provider.displayName}
+                open={editOpen}
+                onOpenChange={setEditOpen}
+              />
             </>
           )}
 
