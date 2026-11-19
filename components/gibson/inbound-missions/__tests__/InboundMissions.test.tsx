@@ -16,6 +16,7 @@ const m = vi.hoisted(() => ({
   callers: vi.fn(),
   revoke: vi.fn(),
   add: vi.fn(),
+  retire: vi.fn(),
   assert: vi.fn(),
 }));
 
@@ -30,6 +31,7 @@ vi.mock("@/app/actions/inbound-missions", () => ({
   revokeInboundCallerAction: m.revoke,
   addInboundCallerAction: m.add,
 }));
+vi.mock("@/app/actions/crd/member", () => ({ retireAgentIdentityAction: m.retire }));
 vi.mock("next/navigation", () => ({
   redirect: (to: string) => {
     throw new Error(`NEXT_REDIRECT:${to}`);
@@ -274,6 +276,32 @@ describe("the publish form", () => {
     expect(screen.getByTestId("flow-identity-state")).toHaveTextContent(T.identityLeft("partner", CALLER));
     expect(screen.getByTestId("flow-publication-state")).toHaveTextContent(T.definitionPublished);
     await waitFor(() => expect(m.list.mock.calls.length).toBeGreaterThan(1));
+  });
+
+  it("shows the note of a revoke that did not finish, and sends the revoke again", async () => {
+    const note =
+      "the identity is revoked and its access is blocked, but the cleanup of its permission tuples did not finish. Retry the revoke to finish the cleanup";
+    m.publish.mockResolvedValue({
+      ok: false,
+      error: "refused",
+      code: "invalid_argument",
+      failedStep: "publish",
+      identity: { identityId: CALLER, name: "partner", removed: false, revokeNote: note },
+      published: false,
+    });
+    m.retire
+      .mockResolvedValueOnce({ ok: false, error: "[unavailable] " + note, code: "INTERNAL" })
+      .mockResolvedValueOnce({ ok: true, data: undefined });
+    const user = userEvent.setup();
+    render(<InboundMissionsContent />);
+    await fillPublishForm(user);
+    await user.click(screen.getByRole("button", { name: T.publishButton }));
+    expect(await screen.findByTestId("flow-revoke-note")).toHaveTextContent("Retry the revoke to finish the cleanup");
+    await user.click(screen.getByRole("button", { name: T.retryRevokeButton }));
+    expect(m.retire).toHaveBeenCalledWith({ principalId: CALLER });
+    expect(await screen.findByTestId("flow-revoke-error")).toHaveTextContent("Retry the revoke");
+    await user.click(screen.getByRole("button", { name: T.retryRevokeButton }));
+    expect(await screen.findByTestId("flow-identity-revoked")).toHaveTextContent(T.identityRevokedNow("partner"));
   });
 
   it("states that nothing was made when the identity step fails", async () => {

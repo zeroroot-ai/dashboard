@@ -20,6 +20,7 @@
 
 import "server-only";
 
+import { Code, ConnectError } from "@connectrpc/connect";
 import { z } from "zod";
 
 import {
@@ -245,15 +246,22 @@ async function runCallerFlow(
     // The token of this identity never reaches the browser, so the identity
     // has no use. Revoke it, and report the result of the revoke.
     let removed = true;
+    let revokeNote: string | undefined;
     try {
       await daemonRevokeInboundCallerIdentity(identity.principalId);
-    } catch {
+    } catch (revokeErr) {
       removed = false;
+      // The daemon answers Unavailable with a text for the admin. One case is a
+      // revoke that blocked the access and did not finish its cleanup: a retry
+      // finishes it.
+      if (revokeErr instanceof ConnectError && revokeErr.code === Code.Unavailable) {
+        revokeNote = revokeErr.rawMessage.trim() || undefined;
+      }
     }
     return {
       ...shownDaemonFailure(err, action),
       failedStep: step,
-      identity: { ...caller, removed },
+      identity: { ...caller, removed, ...(revokeNote ? { revokeNote } : {}) },
       published,
     };
   }

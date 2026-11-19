@@ -238,6 +238,29 @@ describe("the publish flow", () => {
   });
 });
 
+describe("a revoke of the new identity that does not finish", () => {
+  const NOTE =
+    "the identity is revoked and its access is blocked, but the cleanup of its permission tuples did not finish. Retry the revoke to finish the cleanup";
+
+  it("passes on the text of the daemon for Unavailable", async () => {
+    m.publish.mockRejectedValue(new ConnectError("refused", Code.InvalidArgument));
+    m.retire.mockRejectedValue(new ConnectError(NOTE, Code.Unavailable));
+    const r = await publishInboundMissionAction(VALID);
+    expect(r).toMatchObject({
+      ok: false,
+      failedStep: "publish",
+      identity: { identityId: "agent_principal:id-1", name: "partner", removed: false, revokeNote: NOTE },
+    });
+  });
+
+  it("passes on no text of another failure of the revoke", async () => {
+    m.publish.mockRejectedValue(new ConnectError("refused", Code.InvalidArgument));
+    m.retire.mockRejectedValue(new ConnectError("pq: connection refused", Code.Internal));
+    const r = await publishInboundMissionAction(VALID);
+    expect(r.ok ? null : r.identity).toEqual({ identityId: "agent_principal:id-1", name: "partner", removed: false });
+  });
+});
+
 describe("publish again", () => {
   const AGAIN = { agent: "recon", missionDefinitionId: "def-1", targetIds: ["t1", "t2"], maxActiveMissions: 3 };
 

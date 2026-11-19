@@ -58,7 +58,13 @@ export const INBOUND_MISSION_TEXT = {
   identityNotMade: "No identity was made.",
   identityRemoved: (name: string) => `The page made the identity ${name} and then revoked it. Its token was not shown.`,
   identityLeft: (name: string, id: string) =>
-    `The identity ${name} (${id}) exists and has no grant. The page could not revoke it. Its token was not shown. Revoke this identity.`,
+    `The identity ${name} (${id}) exists and has no grant. The page could not revoke it. Its token was not shown.`,
+  identityRevokeNote: (name: string, id: string) =>
+    `The page made the identity ${name} (${id}). Its token was not shown. The revoke did not finish:`,
+  retryRevokeButton: "Retry the revoke",
+  retryingRevoke: "Revoking...",
+  retryRevokeFailed: "The identity was not revoked.",
+  identityRevokedNow: (name: string) => `The identity ${name} is revoked.`,
   definitionPublished: "The definition is published. Add a caller in the list below.",
   definitionNotPublished: "The definition is not published.",
 
