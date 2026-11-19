@@ -240,6 +240,33 @@ async function refuseUnlessAdmin(action: string): Promise<InboundCallerFlowResul
   }
 }
 
+/** The grant got Aborted two times: the publication changed during each try. */
+class PublicationChangedError extends Error {
+  constructor() {
+    super("The publication changed during the grant. Try again.");
+    this.name = "PublicationChangedError";
+  }
+}
+
+/**
+ * Grant the identity to the published definition. The daemon answers Aborted
+ * when the publication changed during the grant. The flow sends the grant one
+ * more time. A second Aborted becomes a fixed message.
+ */
+async function grantWithOneRetry(agent: string, identityId: string): Promise<void> {
+  const aborted = (err: unknown) => err instanceof ConnectError && err.code === Code.Aborted;
+  try {
+    await daemonGrantInboundCaller(agent, identityId);
+  } catch (first) {
+    if (!aborted(first)) throw first;
+    try {
+      await daemonGrantInboundCaller(agent, identityId);
+    } catch (second) {
+      throw aborted(second) ? new PublicationChangedError() : second;
+    }
+  }
+}
+
 /**
  * Make one new identity, publish when `publish` is set, and grant the identity
  * to the published definition. The calls run in that order.
@@ -273,7 +300,7 @@ async function runCallerFlow(
       published = true;
     }
     step = "grant";
-    await daemonGrantInboundCaller(agent, identity.principalId);
+    await grantWithOneRetry(agent, identity.principalId);
   } catch (err) {
     // The token of this identity never reaches the browser, so the identity
     // has no use. Revoke it, and report the result of the revoke.
@@ -291,8 +318,12 @@ async function runCallerFlow(
         revokeNote = revokeCleanupNote(revokeErr.rawMessage) ?? undefined;
       }
     }
+    const failure =
+      err instanceof PublicationChangedError
+        ? { ok: false as const, error: err.message, code: "aborted" }
+        : shownDaemonFailure(err, action);
     return {
-      ...shownDaemonFailure(err, action),
+      ...failure,
       failedStep: step,
       identity: { ...caller, removed, ...(revokeNote ? { revokeNote } : {}) },
       published,

@@ -283,6 +283,39 @@ describe("the publish flow", () => {
   });
 });
 
+describe("a grant that the daemon aborts", () => {
+  const aborted = () => new ConnectError("the publication changed, row version 7 of shard pg-2", Code.Aborted);
+
+  it("sends the grant one more time, and finishes when the second grant passes", async () => {
+    m.grant.mockRejectedValueOnce(aborted()).mockResolvedValueOnce(undefined);
+    const r = await publishInboundMissionAction(VALID);
+    expect(m.grant).toHaveBeenCalledTimes(2);
+    expect(m.retire).not.toHaveBeenCalled();
+    expect(r).toMatchObject({ ok: true, credentials: { bootstrapToken: "tok" } });
+  });
+
+  it("stops after the second abort with a fixed message, and revokes the identity", async () => {
+    m.grant.mockRejectedValue(aborted());
+    const r = await addInboundCallerAction({ agent: "recon", callerName: "second" });
+    expect(m.grant).toHaveBeenCalledTimes(2);
+    expect(r).toMatchObject({
+      ok: false,
+      error: "The publication changed during the grant. Try again.",
+      code: "aborted",
+      failedStep: "grant",
+      identity: { removed: true },
+    });
+    expect(JSON.stringify(r)).not.toMatch(/row version|pg-2/);
+  });
+
+  it("does not send the grant again after another error", async () => {
+    m.grant.mockRejectedValue(new ConnectError("the identity holds another grant", Code.FailedPrecondition));
+    const r = await addInboundCallerAction({ agent: "recon", callerName: "second" });
+    expect(m.grant).toHaveBeenCalledTimes(1);
+    expect(r).toMatchObject({ ok: false, error: "the identity holds another grant", code: "failed_precondition" });
+  });
+});
+
 describe("a revoke of the new identity that does not finish", () => {
   const NOTE =
     "the identity is revoked and its access is blocked, but the cleanup of its permission tuples did not finish. Retry the revoke to finish the cleanup";
