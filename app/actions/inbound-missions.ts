@@ -325,6 +325,22 @@ export async function publishInboundMissionAction(input: {
   if (!c.success) return bad(c.error.issues[0]?.message);
   const denied = await refuseUnlessAdmin("publishInboundMissionAction");
   if (denied) return denied;
+  // The daemon accepts a publish of an agent that is published with the same
+  // definition and targets: it approves the present state again and replaces
+  // the limit. This form must never do that, so it refuses a published agent
+  // before it makes an identity.
+  try {
+    const present = await daemonListInboundMissions();
+    if (present.some((e) => e.agent === a.data)) {
+      return {
+        ok: false,
+        error: `The agent ${a.data} is already published. Use "Publish again" on its row to approve a change, or unpublish it first.`,
+        code: "already_published",
+      };
+    }
+  } catch (err) {
+    return shownDaemonFailure(err, "publishInboundMissionAction");
+  }
   return runCallerFlow("publishInboundMissionAction", a.data, c.data, {
     missionDefinitionId: d.data,
     targetIds: t.data,

@@ -173,6 +173,27 @@ describe("the publish flow", () => {
     expect(order()).toEqual([]);
   });
 
+  it("refuses an agent that is already published, before it makes an identity", async () => {
+    m.list.mockResolvedValue([{ agent: "recon", missionDefinitionId: "def-1", targetIds: ["t1", "t2"], stale: true }]);
+    const r = await publishInboundMissionAction(VALID);
+    expect(r).toMatchObject({ ok: false, code: "already_published" });
+    expect(r.ok ? "" : r.error).toMatch(/already published.*Publish again.*unpublish/i);
+    expect(order()).toEqual([]);
+  });
+
+  it("publishes an agent name that another publication does not use", async () => {
+    m.list.mockResolvedValue([{ agent: "scan" }]);
+    expect(await publishInboundMissionAction(VALID)).toMatchObject({ ok: true });
+    expect(m.list.mock.invocationCallOrder[0]).toBeLessThan(m.create.mock.invocationCallOrder[0]);
+  });
+
+  it("makes no identity when it cannot read the published definitions", async () => {
+    m.list.mockRejectedValue(new ConnectError("down", Code.Unavailable));
+    const r = await publishInboundMissionAction(VALID);
+    expect(r.ok).toBe(false);
+    expect(order()).toEqual([]);
+  });
+
   it("makes the identity, then publishes, then grants, and returns the token one time", async () => {
     const r = await publishInboundMissionAction({ ...VALID, agent: " recon ", callerName: " partner " });
     expect(order()).toEqual(["create", "publish", "grant"]);
