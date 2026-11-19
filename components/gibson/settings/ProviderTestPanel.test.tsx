@@ -83,6 +83,21 @@ describe("ProviderTestPanel", () => {
     ]);
   });
 
+  it("shows a waiting state while a slow test call runs, and sets no client timeout of its own", async () => {
+    let finish!: (v: unknown) => void;
+    apiFetch.mockResolvedValueOnce(listed()).mockReturnValueOnce(new Promise((r) => (finish = r)));
+    renderPanel();
+    expect(await screen.findByTestId("test-running")).toHaveTextContent(/up to a minute/i);
+    // The wait is longer than any timer of the panel: the call stays open.
+    await new Promise((r) => setTimeout(r, 120));
+    expect(screen.getByTestId("test-running")).toBeInTheDocument();
+    const testCall = apiFetch.mock.calls.find((c) => String(c[0]).endsWith("/providers/test"))!;
+    // The only signal is the abort of an unmount. There is no timeout signal.
+    expect(testCall[1].signal).toBeInstanceOf(AbortSignal);
+    finish(testOk());
+    expect(await screen.findByTestId("test-passed")).toBeInTheDocument();
+  });
+
   it("sends the name of the saved provider and no credential to the test call", async () => {
     apiFetch.mockResolvedValueOnce(listed()).mockResolvedValueOnce(testOk());
     renderPanel();

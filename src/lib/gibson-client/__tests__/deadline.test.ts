@@ -51,6 +51,7 @@ vi.mock('@/auth', () => ({ auth: vi.fn(async () => null) }));
 vi.mock('@/src/lib/auth/membership', () => ({ getMyMemberships: vi.fn(async () => []) }));
 
 let server: http2.Http2Server;
+const sessions = new Set<http2.ServerHttp2Session>();
 let baseUrl: string;
 
 beforeAll(async () => {
@@ -75,12 +76,19 @@ beforeAll(async () => {
   });
 
   server = http2.createServer(handler);
+  // Close every session at the end. A handler that never returns keeps its
+  // session open, and close() would wait for it.
+  server.on('session', (s) => {
+    sessions.add(s);
+    s.on('close', () => sessions.delete(s));
+  });
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   const { port } = server.address() as AddressInfo;
   baseUrl = `http://127.0.0.1:${port}`;
 });
 
 afterAll(async () => {
+  for (const s of sessions) s.destroy();
   await new Promise<void>((resolve) => server.close(() => resolve()));
 });
 
@@ -91,6 +99,30 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   vi.resetModules();
+});
+
+describe('a call with its own longer deadline (gibson#1394)', () => {
+  it('stays open past the default 20 seconds, and aborts at its own bound', async () => {
+    process.env['ADMIN_ENVOY_BASE_URL'] = baseUrl;
+    const { userClient, withCallDeadline } = await import('../transport');
+    const { DaemonService } = await import('@/src/gen/gibson/daemon/v1/daemon_pb');
+
+    let settled = false;
+    const callPromise = userClient(DaemonService).listMyMemberships({}, withCallDeadline(60_000));
+    const assertion = expect(callPromise).rejects.toThrow(/60000ms/);
+    void callPromise.then(
+      () => (settled = true),
+      () => (settled = true),
+    );
+
+    await vi.advanceTimersByTimeAsync(45_000);
+    expect(settled).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(20_000);
+    await assertion;
+    const err = await callPromise.catch((e: unknown) => e);
+    expect((err as ConnectError).code).toBe(Code.DeadlineExceeded);
+  });
 });
 
 describe('unary call deadline (dashboard#107 follow-up)', () => {

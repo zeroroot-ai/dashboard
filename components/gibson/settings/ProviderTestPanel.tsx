@@ -178,9 +178,12 @@ export function ProviderTestPanel({
         </Alert>
       )}
       {state.kind === "testing" && (
-        <Alert>
+        <Alert data-testid="test-running">
           <Loader2 className="size-4 animate-spin" />
-          <AlertDescription className="text-xs">Testing the connection...</AlertDescription>
+          <AlertDescription className="text-xs">
+            Testing the connection. Right after a save, the test can take up to a minute while the
+            route of the provider starts.
+          </AlertDescription>
         </Alert>
       )}
       {state.kind === "timeout" && (

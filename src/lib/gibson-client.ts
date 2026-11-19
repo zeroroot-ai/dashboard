@@ -34,7 +34,10 @@ import { requireUserToken } from './auth/user-token';
 // `gibson-client/transport.ts` (dashboard#814). `makeClient` and the raw
 // `createGrpcTransport` / `createClient` primitives are intentionally NOT
 // re-exported, this file consumes the sanctioned typed-client wrappers only.
-import { userClient, serviceClient } from './gibson-client/transport';
+import { userClient, serviceClient, withCallDeadline } from './gibson-client/transport';
+
+/** Bound of the provider test: the daemon waits up to 45 seconds for the route (gibson#1394). */
+const TEST_PROVIDER_DEADLINE_MS = 60_000;
 import { isActiveMission, parseMissionStatus } from '@/src/lib/missions/status';
 export { userClient, serviceClient };
 
@@ -1513,7 +1516,9 @@ export async function daemonTestProvider(
   tenantId?: string,
 ): Promise<DaemonProviderTestResult> {
   const client = await getAdminClient(userId, tenantId);
-  const resp = await client.testProvider({ name });
+  // The daemon waits up to 45 seconds for the route of a new provider, so the
+  // call has a 60 second bound and not the 20 second default.
+  const resp = await client.testProvider({ name }, withCallDeadline(TEST_PROVIDER_DEADLINE_MS));
   return {
     ok: resp.ok,
     latencyMs: Number(resp.latencyMs),
