@@ -28,6 +28,8 @@ import { AGENT_SKILL_TEXT } from "@/components/gibson/agent-skills/texts";
 import { AGENT_SKILL_PAGE_METHOD } from "@/src/lib/agent-skills/gate";
 import { OUTSIDE_AGENT_TEXT } from "@/components/gibson/outside-agents/texts";
 import { OUTSIDE_AGENT_PAGE_METHOD } from "@/src/lib/outside-agents/gate";
+import { INBOUND_MISSION_TEXT } from "@/components/gibson/inbound-missions/texts";
+import { INBOUND_MISSION_PAGE_METHOD } from "@/src/lib/inbound-missions/gate";
 import { ONTOLOGY_TEXT } from "@/components/gibson/ontology-proposals/texts";
 import { PlatformHealthNavGate } from "@/components/gibson/platform-health/PlatformHealthNavGate";
 import { PLATFORM_HEALTH_TEXTS } from "@/components/gibson/platform-health/texts";
@@ -85,6 +87,7 @@ type NavGate =
   | "audit"
   | "agent-skills"
   | "outside-agents"
+  | "inbound-missions"
   | "platform-health";
 
 type NavGroup = {
@@ -108,7 +111,8 @@ type NavItem = {
    * when the tenant enabled a compliance pack (D56).
    * "registrations": the entry shows only for a caller that may read the
    * registration queue, the Platform owner (dashboard#193).
-   * "ontology", "audit", "agent-skills" and "outside-agents": the entry shows only for the
+   * "ontology", "audit", "agent-skills", "outside-agents" and
+   * "inbound-missions": the entry shows only for the
    * Owner and the Admin, the roles that may call the page's RPC
    * (dashboard#191, G23, gibson#1364).
    * "platform-health": the entry shows only for the Platform owner, the
@@ -248,6 +252,15 @@ export const navItems: NavGroup[] = [
         gate: "outside-agents"
       },
       {
+        // The tenant admin publishes a mission definition for inbound A2A
+        // calls (epic gibson#1367). Every RPC needs the admin relation, so
+        // the gate hides the entry from other roles.
+        title: INBOUND_MISSION_TEXT.menu,
+        href: "/dashboard/inbound-missions",
+        icon: NetworkIcon,
+        gate: "inbound-missions"
+      },
+      {
         title: "Chat",
         href: "/dashboard/chat",
         icon: MessageSquareIcon,
@@ -353,6 +366,7 @@ const GATE_METHOD = {
   audit: "/gibson.tenant.v1.TenantService/ListAuditEvents",
   "agent-skills": AGENT_SKILL_PAGE_METHOD,
   "outside-agents": OUTSIDE_AGENT_PAGE_METHOD,
+  "inbound-missions": INBOUND_MISSION_PAGE_METHOD,
 } as const;
 
 function GatedItem({
@@ -364,7 +378,13 @@ function GatedItem({
 }) {
   if (gate === "compliance") return <ComplianceNavGate>{children}</ComplianceNavGate>;
   if (gate === "registrations") return <RegistrationsNavGate>{children}</RegistrationsNavGate>;
-  if (gate === "ontology" || gate === "audit" || gate === "agent-skills" || gate === "outside-agents") {
+  if (
+    gate === "ontology" ||
+    gate === "audit" ||
+    gate === "agent-skills" ||
+    gate === "outside-agents" ||
+    gate === "inbound-missions"
+  ) {
     return <AuthorizedNavGate method={GATE_METHOD[gate]}>{children}</AuthorizedNavGate>;
   }
   if (gate === "platform-health") return <PlatformHealthNavGate>{children}</PlatformHealthNavGate>;
