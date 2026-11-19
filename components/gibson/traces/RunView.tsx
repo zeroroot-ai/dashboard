@@ -9,7 +9,7 @@
  * Leads with the run's by-model token totals, then two tabs:
  *  - Calls: the run's LLM calls in order, each expandable into its full
  *    prompt ↔ response transcript (loaded on demand).
- *  - Spend: the by-model token / estimated-cost breakdown.
+ *  - Spend: the by-model token breakdown.
  *
  * Both the standalone trace page and any embedded run view render through this,
  * there is one run renderer.

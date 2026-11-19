@@ -41,7 +41,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatUsd } from '@/src/lib/world-traces';
 import {
   FINDING_STATUSES,
   REPORT_SEVERITIES,
@@ -391,8 +390,8 @@ export function ApplicationReportView({ report }: { report: ApplicationReport })
 
   const costHint =
     report.cost.attributedBy === 'scope'
-      ? `${report.cost.llmCallCount} model call${report.cost.llmCallCount === 1 ? '' : 's'} in this application's scope`
-      : 'This application has no scope recorded, so no spend is attributed to it.';
+      ? "Model calls in this application's scope"
+      : 'This application has no scope recorded, so no model call is attributed to it.';
 
   return (
     <div className="space-y-6">
@@ -426,8 +425,8 @@ export function ApplicationReportView({ report }: { report: ApplicationReport })
               hint={`Fixing ${report.mergeRequests.reduce((n, mr) => n + mr.fixesFindings, 0)} findings`}
             />
             <StatTile
-              label="Model spend"
-              value={formatUsd(report.cost.estimatedCostUsd)}
+              label="Model calls"
+              value={String(report.cost.llmCallCount)}
               hint={costHint}
             />
           </div>

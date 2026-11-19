@@ -185,13 +185,11 @@ export function groupCallsIntoRuns(calls: LlmCallSummary[]): LlmRun[] {
     const models = new Set<string>();
     let promptTokens = 0;
     let completionTokens = 0;
-    let estimatedCostUsd = 0;
 
     for (const c of group) {
       if (c.model) models.add(c.model);
       promptTokens += c.promptTokens;
       completionTokens += c.completionTokens;
-      estimatedCostUsd += estimateCallCostUsd(c.model, c.promptTokens, c.completionTokens);
     }
 
     return {
@@ -202,7 +200,6 @@ export function groupCallsIntoRuns(calls: LlmCallSummary[]): LlmRun[] {
       promptTokens,
       completionTokens,
       totalTokens: promptTokens + completionTokens,
-      estimatedCostUsd,
       calls: group,
     };
   });
@@ -212,18 +209,20 @@ export function groupCallsIntoRuns(calls: LlmCallSummary[]): LlmRun[] {
 // token / spend aggregation
 // ---------------------------------------------------------------------------
 
-/** Aggregate a call list into a by-model `TokenSummary`. */
+/**
+ * Aggregate a call list into a by-model `TokenSummary`. The summary holds no
+ * cost. The call list of the daemon has no cost field, and the dashboard does
+ * not estimate one. The one cost is the cost that the gateway recorded for a
+ * model call, and the detail of that call shows it.
+ */
 export function aggregateCalls(calls: LlmCallSummary[]): TokenSummary {
   const byModel = new Map<string, ModelTokenBreakdown>();
   let inputTokens = 0;
   let outputTokens = 0;
-  let estimatedCostUsd = 0;
 
   for (const c of calls) {
     inputTokens += c.promptTokens;
     outputTokens += c.completionTokens;
-    const cost = estimateCallCostUsd(c.model, c.promptTokens, c.completionTokens);
-    estimatedCostUsd += cost;
 
     const model = c.model || 'unknown';
     const row = byModel.get(model) ?? {
@@ -232,13 +231,11 @@ export function aggregateCalls(calls: LlmCallSummary[]): TokenSummary {
       outputTokens: 0,
       totalTokens: 0,
       callCount: 0,
-      estimatedCostUsd: 0,
     };
     row.inputTokens += c.promptTokens;
     row.outputTokens += c.completionTokens;
     row.totalTokens += c.totalTokens;
     row.callCount += 1;
-    row.estimatedCostUsd += cost;
     byModel.set(model, row);
   }
 
@@ -246,58 +243,14 @@ export function aggregateCalls(calls: LlmCallSummary[]): TokenSummary {
     inputTokens,
     outputTokens,
     totalTokens: inputTokens + outputTokens,
-    estimatedCostUsd,
     llmCallCount: calls.length,
     byModel: Array.from(byModel.values()),
   };
 }
 
 // ---------------------------------------------------------------------------
-// cost estimation + formatting (kept from the retired trace-utils)
+// formatting
 // ---------------------------------------------------------------------------
-
-/**
- * Estimate a single call's cost in USD from model name + token counts using an
- * approximate per-model price table. Returns 0 for unknown models.
- */
-export function estimateCallCostUsd(
-  model: string,
-  inputTokens: number,
-  outputTokens: number,
-): number {
-  const m = (model || '').toLowerCase();
-  // Prices per 1M tokens: [inputPrice, outputPrice].
-  const pricing: Record<string, [number, number]> = {
-    'claude-3-5-sonnet': [3, 15],
-    'claude-3-opus': [15, 75],
-    'claude-3-haiku': [0.25, 1.25],
-    'claude-sonnet-4': [3, 15],
-    'claude-opus-4': [15, 75],
-    'gpt-4o': [2.5, 10],
-    'gpt-4o-mini': [0.15, 0.6],
-    'gpt-4-turbo': [10, 30],
-    'gemini-1.5-pro': [1.25, 5],
-    'gemini-1.5-flash': [0.075, 0.3],
-    'gemini-2.0-flash': [0.1, 0.4],
-  };
-
-  for (const [key, [inputPrice, outputPrice]] of Object.entries(pricing)) {
-    if (m.includes(key)) {
-      return (inputTokens * inputPrice + outputTokens * outputPrice) / 1_000_000;
-    }
-  }
-  return 0;
-}
-
-/**
- * Format a USD amount for display: 0 → "$0.00", 0.004 → "<$0.01",
- * 1.2345 → "$1.23". The string carries the leading "$".
- */
-export function formatUsd(usd: number): string {
-  if (usd <= 0) return '$0.00';
-  if (usd < 0.01) return '<$0.01';
-  return `$${usd.toFixed(2)}`;
-}
 
 /** Format a token count: 12432 → "12.4k", 1234567 → "1.2M". */
 export function formatTokenCount(count: number): string {

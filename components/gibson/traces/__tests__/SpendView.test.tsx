@@ -11,7 +11,6 @@ const SUMMARY: TokenSummary = {
   inputTokens: 12_400,
   outputTokens: 4_800,
   totalTokens: 17_200,
-  estimatedCostUsd: 0.42,
   llmCallCount: 9,
   byModel: [
     {
@@ -20,7 +19,6 @@ const SUMMARY: TokenSummary = {
       outputTokens: 500,
       totalTokens: 2_500,
       callCount: 2,
-      estimatedCostUsd: 0.03,
     },
     {
       model: "claude-sonnet-4",
@@ -28,48 +26,23 @@ const SUMMARY: TokenSummary = {
       outputTokens: 4_300,
       totalTokens: 14_700,
       callCount: 7,
-      estimatedCostUsd: 0.39,
     },
   ],
 };
 
 describe("SpendView", () => {
-  it("renders the by-model breakdown sorted by spend", () => {
-    render(<SpendView summary={SUMMARY} />);
-
-    // by-model sorted by cost desc: sonnet ($0.39) before haiku ($0.03)
-    expect(screen.getByText("claude-sonnet-4")).toBeInTheDocument();
-    expect(screen.getByText("$0.39")).toBeInTheDocument();
-    expect(screen.getByText("$0.03")).toBeInTheDocument();
+  it("renders the by-model breakdown sorted by tokens, with no cost", () => {
+    const { container } = render(<SpendView summary={SUMMARY} />);
 
     const table = screen.getByRole("table");
     const rows = within(table).getAllByRole("row");
-    // row[0] is the header; sonnet (higher cost) comes first.
+    // row[0] is the header; sonnet (more tokens) comes first.
     expect(within(rows[1]).getByText("claude-sonnet-4")).toBeInTheDocument();
     expect(within(rows[2]).getByText("claude-haiku-4")).toBeInTheDocument();
-  });
 
-  it("shows a dash for models with no known pricing instead of a fake $0", () => {
-    render(
-      <SpendView
-        summary={{
-          ...SUMMARY,
-          byModel: [
-            {
-              model: "mystery-model",
-              inputTokens: 100,
-              outputTokens: 50,
-              totalTokens: 150,
-              callCount: 1,
-              estimatedCostUsd: 0,
-            },
-          ],
-        }}
-      />,
-    );
-    const row = screen.getByText("mystery-model").closest("tr")!;
-    expect(within(row).getByText("-")).toBeInTheDocument();
-    expect(screen.queryByText("$0.00")).not.toBeInTheDocument();
+    expect(within(rows[0]).queryByText(/cost/i)).toBeNull();
+    expect(container.textContent).not.toContain("$");
+    expect(container.textContent).not.toMatch(/estimate/i);
   });
 
   it("handles an empty/zero-spend run without crashing", () => {
@@ -79,7 +52,6 @@ describe("SpendView", () => {
           inputTokens: 0,
           outputTokens: 0,
           totalTokens: 0,
-          estimatedCostUsd: 0,
           llmCallCount: 0,
           byModel: [],
         }}

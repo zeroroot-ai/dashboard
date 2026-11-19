@@ -113,7 +113,8 @@ describe('GET /api/traces', () => {
       totalTokens: 1830,
     });
     expect(run1.models).toEqual(['claude-opus-4']);
-    expect(run1.estimatedCostUsd).toBeGreaterThan(0);
+    // The API sends no cost for a run: the dashboard estimates none.
+    expect(run1).not.toHaveProperty('estimatedCostUsd');
   });
 
   it('collapses empty run ids into one ungrouped run', async () => {
