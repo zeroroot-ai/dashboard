@@ -69,7 +69,7 @@ beforeEach(() => {
   Object.values(m).forEach((f) => f.mockReset());
   m.secrets.mockResolvedValue({ ok: true, data: ["cred", "ca-1"] });
   m.missions.mockResolvedValue({ ok: true, data: [] });
-  m.grants.mockResolvedValue({ ok: true, data: [] });
+  m.grants.mockResolvedValue({ ok: true, data: { items: [], truncated: false } });
 });
 
 describe("OutsideAgentsContent", () => {
@@ -128,7 +128,7 @@ describe("OutsideAgentsContent", () => {
 describe("OutsideAgentDetail", () => {
   it("shows the record and the present grants, and revokes one", async () => {
     m.get.mockResolvedValue({ ok: true, data: agent });
-    m.grants.mockResolvedValue({ ok: true, data: ["m1", "m2"] });
+    m.grants.mockResolvedValue({ ok: true, data: { items: ["m1", "m2"], truncated: false } });
     m.revoke.mockResolvedValue({ ok: true, data: null });
     const user = userEvent.setup();
     render(<OutsideAgentDetail name="scout" />);
@@ -138,6 +138,13 @@ describe("OutsideAgentDetail", () => {
     await user.click(within(rows[0]).getByRole("button", { name: `${T.revokeButton} m1` }));
     expect(m.revoke).toHaveBeenCalledWith({ name: "scout", missionId: "m1" });
     await waitFor(() => expect(m.grants.mock.calls.length).toBeGreaterThan(1));
+  });
+
+  it("says that the grant list is cut when the walk stopped at its bound", async () => {
+    m.get.mockResolvedValue({ ok: true, data: agent });
+    m.grants.mockResolvedValue({ ok: true, data: { items: ["m1", "m2"], truncated: true } });
+    render(<OutsideAgentDetail name="scout" />);
+    expect(await screen.findByTestId("grants-cut")).toHaveTextContent(T.grantsCut(2));
   });
 
   it("states that no mission has a grant", async () => {

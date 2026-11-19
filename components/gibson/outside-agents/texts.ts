@@ -51,6 +51,7 @@ export const OUTSIDE_AGENT_TEXT = {
     "Only a mission with a grant can call this outside agent. Choose a mission, or enter its id.",
   grantsEmpty: "No mission has a grant for this outside agent.",
   grantsLoadError: "The grants could not be loaded.",
+  grantsCut: (shown: number) => `The list is not complete. It shows the first ${shown} grants.`,
   columnMission: "Mission id",
   fieldMissionPick: "Mission",
   fieldMissionId: "Mission id",

@@ -228,7 +228,7 @@ export async function revokeAgentSkillAction(input: {
 /** List each agent and each mission that may load an Agent Skill. */
 export async function listAgentSkillGrantsAction(
   name: string,
-): Promise<AgentSkillActionResult<AgentSkillGrantDTO[]>> {
+): Promise<AgentSkillActionResult<{ items: AgentSkillGrantDTO[]; truncated: boolean }>> {
   const session = await getServerSession();
   if (!session?.user) return UNAUTHENTICATED;
   const n = nameSchema.safeParse(name);

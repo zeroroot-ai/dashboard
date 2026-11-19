@@ -13,7 +13,8 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 
 import { userClient } from "../gibson-client";
-import { walkItems } from "./paging";
+import { walkItems, walkPages } from "./paging";
+import type { WalkResult } from "./paging";
 import { AgentIdentityService, PrincipalKind } from "@/src/gen/gibson/agentidentity/v1/agent_identity_pb";
 import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 import { InboundMissionService } from "@/src/gen/gibson/tenant/v1/inbound_mission_pb";
@@ -96,10 +97,13 @@ export async function daemonRevokeInboundCaller(agent: string, identityId: strin
   await userClient(InboundMissionService).revokeInboundCaller({ agent, identityId });
 }
 
-/** List the ids of the agent identities that may call one published definition. */
-export async function daemonListInboundCallers(agent: string): Promise<string[]> {
+/**
+ * List the ids of the agent identities that may call one published definition.
+ * `truncated` is true when the walk stopped at its bound with callers left.
+ */
+export async function daemonListInboundCallers(agent: string): Promise<WalkResult<string>> {
   const client = userClient(InboundMissionService);
-  return walkItems("tenant.inboundCallers", async (pageSize, pageToken) => {
+  return walkPages(async (pageSize, pageToken) => {
     const resp = await client.listInboundCallers({ agent, pageSize, pageToken });
     return { items: resp.identityIds, nextPageToken: resp.nextPageToken };
   });

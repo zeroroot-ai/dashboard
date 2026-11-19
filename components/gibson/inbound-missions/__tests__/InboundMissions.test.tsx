@@ -79,7 +79,7 @@ beforeEach(() => {
     },
   });
   m.agents.mockResolvedValue({ ok: true, data: ["recon", "scan"] });
-  m.callers.mockResolvedValue({ ok: true, data: [] });
+  m.callers.mockResolvedValue({ ok: true, data: { items: [], truncated: false } });
 });
 
 async function fillPublishForm(user: ReturnType<typeof userEvent.setup>) {
@@ -311,10 +311,13 @@ describe("the callers of one publication", () => {
   it("lists each caller and revokes one", async () => {
     m.callers.mockResolvedValue({
       ok: true,
-      data: [
-        { identityId: CALLER, name: "partner" },
-        { identityId: "agent_principal:id-2", name: "" },
-      ],
+      data: {
+        items: [
+          { identityId: CALLER, name: "partner" },
+          { identityId: "agent_principal:id-2", name: "" },
+        ],
+        truncated: false,
+      },
     });
     m.revoke.mockResolvedValue({ ok: true, data: null });
     const user = userEvent.setup();
@@ -327,6 +330,16 @@ describe("the callers of one publication", () => {
     await user.click(within(rows[0]).getByRole("button", { name: `${T.revokeButton} partner` }));
     expect(m.revoke).toHaveBeenCalledWith({ agent: "recon", identityId: CALLER });
     await waitFor(() => expect(m.callers.mock.calls.length).toBeGreaterThan(1));
+  });
+
+  it("says that the caller list is cut when the walk stopped at its bound", async () => {
+    m.callers.mockResolvedValue({
+      ok: true,
+      data: { items: [{ identityId: CALLER, name: "partner" }], truncated: true },
+    });
+    const user = userEvent.setup();
+    const panel = await openCallers(user);
+    expect(await within(panel).findByTestId("callers-cut")).toHaveTextContent(T.callersCut(1));
   });
 
   it("states that no identity can call", async () => {

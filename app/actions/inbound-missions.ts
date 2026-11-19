@@ -173,14 +173,22 @@ export async function republishInboundMissionAction(input: {
 }
 
 /** List the callers of one published definition, each with the name of its identity. */
-export async function listInboundCallersAction(agent: string): Promise<InboundActionResult<InboundCallerDTO[]>> {
+export async function listInboundCallersAction(
+  agent: string,
+): Promise<InboundActionResult<{ items: InboundCallerDTO[]; truncated: boolean }>> {
   const session = await getServerSession();
   if (!session?.user) return UNAUTHENTICATED;
   const a = nameSchema.safeParse(agent);
   if (!a.success) return bad(a.error.issues[0]?.message);
   try {
-    const [ids, names] = await Promise.all([daemonListInboundCallers(a.data), daemonListInboundCallerNames()]);
-    return { ok: true, data: ids.map((identityId) => ({ identityId, name: names[identityId] ?? "" })) };
+    const [callers, names] = await Promise.all([daemonListInboundCallers(a.data), daemonListInboundCallerNames()]);
+    return {
+      ok: true,
+      data: {
+        items: callers.items.map((identityId) => ({ identityId, name: names[identityId] ?? "" })),
+        truncated: callers.truncated,
+      },
+    };
   } catch (err) {
     return shownDaemonFailure(err, "listInboundCallersAction");
   }

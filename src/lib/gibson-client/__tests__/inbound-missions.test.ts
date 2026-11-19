@@ -100,9 +100,23 @@ describe("inbound mission client", () => {
     inbound.listInboundCallers
       .mockResolvedValueOnce({ identityIds: ["agent_principal:a"], nextPageToken: "p2" })
       .mockResolvedValueOnce({ identityIds: ["agent_principal:b"], nextPageToken: "" });
-    expect(await daemonListInboundCallers("recon")).toEqual(["agent_principal:a", "agent_principal:b"]);
+    expect(await daemonListInboundCallers("recon")).toEqual({
+      items: ["agent_principal:a", "agent_principal:b"],
+      truncated: false,
+    });
     expect(inbound.listInboundCallers).toHaveBeenNthCalledWith(1, { agent: "recon", pageSize: 1000, pageToken: "" });
     expect(inbound.listInboundCallers).toHaveBeenNthCalledWith(2, { agent: "recon", pageSize: 1000, pageToken: "p2" });
+  });
+
+  it("reports a caller list that the walk cut at its page bound", async () => {
+    let page = 0;
+    inbound.listInboundCallers.mockImplementation(async () => {
+      page++;
+      return { identityIds: [`agent_principal:${page}`], nextPageToken: `p${page + 1}` };
+    });
+    const out = await daemonListInboundCallers("recon");
+    expect(out.truncated).toBe(true);
+    expect(out.items).toHaveLength(10);
   });
 
   it("publishes with the agent, the definition, the targets and the limit", async () => {

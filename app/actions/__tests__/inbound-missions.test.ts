@@ -113,14 +113,17 @@ describe("inbound mission actions", () => {
   });
 
   it("list the callers with the name of each identity", async () => {
-    m.callers.mockResolvedValue(["agent_principal:id-1", "agent_principal:id-2"]);
+    m.callers.mockResolvedValue({ items: ["agent_principal:id-1", "agent_principal:id-2"], truncated: true });
     m.names.mockResolvedValue({ "agent_principal:id-1": "partner" });
     expect(await listInboundCallersAction("recon")).toEqual({
       ok: true,
-      data: [
-        { identityId: "agent_principal:id-1", name: "partner" },
-        { identityId: "agent_principal:id-2", name: "" },
-      ],
+      data: {
+        items: [
+          { identityId: "agent_principal:id-1", name: "partner" },
+          { identityId: "agent_principal:id-2", name: "" },
+        ],
+        truncated: true,
+      },
     });
     expect(m.callers).toHaveBeenCalledWith("recon");
   });

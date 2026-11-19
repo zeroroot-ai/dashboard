@@ -71,7 +71,7 @@ function entry(over: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   Object.values(m).forEach((f) => f.mockReset());
-  m.grants.mockResolvedValue({ ok: true, data: [] });
+  m.grants.mockResolvedValue({ ok: true, data: { items: [], truncated: false } });
   m.missions.mockResolvedValue({ ok: true, data: [] });
   m.agents.mockResolvedValue({ ok: true, data: [] });
 });
@@ -192,16 +192,20 @@ describe("grants on the detail page", () => {
     detailMocks();
     m.grants.mockResolvedValue({
       ok: true,
-      data: [
-        { kind: "agent", subjectId: "agent-1" },
-        { kind: "mission", subjectId: "m-1" },
-      ],
+      data: {
+        items: [
+          { kind: "agent", subjectId: "agent-1" },
+          { kind: "mission", subjectId: "m-1" },
+        ],
+        truncated: false,
+      },
     });
     m.revoke.mockResolvedValue({ ok: true, data: null });
     const user = userEvent.setup();
     render(<AgentSkillDetail name="triage" />);
     const rows = await screen.findAllByTestId("grant-row");
     expect(rows).toHaveLength(2);
+    expect(screen.queryByTestId("grants-cut")).not.toBeInTheDocument();
     await user.click(within(rows[0]).getByRole("button", { name: `${T.revokeButton} agent-1` }));
     expect(m.revoke).toHaveBeenCalledWith({
       name: "triage",
@@ -209,6 +213,16 @@ describe("grants on the detail page", () => {
       subjectId: "agent-1",
     });
     await waitFor(() => expect(m.grants.mock.calls.length).toBeGreaterThan(1));
+  });
+
+  it("says that the grant list is cut when the walk stopped at its bound", async () => {
+    detailMocks();
+    m.grants.mockResolvedValue({
+      ok: true,
+      data: { items: [{ kind: "agent", subjectId: "agent-1" }], truncated: true },
+    });
+    render(<AgentSkillDetail name="triage" />);
+    expect(await screen.findByTestId("grants-cut")).toHaveTextContent(T.grantsCut(1));
   });
 
   it("states that no grant exists", async () => {

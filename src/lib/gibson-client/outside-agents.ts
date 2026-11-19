@@ -9,7 +9,8 @@ import "server-only";
  * reaches the caller unchanged, so the actions can show a validation error.
  */
 import { userClient } from "../gibson-client";
-import { walkItems } from "./paging";
+import { walkItems, walkPages } from "./paging";
+import type { WalkResult } from "./paging";
 import { OutsideAgentService } from "@/src/gen/gibson/tenant/v1/outside_agent_pb";
 import type { OutsideAgentEntry } from "@/src/gen/gibson/tenant/v1/outside_agent_pb";
 
@@ -70,10 +71,13 @@ export async function daemonRevokeOutsideAgent(name: string, missionId: string):
   await userClient(OutsideAgentService).revokeOutsideAgent({ name, missionId });
 }
 
-/** List the ids of the missions that may call one outside agent. */
-export async function daemonListOutsideAgentGrants(name: string): Promise<string[]> {
+/**
+ * List the ids of the missions that may call one outside agent. `truncated` is
+ * true when the walk stopped at its bound with grants left.
+ */
+export async function daemonListOutsideAgentGrants(name: string): Promise<WalkResult<string>> {
   const client = userClient(OutsideAgentService);
-  return walkItems("tenant.outsideAgentGrants", async (pageSize, pageToken) => {
+  return walkPages(async (pageSize, pageToken) => {
     const resp = await client.listOutsideAgentGrants({ name, pageSize, pageToken });
     return { items: resp.missionIds, nextPageToken: resp.nextPageToken };
   });

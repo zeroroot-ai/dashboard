@@ -57,6 +57,7 @@ export function AgentSkillGrants({ name }: { name: string }) {
   const [agents, setAgents] = React.useState<Option[]>([]);
   const [missions, setMissions] = React.useState<Option[]>([]);
   const [grants, setGrants] = React.useState<AgentSkillGrantDTO[] | null>(null);
+  const [grantsCut, setGrantsCut] = React.useState(false);
   const [grantsError, setGrantsError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -65,7 +66,8 @@ export function AgentSkillGrants({ name }: { name: string }) {
     void listAgentSkillGrantsAction(name)
       .then((res) => {
         if (res.ok) {
-          setGrants(res.data);
+          setGrants(res.data.items);
+          setGrantsCut(res.data.truncated);
           setGrantsError(null);
         } else {
           setGrantsError(res.error || T.grantsLoadError);
@@ -127,6 +129,11 @@ export function AgentSkillGrants({ name }: { name: string }) {
     <div className="space-y-6">
       <div className="space-y-2">
         <h3 className="text-sm font-medium">{T.grantsPresent}</h3>
+        {grants !== null && grantsCut ? (
+          <p role="status" data-testid="grants-cut" className="text-muted-foreground text-sm">
+            {T.grantsCut(grants.length)}
+          </p>
+        ) : null}
         {grantsError ? (
           <p role="alert" data-testid="grants-load-error" className="text-destructive text-sm">
             {grantsError}

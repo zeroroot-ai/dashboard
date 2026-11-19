@@ -148,10 +148,10 @@ describe("grant and revoke", () => {
 
 describe("grants list and mission picker", () => {
   it("lists the grants of one name", async () => {
-    m.grants.mockResolvedValue([{ kind: "agent", subjectId: "a1" }]);
+    m.grants.mockResolvedValue({ items: [{ kind: "agent", subjectId: "a1" }], truncated: true });
     expect(await listAgentSkillGrantsAction(" triage ")).toEqual({
       ok: true,
-      data: [{ kind: "agent", subjectId: "a1" }],
+      data: { items: [{ kind: "agent", subjectId: "a1" }], truncated: true },
     });
     expect(m.grants).toHaveBeenCalledWith("triage");
     expect(await listAgentSkillGrantsAction("")).toMatchObject({ ok: false, code: "bad_input" });

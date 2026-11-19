@@ -40,6 +40,7 @@ type Failure = Extract<InboundCallerFlowResult, { ok: false }>;
 
 export function InboundCallers({ agent }: { agent: string }) {
   const [callers, setCallers] = React.useState<InboundCallerDTO[] | null>(null);
+  const [callersCut, setCallersCut] = React.useState(false);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [name, setName] = React.useState("");
   const [busy, setBusy] = React.useState(false);
@@ -51,7 +52,8 @@ export function InboundCallers({ agent }: { agent: string }) {
     void listInboundCallersAction(agent)
       .then((res) => {
         if (res.ok) {
-          setCallers(res.data);
+          setCallers(res.data.items);
+          setCallersCut(res.data.truncated);
           setLoadError(null);
         } else {
           setLoadError(res.error || T.callersLoadError);
@@ -110,6 +112,11 @@ export function InboundCallers({ agent }: { agent: string }) {
         <p className="text-muted-foreground text-sm">{T.callersIntro}</p>
       </div>
 
+      {callers !== null && callersCut ? (
+        <p role="status" data-testid="callers-cut" className="text-muted-foreground text-sm">
+          {T.callersCut(callers.length)}
+        </p>
+      ) : null}
       {loadError ? (
         <p role="alert" data-testid="callers-load-error" className="text-destructive text-sm">
           {loadError}

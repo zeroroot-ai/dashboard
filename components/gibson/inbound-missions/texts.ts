@@ -78,6 +78,7 @@ export const INBOUND_MISSION_TEXT = {
   callersIntro: "Only these identities can call this published definition.",
   callersLoading: "Loading the callers...",
   callersLoadError: "The callers could not be loaded.",
+  callersCut: (shown: number) => `The list is not complete. It shows the first ${shown} callers.`,
   callersEmpty: "No identity can call this published definition.",
   columnCaller: "Caller",
   columnIdentityId: "Identity id",

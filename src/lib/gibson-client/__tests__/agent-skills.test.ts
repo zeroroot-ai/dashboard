@@ -218,11 +218,25 @@ describe("daemonListAgentSkillGrants", () => {
         { subjectKind: 0, subjectId: "x" },
       ],
     });
-    expect(await daemonListAgentSkillGrants("triage")).toEqual([
-      { kind: "agent", subjectId: "agent-1" },
-      { kind: "mission", subjectId: "m-1" },
-    ]);
+    expect(await daemonListAgentSkillGrants("triage")).toEqual({
+      items: [
+        { kind: "agent", subjectId: "agent-1" },
+        { kind: "mission", subjectId: "m-1" },
+      ],
+      truncated: false,
+    });
     expect(client.listAgentSkillGrants).toHaveBeenCalledWith({ name: "triage", pageSize: 1000, pageToken: "" });
+  });
+
+  it("reports a list that the walk cut at its page bound", async () => {
+    let page = 0;
+    client.listAgentSkillGrants.mockImplementation(async () => {
+      page++;
+      return { grants: [{ subjectKind: 1, subjectId: `agent-${page}` }], nextPageToken: `p${page + 1}` };
+    });
+    const out = await daemonListAgentSkillGrants("triage");
+    expect(out.truncated).toBe(true);
+    expect(out.items).toHaveLength(10);
   });
 });
 

@@ -98,6 +98,7 @@ export const AGENT_SKILL_TEXT = {
   grantsPresent: "Present grants",
   grantsEmpty: "No agent and no mission has a grant for this Agent Skill.",
   grantsLoadError: "The grants could not be loaded.",
+  grantsCut: (shown: number) => `The list is not complete. It shows the first ${shown} grants.`,
   columnGrantKind: "Type",
   columnGrantId: "Id",
   pickerNone: "Choose from the list",
