@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.136.0](https://github.com/zeroroot-ai/dashboard/compare/v0.135.4...v0.136.0) (2026-11-19)
+
+
+### Features
+
+* add the pages for agent skills, finding evidence, outside agents and model calls ([#378](https://github.com/zeroroot-ai/dashboard/issues/378)) ([c070e6a](https://github.com/zeroroot-ai/dashboard/commit/c070e6a234fd80abdfec13c3c03be2ebbe3a7030))
+
+
+### Bug Fixes
+
+* **providers:** default the tenant's first provider so the product sees it ([#365](https://github.com/zeroroot-ai/dashboard/issues/365)) ([2ffb17c](https://github.com/zeroroot-ai/dashboard/commit/2ffb17c1c26e9fe510f7d37e033c575d77b99f69)), closes [#364](https://github.com/zeroroot-ai/dashboard/issues/364)
+
 ## [0.135.4](https://github.com/zeroroot-ai/dashboard/compare/v0.135.3...v0.135.4) (2026-11-04)
 
 
