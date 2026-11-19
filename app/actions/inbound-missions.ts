@@ -49,6 +49,7 @@ import type {
 import { getServerSession } from "@/src/lib/auth";
 import { assertAuthorized } from "@/src/lib/auth/assert-authorized";
 import { shownDaemonFailure } from "@/src/lib/errors/shown-daemon-failure";
+import { revokeCleanupNote } from "@/src/lib/inbound-missions/revoke-note";
 import { providerNameError } from "@/src/lib/providers/provider-name";
 
 type InboundActionResult<T = null> =
@@ -282,11 +283,12 @@ async function runCallerFlow(
       await daemonRevokeInboundCallerIdentity(identity.principalId);
     } catch (revokeErr) {
       removed = false;
-      // The daemon answers Unavailable with a text for the admin. One case is a
-      // revoke that blocked the access and did not finish its cleanup: a retry
-      // finishes it.
+      // The daemon answers Unavailable when it blocked the access and did not
+      // finish its cleanup: a retry finishes it. Envoy and the transport use
+      // Unavailable too, so only the cleanup message gives a note, and the note
+      // is a fixed text.
       if (revokeErr instanceof ConnectError && revokeErr.code === Code.Unavailable) {
-        revokeNote = revokeErr.rawMessage.trim() || undefined;
+        revokeNote = revokeCleanupNote(revokeErr.rawMessage) ?? undefined;
       }
     }
     return {

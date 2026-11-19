@@ -18,6 +18,7 @@ import { retireAgentIdentityAction } from "@/app/actions/crd/member";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { InboundCallerFlowResult } from "@/src/lib/gibson-client/inbound-mission-types";
+import { revokeCleanupNote } from "@/src/lib/inbound-missions/revoke-note";
 import { INBOUND_MISSION_TEXT as T } from "./texts";
 
 type Failure = Extract<InboundCallerFlowResult, { ok: false }>;
@@ -44,7 +45,9 @@ function IdentityLeft({ identity }: { identity: LeftIdentity }) {
       if (res.ok) {
         setRevoked(true);
       } else {
-        setError(res.error || T.retryRevokeFailed);
+        // The error of the revoke can hold proxy or transport text. Only the
+        // cleanup message of the daemon shows, as its fixed note.
+        setError(revokeCleanupNote(res.error) ?? T.retryRevokeFailed);
       }
     } catch {
       setError(T.retryRevokeFailed);

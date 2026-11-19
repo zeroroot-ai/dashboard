@@ -43,6 +43,7 @@ vi.mock("@/src/lib/gibson-client/inbound-missions", () => ({
 }));
 
 import { AuthzDeniedError } from "@/src/lib/auth/assert-authorized";
+import { REVOKE_CLEANUP_NOTE } from "@/src/lib/inbound-missions/revoke-note";
 import {
   addInboundCallerAction,
   listDefinitionAgentsAction,
@@ -286,15 +287,32 @@ describe("a revoke of the new identity that does not finish", () => {
   const NOTE =
     "the identity is revoked and its access is blocked, but the cleanup of its permission tuples did not finish. Retry the revoke to finish the cleanup";
 
-  it("passes on the text of the daemon for Unavailable", async () => {
+  it("gives the fixed note for the cleanup message of the daemon", async () => {
     m.publish.mockRejectedValue(new ConnectError("refused", Code.InvalidArgument));
     m.retire.mockRejectedValue(new ConnectError(NOTE, Code.Unavailable));
     const r = await publishInboundMissionAction(VALID);
     expect(r).toMatchObject({
       ok: false,
       failedStep: "publish",
-      identity: { identityId: "agent_principal:id-1", name: "partner", removed: false, revokeNote: NOTE },
+      identity: {
+        identityId: "agent_principal:id-1",
+        name: "partner",
+        removed: false,
+        revokeNote: REVOKE_CLEANUP_NOTE,
+      },
     });
+  });
+
+  it("gives no note and no text for another Unavailable, for example from the proxy", async () => {
+    m.publish.mockRejectedValue(new ConnectError("refused", Code.InvalidArgument));
+    m.retire.mockRejectedValue(new ConnectError("down", Code.Unavailable));
+    const r = await publishInboundMissionAction(VALID);
+    expect(r.ok ? null : r.identity).toEqual({ identityId: "agent_principal:id-1", name: "partner", removed: false });
+    expect(JSON.stringify(r)).not.toContain("down");
+    m.retire.mockRejectedValue(
+      new ConnectError("upstream connect error or disconnect/reset before headers. reset reason: 10.0.3.4", Code.Unavailable),
+    );
+    expect(JSON.stringify(await publishInboundMissionAction(VALID))).not.toMatch(/upstream|10\.0\.3\.4/);
   });
 
   it("passes on no text of another failure of the revoke", async () => {

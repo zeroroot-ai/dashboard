@@ -76,8 +76,8 @@ export type InboundCallerFlowResult =
       failedStep?: InboundFlowStep;
       /**
        * The identity that the flow made. `removed` is true when the flow revoked
-       * it again. `revokeNote` is the text of the daemon when the revoke did not
-       * finish, for example "Retry the revoke to finish the cleanup".
+       * it again. `revokeNote` is a fixed text, set when the daemon blocked the
+       * access of the identity and did not finish the cleanup of the revoke.
        */
       identity?: InboundCallerDTO & { removed: boolean; revokeNote?: string };
       /** True when the definition is published after the failure. */

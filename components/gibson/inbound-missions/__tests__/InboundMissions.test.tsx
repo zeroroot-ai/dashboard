@@ -290,6 +290,7 @@ describe("the publish form", () => {
       published: false,
     });
     m.retire
+      .mockResolvedValueOnce({ ok: false, error: "[unavailable] upstream reset 10.0.3.4", code: "INTERNAL" })
       .mockResolvedValueOnce({ ok: false, error: "[unavailable] " + note, code: "INTERNAL" })
       .mockResolvedValueOnce({ ok: true, data: undefined });
     const user = userEvent.setup();
@@ -299,7 +300,13 @@ describe("the publish form", () => {
     expect(await screen.findByTestId("flow-revoke-note")).toHaveTextContent("Retry the revoke to finish the cleanup");
     await user.click(screen.getByRole("button", { name: T.retryRevokeButton }));
     expect(m.retire).toHaveBeenCalledWith({ principalId: CALLER });
-    expect(await screen.findByTestId("flow-revoke-error")).toHaveTextContent("Retry the revoke");
+    // A proxy error shows as a fixed text, with no detail of the network.
+    expect(await screen.findByTestId("flow-revoke-error")).toHaveTextContent(T.retryRevokeFailed);
+    expect(screen.getByTestId("flow-failure")).not.toHaveTextContent("10.0.3.4");
+    await user.click(screen.getByRole("button", { name: T.retryRevokeButton }));
+    await waitFor(() =>
+      expect(screen.getByTestId("flow-revoke-error")).toHaveTextContent("Retry the revoke to finish the cleanup"),
+    );
     await user.click(screen.getByRole("button", { name: T.retryRevokeButton }));
     expect(await screen.findByTestId("flow-identity-revoked")).toHaveTextContent(T.identityRevokedNow("partner"));
   });
