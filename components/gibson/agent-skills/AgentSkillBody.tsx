@@ -8,7 +8,8 @@
  * untrusted text. The default view is plain text in a <pre> element. The
  * formatted view uses react-markdown, which does not parse raw HTML. The
  * formatted view also drops images, so a body cannot make the browser load a
- * remote file.
+ * remote file. A link shows its target as text after the link text, so the
+ * text of a link cannot hide where the link goes.
  */
 
 import * as React from "react";
@@ -17,6 +18,25 @@ import remarkGfm from "remark-gfm";
 
 import { Button } from "@/components/ui/button";
 import { AGENT_SKILL_TEXT as T } from "./texts";
+
+/**
+ * A link of the body. The URL shows after the link text. The link opens a new
+ * tab and gives the target no opener and no referrer. A link with no usable
+ * target (react-markdown removes a script URL) shows only its text.
+ */
+function BodyLink({ href, children }: { href?: string; children?: React.ReactNode }) {
+  if (!href) return <span>{children}</span>;
+  return (
+    <>
+      <a href={href} target="_blank" rel="noopener noreferrer nofollow">
+        {children}
+      </a>{" "}
+      <span data-testid="agent-skill-link-target" className="text-muted-foreground font-mono text-xs break-all">
+        ({href})
+      </span>
+    </>
+  );
+}
 
 export function AgentSkillBody({ body }: { body: string }) {
   const [formatted, setFormatted] = React.useState(false);
@@ -50,6 +70,7 @@ export function AgentSkillBody({ body }: { body: string }) {
             remarkPlugins={[remarkGfm]}
             disallowedElements={["img"]}
             unwrapDisallowed
+            components={{ a: ({ href, children }) => <BodyLink href={href}>{children}</BodyLink> }}
           >
             {body}
           </ReactMarkdown>
