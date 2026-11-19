@@ -7,8 +7,8 @@
  * CallsList, the calls view of a run (gibson#755).
  *
  * Renders the run's LLM calls as a vertical list: which model answered, the
- * call's input/output token spend, and an expander that loads the call's full
- * prompt ↔ response transcript on demand (WorldService.GetLlmCall). This is the
+ * call's input/output token spend, and an expander that loads the full record
+ * of the model call on demand (WorldService.GetLlmCall). This is the
  * default run view; it replaces the Langfuse decision/observation timeline,
  * which the flat World call log has no equivalent for.
  */
@@ -21,9 +21,9 @@ import {
   formatUsd,
   estimateCallCostUsd,
 } from "@/src/lib/world-traces";
-import { ConversationView } from "@/components/gibson/traces/ConversationView";
+import { ModelCallDetail } from "@/components/gibson/traces/ModelCallDetail";
 import { useCallTranscript } from "@/src/hooks/useTraces";
-import type { LlmCallSummary, ConversationMessage } from "@/src/types/trace";
+import type { LlmCallSummary } from "@/src/types/trace";
 
 function CallRow({ call, index }: { call: LlmCallSummary; index: number }) {
   const [expanded, setExpanded] = React.useState(false);
@@ -34,17 +34,6 @@ function CallRow({ call, index }: { call: LlmCallSummary; index: number }) {
     call.promptTokens,
     call.completionTokens,
   );
-
-  // The completion is the assistant's reply; append it to the prompt messages
-  // so the transcript reads as a full exchange.
-  const messages: ConversationMessage[] = React.useMemo(() => {
-    if (!detail) return [];
-    const msgs = [...detail.messages];
-    if (detail.completion) {
-      msgs.push({ role: "assistant", content: detail.completion });
-    }
-    return msgs;
-  }, [detail]);
 
   return (
     <li className="relative pl-6">
@@ -83,21 +72,18 @@ function CallRow({ call, index }: { call: LlmCallSummary; index: number }) {
           ) : (
             <ChevronRight className="size-3.5" />
           )}
-          {expanded ? "Hide transcript" : "Show transcript"}
+          {expanded ? "Hide model call" : "Show model call"}
         </button>
 
         {expanded && (
           <div className="mt-2">
             {isLoading ? (
-              <p className="text-xs text-muted-foreground">Loading transcript…</p>
-            ) : detail && messages.length > 0 ? (
-              <ConversationView
-                messages={messages}
-                tokens={{ input: call.promptTokens, output: call.completionTokens }}
-              />
+              <p className="text-xs text-muted-foreground">Loading model call…</p>
+            ) : detail ? (
+              <ModelCallDetail call={detail} />
             ) : (
               <p className="text-xs italic text-muted-foreground">
-                No transcript was recorded for this call.
+                The record of this model call is not available.
               </p>
             )}
           </div>

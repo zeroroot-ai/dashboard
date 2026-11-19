@@ -13,8 +13,8 @@ import { adaptCallDetail } from '@/src/lib/world-traces';
 /**
  * GET /api/traces/calls/[callId]
  *
- * One LLM call's full detail incl. its prompt transcript + completion
- * (gibson#755), loaded on demand when the user expands a call. Backed by
+ * The full record of one model call: the metadata, the request items and the
+ * output items (gibson#755). The page loads it when the user expands a call. Backed by
  * WorldService.GetLlmCall; the daemon scopes to the caller's tenant and returns
  * NotFound for an unknown call id.
  */

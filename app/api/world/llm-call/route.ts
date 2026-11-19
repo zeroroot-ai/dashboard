@@ -6,15 +6,16 @@ import { getServerSession } from '@/src/lib/auth';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { userClient } from '@/src/lib/gibson-client';
 import { WorldService } from '@/src/gen/gibson/world/v1/world_pb';
+import { adaptCallDetail } from '@/src/lib/world-traces';
 
 /**
  * GET /api/world/llm-call?callId=ID
  *
- * The per-tick inspector's transcript fetch (epic ecs-brain, gibson#1059). Returns
- * one LLM call's full record — metadata plus the prompt messages and assistant
- * completion — by wiring the daemon's GetLlmCall (gibson#755). Daemon-mediated and
- * tenant-scoped by gibson.world.v1.WorldService; the dashboard never touches the
- * brain directly. callId is required; an unknown call surfaces as 404.
+ * The model call fetch of the per-tick inspector (epic ecs-brain, gibson#1059).
+ * Returns the full record of one model call: the metadata, the request items
+ * and the output items. It calls the daemon's GetLlmCall (gibson#755). The
+ * daemon scopes the call to the tenant of the caller. The dashboard never
+ * touches the brain directly. callId is required. An unknown call returns 404.
  */
 export async function GET(req: NextRequest) {
   try {
@@ -44,16 +45,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      callId: call.callId,
-      runId: call.runId,
-      model: call.model,
-      scopeId: call.scopeId,
-      promptTokens: call.promptTokens,
-      completionTokens: call.completionTokens,
-      messages: call.messages.map((m) => ({ role: m.role, content: m.content })),
-      completion: call.completion,
-    });
+    return NextResponse.json(adaptCallDetail(call));
   } catch (error) {
     return daemonErrorResponse(error);
   }

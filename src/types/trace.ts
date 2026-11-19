@@ -7,7 +7,7 @@
  * The Gibson Traces surface reads `gibson.world.v1.WorldService.ListLlmCalls` /
  * `GetLlmCall`: a flat log of LLM completions folded into the per-tenant World,
  * replacing the retired Langfuse trace/observation tree. Each LLM call carries
- * model + token metadata and (on detail) its prompt transcript + completion.
+ * model + token metadata and (on detail) its request items and output items.
  * Calls are grouped into "runs" by the AgentRun (`runId`) that issued them.
  */
 
@@ -75,30 +75,49 @@ export interface TokenSummary {
 }
 
 // ============================================================================
-// Transcript types
+// Model call detail types
 // ============================================================================
 
-export type MessageRole = 'system' | 'user' | 'assistant' | 'tool';
+/**
+ * One Open Responses item of a model call, parsed for display.
+ *
+ * `text` is an item that is a JSON string, or a JSON text that does not parse.
+ * `unknown` is an item of a type that the view does not know. Its `json` is the
+ * raw JSON. All strings are untrusted. The view shows them as text.
+ */
+export type ModelCallItem =
+  | { kind: 'message'; role: string; text: string }
+  | { kind: 'reasoning'; text: string }
+  | { kind: 'function_call'; name: string; callId: string; arguments: string }
+  | { kind: 'function_call_output'; callId: string; output: string }
+  | { kind: 'text'; text: string }
+  | { kind: 'unknown'; json: string };
 
-export interface ConversationMessage {
-  role: MessageRole;
-  content: string;
-  name?: string;
-}
-
-/** One call's full record incl. transcript (a `gibson.world.v1.LlmCallDetail`). */
+/** The full record of one model call (a `gibson.world.v1.LlmCallDetail`). */
 export interface LlmCallDetailData {
   callId: string;
   runId: string;
   model: string;
   scopeId: string;
+  /** The provider of the model, for example "openai". Empty when unknown. */
+  provider: string;
+  /** The HTTP status of the gateway reply. 0 when unknown. */
+  httpStatus: number;
+  /** True when the HTTP status is 400 or more. */
+  failed: boolean;
   promptTokens: number;
   completionTokens: number;
   totalTokens: number;
-  /** The prompt messages sent to the model. */
-  messages: ConversationMessage[];
-  /** The assistant's completion text. */
-  completion: string;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+  /** US dollars as a decimal string. Empty when the gateway had no price. */
+  cost: string;
+  /** The reply text of a failed model call. Empty for a call that worked. */
+  errorText: string;
+  /** The items that the caller sent to the model, in order. */
+  requestItems: ModelCallItem[];
+  /** The items that the model returned, in order. */
+  outputItems: ModelCallItem[];
 }
 
 // ============================================================================
