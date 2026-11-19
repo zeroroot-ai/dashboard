@@ -14,6 +14,7 @@
 
 import { ConnectError, Code } from '@connectrpc/connect';
 import { logger } from '@/src/lib/logger';
+import { ADDRESS_REFUSED_MESSAGE, isAddressRefusal } from '@/src/lib/errors/address-refusal';
 
 /**
  * Map a Connect gRPC status code to an HTTP status code.
@@ -65,10 +66,10 @@ export function translateError(err: unknown, route = 'providers'): Response {
         'daemon RPC returned 5xx',
       );
     }
-    return Response.json(
-      { error: { code: err.code, message: err.rawMessage } },
-      { status },
-    );
+    // A refused base_url host holds resolved addresses and DNS detail. The
+    // browser gets a fixed text in place of it.
+    const message = isAddressRefusal(err.rawMessage) ? ADDRESS_REFUSED_MESSAGE : err.rawMessage;
+    return Response.json({ error: { code: err.code, message } }, { status });
   }
 
   // Include the error name and one line of stack for triage. NEVER include

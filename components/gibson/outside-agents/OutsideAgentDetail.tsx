@@ -67,6 +67,7 @@ async function readDetail(name: string): Promise<DetailRead> {
 
 function Grants({ name }: { name: string }) {
   const [grants, setGrants] = React.useState<string[] | null>(null);
+  const [grantsCut, setGrantsCut] = React.useState(false);
   const [grantsError, setGrantsError] = React.useState<string | null>(null);
   const [missions, setMissions] = React.useState<{ id: string; name: string }[]>([]);
   const [missionId, setMissionId] = React.useState("");
@@ -78,7 +79,8 @@ function Grants({ name }: { name: string }) {
     void listOutsideAgentGrantsAction(name)
       .then((res) => {
         if (res.ok) {
-          setGrants(res.data);
+          setGrants(res.data.items);
+          setGrantsCut(res.data.truncated);
           setGrantsError(null);
         } else {
           setGrantsError(res.error || T.grantsLoadError);
@@ -128,6 +130,11 @@ function Grants({ name }: { name: string }) {
 
   return (
     <div className="space-y-6">
+      {grants !== null && grantsCut ? (
+        <p role="status" data-testid="grants-cut" className="text-muted-foreground text-sm">
+          {T.grantsCut(grants.length)}
+        </p>
+      ) : null}
       {grantsError ? (
         <p role="alert" data-testid="grants-load-error" className="text-destructive text-sm">
           {grantsError}

@@ -111,9 +111,12 @@ describe("outside agent actions", () => {
   });
 
   it("list grants and delete work by name", async () => {
-    m.grants.mockResolvedValue(["m1"]);
+    m.grants.mockResolvedValue({ items: ["m1"], truncated: true });
     m.del.mockResolvedValue(undefined);
-    expect(await listOutsideAgentGrantsAction("scout")).toEqual({ ok: true, data: ["m1"] });
+    expect(await listOutsideAgentGrantsAction("scout")).toEqual({
+      ok: true,
+      data: { items: ["m1"], truncated: true },
+    });
     expect(await deleteOutsideAgentAction("scout")).toEqual({ ok: true, data: null });
     expect(await deleteOutsideAgentAction("")).toMatchObject({ ok: false, code: "bad_input" });
   });

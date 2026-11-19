@@ -62,6 +62,9 @@ export function useCreateProvider(): UseMutationResult<
   const queryClient = useQueryClient();
 
   return useMutation({
+    // The variables hold the credentials. The mutation cache drops a settled
+    // mutation at once when no component observes it.
+    gcTime: 0,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mutationFn: ({ config, testConnection }) => createProvider(config as any, { testConnection }),
     onMutate: async ({ config }) => {
@@ -148,6 +151,8 @@ export function useUpdateProvider(): UseMutationResult<
   const queryClient = useQueryClient();
 
   return useMutation({
+    // The variables can hold new credentials. See useCreateProvider.
+    gcTime: 0,
     mutationFn: ({ name, config, expectedVersion }) =>
       updateProvider(name, config, { expectedVersion }),
     onMutate: async ({ name, config }) => {

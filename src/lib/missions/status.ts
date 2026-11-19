@@ -30,15 +30,17 @@ export const MISSION_STATUS_LABELS: Record<MissionStatus, string> = {
   failed: "Failed",
   canceled: "Canceled",
   paused: "Paused",
+  unknown: "Unknown",
 };
 
 /**
  * Read the state of a mission from the string that the daemon sends. An
- * unknown string reads as "submitted", the state that holds no run yet.
+ * unknown, unspecified or missing string reads as "unknown". That state is
+ * not "submitted": a person cannot start a run from it.
  */
 export function parseMissionStatus(raw: string | undefined | null): MissionStatus {
   const s = (raw ?? "").trim().toLowerCase().replace("mission_status_", "");
-  return (MISSION_STATUSES as readonly string[]).includes(s) ? (s as MissionStatus) : "submitted";
+  return (MISSION_STATUSES as readonly string[]).includes(s) ? (s as MissionStatus) : "unknown";
 }
 
 /** An active mission is working, or it waits for an answer to an approval request. */
@@ -51,7 +53,7 @@ export function canStopMission(status: MissionStatus): boolean {
   return isActiveMission(status) || status === "paused";
 }
 
-/** A mission that a person may start is submitted or paused. */
+/** A mission that a person may start is submitted or paused. An unknown state starts nothing. */
 export function canStartMission(status: MissionStatus): boolean {
   return status === "submitted" || status === "paused";
 }

@@ -141,6 +141,43 @@ describe("ProviderTestPanel", () => {
     expect(onDone).toHaveBeenCalled();
   });
 
+  it("offers Edit after a failed test, opens the edit dialog, and tests again after a save", async () => {
+    apiFetch
+      .mockResolvedValueOnce(listed())
+      .mockResolvedValueOnce(json({ result: { ok: false, latencyMs: 3, models: [], error: "bad key" } }))
+      .mockResolvedValueOnce(listed())
+      .mockResolvedValueOnce(testOk());
+    renderPanel({
+      renderEdit: (ctl) =>
+        ctl.open ? (
+          <div role="dialog" aria-label="edit credentials">
+            <button type="button" onClick={ctl.onSaved}>
+              save new credentials
+            </button>
+          </div>
+        ) : null,
+    });
+    await screen.findByTestId("test-failed");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: /edit credentials/i }));
+    expect(screen.getByRole("dialog", { name: "edit credentials" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "save new credentials" }));
+    expect(await screen.findByTestId("test-passed")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /edit credentials/i })).toBeNull();
+  });
+
+  it("removes nothing when the person cancels the confirmation", async () => {
+    apiFetch.mockResolvedValueOnce(listed()).mockResolvedValueOnce(testOk());
+    const { onRemoved } = renderPanel();
+    await screen.findByTestId("test-passed");
+    await userEvent.click(screen.getByRole("button", { name: /remove provider/i }));
+    expect(screen.getByRole("alertdialog")).toHaveTextContent("Remove claude-prod?");
+    expect(deleteMutate).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(deleteMutate).not.toHaveBeenCalled();
+    expect(onRemoved).not.toHaveBeenCalled();
+  });
+
   it("tests again from the start", async () => {
     apiFetch
       .mockResolvedValueOnce(listed())
@@ -172,6 +209,7 @@ describe("ProviderTestPanel", () => {
     const { onRemoved } = renderPanel();
     await screen.findByTestId("test-passed");
     await userEvent.click(screen.getByRole("button", { name: /remove provider/i }));
+    await userEvent.click(screen.getByRole("button", { name: "Remove" }));
     await waitFor(() => expect(onRemoved).toHaveBeenCalled());
     expect(deleteMutate.mock.calls[0][0]).toBe("claude-prod");
   });

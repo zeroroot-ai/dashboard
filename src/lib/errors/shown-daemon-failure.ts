@@ -9,11 +9,14 @@
  * refuses the credential. The generic server action mapper hides the daemon
  * text. This mapper shows it for the codes below, as the mission and agent
  * permission actions do. Any other failure takes the generic mapper, so
- * internal detail never reaches the browser.
+ * internal detail never reaches the browser. The refusal of a host is the
+ * exception among the shown codes: its text holds resolved addresses, so the
+ * browser gets a fixed message.
  */
 import { Code, ConnectError } from "@connectrpc/connect";
 
 import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
+import { ADDRESS_REFUSED_MESSAGE, isAddressRefusal } from "@/src/lib/errors/address-refusal";
 import { serverActionError } from "@/src/lib/errors/server-action-error";
 
 export type ShownDaemonFailure = { ok: false; error: string; code?: string };
@@ -33,6 +36,10 @@ export function shownDaemonFailure(err: unknown, action: string): ShownDaemonFai
     const code = SHOWN_CODES.get(err.code);
     const message = err.rawMessage.trim();
     const provisioning = /tenant data.?plane not provisioned/i.test(message);
+    // A refused host holds resolved addresses. The browser gets a fixed text.
+    if (code !== undefined && isAddressRefusal(message)) {
+      return { ok: false, error: ADDRESS_REFUSED_MESSAGE, code };
+    }
     if (code !== undefined && message !== "" && !provisioning) {
       return { ok: false, error: message, code };
     }

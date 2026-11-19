@@ -15,7 +15,8 @@ import "server-only";
  * who published.
  */
 import { userClient } from "../gibson-client";
-import { walkItems } from "./paging";
+import { walkItems, walkPages } from "./paging";
+import type { WalkResult } from "./paging";
 import {
   AgentSkillService,
   AgentSkillSource,
@@ -164,10 +165,14 @@ export async function daemonEnableSharedAgentSkill(name: string): Promise<AgentS
   return resp.entry ? toAgentSkillDTO(resp.entry) : null;
 }
 
-/** List each agent and each mission that may load an Agent Skill. */
-export async function daemonListAgentSkillGrants(name: string): Promise<AgentSkillGrantDTO[]> {
+/**
+ * List each agent and each mission that may load an Agent Skill. `truncated`
+ * is true when the walk stopped at its bound with grants left, so the page can
+ * say that the list is cut.
+ */
+export async function daemonListAgentSkillGrants(name: string): Promise<WalkResult<AgentSkillGrantDTO>> {
   const client = userClient(AgentSkillService);
-  const grants = await walkItems("tenant.agentSkillGrants", async (pageSize, pageToken) => {
+  const { items: grants, truncated } = await walkPages(async (pageSize, pageToken) => {
     const resp = await client.listAgentSkillGrants({ name, pageSize, pageToken });
     return { items: resp.grants, nextPageToken: resp.nextPageToken };
   });
@@ -179,5 +184,5 @@ export async function daemonListAgentSkillGrants(name: string): Promise<AgentSki
       out.push({ kind: "mission", subjectId: g.subjectId });
     }
   }
-  return out;
+  return { items: out, truncated };
 }

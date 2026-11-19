@@ -155,6 +155,38 @@ describe('adaptCallDetail', () => {
   });
 });
 
+describe('adaptCallDetail with an error and no HTTP status', () => {
+  const base = {
+    callId: 'c3',
+    runId: '',
+    model: 'm',
+    scopeId: 's',
+    promptTokens: 0,
+    completionTokens: 0,
+    requestItems: [],
+    outputItems: [],
+    provider: '',
+    cacheReadTokens: 0,
+    cacheWriteTokens: 0,
+    cost: '',
+  };
+
+  it('marks a model call with an error text and a status of 0 as failed', () => {
+    const out = adaptCallDetail({ ...base, httpStatus: 0, errorText: 'connection reset' } as never);
+    expect(out.failed).toBe(true);
+  });
+
+  it('marks a model call with an error text and a status of 200 as failed', () => {
+    const out = adaptCallDetail({ ...base, httpStatus: 200, errorText: 'stream cut' } as never);
+    expect(out.failed).toBe(true);
+  });
+
+  it('does not mark a model call with no error text and a status of 0 as failed', () => {
+    const out = adaptCallDetail({ ...base, httpStatus: 0, errorText: '' } as never);
+    expect(out.failed).toBe(false);
+  });
+});
+
 describe('formatModelCallCost', () => {
   it('shows "Unknown" for an empty cost, never a zero', () => {
     expect(formatModelCallCost('')).toBe('Unknown');

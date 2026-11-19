@@ -67,6 +67,7 @@ vi.mock("@/src/hooks/useProviderMutations", () => ({
   useUpdateProvider: vi.fn(() => ({
     mutate: mockUpdateMutate,
     isPending: false,
+    reset: vi.fn(),
   })),
 }));
 
@@ -584,6 +585,7 @@ describe("ConfiguredProviderRow, edit credentials", () => {
         opts?.onSuccess?.();
       },
       isPending: false,
+      reset: vi.fn(),
     } as unknown as ReturnType<typeof useUpdateProvider>);
 
     const user = userEvent.setup();
@@ -610,6 +612,7 @@ describe("ConfiguredProviderRow, edit credentials", () => {
         opts?.onError?.(new Error("network error"));
       },
       isPending: false,
+      reset: vi.fn(),
     } as unknown as ReturnType<typeof useUpdateProvider>);
 
     const user = userEvent.setup();

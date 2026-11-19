@@ -17,7 +17,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { ProviderWizard, CredentialsForm } from "./ProviderWizard";
+import { ProviderWizard, CredentialsForm, withoutCredentials } from "./ProviderWizard";
 import { CREDENTIAL_FIELD_TYPE } from "@/src/lib/gibson-client-types";
 import type { SupportedProviderDescriptor } from "@/src/lib/gibson-client-types";
 
@@ -45,7 +45,7 @@ const { createMutate, createState } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/src/hooks/useProviderMutations", () => ({
-  useCreateProvider: () => ({ mutate: createMutate, isPending: createState.isPending }),
+  useCreateProvider: () => ({ mutate: createMutate, isPending: createState.isPending, reset: vi.fn() }),
   useDeleteProvider: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
@@ -825,5 +825,16 @@ describe("ProviderWizard: save first, test after (gibson#1394)", () => {
   it("leaves 'set as default' unchecked when a default exists", () => {
     renderAnthropic({ preselectDefault: false });
     expect(screen.getByRole("checkbox", { name: /set as default provider/i })).not.toBeChecked();
+  });
+});
+
+describe("withoutCredentials (the form state after a good save)", () => {
+  it("keeps the name and drops each credential value", () => {
+    const values = { name: "claude-prod", credentials: { api_key: "sk-ant-test-key", base_url: "https://x" } };
+    const out = withoutCredentials(values);
+    expect(out).toEqual({ name: "claude-prod", credentials: {} });
+    expect(JSON.stringify(out)).not.toContain("sk-ant-test-key");
+    // The input stays as it was, so the save that runs keeps its credentials.
+    expect(values.credentials.api_key).toBe("sk-ant-test-key");
   });
 });

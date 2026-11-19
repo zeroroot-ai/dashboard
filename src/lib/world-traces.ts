@@ -132,7 +132,8 @@ export function adaptCallDetail(c: LlmCallDetail): LlmCallDetailData {
     scopeId: c.scopeId,
     provider: c.provider,
     httpStatus: c.httpStatus,
-    failed: c.httpStatus >= 400,
+    // A call can fail with no HTTP status, for example on a network error.
+    failed: c.httpStatus >= 400 || c.errorText !== '',
     promptTokens: c.promptTokens,
     completionTokens: c.completionTokens,
     totalTokens: c.promptTokens + c.completionTokens,

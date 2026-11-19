@@ -48,7 +48,7 @@ interface WalkOptions {
   restartOnce?: (err: unknown) => boolean;
 }
 
-interface WalkResult<T> {
+export interface WalkResult<T> {
   items: T[];
   /** True when the walk stopped while the daemon had more rows. */
   truncated: boolean;

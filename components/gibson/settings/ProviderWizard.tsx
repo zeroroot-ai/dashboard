@@ -79,6 +79,7 @@ import {
 } from "@/src/lib/provider-capabilities";
 import { isOfferedProviderType } from "@/src/lib/providers/offered-types";
 import { PROVIDER_NAME_MAX_LENGTH, providerNameError } from "@/src/lib/providers/provider-name";
+import { EditCredentialsDialog } from "./EditCredentialsDialog";
 import { ProviderTestPanel } from "./ProviderTestPanel";
 import { Textarea } from "@/components/ui/textarea";
 import { loginShapeHint } from "@/src/lib/providers/login-shape";
@@ -99,6 +100,14 @@ interface FoundModel {
 interface CredentialFormValues {
   name: string;
   credentials: Record<string, string>;
+}
+
+/**
+ * The form values after a good save: the name stays, and each credential
+ * value is gone. The test step needs only the name of the saved provider.
+ */
+export function withoutCredentials(values: CredentialFormValues): CredentialFormValues {
+  return { name: values.name, credentials: {} };
 }
 
 interface ProviderWizardProps {
@@ -943,6 +952,10 @@ export function ProviderWizard({
       {
         onSuccess: () => {
           toast.success(`${descriptor.displayName} saved`);
+          // The daemon holds the credential now. The browser keeps no copy:
+          // not in the form state, and not in the variables of the mutation.
+          setFormValues(withoutCredentials(formValues));
+          createMutation.reset();
           setSavedName(formValues.name);
         },
         onError: (err) => {
@@ -1014,6 +1027,20 @@ export function ProviderWizard({
       {step === 3 && savedName !== null && (
         <ProviderTestPanel
           name={savedName}
+          renderEdit={
+            descriptor
+              ? (ctl) => (
+                  <EditCredentialsDialog
+                    descriptor={descriptor}
+                    providerName={savedName}
+                    displayName={descriptor.displayName}
+                    open={ctl.open}
+                    onOpenChange={ctl.onOpenChange}
+                    onSaved={ctl.onSaved}
+                  />
+                )
+              : undefined
+          }
           onDone={() => {
             reset();
             onComplete?.();

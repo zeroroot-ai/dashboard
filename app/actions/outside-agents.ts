@@ -144,7 +144,7 @@ export async function deleteOutsideAgentAction(name: string): Promise<OutsideAge
 /** List the ids of the missions that may call one outside agent. */
 export async function listOutsideAgentGrantsAction(
   name: string,
-): Promise<OutsideAgentActionResult<string[]>> {
+): Promise<OutsideAgentActionResult<{ items: string[]; truncated: boolean }>> {
   const session = await getServerSession();
   if (!session?.user) return UNAUTHENTICATED;
   const n = nameSchema.safeParse(name);

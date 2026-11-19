@@ -42,6 +42,17 @@ const DTO = { ...PROTO, createdAt: "2023-11-14T22:13:20.000Z" };
 beforeEach(() => vi.clearAllMocks());
 
 describe("outside agent client", () => {
+  it("reports a grant list that the walk cut at its page bound", async () => {
+    let page = 0;
+    client.listOutsideAgentGrants.mockImplementation(async () => {
+      page++;
+      return { missionIds: [`m${page}`], nextPageToken: `p${page + 1}` };
+    });
+    const out = await daemonListOutsideAgentGrants("scout");
+    expect(out.truncated).toBe(true);
+    expect(out.items).toHaveLength(10);
+  });
+
   it("lists and maps the entries, and maps a missing time to an empty text", async () => {
     client.listOutsideAgents.mockResolvedValue({ entries: [PROTO, { ...PROTO, createdAt: undefined }] });
     const out = await daemonListOutsideAgents();
@@ -96,7 +107,7 @@ describe("outside agent client", () => {
     await daemonDeleteOutsideAgent("scout");
     await daemonGrantOutsideAgent("scout", "m1");
     await daemonRevokeOutsideAgent("scout", "m1");
-    expect(await daemonListOutsideAgentGrants("scout")).toEqual(["m1", "m2"]);
+    expect(await daemonListOutsideAgentGrants("scout")).toEqual({ items: ["m1", "m2"], truncated: false });
     expect(client.deleteOutsideAgent).toHaveBeenCalledWith({ name: "scout" });
     expect(client.grantOutsideAgent).toHaveBeenCalledWith({ name: "scout", missionId: "m1" });
     expect(client.revokeOutsideAgent).toHaveBeenCalledWith({ name: "scout", missionId: "m1" });

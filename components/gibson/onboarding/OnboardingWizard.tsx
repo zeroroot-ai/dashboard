@@ -229,8 +229,11 @@ function LLMProviderStep({
         testConnection: false,
       });
 
+      // The daemon holds the key now. The browser keeps no copy: not in the
+      // store, not in the form and not in the variables of the mutation.
+      form.resetField("apiKey");
+      createProvider.reset();
       store.setLLMProvider(values.provider as LLMProviderValue);
-      if (values.apiKey) store.setLLMApiKey(values.apiKey);
       store.setLLMValidated(true);
 
       onStateChange({ llmProvider: values.provider });

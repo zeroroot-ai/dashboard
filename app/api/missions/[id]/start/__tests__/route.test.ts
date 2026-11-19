@@ -177,6 +177,25 @@ describe('POST /api/missions/:id/start', () => {
     expect(mockResumeMission).not.toHaveBeenCalled();
   });
 
+  it.each(['MISSION_STATUS_UNSPECIFIED', 'MISSION_STATUS_FROM_THE_FUTURE', ''])(
+    'refuses a mission with the unknown state %j and starts no run',
+    async (status) => {
+      mockGetServerSession.mockResolvedValue({ user: { id: 'u1', tenantId: 't1' } });
+      mockListMissions.mockResolvedValue({
+        missions: [{ id: 'm1', status, missionDefinitionId: 'def1', targetId: 'tgt1' }],
+      });
+
+      const { POST } = await import('../route');
+      const res = await POST(makeRequest(), makeParams('m1'));
+
+      expect(res.status).toBe(409);
+      const body = await res.json();
+      expect(body.error.code).toBe('UNKNOWN_STATE');
+      expect(mockRunMission).not.toHaveBeenCalled();
+      expect(mockResumeMission).not.toHaveBeenCalled();
+    },
+  );
+
   it('maps a daemon FailedPrecondition into the canonical error response', async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: 'u1', tenantId: 't1' } });
     mockListMissions.mockResolvedValue({

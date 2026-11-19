@@ -45,6 +45,23 @@ describe("AgentSkillBody", () => {
     expect((window as unknown as { __pwned?: boolean }).__pwned).toBeUndefined();
   });
 
+  it("shows the target of a link as text, and opens it with no opener and no referrer", async () => {
+    render(<AgentSkillBody body={"Read [the vendor docs](https://evil.example/login?next=x) first."} />);
+    await userEvent.click(screen.getByRole("button", { name: T.bodyRendered }));
+    const link = screen.getByRole("link", { name: "the vendor docs" });
+    expect(link).toHaveAttribute("href", "https://evil.example/login?next=x");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer nofollow");
+    expect(screen.getByTestId("agent-skill-link-target")).toHaveTextContent("(https://evil.example/login?next=x)");
+  });
+
+  it("shows a link with a script target as text only", async () => {
+    render(<AgentSkillBody body={"[click](javascript:alert(1))"} />);
+    await userEvent.click(screen.getByRole("button", { name: T.bodyRendered }));
+    expect(screen.queryByRole("link")).toBeNull();
+    expect(screen.getByText("click")).toBeInTheDocument();
+  });
+
   it("says so when the body is empty", () => {
     render(<AgentSkillBody body="  " />);
     expect(screen.getByText(T.bodyEmpty)).toBeInTheDocument();

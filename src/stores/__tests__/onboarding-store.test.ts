@@ -9,7 +9,8 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { act } from '@testing-library/react';
-import { useOnboardingStore } from '../onboarding-store';
+import { ONBOARDING_STORE_VERSION, migrateOnboardingState, useOnboardingStore } from '../onboarding-store';
+import { withoutApiKey } from '@/src/types/onboarding';
 
 // Reset store before each test
 beforeEach(() => {
@@ -291,5 +292,66 @@ describe('Wizard Navigation Hooks', () => {
       const state = useOnboardingStore.getState();
       expect(state.currentStep).toBe(0);
     });
+  });
+});
+
+describe('the provider API key is never kept in the browser', () => {
+  const STORAGE_KEY = 'gibson-onboarding';
+  const SECRET = 'sk-ant-onboarding-key-do-not-keep';
+
+  it('has no action that stores an API key', () => {
+    expect('setLLMApiKey' in useOnboardingStore.getState()).toBe(false);
+  });
+
+  it('keeps no API key in the state or in localStorage, even from a config that holds one', () => {
+    act(() => {
+      // An older stored config can hold the key. The type no longer has it.
+      useOnboardingStore
+        .getState()
+        .setLLMConfig({ provider: 'anthropic', model: 'm', isValidated: true, apiKey: SECRET } as never);
+    });
+    expect(useOnboardingStore.getState().llmConfig).toEqual({ provider: 'anthropic', model: 'm', isValidated: true });
+    const stored = localStorage.getItem(STORAGE_KEY) ?? '';
+    expect(stored).toContain('anthropic');
+    expect(stored).not.toContain(SECRET);
+    expect(stored).not.toContain('apiKey');
+  });
+
+  it('removes a key that an older version persisted, one time on load', async () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        state: {
+          currentStepId: 'llm_provider',
+          completedSteps: [],
+          skippedSteps: [],
+          llmConfig: { provider: 'anthropic', apiKey: SECRET, model: '', isValidated: true },
+          llmValidated: true,
+        },
+        version: 0,
+      }),
+    );
+    await useOnboardingStore.persist.rehydrate();
+    expect(useOnboardingStore.getState().llmConfig).toEqual({ provider: 'anthropic', model: '', isValidated: true });
+    expect(useOnboardingStore.getState().llmValidated).toBe(true);
+    const stored = localStorage.getItem(STORAGE_KEY) ?? '';
+    expect(stored).not.toContain(SECRET);
+    expect(stored).not.toContain('apiKey');
+    expect(JSON.parse(stored).version).toBe(ONBOARDING_STORE_VERSION);
+  });
+
+  it('migrates a state with no config and a value of another shape unchanged', () => {
+    expect(migrateOnboardingState({ llmConfig: null, wizardCompleted: true })).toEqual({
+      llmConfig: null,
+      wizardCompleted: true,
+    });
+    expect(migrateOnboardingState(null)).toBeNull();
+    expect(migrateOnboardingState('x')).toBe('x');
+  });
+
+  it('removes the key from a config and leaves a config with no key as it is', () => {
+    const clean = { provider: 'anthropic', model: '', isValidated: false };
+    expect(withoutApiKey(clean)).toBe(clean);
+    expect(withoutApiKey({ ...clean, apiKey: SECRET })).toEqual(clean);
   });
 });

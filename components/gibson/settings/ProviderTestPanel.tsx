@@ -14,15 +14,27 @@
  * seconds after the save. The panel polls the model list until the answer is
  * not "route not ready", shows the wait, and stops after a fixed time. Then
  * it runs the test. A failed test leaves the saved provider, with a button to
- * test again and a button to remove it. The Edit credentials button of the
- * provider card changes it.
+ * test again, a button to edit its credentials and a button to remove it. The
+ * edit button opens the edit dialog of the provider card. After a save of the
+ * new credentials the panel tests again. The remove button asks first.
  */
 
 import * as React from "react";
-import { AlertCircle, CheckCircle2, Loader2, Plug, Trash2, WifiOff } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, Pencil, Plug, Trash2, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useDeleteProvider } from "@/src/hooks/useProviderMutations";
 import { apiFetch } from "@/src/lib/api/fetch";
@@ -61,10 +73,19 @@ function errorText(body: { error?: { message?: string } | string }, status: numb
   return body.error?.message ?? `The request failed (HTTP ${status})`;
 }
 
+/** What the panel gives to the edit dialog. */
+export interface EditDialogControl {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** The dialog calls it after the daemon saved the new credentials. */
+  onSaved: () => void;
+}
+
 export function ProviderTestPanel({
   name,
   onDone,
   onRemoved,
+  renderEdit,
   intervalMs = POLL_INTERVAL_MS,
   timeoutMs = POLL_TIMEOUT_MS,
 }: {
@@ -74,11 +95,17 @@ export function ProviderTestPanel({
   onDone: () => void;
   /** The person removed the provider. */
   onRemoved: () => void;
+  /**
+   * Renders the edit dialog of the provider. The wizard passes the dialog of
+   * the provider card, so one dialog changes the credentials.
+   */
+  renderEdit?: (ctl: EditDialogControl) => React.ReactNode;
   intervalMs?: number;
   timeoutMs?: number;
 }) {
   const [state, setState] = React.useState<PanelState>({ kind: "waiting", elapsedMs: 0 });
   const [runId, setRunId] = React.useState(0);
+  const [editOpen, setEditOpen] = React.useState(false);
   const deleteMutation = useDeleteProvider();
 
   React.useEffect(() => {
@@ -198,8 +225,8 @@ export function ProviderTestPanel({
         <Alert variant="destructive" data-testid="test-failed">
           <WifiOff className="size-4" />
           <AlertDescription className="text-xs">
-            The connection test failed. The provider stays saved. Edit its credentials in the list,
-            or remove it.
+            The connection test failed. The provider stays saved. Edit its credentials, or remove
+            it.
             <span className="mt-1 block font-mono">{state.message}</span>
           </AlertDescription>
         </Alert>
@@ -231,21 +258,48 @@ export function ProviderTestPanel({
           <Plug className="size-3" />
           Test again
         </Button>
+        {state.kind === "failed" && renderEdit ? (
+          <Button type="button" size="sm" variant="outline" className="text-xs" onClick={() => setEditOpen(true)}>
+            <Pencil className="size-3" />
+            Edit credentials
+          </Button>
+        ) : null}
         <Button type="button" size="sm" className="text-xs" onClick={onDone}>
           Done
         </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="text-destructive hover:text-destructive text-xs"
-          disabled={deleteMutation.isPending}
-          onClick={remove}
-        >
-          {deleteMutation.isPending ? <Loader2 className="size-3 animate-spin" /> : <Trash2 className="size-3" />}
-          Remove provider
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="text-destructive hover:text-destructive text-xs"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? <Loader2 className="size-3 animate-spin" /> : <Trash2 className="size-3" />}
+              Remove provider
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remove {name}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This deletes the provider and its saved credential. A mission that uses it can no longer call a
+                model through it.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={remove}>Remove</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
+      {renderEdit?.({
+        open: editOpen,
+        onOpenChange: setEditOpen,
+        onSaved: testAgain,
+      })}
     </div>
   );
 }
