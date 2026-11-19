@@ -11,6 +11,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ModelCallDetail } from '../ModelCallDetail';
 import { adaptCallDetail } from '@/src/lib/world-traces';
 import type { LlmCallDetailData } from '@/src/types/trace';
@@ -90,6 +91,30 @@ describe('ModelCallDetail', () => {
     expect(within(output).getByText('all done')).toBeDefined();
 
     expect(container.querySelectorAll('[data-testid^="model-call-item-"]')).toHaveLength(5);
+  });
+
+  it('shortens a long item behind a "Show all" control', async () => {
+    const image = 'A'.repeat(200_000);
+    render(
+      <ModelCallDetail
+        call={detail({
+          requestItems: [
+            JSON.stringify({
+              type: 'message',
+              role: 'user',
+              content: [{ type: 'input_image', image_url: `data:image/png;base64,${image}` }],
+            }),
+            '{"type":"message","role":"user","content":"short"}',
+          ],
+        })}
+      />,
+    );
+    const [long, short] = screen.getAllByTestId('model-call-item-message');
+    expect(long.querySelector('pre')?.textContent?.length ?? 0).toBeLessThan(3000);
+    expect(within(short).queryByRole('button')).toBeNull();
+    await userEvent.click(within(long).getByRole('button', { name: 'Show all' }));
+    expect(long.querySelector('pre')?.textContent).toContain(image);
+    expect(within(long).getByRole('button', { name: 'Show less' })).toBeDefined();
   });
 
   it('shows an item of an unknown type as raw JSON', () => {

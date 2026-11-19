@@ -6,6 +6,8 @@
 import * as React from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { collapsedEvidence, isLongEvidence } from "@/src/lib/findings/evidence";
 import { formatModelCallCost } from "@/src/lib/world-traces";
 import type { LlmCallDetailData, ModelCallItem } from "@/src/types/trace";
 
@@ -71,6 +73,11 @@ function itemCallId(item: ModelCallItem): string {
 function ItemBlock({ item }: { item: ModelCallItem }) {
   const body = itemBody(item);
   const callId = itemCallId(item);
+  // An item can hold megabytes of text, for example a base64 image. A long
+  // item starts short, with the same rule as an evidence item of a finding.
+  const long = isLongEvidence(body);
+  const [expanded, setExpanded] = React.useState(false);
+  const shown = long && !expanded ? collapsedEvidence(body) : body;
   return (
     <li
       data-testid={`model-call-item-${item.kind}`}
@@ -82,11 +89,24 @@ function ItemBlock({ item }: { item: ModelCallItem }) {
       </div>
       {body ? (
         <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words font-mono text-xs">
-          {body}
+          {shown}
+          {long && !expanded ? "\n..." : ""}
         </pre>
       ) : (
         <p className="text-xs italic text-muted-foreground">No text.</p>
       )}
+      {long ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="mt-2"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? "Show less" : "Show all"}
+        </Button>
+      ) : null}
     </li>
   );
 }
