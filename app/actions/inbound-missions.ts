@@ -239,15 +239,15 @@ const PUBLISH_METHOD = "/gibson.tenant.v1.InboundMissionService/PublishInboundMi
 const GRANT_METHOD = "/gibson.tenant.v1.InboundMissionService/GrantInboundCaller";
 
 /**
- * Check that the caller may publish and grant, before the flow makes an
- * identity. CreateAgentIdentity needs only the "writer" relation. Without this
- * check a writer who calls the action directly gets an identity made, and only
- * then the publish is refused.
+ * Check that the caller may call each method of the flow, before the flow
+ * makes an identity. CreateAgentIdentity needs only the "writer" relation.
+ * Without this check a writer who calls the action directly gets an identity
+ * made, and only then the next call is refused. A flow names only the methods
+ * that it calls.
  */
-async function refuseUnlessAdmin(action: string): Promise<InboundCallerFlowResult | null> {
+async function refuseUnlessAllowed(action: string, methods: string[]): Promise<InboundCallerFlowResult | null> {
   try {
-    await assertAuthorized(PUBLISH_METHOD);
-    await assertAuthorized(GRANT_METHOD);
+    for (const method of methods) await assertAuthorized(method);
     return null;
   } catch (err) {
     return shownDaemonFailure(err, action);
@@ -374,7 +374,7 @@ export async function publishInboundMissionAction(input: {
   if (!n.success) return bad(n.error.issues[0]?.message);
   const c = nameSchema.safeParse(input.callerName);
   if (!c.success) return bad(c.error.issues[0]?.message);
-  const denied = await refuseUnlessAdmin("publishInboundMissionAction");
+  const denied = await refuseUnlessAllowed("publishInboundMissionAction", [PUBLISH_METHOD, GRANT_METHOD]);
   if (denied) return denied;
   // The daemon accepts a publish of an agent that is published with the same
   // definition and targets: it approves the present state again and replaces
@@ -412,7 +412,8 @@ export async function addInboundCallerAction(input: {
   if (!a.success) return bad(a.error.issues[0]?.message);
   const c = nameSchema.safeParse(input.callerName);
   if (!c.success) return bad(c.error.issues[0]?.message);
-  const denied = await refuseUnlessAdmin("addInboundCallerAction");
+  // This flow publishes nothing, so it does not ask for the publish right.
+  const denied = await refuseUnlessAllowed("addInboundCallerAction", [GRANT_METHOD]);
   if (denied) return denied;
   return runCallerFlow("addInboundCallerAction", a.data, c.data, null);
 }

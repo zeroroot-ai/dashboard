@@ -390,6 +390,17 @@ describe("a caller who is not a tenant admin", () => {
     expect(order()).toEqual([]);
   });
 
+  it("is checked only for the grant by the flow that adds a caller", async () => {
+    // A caller with the grant right and no publish right can add a caller.
+    m.assert.mockImplementation(async (method: string) => {
+      if (method === PUBLISH) throw new AuthzDeniedError(PUBLISH, "relation-not-met");
+    });
+    const r = await addInboundCallerAction({ agent: "recon", callerName: "second" });
+    expect(m.assert.mock.calls.map((c) => c[0])).toEqual([GRANT]);
+    expect(r).toMatchObject({ ok: true });
+    expect(order()).toEqual(["create", "grant"]);
+  });
+
   it("is checked for the publish and for the grant before the create", async () => {
     await publishInboundMissionAction(VALID);
     expect(m.assert.mock.calls.map((c) => c[0])).toEqual([PUBLISH, GRANT]);
