@@ -33,6 +33,7 @@ import {
   daemonListInboundDefinitionOptions,
   daemonListInboundMissions,
   daemonListInboundTargetOptions,
+  daemonWalkInboundMissions,
   daemonPublishInboundMission,
   daemonRevokeInboundCaller,
   daemonRevokeInboundCallerIdentity,
@@ -82,6 +83,17 @@ const maxActiveMissionsSchema = z
   .int("The maximum number of missions must be a whole number.")
   .min(1, "The maximum number of missions must be at least 1.")
   .max(10000, "The maximum number of missions must be at most 10000.");
+
+/**
+ * The walk of the published definitions stopped at its bound. A check for the
+ * absence of an agent cannot pass then, so the action refuses (fail closed).
+ */
+const LIST_INCOMPLETE = {
+  ok: false,
+  error:
+    "The list of published definitions is too long to read in full, so the agent name cannot be checked. Nothing was changed.",
+  code: "list_incomplete",
+} as const;
 
 function bad(message: string | undefined): { ok: false; error: string; code: string } {
   return { ok: false, error: message ?? "Invalid input", code: "bad_input" };
@@ -157,7 +169,9 @@ export async function republishInboundMissionAction(
   const a = nameSchema.safeParse(agent);
   if (!a.success) return bad(a.error.issues[0]?.message);
   try {
-    const stored = (await daemonListInboundMissions()).find((e) => e.agent === a.data);
+    const present = await daemonWalkInboundMissions();
+    const stored = present.items.find((e) => e.agent === a.data);
+    if (!stored && present.truncated) return LIST_INCOMPLETE;
     if (!stored) {
       return { ok: false, error: `The agent ${a.data} is not published.`, code: "not_found" };
     }
@@ -367,14 +381,16 @@ export async function publishInboundMissionAction(input: {
   // the limit. This form must never do that, so it refuses a published agent
   // before it makes an identity.
   try {
-    const present = await daemonListInboundMissions();
-    if (present.some((e) => e.agent === a.data)) {
+    const present = await daemonWalkInboundMissions();
+    if (present.items.some((e) => e.agent === a.data)) {
       return {
         ok: false,
         error: `The agent ${a.data} is already published. Use "Publish again" on its row to approve a change, or unpublish it first.`,
         code: "already_published",
       };
     }
+    // An agent past the bound of the walk would pass the check above.
+    if (present.truncated) return LIST_INCOMPLETE;
   } catch (err) {
     return shownDaemonFailure(err, "publishInboundMissionAction");
   }

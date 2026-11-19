@@ -52,6 +52,7 @@ import {
   daemonRevokeInboundCaller,
   daemonRevokeInboundCallerIdentity,
   daemonUnpublishInboundMission,
+  daemonWalkInboundMissions,
 } from "../inbound-missions";
 
 const PROTO = {
@@ -94,6 +95,20 @@ describe("inbound mission client", () => {
     expect(inbound.listInboundMissions).toHaveBeenCalledTimes(2);
     expect(inbound.listInboundMissions).toHaveBeenNthCalledWith(1, { pageSize: 1000, pageToken: "" });
     expect(inbound.listInboundMissions).toHaveBeenNthCalledWith(2, { pageSize: 1000, pageToken: "p2" });
+  });
+
+  it("reports a list of published definitions that the walk cut at its page bound", async () => {
+    let page = 0;
+    inbound.listInboundMissions.mockImplementation(async () => {
+      page++;
+      return { entries: [{ ...PROTO, agent: `a${page}` }], nextPageToken: `p${page + 1}` };
+    });
+    const out = await daemonWalkInboundMissions();
+    expect(out.truncated).toBe(true);
+    expect(out.items).toHaveLength(10);
+    inbound.listInboundMissions.mockReset();
+    inbound.listInboundMissions.mockResolvedValue({ entries: [PROTO], nextPageToken: "" });
+    expect(await daemonWalkInboundMissions()).toEqual({ items: [DTO], truncated: false });
   });
 
   it("reads each page of the callers of one published definition", async () => {

@@ -49,7 +49,21 @@ function toDTO(e: InboundMissionEntry): InboundMissionDTO {
   };
 }
 
-/** List each published definition of the tenant. */
+/**
+ * Read the published definitions of the tenant for a check that must see each
+ * one. `truncated` is true when the walk stopped at its bound with entries
+ * left. A caller that decides on the absence of an agent must refuse then.
+ */
+export async function daemonWalkInboundMissions(): Promise<WalkResult<InboundMissionDTO>> {
+  const client = userClient(InboundMissionService);
+  const { items, truncated } = await walkPages(async (pageSize, pageToken) => {
+    const resp = await client.listInboundMissions({ pageSize, pageToken });
+    return { items: resp.entries, nextPageToken: resp.nextPageToken };
+  });
+  return { items: items.map(toDTO), truncated };
+}
+
+/** List each published definition of the tenant, for the page. */
 export async function daemonListInboundMissions(): Promise<InboundMissionDTO[]> {
   const client = userClient(InboundMissionService);
   const entries = await walkItems("tenant.inboundMissions", async (pageSize, pageToken) => {

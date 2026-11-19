@@ -18,6 +18,7 @@ const m = vi.hoisted(() => ({
   targets: vi.fn(),
   agents: vi.fn(),
   session: vi.fn(),
+  walk: vi.fn(),
   assert: vi.fn(),
 }));
 vi.mock("@/src/lib/auth/assert-authorized", async (orig) => ({
@@ -29,6 +30,7 @@ vi.mock("@/src/lib/auth", () => ({ getServerSession: m.session }));
 vi.mock("@/src/lib/gibson-client/inbound-missions", () => ({
   AGENT_PRINCIPAL_PREFIX: "agent_principal:",
   daemonListInboundMissions: m.list,
+  daemonWalkInboundMissions: m.walk,
   daemonPublishInboundMission: m.publish,
   daemonUnpublishInboundMission: m.unpublish,
   daemonGrantInboundCaller: m.grant,
@@ -89,6 +91,7 @@ beforeEach(() => {
   m.session.mockResolvedValue({ user: { id: "u1" } });
   m.assert.mockResolvedValue(undefined);
   m.list.mockResolvedValue([]);
+  m.walk.mockResolvedValue({ items: [], truncated: false });
   m.create.mockResolvedValue(IDENTITY);
   m.publish.mockResolvedValue({ agent: "recon" });
   m.grant.mockResolvedValue(undefined);
@@ -175,7 +178,10 @@ describe("the publish flow", () => {
   });
 
   it("refuses an agent that is already published, before it makes an identity", async () => {
-    m.list.mockResolvedValue([{ agent: "recon", missionDefinitionId: "def-1", targetIds: ["t1", "t2"], stale: true }]);
+    m.walk.mockResolvedValue({
+      items: [{ agent: "recon", missionDefinitionId: "def-1", targetIds: ["t1", "t2"], stale: true }],
+      truncated: false,
+    });
     const r = await publishInboundMissionAction(VALID);
     expect(r).toMatchObject({ ok: false, code: "already_published" });
     expect(r.ok ? "" : r.error).toMatch(/already published.*Publish again.*unpublish/i);
@@ -183,15 +189,23 @@ describe("the publish flow", () => {
   });
 
   it("publishes an agent name that another publication does not use", async () => {
-    m.list.mockResolvedValue([{ agent: "scan" }]);
+    m.walk.mockResolvedValue({ items: [{ agent: "scan" }], truncated: false });
     expect(await publishInboundMissionAction(VALID)).toMatchObject({ ok: true });
-    expect(m.list.mock.invocationCallOrder[0]).toBeLessThan(m.create.mock.invocationCallOrder[0]);
+    expect(m.walk.mock.invocationCallOrder[0]).toBeLessThan(m.create.mock.invocationCallOrder[0]);
   });
 
   it("makes no identity when it cannot read the published definitions", async () => {
-    m.list.mockRejectedValue(new ConnectError("down", Code.Unavailable));
+    m.walk.mockRejectedValue(new ConnectError("down", Code.Unavailable));
     const r = await publishInboundMissionAction(VALID);
     expect(r.ok).toBe(false);
+    expect(order()).toEqual([]);
+  });
+
+  it("refuses when the list of published definitions is cut at the page bound", async () => {
+    // The agent can be past the bound, so its absence in the rows proves nothing.
+    m.walk.mockResolvedValue({ items: [{ agent: "scan" }], truncated: true });
+    const r = await publishInboundMissionAction(VALID);
+    expect(r).toMatchObject({ ok: false, code: "list_incomplete" });
     expect(order()).toEqual([]);
   });
 
@@ -394,7 +408,7 @@ describe("publish again", () => {
   };
 
   it("sends the stored definition, targets and limit, and makes no identity and no grant", async () => {
-    m.list.mockResolvedValue([{ ...STORED, agent: "scan" }, STORED]);
+    m.walk.mockResolvedValue({ items: [{ ...STORED, agent: "scan" }, STORED], truncated: false });
     m.publish.mockResolvedValue({ agent: "recon", stale: false });
     expect(await republishInboundMissionAction(" recon ")).toEqual({
       ok: true,
@@ -410,7 +424,7 @@ describe("publish again", () => {
   });
 
   it("ignores a definition, a target list and a limit that the browser sends", async () => {
-    m.list.mockResolvedValue([STORED]);
+    m.walk.mockResolvedValue({ items: [STORED], truncated: false });
     m.publish.mockResolvedValue({ agent: "recon" });
     const forged = {
       agent: "recon",
@@ -428,14 +442,16 @@ describe("publish again", () => {
   });
 
   it("refuses a publication that is not stale, and one that does not exist", async () => {
-    m.list.mockResolvedValue([{ ...STORED, stale: false, staleReason: "" }]);
+    m.walk.mockResolvedValue({ items: [{ ...STORED, stale: false, staleReason: "" }], truncated: false });
     expect(await republishInboundMissionAction("recon")).toMatchObject({ ok: false, code: "not_stale" });
     expect(await republishInboundMissionAction("scan")).toMatchObject({ ok: false, code: "not_found" });
+    m.walk.mockResolvedValue({ items: [], truncated: true });
+    expect(await republishInboundMissionAction("recon")).toMatchObject({ ok: false, code: "list_incomplete" });
     expect(m.publish).not.toHaveBeenCalled();
   });
 
   it("shows the refusal of the daemon, for example a target that was deleted", async () => {
-    m.list.mockResolvedValue([STORED]);
+    m.walk.mockResolvedValue({ items: [STORED], truncated: false });
     m.publish.mockRejectedValue(new ConnectError("the target does not exist: t2", Code.NotFound));
     expect(await republishInboundMissionAction("recon")).toEqual({
       ok: false,
