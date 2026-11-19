@@ -952,8 +952,10 @@ export function ProviderWizard({
       {
         onSuccess: () => {
           toast.success(`${descriptor.displayName} saved`);
-          // The daemon holds the credential now. The browser keeps no copy.
+          // The daemon holds the credential now. The browser keeps no copy:
+          // not in the form state, and not in the variables of the mutation.
           setFormValues(withoutCredentials(formValues));
+          createMutation.reset();
           setSavedName(formValues.name);
         },
         onError: (err) => {

@@ -45,7 +45,7 @@ const { createMutate, createState } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/src/hooks/useProviderMutations", () => ({
-  useCreateProvider: () => ({ mutate: createMutate, isPending: createState.isPending }),
+  useCreateProvider: () => ({ mutate: createMutate, isPending: createState.isPending, reset: vi.fn() }),
   useDeleteProvider: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 

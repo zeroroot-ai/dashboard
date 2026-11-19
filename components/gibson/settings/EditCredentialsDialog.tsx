@@ -44,7 +44,7 @@ export function EditCredentialsDialog({
   /** Called after the daemon saved the new credentials. */
   onSaved?: () => void;
 }) {
-  const { mutate: updateProvider, isPending: isUpdating } = useUpdateProvider();
+  const { mutate: updateProvider, isPending: isUpdating, reset: resetUpdate } = useUpdateProvider();
   const queryClient = useQueryClient();
   const [credentials, setCredentials] = React.useState<Record<string, string>>({});
 
@@ -56,6 +56,7 @@ export function EditCredentialsDialog({
           toast.success(`${displayName} credentials updated`);
           // The secret values leave the state of the form with the save.
           setCredentials({});
+          resetUpdate();
           onOpenChange(false);
           void queryClient.invalidateQueries({ queryKey: providerQueryKeys.lists() });
           onSaved?.();
