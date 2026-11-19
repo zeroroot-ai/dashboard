@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.137.0](https://github.com/zeroroot-ai/dashboard/compare/v0.136.0...v0.137.0) (2026-11-19)
+
+
+### Features
+
+* **inbound-missions:** add the page that publishes a mission definition for inbound calls ([#379](https://github.com/zeroroot-ai/dashboard/issues/379)) ([f0a17e8](https://github.com/zeroroot-ai/dashboard/commit/f0a17e8fb3e8661f6faf308b70bd14a9a9de72c1))
+
 ## [0.136.0](https://github.com/zeroroot-ai/dashboard/compare/v0.135.4...v0.136.0) (2026-11-19)
 
 
