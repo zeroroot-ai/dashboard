@@ -8,9 +8,7 @@
  *
  * Renders the run's LLM calls as a vertical list: which model answered, the
  * call's input/output token spend, and an expander that loads the full record
- * of the model call on demand (WorldService.GetLlmCall). A row shows no price.
- * The price of one call is the cost that the gateway recorded, and only the
- * record of the call holds it. This is the
+ * of the model call on demand (WorldService.GetLlmCall). This is the
  * default run view; it replaces the Langfuse decision/observation timeline,
  * which the flat World call log has no equivalent for.
  */
@@ -18,7 +16,11 @@
 import * as React from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
-import { formatTokenCount } from "@/src/lib/world-traces";
+import {
+  formatTokenCount,
+  formatUsd,
+  estimateCallCostUsd,
+} from "@/src/lib/world-traces";
 import { ModelCallDetail } from "@/components/gibson/traces/ModelCallDetail";
 import { useCallTranscript } from "@/src/hooks/useTraces";
 import type { LlmCallSummary } from "@/src/types/trace";
@@ -26,6 +28,12 @@ import type { LlmCallSummary } from "@/src/types/trace";
 function CallRow({ call, index }: { call: LlmCallSummary; index: number }) {
   const [expanded, setExpanded] = React.useState(false);
   const { data: detail, isLoading } = useCallTranscript(call.callId, expanded);
+
+  const costUsd = estimateCallCostUsd(
+    call.model,
+    call.promptTokens,
+    call.completionTokens,
+  );
 
   return (
     <li className="relative pl-6">
@@ -44,6 +52,12 @@ function CallRow({ call, index }: { call: LlmCallSummary; index: number }) {
               {formatTokenCount(call.promptTokens)}/
               {formatTokenCount(call.completionTokens)}
             </span>
+            {costUsd > 0 && (
+              <>
+                <span>·</span>
+                <span title="estimated cost">{formatUsd(costUsd)}</span>
+              </>
+            )}
           </span>
         </div>
 
