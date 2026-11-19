@@ -215,7 +215,7 @@ const deadlineInterceptor: Interceptor = (next) => async (req) => {
   } else {
     req.signal.addEventListener('abort', forwardAbort, { once: true });
   }
-  const deadlineMs = req.contextValues.get(CALL_DEADLINE_MS_KEY);
+  const deadlineMs = req.contextValues?.get(CALL_DEADLINE_MS_KEY) ?? UNARY_CALL_DEADLINE_MS;
   const timer = setTimeout(() => {
     controller.abort(
       new ConnectError(
