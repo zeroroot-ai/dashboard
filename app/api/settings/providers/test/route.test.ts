@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Tests for POST /api/settings/providers/test
+ * Tests for POST /api/settings/providers/test (test a SAVED provider by name)
  *
  * Verifies:
  * - Unauthenticated requests return 401
@@ -70,10 +70,10 @@ const mockSession = {
   expires: '2099-01-01T00:00:00Z',
 };
 
+// The body names a saved provider. The extra fields stand for a client that
+// still sends a credential: the route must ignore them and never forward them.
 const testInput = {
   name: 'test-anthropic',
-  type: 'anthropic',
-  defaultModel: 'claude-3-5-sonnet-20241022',
   credentials: { api_key: 'sk-ant-api03-plaintext-secret' },
 };
 
@@ -188,15 +188,31 @@ describe('POST /api/settings/providers/test', () => {
     expect(text).not.toContain('sk-ant-api03-plaintext-secret');
   });
 
-  it('forwards input to daemonTestProvider (not persisted)', async () => {
+  it('passes only the name of the saved provider to the daemon, never a credential', async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
     vi.mocked(daemonTestProvider).mockResolvedValue(mockTestResult);
 
     await POST(makeRequest(testInput) as Parameters<typeof POST>[0]);
-    expect(daemonTestProvider).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'test-anthropic', type: 'anthropic' }),
-      'user-1',
-      'tenant-1',
+    expect(daemonTestProvider).toHaveBeenCalledWith('test-anthropic', 'user-1', 'tenant-1');
+    expect(JSON.stringify(vi.mocked(daemonTestProvider).mock.calls)).not.toContain(
+      'sk-ant-api03-plaintext-secret',
     );
+  });
+
+  it.each([{}, { name: '' }, { name: 42 }, { type: 'anthropic', credentials: { api_key: 'x' } }])(
+    'returns 400 when the body holds no name of a saved provider: %j',
+    async (body) => {
+      vi.mocked(getServerSession).mockResolvedValue(mockSession);
+      const res = await POST(makeRequest(body) as Parameters<typeof POST>[0]);
+      expect(res.status).toBe(400);
+      expect(daemonTestProvider).not.toHaveBeenCalled();
+    },
+  );
+
+  it('returns 404 for a name that is not saved (NotFound)', async () => {
+    vi.mocked(getServerSession).mockResolvedValue(mockSession);
+    vi.mocked(daemonTestProvider).mockRejectedValue(new ConnectError('no provider', Code.NotFound));
+    const res = await POST(makeRequest({ name: 'nope' }) as Parameters<typeof POST>[0]);
+    expect(res.status).toBe(404);
   });
 });

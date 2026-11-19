@@ -12,7 +12,7 @@ import { http, HttpResponse } from 'msw';
 const generateMission = (id: string) => ({
   id,
   name: `Mission ${id}`,
-  status: ['pending', 'running', 'completed', 'failed'][Math.floor(Math.random() * 4)],
+  status: ['submitted', 'working', 'completed', 'failed'][Math.floor(Math.random() * 4)],
   progress: Math.floor(Math.random() * 100),
   startedAt: new Date(Date.now() - Math.random() * 86400000).toISOString(),
   agents: Math.floor(Math.random() * 5) + 1,
@@ -111,7 +111,7 @@ export const handlers = [
     const body = await request.json() as Record<string, unknown>;
     return HttpResponse.json({
       id: `mission-${Date.now()}`,
-      status: 'pending',
+      status: 'submitted',
       ...body,
     }, { status: 201 });
   }),
@@ -129,7 +129,7 @@ export const handlers = [
   http.post('/api/missions/:id/start', ({ params }) => {
     return HttpResponse.json({
       id: params.id,
-      status: 'running',
+      status: 'working',
       startedAt: new Date().toISOString(),
     });
   }),
@@ -137,7 +137,7 @@ export const handlers = [
   http.post('/api/missions/:id/stop', ({ params }) => {
     return HttpResponse.json({
       id: params.id,
-      status: 'stopped',
+      status: 'canceled',
       completedAt: new Date().toISOString(),
     });
   }),
@@ -152,7 +152,7 @@ export const handlers = [
   http.post('/api/missions/:id/resume', ({ params }) => {
     return HttpResponse.json({
       id: params.id,
-      status: 'running',
+      status: 'working',
     });
   }),
 

@@ -28,7 +28,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/provider.proto.
  */
 export const file_gibson_tenant_v1_provider: GenFile = /*@__PURE__*/
-  fileDesc("Ch9naWJzb24vdGVuYW50L3YxL3Byb3ZpZGVyLnByb3RvEhBnaWJzb24udGVuYW50LnYxIoADCg5Qcm92aWRlclJlY29yZBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEgwKBHR5cGUYAyABKAkSFQoNZGVmYXVsdF9tb2RlbBgEIAEoCRISCgppc19kZWZhdWx0GAUgASgIEg8KB2VuYWJsZWQYBiABKAgSUwoSY3JlZGVudGlhbHNfbWFza2VkGAcgAygLMjcuZ2lic29uLnRlbmFudC52MS5Qcm92aWRlclJlY29yZC5DcmVkZW50aWFsc01hc2tlZEVudHJ5EhIKCmNyZWF0ZWRfYXQYCCABKAkSEgoKdXBkYXRlZF9hdBgJIAEoCRIyCgxjYXBhYmlsaXRpZXMYCiADKA4yHC5naWJzb24udGVuYW50LnYxLkNhcGFiaWxpdHkSHwoXZGVmYXVsdF9lbWJlZGRpbmdfbW9kZWwYCyABKAkaOAoWQ3JlZGVudGlhbHNNYXNrZWRFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIuoCChNQcm92aWRlckNvbmZpZ0lucHV0EgwKBG5hbWUYASABKAkSDAoEdHlwZRgCIAEoCRIVCg1kZWZhdWx0X21vZGVsGAMgASgJEksKC2NyZWRlbnRpYWxzGAQgAygLMjYuZ2lic29uLnRlbmFudC52MS5Qcm92aWRlckNvbmZpZ0lucHV0LkNyZWRlbnRpYWxzRW50cnkSFgoOc2V0X2FzX2RlZmF1bHQYBSABKAgSMgoMY2FwYWJpbGl0aWVzGAYgAygOMhwuZ2lic29uLnRlbmFudC52MS5DYXBhYmlsaXR5Eh8KF2RlZmF1bHRfZW1iZWRkaW5nX21vZGVsGAcgASgJEjIKHGRlZmF1bHRfbW9kZWxfY29udGV4dF93aW5kb3cYCCABKAVCDLpICRoHGICt4gQoABoyChBDcmVkZW50aWFsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEipwEKD0NyZWRlbnRpYWxGaWVsZBILCgNrZXkYASABKAkSDQoFbGFiZWwYAiABKAkSEAoIcmVxdWlyZWQYAyABKAgSDgoGc2VjcmV0GAQgASgIEhMKC3BsYWNlaG9sZGVyGAUgASgJEgwKBGhlbHAYBiABKAkSMwoEdHlwZRgHIAEoDjIlLmdpYnNvbi50ZW5hbnQudjEuQ3JlZGVudGlhbEZpZWxkVHlwZSJ7Cg9Nb2RlbERlc2NyaXB0b3ISDAoEbmFtZRgBIAEoCRIOCgZmYW1pbHkYAiABKAkSFgoOY29udGV4dF93aW5kb3cYAyABKAUSMgoMY2FwYWJpbGl0aWVzGAQgAygOMhwuZ2lic29uLnRlbmFudC52MS5DYXBhYmlsaXR5Io4CChFTdXBwb3J0ZWRQcm92aWRlchIMCgR0eXBlGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRIQCghkb2NzX3VybBgDIAEoCRITCgtzZWxmX2hvc3RlZBgEIAEoCBI2CgtjcmVkZW50aWFscxgFIAMoCzIhLmdpYnNvbi50ZW5hbnQudjEuQ3JlZGVudGlhbEZpZWxkEjkKDmRlZmF1bHRfbW9kZWxzGAYgAygLMiEuZ2lic29uLnRlbmFudC52MS5Nb2RlbERlc2NyaXB0b3ISOwoQZW1iZWRkaW5nX21vZGVscxgHIAMoCzIhLmdpYnNvbi50ZW5hbnQudjEuTW9kZWxEZXNjcmlwdG9yIlEKDlJlc3BvbnNlRm9ybWF0EgwKBHR5cGUYASABKAkSDAoEbmFtZRgCIAEoCRITCgtzY2hlbWFfanNvbhgDIAEoCRIOCgZzdHJpY3QYBCABKAgiUgoNTExNVG9rZW5Vc2FnZRIUCgxpbnB1dF90b2tlbnMYASABKAUSFQoNb3V0cHV0X3Rva2VucxgCIAEoBRIUCgx0b3RhbF90b2tlbnMYAyABKAUiOgoLTExNVG9vbENhbGwSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIRCglhcmd1bWVudHMYAyABKAkiSAoNTExNVG9vbFJlc3VsdBIUCgx0b29sX2NhbGxfaWQYASABKAkSDwoHY29udGVudBgCIAEoCRIQCghpc19lcnJvchgDIAEoCCJICgpMTE1Ub29sRGVmEgwKBG5hbWUYASABKAkSEwoLZGVzY3JpcHRpb24YAiABKAkSFwoPcGFyYW1ldGVyc19qc29uGAMgASgJIqoBChFMTE1NZXNzYWdlQ29udGVudBIMCgRyb2xlGAEgASgJEg8KB2NvbnRlbnQYAiABKAkSMQoKdG9vbF9jYWxscxgDIAMoCzIdLmdpYnNvbi50ZW5hbnQudjEuTExNVG9vbENhbGwSNQoMdG9vbF9yZXN1bHRzGAQgAygLMh8uZ2lic29uLnRlbmFudC52MS5MTE1Ub29sUmVzdWx0EgwKBG5hbWUYBSABKAkiFgoUTGlzdFByb3ZpZGVyc1JlcXVlc3QiTAoVTGlzdFByb3ZpZGVyc1Jlc3BvbnNlEjMKCXByb3ZpZGVycxgBIAMoCzIgLmdpYnNvbi50ZW5hbnQudjEuUHJvdmlkZXJSZWNvcmQiLAoSR2V0UHJvdmlkZXJSZXF1ZXN0EhYKBG5hbWUYASABKAlCCLpIBXIDGIAIIkkKE0dldFByb3ZpZGVyUmVzcG9uc2USMgoIcHJvdmlkZXIYASABKAsyIC5naWJzb24udGVuYW50LnYxLlByb3ZpZGVyUmVjb3JkInAKFUNyZWF0ZVByb3ZpZGVyUmVxdWVzdBI0CgVpbnB1dBgBIAEoCzIlLmdpYnNvbi50ZW5hbnQudjEuUHJvdmlkZXJDb25maWdJbnB1dBIhCg9pZGVtcG90ZW5jeV9rZXkYAiABKAlCCLpIBXIDGIABIkwKFkNyZWF0ZVByb3ZpZGVyUmVzcG9uc2USMgoIcHJvdmlkZXIYASABKAsyIC5naWJzb24udGVuYW50LnYxLlByb3ZpZGVyUmVjb3JkImUKFVVwZGF0ZVByb3ZpZGVyUmVxdWVzdBIWCgRuYW1lGAEgASgJQgi6SAVyAxiACBI0CgVpbnB1dBgCIAEoCzIlLmdpYnNvbi50ZW5hbnQudjEuUHJvdmlkZXJDb25maWdJbnB1dCJMChZVcGRhdGVQcm92aWRlclJlc3BvbnNlEjIKCHByb3ZpZGVyGAEgASgLMiAuZ2lic29uLnRlbmFudC52MS5Qcm92aWRlclJlY29yZCIvChVEZWxldGVQcm92aWRlclJlcXVlc3QSFgoEbmFtZRgBIAEoCUIIukgFcgMYgAgiGAoWRGVsZXRlUHJvdmlkZXJSZXNwb25zZSJLChNUZXN0UHJvdmlkZXJSZXF1ZXN0EjQKBWlucHV0GAEgASgLMiUuZ2lic29uLnRlbmFudC52MS5Qcm92aWRlckNvbmZpZ0lucHV0ItMBChRUZXN0UHJvdmlkZXJSZXNwb25zZRIKCgJvaxgBIAEoCBISCgpsYXRlbmN5X21zGAIgASgDEg0KBW1vZGVsGAMgASgJEg0KBWVycm9yGAQgASgJEjEKBm1vZGVscxgFIAMoCzIhLmdpYnNvbi50ZW5hbnQudjEuTW9kZWxEZXNjcmlwdG9yEhQKDGVtYmVkZGluZ19vaxgGIAEoCBIbChNlbWJlZGRpbmdfZGltZW5zaW9uGAcgASgFEhcKD2VtYmVkZGluZ19lcnJvchgIIAEoCSIeChxHZXRTdXBwb3J0ZWRQcm92aWRlcnNSZXF1ZXN0IlcKHUdldFN1cHBvcnRlZFByb3ZpZGVyc1Jlc3BvbnNlEjYKCXByb3ZpZGVycxgBIAMoCzIjLmdpYnNvbi50ZW5hbnQudjEuU3VwcG9ydGVkUHJvdmlkZXIi/AEKFFByb2JlUHJvdmlkZXJSZXF1ZXN0EhYKBHR5cGUYASABKAlCCLpIBXIDGIAIEkwKC2NyZWRlbnRpYWxzGAIgAygLMjcuZ2lic29uLnRlbmFudC52MS5Qcm9iZVByb3ZpZGVyUmVxdWVzdC5DcmVkZW50aWFsc0VudHJ5EikKF2RlZmF1bHRfZW1iZWRkaW5nX21vZGVsGAMgASgJQgi6SAVyAxiAIBIfCg1kZWZhdWx0X21vZGVsGAQgASgJQgi6SAVyAxiACBoyChBDcmVkZW50aWFsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiswEKFVByb2JlUHJvdmlkZXJSZXNwb25zZRIKCgJvaxgBIAEoCBIVCg1lcnJvcl9tZXNzYWdlGAIgASgJEhMKC2Vycm9yX2NsYXNzGAMgASgJEjEKBm1vZGVscxgEIAMoCzIhLmdpYnNvbi50ZW5hbnQudjEuTW9kZWxEZXNjcmlwdG9yEhIKCmxhdGVuY3lfbXMYBSABKAMSGwoTZW1iZWRkaW5nX2RpbWVuc2lvbhgGIAEoBSIzChlMaXN0UHJvdmlkZXJNb2RlbHNSZXF1ZXN0EhYKBG5hbWUYASABKAlCCLpIBXIDGIAIIpsBChpMaXN0UHJvdmlkZXJNb2RlbHNSZXNwb25zZRIKCgJvaxgBIAEoCBIVCg1lcnJvcl9tZXNzYWdlGAIgASgJEhMKC2Vycm9yX2NsYXNzGAMgASgJEjEKBm1vZGVscxgEIAMoCzIhLmdpYnNvbi50ZW5hbnQudjEuTW9kZWxEZXNjcmlwdG9yEhIKCmxhdGVuY3lfbXMYBSABKAMiMgoYR2V0UHJvdmlkZXJIZWFsdGhSZXF1ZXN0EhYKBG5hbWUYASABKAlCCLpIBXIDGIAIIlQKGUdldFByb3ZpZGVySGVhbHRoUmVzcG9uc2USDwoHaGVhbHRoeRgBIAEoCBIXCg9sYXN0X2NoZWNrZWRfYXQYAiABKAkSDQoFZXJyb3IYAyABKAkiGwoZR2V0RGVmYXVsdFByb3ZpZGVyUmVxdWVzdCJQChpHZXREZWZhdWx0UHJvdmlkZXJSZXNwb25zZRIyCghwcm92aWRlchgBIAEoCzIgLmdpYnNvbi50ZW5hbnQudjEuUHJvdmlkZXJSZWNvcmQiMwoZU2V0RGVmYXVsdFByb3ZpZGVyUmVxdWVzdBIWCgRuYW1lGAEgASgJQgi6SAVyAxiACCJQChpTZXREZWZhdWx0UHJvdmlkZXJSZXNwb25zZRIyCghwcm92aWRlchgBIAEoCzIgLmdpYnNvbi50ZW5hbnQudjEuUHJvdmlkZXJSZWNvcmQitQMKEUV4ZWN1dGVMTE1SZXF1ZXN0Eh8KDXByb3ZpZGVyX25hbWUYASABKAlCCLpIBXIDGIAIEhcKBW1vZGVsGAIgASgJQgi6SAVyAxiAIBI1CghtZXNzYWdlcxgDIAMoCzIjLmdpYnNvbi50ZW5hbnQudjEuTExNTWVzc2FnZUNvbnRlbnQSKwoFdG9vbHMYBCADKAsyHC5naWJzb24udGVuYW50LnYxLkxMTVRvb2xEZWYSPgoPcmVzcG9uc2VfZm9ybWF0GAUgASgLMiAuZ2lic29uLnRlbmFudC52MS5SZXNwb25zZUZvcm1hdEgAiAEBEhgKC3RlbXBlcmF0dXJlGAYgASgBSAGIAQESFwoKbWF4X3Rva2VucxgHIAEoBUgCiAEBEhIKBXRvcF9wGAggASgBSAOIAQESDAoEc3RvcBgJIAMoCRIhCgptaXNzaW9uX2lkGAogASgJQgi6SAVyAxiACEgEiAEBQhIKEF9yZXNwb25zZV9mb3JtYXRCDgoMX3RlbXBlcmF0dXJlQg0KC19tYXhfdG9rZW5zQggKBl90b3BfcEINCgtfbWlzc2lvbl9pZCKfAQoSRXhlY3V0ZUxMTVJlc3BvbnNlEg8KB2NvbnRlbnQYASABKAkSMQoKdG9vbF9jYWxscxgCIAMoCzIdLmdpYnNvbi50ZW5hbnQudjEuTExNVG9vbENhbGwSFQoNZmluaXNoX3JlYXNvbhgDIAEoCRIuCgV1c2FnZRgEIAEoCzIfLmdpYnNvbi50ZW5hbnQudjEuTExNVG9rZW5Vc2FnZSpXCgpDYXBhYmlsaXR5EhoKFkNBUEFCSUxJVFlfVU5TUEVDSUZJRUQQABITCg9DQVBBQklMSVRZX0NIQVQQARIYChRDQVBBQklMSVRZX0VNQkVERElORxACKuEBChNDcmVkZW50aWFsRmllbGRUeXBlEiUKIUNSRURFTlRJQUxfRklFTERfVFlQRV9VTlNQRUNJRklFRBAAEh4KGkNSRURFTlRJQUxfRklFTERfVFlQRV9URVhUEAESIgoeQ1JFREVOVElBTF9GSUVMRF9UWVBFX1BBU1NXT1JEEAISHQoZQ1JFREVOVElBTF9GSUVMRF9UWVBFX1VSTBADEiAKHENSRURFTlRJQUxfRklFTERfVFlQRV9SRUdJT04QBBIeChpDUkVERU5USUFMX0ZJRUxEX1RZUEVfQk9PTBAFMrUPCg9Qcm92aWRlclNlcnZpY2USjgEKDUxpc3RQcm92aWRlcnMSJi5naWJzb24udGVuYW50LnYxLkxpc3RQcm92aWRlcnNSZXF1ZXN0GicuZ2lic29uLnRlbmFudC52MS5MaXN0UHJvdmlkZXJzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEogBCgtHZXRQcm92aWRlchIkLmdpYnNvbi50ZW5hbnQudjEuR2V0UHJvdmlkZXJSZXF1ZXN0GiUuZ2lic29uLnRlbmFudC52MS5HZXRQcm92aWRlclJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKRAQoOQ3JlYXRlUHJvdmlkZXISJy5naWJzb24udGVuYW50LnYxLkNyZWF0ZVByb3ZpZGVyUmVxdWVzdBooLmdpYnNvbi50ZW5hbnQudjEuQ3JlYXRlUHJvdmlkZXJSZXNwb25zZSIsirUYKAoGd3JpdGVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkQEKDlVwZGF0ZVByb3ZpZGVyEicuZ2lic29uLnRlbmFudC52MS5VcGRhdGVQcm92aWRlclJlcXVlc3QaKC5naWJzb24udGVuYW50LnYxLlVwZGF0ZVByb3ZpZGVyUmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpEBCg5EZWxldGVQcm92aWRlchInLmdpYnNvbi50ZW5hbnQudjEuRGVsZXRlUHJvdmlkZXJSZXF1ZXN0GiguZ2lic29uLnRlbmFudC52MS5EZWxldGVQcm92aWRlclJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKLAQoMVGVzdFByb3ZpZGVyEiUuZ2lic29uLnRlbmFudC52MS5UZXN0UHJvdmlkZXJSZXF1ZXN0GiYuZ2lic29uLnRlbmFudC52MS5UZXN0UHJvdmlkZXJSZXNwb25zZSIsirUYKAoGd3JpdGVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSpgEKFUdldFN1cHBvcnRlZFByb3ZpZGVycxIuLmdpYnNvbi50ZW5hbnQudjEuR2V0U3VwcG9ydGVkUHJvdmlkZXJzUmVxdWVzdBovLmdpYnNvbi50ZW5hbnQudjEuR2V0U3VwcG9ydGVkUHJvdmlkZXJzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEo0BCg1Qcm9iZVByb3ZpZGVyEiYuZ2lic29uLnRlbmFudC52MS5Qcm9iZVByb3ZpZGVyUmVxdWVzdBonLmdpYnNvbi50ZW5hbnQudjEuUHJvYmVQcm92aWRlclJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSABEp0BChJMaXN0UHJvdmlkZXJNb2RlbHMSKy5naWJzb24udGVuYW50LnYxLkxpc3RQcm92aWRlck1vZGVsc1JlcXVlc3QaLC5naWJzb24udGVuYW50LnYxLkxpc3RQcm92aWRlck1vZGVsc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKaAQoRR2V0UHJvdmlkZXJIZWFsdGgSKi5naWJzb24udGVuYW50LnYxLkdldFByb3ZpZGVySGVhbHRoUmVxdWVzdBorLmdpYnNvbi50ZW5hbnQudjEuR2V0UHJvdmlkZXJIZWFsdGhSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSnQEKEkdldERlZmF1bHRQcm92aWRlchIrLmdpYnNvbi50ZW5hbnQudjEuR2V0RGVmYXVsdFByb3ZpZGVyUmVxdWVzdBosLmdpYnNvbi50ZW5hbnQudjEuR2V0RGVmYXVsdFByb3ZpZGVyUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEp0BChJTZXREZWZhdWx0UHJvdmlkZXISKy5naWJzb24udGVuYW50LnYxLlNldERlZmF1bHRQcm92aWRlclJlcXVlc3QaLC5naWJzb24udGVuYW50LnYxLlNldERlZmF1bHRQcm92aWRlclJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKFAQoKRXhlY3V0ZUxMTRIjLmdpYnNvbi50ZW5hbnQudjEuRXhlY3V0ZUxMTVJlcXVlc3QaJC5naWJzb24udGVuYW50LnYxLkV4ZWN1dGVMTE1SZXNwb25zZSIsirUYKAoGd3JpdGVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IANCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_gibson_auth_v1_options, file_buf_validate_validate]);
+  fileDesc("Ch9naWJzb24vdGVuYW50L3YxL3Byb3ZpZGVyLnByb3RvEhBnaWJzb24udGVuYW50LnYxIoADCg5Qcm92aWRlclJlY29yZBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEgwKBHR5cGUYAyABKAkSFQoNZGVmYXVsdF9tb2RlbBgEIAEoCRISCgppc19kZWZhdWx0GAUgASgIEg8KB2VuYWJsZWQYBiABKAgSUwoSY3JlZGVudGlhbHNfbWFza2VkGAcgAygLMjcuZ2lic29uLnRlbmFudC52MS5Qcm92aWRlclJlY29yZC5DcmVkZW50aWFsc01hc2tlZEVudHJ5EhIKCmNyZWF0ZWRfYXQYCCABKAkSEgoKdXBkYXRlZF9hdBgJIAEoCRIyCgxjYXBhYmlsaXRpZXMYCiADKA4yHC5naWJzb24udGVuYW50LnYxLkNhcGFiaWxpdHkSHwoXZGVmYXVsdF9lbWJlZGRpbmdfbW9kZWwYCyABKAkaOAoWQ3JlZGVudGlhbHNNYXNrZWRFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIuoCChNQcm92aWRlckNvbmZpZ0lucHV0EgwKBG5hbWUYASABKAkSDAoEdHlwZRgCIAEoCRIVCg1kZWZhdWx0X21vZGVsGAMgASgJEksKC2NyZWRlbnRpYWxzGAQgAygLMjYuZ2lic29uLnRlbmFudC52MS5Qcm92aWRlckNvbmZpZ0lucHV0LkNyZWRlbnRpYWxzRW50cnkSFgoOc2V0X2FzX2RlZmF1bHQYBSABKAgSMgoMY2FwYWJpbGl0aWVzGAYgAygOMhwuZ2lic29uLnRlbmFudC52MS5DYXBhYmlsaXR5Eh8KF2RlZmF1bHRfZW1iZWRkaW5nX21vZGVsGAcgASgJEjIKHGRlZmF1bHRfbW9kZWxfY29udGV4dF93aW5kb3cYCCABKAVCDLpICRoHGICt4gQoABoyChBDcmVkZW50aWFsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEipwEKD0NyZWRlbnRpYWxGaWVsZBILCgNrZXkYASABKAkSDQoFbGFiZWwYAiABKAkSEAoIcmVxdWlyZWQYAyABKAgSDgoGc2VjcmV0GAQgASgIEhMKC3BsYWNlaG9sZGVyGAUgASgJEgwKBGhlbHAYBiABKAkSMwoEdHlwZRgHIAEoDjIlLmdpYnNvbi50ZW5hbnQudjEuQ3JlZGVudGlhbEZpZWxkVHlwZSJ7Cg9Nb2RlbERlc2NyaXB0b3ISDAoEbmFtZRgBIAEoCRIOCgZmYW1pbHkYAiABKAkSFgoOY29udGV4dF93aW5kb3cYAyABKAUSMgoMY2FwYWJpbGl0aWVzGAQgAygOMhwuZ2lic29uLnRlbmFudC52MS5DYXBhYmlsaXR5Io4CChFTdXBwb3J0ZWRQcm92aWRlchIMCgR0eXBlGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRIQCghkb2NzX3VybBgDIAEoCRITCgtzZWxmX2hvc3RlZBgEIAEoCBI2CgtjcmVkZW50aWFscxgFIAMoCzIhLmdpYnNvbi50ZW5hbnQudjEuQ3JlZGVudGlhbEZpZWxkEjkKDmRlZmF1bHRfbW9kZWxzGAYgAygLMiEuZ2lic29uLnRlbmFudC52MS5Nb2RlbERlc2NyaXB0b3ISOwoQZW1iZWRkaW5nX21vZGVscxgHIAMoCzIhLmdpYnNvbi50ZW5hbnQudjEuTW9kZWxEZXNjcmlwdG9yIlEKDlJlc3BvbnNlRm9ybWF0EgwKBHR5cGUYASABKAkSDAoEbmFtZRgCIAEoCRITCgtzY2hlbWFfanNvbhgDIAEoCRIOCgZzdHJpY3QYBCABKAgiUgoNTExNVG9rZW5Vc2FnZRIUCgxpbnB1dF90b2tlbnMYASABKAUSFQoNb3V0cHV0X3Rva2VucxgCIAEoBRIUCgx0b3RhbF90b2tlbnMYAyABKAUiOgoLTExNVG9vbENhbGwSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIRCglhcmd1bWVudHMYAyABKAkiSAoNTExNVG9vbFJlc3VsdBIUCgx0b29sX2NhbGxfaWQYASABKAkSDwoHY29udGVudBgCIAEoCRIQCghpc19lcnJvchgDIAEoCCJICgpMTE1Ub29sRGVmEgwKBG5hbWUYASABKAkSEwoLZGVzY3JpcHRpb24YAiABKAkSFwoPcGFyYW1ldGVyc19qc29uGAMgASgJIqoBChFMTE1NZXNzYWdlQ29udGVudBIMCgRyb2xlGAEgASgJEg8KB2NvbnRlbnQYAiABKAkSMQoKdG9vbF9jYWxscxgDIAMoCzIdLmdpYnNvbi50ZW5hbnQudjEuTExNVG9vbENhbGwSNQoMdG9vbF9yZXN1bHRzGAQgAygLMh8uZ2lic29uLnRlbmFudC52MS5MTE1Ub29sUmVzdWx0EgwKBG5hbWUYBSABKAkiFgoUTGlzdFByb3ZpZGVyc1JlcXVlc3QiTAoVTGlzdFByb3ZpZGVyc1Jlc3BvbnNlEjMKCXByb3ZpZGVycxgBIAMoCzIgLmdpYnNvbi50ZW5hbnQudjEuUHJvdmlkZXJSZWNvcmQiLAoSR2V0UHJvdmlkZXJSZXF1ZXN0EhYKBG5hbWUYASABKAlCCLpIBXIDGIAIIkkKE0dldFByb3ZpZGVyUmVzcG9uc2USMgoIcHJvdmlkZXIYASABKAsyIC5naWJzb24udGVuYW50LnYxLlByb3ZpZGVyUmVjb3JkInAKFUNyZWF0ZVByb3ZpZGVyUmVxdWVzdBI0CgVpbnB1dBgBIAEoCzIlLmdpYnNvbi50ZW5hbnQudjEuUHJvdmlkZXJDb25maWdJbnB1dBIhCg9pZGVtcG90ZW5jeV9rZXkYAiABKAlCCLpIBXIDGIABIkwKFkNyZWF0ZVByb3ZpZGVyUmVzcG9uc2USMgoIcHJvdmlkZXIYASABKAsyIC5naWJzb24udGVuYW50LnYxLlByb3ZpZGVyUmVjb3JkImUKFVVwZGF0ZVByb3ZpZGVyUmVxdWVzdBIWCgRuYW1lGAEgASgJQgi6SAVyAxiACBI0CgVpbnB1dBgCIAEoCzIlLmdpYnNvbi50ZW5hbnQudjEuUHJvdmlkZXJDb25maWdJbnB1dCJMChZVcGRhdGVQcm92aWRlclJlc3BvbnNlEjIKCHByb3ZpZGVyGAEgASgLMiAuZ2lic29uLnRlbmFudC52MS5Qcm92aWRlclJlY29yZCIvChVEZWxldGVQcm92aWRlclJlcXVlc3QSFgoEbmFtZRgBIAEoCUIIukgFcgMYgAgiGAoWRGVsZXRlUHJvdmlkZXJSZXNwb25zZSI8ChNUZXN0UHJvdmlkZXJSZXF1ZXN0EhgKBG5hbWUYAiABKAlCCrpIB3IFEAEYgAhKBAgBEAJSBWlucHV0Is0BChRUZXN0UHJvdmlkZXJSZXNwb25zZRIKCgJvaxgBIAEoCBISCgpsYXRlbmN5X21zGAIgASgDEg0KBW1vZGVsGAMgASgJEg0KBWVycm9yGAQgASgJEjEKBm1vZGVscxgFIAMoCzIhLmdpYnNvbi50ZW5hbnQudjEuTW9kZWxEZXNjcmlwdG9ySgQIBhAHSgQIBxAISgQICBAJUgxlbWJlZGRpbmdfb2tSE2VtYmVkZGluZ19kaW1lbnNpb25SD2VtYmVkZGluZ19lcnJvciIeChxHZXRTdXBwb3J0ZWRQcm92aWRlcnNSZXF1ZXN0IlcKHUdldFN1cHBvcnRlZFByb3ZpZGVyc1Jlc3BvbnNlEjYKCXByb3ZpZGVycxgBIAMoCzIjLmdpYnNvbi50ZW5hbnQudjEuU3VwcG9ydGVkUHJvdmlkZXIiMwoZTGlzdFByb3ZpZGVyTW9kZWxzUmVxdWVzdBIWCgRuYW1lGAEgASgJQgi6SAVyAxiACCKbAQoaTGlzdFByb3ZpZGVyTW9kZWxzUmVzcG9uc2USCgoCb2sYASABKAgSFQoNZXJyb3JfbWVzc2FnZRgCIAEoCRITCgtlcnJvcl9jbGFzcxgDIAEoCRIxCgZtb2RlbHMYBCADKAsyIS5naWJzb24udGVuYW50LnYxLk1vZGVsRGVzY3JpcHRvchISCgpsYXRlbmN5X21zGAUgASgDIjIKGEdldFByb3ZpZGVySGVhbHRoUmVxdWVzdBIWCgRuYW1lGAEgASgJQgi6SAVyAxiACCJUChlHZXRQcm92aWRlckhlYWx0aFJlc3BvbnNlEg8KB2hlYWx0aHkYASABKAgSFwoPbGFzdF9jaGVja2VkX2F0GAIgASgJEg0KBWVycm9yGAMgASgJIhsKGUdldERlZmF1bHRQcm92aWRlclJlcXVlc3QiUAoaR2V0RGVmYXVsdFByb3ZpZGVyUmVzcG9uc2USMgoIcHJvdmlkZXIYASABKAsyIC5naWJzb24udGVuYW50LnYxLlByb3ZpZGVyUmVjb3JkIjMKGVNldERlZmF1bHRQcm92aWRlclJlcXVlc3QSFgoEbmFtZRgBIAEoCUIIukgFcgMYgAgiUAoaU2V0RGVmYXVsdFByb3ZpZGVyUmVzcG9uc2USMgoIcHJvdmlkZXIYASABKAsyIC5naWJzb24udGVuYW50LnYxLlByb3ZpZGVyUmVjb3JkIrUDChFFeGVjdXRlTExNUmVxdWVzdBIfCg1wcm92aWRlcl9uYW1lGAEgASgJQgi6SAVyAxiACBIXCgVtb2RlbBgCIAEoCUIIukgFcgMYgCASNQoIbWVzc2FnZXMYAyADKAsyIy5naWJzb24udGVuYW50LnYxLkxMTU1lc3NhZ2VDb250ZW50EisKBXRvb2xzGAQgAygLMhwuZ2lic29uLnRlbmFudC52MS5MTE1Ub29sRGVmEj4KD3Jlc3BvbnNlX2Zvcm1hdBgFIAEoCzIgLmdpYnNvbi50ZW5hbnQudjEuUmVzcG9uc2VGb3JtYXRIAIgBARIYCgt0ZW1wZXJhdHVyZRgGIAEoAUgBiAEBEhcKCm1heF90b2tlbnMYByABKAVIAogBARISCgV0b3BfcBgIIAEoAUgDiAEBEgwKBHN0b3AYCSADKAkSIQoKbWlzc2lvbl9pZBgKIAEoCUIIukgFcgMYgAhIBIgBAUISChBfcmVzcG9uc2VfZm9ybWF0Qg4KDF90ZW1wZXJhdHVyZUINCgtfbWF4X3Rva2Vuc0IICgZfdG9wX3BCDQoLX21pc3Npb25faWQinwEKEkV4ZWN1dGVMTE1SZXNwb25zZRIPCgdjb250ZW50GAEgASgJEjEKCnRvb2xfY2FsbHMYAiADKAsyHS5naWJzb24udGVuYW50LnYxLkxMTVRvb2xDYWxsEhUKDWZpbmlzaF9yZWFzb24YAyABKAkSLgoFdXNhZ2UYBCABKAsyHy5naWJzb24udGVuYW50LnYxLkxMTVRva2VuVXNhZ2UqVwoKQ2FwYWJpbGl0eRIaChZDQVBBQklMSVRZX1VOU1BFQ0lGSUVEEAASEwoPQ0FQQUJJTElUWV9DSEFUEAESGAoUQ0FQQUJJTElUWV9FTUJFRERJTkcQAirhAQoTQ3JlZGVudGlhbEZpZWxkVHlwZRIlCiFDUkVERU5USUFMX0ZJRUxEX1RZUEVfVU5TUEVDSUZJRUQQABIeChpDUkVERU5USUFMX0ZJRUxEX1RZUEVfVEVYVBABEiIKHkNSRURFTlRJQUxfRklFTERfVFlQRV9QQVNTV09SRBACEh0KGUNSRURFTlRJQUxfRklFTERfVFlQRV9VUkwQAxIgChxDUkVERU5USUFMX0ZJRUxEX1RZUEVfUkVHSU9OEAQSHgoaQ1JFREVOVElBTF9GSUVMRF9UWVBFX0JPT0wQBTKlDgoPUHJvdmlkZXJTZXJ2aWNlEo4BCg1MaXN0UHJvdmlkZXJzEiYuZ2lic29uLnRlbmFudC52MS5MaXN0UHJvdmlkZXJzUmVxdWVzdBonLmdpYnNvbi50ZW5hbnQudjEuTGlzdFByb3ZpZGVyc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKIAQoLR2V0UHJvdmlkZXISJC5naWJzb24udGVuYW50LnYxLkdldFByb3ZpZGVyUmVxdWVzdBolLmdpYnNvbi50ZW5hbnQudjEuR2V0UHJvdmlkZXJSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkQEKDkNyZWF0ZVByb3ZpZGVyEicuZ2lic29uLnRlbmFudC52MS5DcmVhdGVQcm92aWRlclJlcXVlc3QaKC5naWJzb24udGVuYW50LnYxLkNyZWF0ZVByb3ZpZGVyUmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpEBCg5VcGRhdGVQcm92aWRlchInLmdpYnNvbi50ZW5hbnQudjEuVXBkYXRlUHJvdmlkZXJSZXF1ZXN0GiguZ2lic29uLnRlbmFudC52MS5VcGRhdGVQcm92aWRlclJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKRAQoORGVsZXRlUHJvdmlkZXISJy5naWJzb24udGVuYW50LnYxLkRlbGV0ZVByb3ZpZGVyUmVxdWVzdBooLmdpYnNvbi50ZW5hbnQudjEuRGVsZXRlUHJvdmlkZXJSZXNwb25zZSIsirUYKAoGd3JpdGVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSiwEKDFRlc3RQcm92aWRlchIlLmdpYnNvbi50ZW5hbnQudjEuVGVzdFByb3ZpZGVyUmVxdWVzdBomLmdpYnNvbi50ZW5hbnQudjEuVGVzdFByb3ZpZGVyUmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEqYBChVHZXRTdXBwb3J0ZWRQcm92aWRlcnMSLi5naWJzb24udGVuYW50LnYxLkdldFN1cHBvcnRlZFByb3ZpZGVyc1JlcXVlc3QaLy5naWJzb24udGVuYW50LnYxLkdldFN1cHBvcnRlZFByb3ZpZGVyc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKdAQoSTGlzdFByb3ZpZGVyTW9kZWxzEisuZ2lic29uLnRlbmFudC52MS5MaXN0UHJvdmlkZXJNb2RlbHNSZXF1ZXN0GiwuZ2lic29uLnRlbmFudC52MS5MaXN0UHJvdmlkZXJNb2RlbHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSmgEKEUdldFByb3ZpZGVySGVhbHRoEiouZ2lic29uLnRlbmFudC52MS5HZXRQcm92aWRlckhlYWx0aFJlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkdldFByb3ZpZGVySGVhbHRoUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEp0BChJHZXREZWZhdWx0UHJvdmlkZXISKy5naWJzb24udGVuYW50LnYxLkdldERlZmF1bHRQcm92aWRlclJlcXVlc3QaLC5naWJzb24udGVuYW50LnYxLkdldERlZmF1bHRQcm92aWRlclJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKdAQoSU2V0RGVmYXVsdFByb3ZpZGVyEisuZ2lic29uLnRlbmFudC52MS5TZXREZWZhdWx0UHJvdmlkZXJSZXF1ZXN0GiwuZ2lic29uLnRlbmFudC52MS5TZXREZWZhdWx0UHJvdmlkZXJSZXNwb25zZSIsirUYKAoGd3JpdGVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMShQEKCkV4ZWN1dGVMTE0SIy5naWJzb24udGVuYW50LnYxLkV4ZWN1dGVMTE1SZXF1ZXN0GiQuZ2lic29uLnRlbmFudC52MS5FeGVjdXRlTExNUmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADQlRaUmdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi90ZW5hbnQvdjE7dGVuYW50djFiBnByb3RvMw", [file_gibson_auth_v1_options, file_buf_validate_validate]);
 
 /**
  * ProviderRecord is the read-side representation of a stored provider config.
@@ -700,9 +700,11 @@ export const DeleteProviderResponseSchema: GenMessage<DeleteProviderResponse> = 
  */
 export type TestProviderRequest = Message<"gibson.tenant.v1.TestProviderRequest"> & {
   /**
-   * @generated from field: gibson.tenant.v1.ProviderConfigInput input = 1;
+   * name is the name of a saved provider. Required.
+   *
+   * @generated from field: string name = 2;
    */
-  input?: ProviderConfigInput | undefined;
+  name: string;
 };
 
 /**
@@ -737,37 +739,11 @@ export type TestProviderResponse = Message<"gibson.tenant.v1.TestProviderRespons
   error: string;
 
   /**
-   * Live models that the provider's list endpoint reports for these
-   * credentials. Empty when ok=false.
+   * Live models that the provider's list endpoint reports. Empty when ok=false.
    *
    * @generated from field: repeated gibson.tenant.v1.ModelDescriptor models = 5;
    */
   models: ModelDescriptor[];
-
-  /**
-   * embedding_ok is true when an embedding probe was attempted and succeeded.
-   * False when no embedding probe was run (provider is chat-only or
-   * default_embedding_model was empty) or when the probe failed.
-   *
-   * @generated from field: bool embedding_ok = 6;
-   */
-  embeddingOk: boolean;
-
-  /**
-   * embedding_dimension is the vector dimension returned by the embedding
-   * probe. 0 when embedding_ok=false or no embedding probe was run.
-   *
-   * @generated from field: int32 embedding_dimension = 7;
-   */
-  embeddingDimension: number;
-
-  /**
-   * embedding_error is the human-readable error from the embedding probe
-   * when embedding_ok=false and a probe was attempted.
-   *
-   * @generated from field: string embedding_error = 8;
-   */
-  embeddingError: string;
 };
 
 /**
@@ -808,118 +784,6 @@ export const GetSupportedProvidersResponseSchema: GenMessage<GetSupportedProvide
   messageDesc(file_gibson_tenant_v1_provider, 24);
 
 /**
- * ProbeProviderRequest carries candidate provider credentials for a
- * validation-only call that returns the live model catalog. Credentials
- * are NEVER persisted by this RPC.
- * Source: previously ProbeProviderRequest in gibson.admin.v1 (platform-sdk).
- *
- * @generated from message gibson.tenant.v1.ProbeProviderRequest
- */
-export type ProbeProviderRequest = Message<"gibson.tenant.v1.ProbeProviderRequest"> & {
-  /**
-   * Provider type identifier (matches SupportedProvider.type).
-   *
-   * @generated from field: string type = 1;
-   */
-  type: string;
-
-  /**
-   * Credential map. Keys come from the provider's CredentialField.key entries;
-   * values are plaintext (used once, discarded).
-   *
-   * @generated from field: map<string, string> credentials = 2;
-   */
-  credentials: { [key: string]: string };
-
-  /**
-   * default_embedding_model is the embedding model to use in the probe.
-   * Required when the provider type serves embeddings and the caller wants an
-   * embedding probe (e.g. voyage, openai-compatible, tei). Optional for
-   * chat-only providers — if supplied, an embedding probe is also run.
-   *
-   * @generated from field: string default_embedding_model = 3;
-   */
-  defaultEmbeddingModel: string;
-
-  /**
-   * default_model is the chat model to test. Optional. Only a provider with no
-   * model list call (Foundry) needs it: the test completes one token against
-   * this model. A provider with a list call ignores it.
-   *
-   * @generated from field: string default_model = 4;
-   */
-  defaultModel: string;
-};
-
-/**
- * Describes the message gibson.tenant.v1.ProbeProviderRequest.
- * Use `create(ProbeProviderRequestSchema)` to create a new message.
- */
-export const ProbeProviderRequestSchema: GenMessage<ProbeProviderRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_provider, 25);
-
-/**
- * ProbeProviderResponse carries the structured probe outcome.
- * Source: previously ProbeProviderResponse in gibson.admin.v1 (platform-sdk).
- *
- * @generated from message gibson.tenant.v1.ProbeProviderResponse
- */
-export type ProbeProviderResponse = Message<"gibson.tenant.v1.ProbeProviderResponse"> & {
-  /**
-   * True when the provider accepted the credentials and a model list was
-   * retrieved (or the embedding probe succeeded). False otherwise —
-   * error_message describes the reason.
-   *
-   * @generated from field: bool ok = 1;
-   */
-  ok: boolean;
-
-  /**
-   * Human-readable error message when ok=false.
-   *
-   * @generated from field: string error_message = 2;
-   */
-  errorMessage: string;
-
-  /**
-   * Stable error class for programmatic dispatch when ok=false.
-   *
-   * @generated from field: string error_class = 3;
-   */
-  errorClass: string;
-
-  /**
-   * Live chat-model catalog the provider's API returned for these
-   * credentials. Empty when ok=false or the provider is embedding-only.
-   *
-   * @generated from field: repeated gibson.tenant.v1.ModelDescriptor models = 4;
-   */
-  models: ModelDescriptor[];
-
-  /**
-   * Round-trip latency to the upstream provider, in milliseconds.
-   *
-   * @generated from field: int64 latency_ms = 5;
-   */
-  latencyMs: bigint;
-
-  /**
-   * embedding_dimension is the vector dimension returned by the embedding
-   * probe. 0 when no embedding probe was run or it failed.
-   *
-   * @generated from field: int32 embedding_dimension = 6;
-   */
-  embeddingDimension: number;
-};
-
-/**
- * Describes the message gibson.tenant.v1.ProbeProviderResponse.
- * Use `create(ProbeProviderResponseSchema)` to create a new message.
- */
-export const ProbeProviderResponseSchema: GenMessage<ProbeProviderResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_provider, 26);
-
-/**
  * @generated from message gibson.tenant.v1.ListProviderModelsRequest
  */
 export type ListProviderModelsRequest = Message<"gibson.tenant.v1.ListProviderModelsRequest"> & {
@@ -934,7 +798,7 @@ export type ListProviderModelsRequest = Message<"gibson.tenant.v1.ListProviderMo
  * Use `create(ListProviderModelsRequestSchema)` to create a new message.
  */
 export const ListProviderModelsRequestSchema: GenMessage<ListProviderModelsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_provider, 27);
+  messageDesc(file_gibson_tenant_v1_provider, 25);
 
 /**
  * @generated from message gibson.tenant.v1.ListProviderModelsResponse
@@ -971,7 +835,7 @@ export type ListProviderModelsResponse = Message<"gibson.tenant.v1.ListProviderM
  * Use `create(ListProviderModelsResponseSchema)` to create a new message.
  */
 export const ListProviderModelsResponseSchema: GenMessage<ListProviderModelsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_provider, 28);
+  messageDesc(file_gibson_tenant_v1_provider, 26);
 
 /**
  * @generated from message gibson.tenant.v1.GetProviderHealthRequest
@@ -988,7 +852,7 @@ export type GetProviderHealthRequest = Message<"gibson.tenant.v1.GetProviderHeal
  * Use `create(GetProviderHealthRequestSchema)` to create a new message.
  */
 export const GetProviderHealthRequestSchema: GenMessage<GetProviderHealthRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_provider, 29);
+  messageDesc(file_gibson_tenant_v1_provider, 27);
 
 /**
  * @generated from message gibson.tenant.v1.GetProviderHealthResponse
@@ -1015,7 +879,7 @@ export type GetProviderHealthResponse = Message<"gibson.tenant.v1.GetProviderHea
  * Use `create(GetProviderHealthResponseSchema)` to create a new message.
  */
 export const GetProviderHealthResponseSchema: GenMessage<GetProviderHealthResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_provider, 30);
+  messageDesc(file_gibson_tenant_v1_provider, 28);
 
 /**
  * @generated from message gibson.tenant.v1.GetDefaultProviderRequest
@@ -1028,7 +892,7 @@ export type GetDefaultProviderRequest = Message<"gibson.tenant.v1.GetDefaultProv
  * Use `create(GetDefaultProviderRequestSchema)` to create a new message.
  */
 export const GetDefaultProviderRequestSchema: GenMessage<GetDefaultProviderRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_provider, 31);
+  messageDesc(file_gibson_tenant_v1_provider, 29);
 
 /**
  * @generated from message gibson.tenant.v1.GetDefaultProviderResponse
@@ -1045,7 +909,7 @@ export type GetDefaultProviderResponse = Message<"gibson.tenant.v1.GetDefaultPro
  * Use `create(GetDefaultProviderResponseSchema)` to create a new message.
  */
 export const GetDefaultProviderResponseSchema: GenMessage<GetDefaultProviderResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_provider, 32);
+  messageDesc(file_gibson_tenant_v1_provider, 30);
 
 /**
  * @generated from message gibson.tenant.v1.SetDefaultProviderRequest
@@ -1062,7 +926,7 @@ export type SetDefaultProviderRequest = Message<"gibson.tenant.v1.SetDefaultProv
  * Use `create(SetDefaultProviderRequestSchema)` to create a new message.
  */
 export const SetDefaultProviderRequestSchema: GenMessage<SetDefaultProviderRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_provider, 33);
+  messageDesc(file_gibson_tenant_v1_provider, 31);
 
 /**
  * @generated from message gibson.tenant.v1.SetDefaultProviderResponse
@@ -1079,7 +943,7 @@ export type SetDefaultProviderResponse = Message<"gibson.tenant.v1.SetDefaultPro
  * Use `create(SetDefaultProviderResponseSchema)` to create a new message.
  */
 export const SetDefaultProviderResponseSchema: GenMessage<SetDefaultProviderResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_provider, 34);
+  messageDesc(file_gibson_tenant_v1_provider, 32);
 
 /**
  * @generated from message gibson.tenant.v1.ExecuteLLMRequest
@@ -1147,7 +1011,7 @@ export type ExecuteLLMRequest = Message<"gibson.tenant.v1.ExecuteLLMRequest"> & 
  * Use `create(ExecuteLLMRequestSchema)` to create a new message.
  */
 export const ExecuteLLMRequestSchema: GenMessage<ExecuteLLMRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_provider, 35);
+  messageDesc(file_gibson_tenant_v1_provider, 33);
 
 /**
  * @generated from message gibson.tenant.v1.ExecuteLLMResponse
@@ -1179,7 +1043,7 @@ export type ExecuteLLMResponse = Message<"gibson.tenant.v1.ExecuteLLMResponse"> 
  * Use `create(ExecuteLLMResponseSchema)` to create a new message.
  */
 export const ExecuteLLMResponseSchema: GenMessage<ExecuteLLMResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_provider, 36);
+  messageDesc(file_gibson_tenant_v1_provider, 34);
 
 /**
  * Capability declares a service a provider can fulfill. A provider may serve
@@ -1332,8 +1196,9 @@ export const ProviderService: GenService<{
     output: typeof DeleteProviderResponseSchema;
   },
   /**
-   * TestProvider validates a proposed provider config by making a minimal live
-   * request.
+   * TestProvider tests a SAVED provider by name. It sends one GET of the model
+   * list through the route of the provider on the model gateway. It never tests
+   * a credential that is not saved (gibson#1394).
    *
    * @generated from rpc gibson.tenant.v1.ProviderService.TestProvider
    */
@@ -1354,29 +1219,9 @@ export const ProviderService: GenService<{
     output: typeof GetSupportedProvidersResponseSchema;
   },
   /**
-   * ProbeProvider validates candidate provider credentials WITHOUT persisting
-   * them, and returns the live model catalog the provider's API exposes for
-   * those credentials. Used by the wizard's "Test connection" step.
-   *
-   * SECURITY: credentials transit memory only — they are passed to the
-   * transient provider client, the call is made, and the values are dropped
-   * when the request returns. They are never logged, never persisted, and
-   * never returned to the caller.
-   *
-   * Source: previously ProbeProvider in gibson.admin.v1.TenantAdminService
-   * (platform-sdk); moved here as it is customer-callable.
-   *
-   * @generated from rpc gibson.tenant.v1.ProviderService.ProbeProvider
-   */
-  probeProvider: {
-    methodKind: "unary";
-    input: typeof ProbeProviderRequestSchema;
-    output: typeof ProbeProviderResponseSchema;
-  },
-  /**
-   * ListProviderModels fetches the live model catalog for an already-
-   * configured provider, looked up by name. Credentials are read from the
-   * encrypted store; the caller does not pass them.
+   * ListProviderModels fetches the live model catalog for a saved provider, by
+   * name. It sends one GET of the model list through the route of the provider
+   * on the model gateway. The caller passes no credential.
    *
    * @generated from rpc gibson.tenant.v1.ProviderService.ListProviderModels
    */

@@ -5,7 +5,7 @@
  * Per-route contract test for GET /api/missions/:id/events, Loki log tail
  * (dashboard#385).
  *
- * Verifies that while the mission is `running` and Loki is reachable, the SSE
+ * Verifies that while the mission is `working` and Loki is reachable, the SSE
  * bridge tails Loki and forwards each entry as an `event: log` frame, and that
  * an unavailable Loki backend is skipped silently (no log frames, no error
  * frame).
@@ -115,14 +115,14 @@ beforeEach(() => {
 });
 
 describe('GET /api/missions/:id/events, Loki log tail', () => {
-  it('emits an event: log frame per Loki entry while the mission is running', async () => {
+  it('emits an event: log frame per Loki entry while the mission is working', async () => {
     mockGetServerSession.mockResolvedValue({
       user: { id: 'u1', tenantId: 't1' },
     });
 
-    // Mission reports running so the Loki-tail branch is entered.
+    // Mission reports working so the Loki-tail branch is entered.
     mockListMissions.mockResolvedValue({
-      missions: [{ id: 'm1', status: 'MISSION_STATUS_RUNNING' }],
+      missions: [{ id: 'm1', status: 'MISSION_STATUS_WORKING' }],
     });
 
     // Entries must be at-or-after the route's live cursor (initialized to
@@ -167,7 +167,7 @@ describe('GET /api/missions/:id/events, Loki log tail', () => {
       user: { id: 'u1', tenantId: 't1' },
     });
     mockListMissions.mockResolvedValue({
-      missions: [{ id: 'm1', status: 'MISSION_STATUS_RUNNING' }],
+      missions: [{ id: 'm1', status: 'MISSION_STATUS_WORKING' }],
     });
     // The daemon log backend is unavailable: the RPC rejects. The tail is
     // best-effort and swallows the error, so no log frames are emitted.
@@ -192,7 +192,7 @@ describe('GET /api/missions/:id/events, per-node lifecycle frames', () => {
       user: { id: 'u1', tenantId: 't1' },
     });
     mockListMissions.mockResolvedValue({
-      missions: [{ id: 'm1', status: 'MISSION_STATUS_RUNNING' }],
+      missions: [{ id: 'm1', status: 'MISSION_STATUS_WORKING' }],
     });
 
     // Daemon Subscribe yields node events as MissionEvent on the response
@@ -244,7 +244,7 @@ describe('GET /api/missions/:id/events, per-node lifecycle frames', () => {
       user: { id: 'u1', tenantId: 't1' },
     });
     mockListMissions.mockResolvedValue({
-      missions: [{ id: 'm1', status: 'MISSION_STATUS_RUNNING' }],
+      missions: [{ id: 'm1', status: 'MISSION_STATUS_WORKING' }],
     });
 
     mockSubscribe.mockImplementation(async function* () {

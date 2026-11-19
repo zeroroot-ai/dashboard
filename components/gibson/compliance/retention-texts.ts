@@ -10,7 +10,7 @@
 export const RETENTION_TEXT = {
   title: "Retention",
   intro:
-    "Postgres keeps your audit log and the Timeline history of your missions for the retention period. After the period, only your durable bucket keeps them. Your organization can set a longer period than the period of this installation, never a shorter one.",
+    "Postgres keeps your audit log and the Timeline history of your missions for the retention period. After the period, only your durable bucket keeps them. Your organization can set a longer period than the period of this installation, never a shorter one. A finding keeps the tool results that it cites, also after this period.",
   inputLabel: "Retention period in months",
   save: "Set period",
   reset: "Use the installation period",

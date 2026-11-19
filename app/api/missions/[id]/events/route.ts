@@ -9,8 +9,9 @@
  * Forwards the following daemon-derived events to the browser as named
  * SSE frames:
  *
- *   - `event: status`     , mission status transition (pending → running
- *                            → paused → completed / failed / stopped).
+ *   - `event: status`     , mission status transition (submitted → working
+ *                            → input_required / paused → completed / failed
+ *                            / canceled).
  *                            Payload: { missionId, status }.
  *   - `event: log`        , one mission log line, while the mission runs.
  *                            Payload: { timestamp, level, message, component }.
@@ -50,6 +51,7 @@ import { getServerSession } from "@/src/lib/auth";
 import { requireActiveTenant, activeTenantApiResponse } from "@/src/lib/auth/active-tenant";
 import { queryMissionLogs } from "@/src/lib/gibson-client/logs";
 import { listMissions, userClient } from "@/src/lib/gibson-client";
+import { isActiveMission, parseMissionStatus } from "@/src/lib/missions/status";
 import { DaemonService } from "@/src/gen/gibson/daemon/v1/daemon_pb";
 
 // Polling cadence for the underlying daemon RPCs. 3s strikes a balance
@@ -140,7 +142,7 @@ export async function GET(
       let seq = 0;
 
       // ---- mission log tail ----
-      // While the mission is `running` we tail the daemon LogsService for this
+      // While the mission is `working` or `input_required` we tail the daemon LogsService for this
       // mission's log lines and forward each as an `event: log` frame. We
       // initialize the cursor to "now" so we never replay historical lines on
       // connect, the logs tab (GET .../logs) owns the backfill; this bridge is
@@ -265,8 +267,8 @@ export async function GET(
         if (cancelled) return;
 
         // ---- mission log tail ----
-        // Only tail while the mission is actively running. When status leaves
-        // `running` this branch is skipped, so log frames naturally stop. The
+        // Only tail while the mission is active. When status leaves
+        // `working` and `input_required` this branch is skipped, so log frames naturally stop. The
         // tail is best-effort: any RPC error (including an unavailable log
         // backend) is swallowed so the status bridge keeps polling.
         // The daemon LogsService derives the tenant scope server-side
@@ -274,7 +276,7 @@ export async function GET(
         // branch is exercised by this route's __tests__ suite (queryMissionLogs
         // mocked) and end-to-end against a live Kind cluster; transient backend
         // failures are intentionally silent here.
-        if (lastStatus === "running") {
+        if (isActiveMission(parseMissionStatus(lastStatus))) {
           try {
             const entries = await queryMissionLogs(missionId, {
               start: new Date(Number(lastLogTimestampNs / NS_PER_MS)),

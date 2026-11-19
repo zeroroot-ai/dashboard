@@ -229,14 +229,14 @@ export function useStartMission(): UseMutationResult<
         queryKeys.missions.lists(tenantId)
       );
 
-      // Optimistically update to running status
+      // Optimistically update to working status
       queryClient.setQueriesData<Mission[]>(
         { queryKey: queryKeys.missions.lists(tenantId) },
         (old) => {
           if (!old) return old;
           return old.map((mission) =>
             mission.id === missionId
-              ? { ...mission, status: 'running' as const, startedAt: new Date() }
+              ? { ...mission, status: 'working' as const, startedAt: new Date() }
               : mission
           );
         }
@@ -247,7 +247,7 @@ export function useStartMission(): UseMutationResult<
         queryKeys.missions.detail(tenantId, missionId),
         (old) => {
           if (!old) return old;
-          return { ...old, status: 'running' as const, startedAt: new Date() };
+          return { ...old, status: 'working' as const, startedAt: new Date() };
         }
       );
 
@@ -355,7 +355,7 @@ export function useResumeMission(): UseMutationResult<
           if (!old) return old;
           return old.map((mission) =>
             mission.id === missionId
-              ? { ...mission, status: 'running' as const }
+              ? { ...mission, status: 'working' as const }
               : mission
           );
         }
@@ -365,7 +365,7 @@ export function useResumeMission(): UseMutationResult<
         queryKeys.missions.detail(tenantId, missionId),
         (old) => {
           if (!old) return old;
-          return { ...old, status: 'running' as const };
+          return { ...old, status: 'working' as const };
         }
       );
 
@@ -413,7 +413,7 @@ export function useStopMission(): UseMutationResult<
           if (!old) return old;
           return old.map((mission) =>
             mission.id === missionId
-              ? { ...mission, status: 'stopped' as const, completedAt: new Date() }
+              ? { ...mission, status: 'canceled' as const, completedAt: new Date() }
               : mission
           );
         }
@@ -423,7 +423,7 @@ export function useStopMission(): UseMutationResult<
         queryKeys.missions.detail(tenantId, missionId),
         (old) => {
           if (!old) return old;
-          return { ...old, status: 'stopped' as const, completedAt: new Date() };
+          return { ...old, status: 'canceled' as const, completedAt: new Date() };
         }
       );
 

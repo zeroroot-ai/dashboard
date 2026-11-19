@@ -2,8 +2,8 @@
 // Copyright 2026 Zero Root AI
 
 /**
- * Per-route contract test for /api/world/llm-call (the per-tick inspector's
- * transcript fetch, gibson#1059). WorldService is mocked via userClient so this
+ * Per-route contract test for /api/world/llm-call (the model call fetch of the
+ * per-tick inspector, gibson#1059). WorldService is mocked via userClient so this
  * is a pure route contract: GET maps the LlmCallDetail, plus the 401, 400
  * (missing callId), and 404 (unknown call) paths. The daemon enforces tenant
  * isolation; this verifies the dashboard forwards the callId and never touches
@@ -49,7 +49,7 @@ beforeEach(() => {
 });
 
 describe('GET /api/world/llm-call', () => {
-  it('maps the call detail (metadata + transcript) and forwards the callId', async () => {
+  it('maps the model call detail and forwards the callId', async () => {
     mockGetLlmCall.mockResolvedValue({
       call: {
         callId: 'c1',
@@ -58,11 +58,17 @@ describe('GET /api/world/llm-call', () => {
         scopeId: 's1',
         promptTokens: 10,
         completionTokens: 5,
-        messages: [
-          { role: 'system', content: 'you are a pentester' },
-          { role: 'user', content: 'scan it' },
+        requestItems: [
+          '{"type":"message","role":"system","content":"you are a pentester"}',
+          '{"type":"message","role":"user","content":"scan it"}',
         ],
-        completion: 'open ports: 22, 443',
+        outputItems: ['{"type":"message","role":"assistant","content":"open ports: 22, 443"}'],
+        provider: 'openai',
+        httpStatus: 200,
+        cacheReadTokens: 4,
+        cacheWriteTokens: 2,
+        cost: '0.0021',
+        errorText: '',
       },
     });
 
@@ -71,9 +77,20 @@ describe('GET /api/world/llm-call', () => {
     const body = await res.json();
     expect(mockGetLlmCall).toHaveBeenCalledWith({ callId: 'c1' });
     expect(body.callId).toBe('c1');
-    expect(body.messages).toHaveLength(2);
-    expect(body.messages[0]).toEqual({ role: 'system', content: 'you are a pentester' });
-    expect(body.completion).toBe('open ports: 22, 443');
+    expect(body.requestItems).toHaveLength(2);
+    expect(body.requestItems[0]).toEqual({
+      kind: 'message',
+      role: 'system',
+      text: 'you are a pentester',
+    });
+    expect(body.outputItems).toEqual([
+      { kind: 'message', role: 'assistant', text: 'open ports: 22, 443' },
+    ]);
+    expect(body.provider).toBe('openai');
+    expect(body.httpStatus).toBe(200);
+    expect(body.cacheReadTokens).toBe(4);
+    expect(body.cacheWriteTokens).toBe(2);
+    expect(body.cost).toBe('0.0021');
   });
 
   it('400 when callId is missing', async () => {

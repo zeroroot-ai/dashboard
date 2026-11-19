@@ -20,18 +20,8 @@ import {
   llmCallIdForEvent,
   type TickEvent,
 } from "@/components/gibson/brain/llm-tick";
-
-type LlmMessage = { role: string; content: string };
-type LlmCall = {
-  callId: string;
-  runId: string;
-  model: string;
-  scopeId: string;
-  promptTokens: number;
-  completionTokens: number;
-  messages: LlmMessage[];
-  completion: string;
-};
+import { ModelCallDetail } from "@/components/gibson/traces/ModelCallDetail";
+import type { LlmCallDetailData } from "@/src/types/trace";
 
 function changeVariant(c: ChangeType): "success" | "info" | "destructive" {
   if (c === "added") return "success";
@@ -46,7 +36,7 @@ function changeVariant(c: ChangeType): "success" | "info" | "destructive" {
  * client-side from the folded frame at seq N-1 vs N (`diffFrames`); the Decider
  * RATIONALE when the tick is a decision event (richer once the decisions fold
  * lands, gibson#1060 — shown from the event summary until then); and, for an LLM
- * tick, its TRANSCRIPT fetched on demand via GetLlmCall (/api/world/llm-call).
+ * tick, its MODEL CALL record fetched on demand via GetLlmCall (/api/world/llm-call).
  * The graph highlight of the same delta is driven by the caller from `diff`.
  */
 export function TickInspector({
@@ -61,7 +51,7 @@ export function TickInspector({
   onClose: () => void;
 }) {
   const callId = llmCallIdForEvent(event);
-  const [call, setCall] = useState<LlmCall | null>(null);
+  const [call, setCall] = useState<LlmCallDetailData | null>(null);
   const [callLoading, setCallLoading] = useState(false);
   const [callError, setCallError] = useState<string | null>(null);
 
@@ -84,10 +74,10 @@ export function TickInspector({
       const res = await fetch(
         `/api/world/llm-call?callId=${encodeURIComponent(callId)}`,
       );
-      if (!res.ok) throw new Error(`transcript read failed (${res.status})`);
-      setCall((await res.json()) as LlmCall);
+      if (!res.ok) throw new Error(`model call read failed (${res.status})`);
+      setCall((await res.json()) as LlmCallDetailData);
     } catch (e) {
-      setCallError(e instanceof Error ? e.message : "failed to load transcript");
+      setCallError(e instanceof Error ? e.message : "failed to load the model call");
     } finally {
       setCallLoading(false);
     }
@@ -141,7 +131,7 @@ export function TickInspector({
           <section className="flex flex-col gap-3">
             <Separator />
             <div className="flex items-center justify-between gap-4">
-              <h3 className="text-sm font-semibold">LLM transcript</h3>
+              <h3 className="text-sm font-semibold">Model call</h3>
               {!call ? (
                 <Button
                   variant="secondary"
@@ -149,40 +139,14 @@ export function TickInspector({
                   onClick={() => void loadTranscript()}
                   disabled={callLoading}
                 >
-                  {callLoading ? "Loading…" : "View transcript"}
+                  {callLoading ? "Loading…" : "View model call"}
                 </Button>
               ) : null}
             </div>
             {callError ? (
               <p className="text-sm text-destructive">{callError}</p>
             ) : null}
-            {call ? (
-              <div className="flex flex-col gap-3">
-                <p className="font-mono text-xs text-muted-foreground">
-                  {call.model} · {call.promptTokens + call.completionTokens} tokens
-                </p>
-                {call.messages.map((m, i) => (
-                  <div key={i} className="flex flex-col gap-1">
-                    <Badge variant="outline" className="w-fit">
-                      {m.role}
-                    </Badge>
-                    <p className="whitespace-pre-wrap break-words text-sm">
-                      {m.content}
-                    </p>
-                  </div>
-                ))}
-                {call.completion ? (
-                  <div className="flex flex-col gap-1">
-                    <Badge variant="success" className="w-fit">
-                      completion
-                    </Badge>
-                    <p className="whitespace-pre-wrap break-words text-sm">
-                      {call.completion}
-                    </p>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
+            {call ? <ModelCallDetail call={call} /> : null}
           </section>
         ) : null}
       </CardContent>

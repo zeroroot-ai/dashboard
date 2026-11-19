@@ -24,6 +24,10 @@ import { COMPLIANCE_MENU_TITLE } from "@/components/gibson/compliance/texts";
 import { INTEGRATIONS_TEXTS } from "@/components/gibson/integrations/texts";
 import { AuthorizedNavGate } from "@/components/gibson/auth/AuthorizedNavGate";
 import { AUDIT_TEXT } from "@/components/gibson/audit-log/texts";
+import { AGENT_SKILL_TEXT } from "@/components/gibson/agent-skills/texts";
+import { AGENT_SKILL_PAGE_METHOD } from "@/src/lib/agent-skills/gate";
+import { OUTSIDE_AGENT_TEXT } from "@/components/gibson/outside-agents/texts";
+import { OUTSIDE_AGENT_PAGE_METHOD } from "@/src/lib/outside-agents/gate";
 import { ONTOLOGY_TEXT } from "@/components/gibson/ontology-proposals/texts";
 import { PlatformHealthNavGate } from "@/components/gibson/platform-health/PlatformHealthNavGate";
 import { PLATFORM_HEALTH_TEXTS } from "@/components/gibson/platform-health/texts";
@@ -58,6 +62,7 @@ import {
   TerminalIcon,
   LayersIcon,
   ShieldCheckIcon,
+  SparklesIcon,
   WrenchIcon,
   type LucideIcon
 } from "lucide-react";
@@ -73,7 +78,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 /** A menu gate. Each value names a component that hides its entry. */
-type NavGate = "compliance" | "registrations" | "ontology" | "audit" | "platform-health";
+type NavGate =
+  | "compliance"
+  | "registrations"
+  | "ontology"
+  | "audit"
+  | "agent-skills"
+  | "outside-agents"
+  | "platform-health";
 
 type NavGroup = {
   title: string;
@@ -96,8 +108,9 @@ type NavItem = {
    * when the tenant enabled a compliance pack (D56).
    * "registrations": the entry shows only for a caller that may read the
    * registration queue, the Platform owner (dashboard#193).
-   * "ontology" and "audit": the entry shows only for the Owner and the
-   * Admin, the roles that may call the page's RPC (dashboard#191, G23).
+   * "ontology", "audit", "agent-skills" and "outside-agents": the entry shows only for the
+   * Owner and the Admin, the roles that may call the page's RPC
+   * (dashboard#191, G23, gibson#1364).
    * "platform-health": the entry shows only for the Platform owner, the
    * caller that may read the platform health (hosted#174).
    */
@@ -217,6 +230,24 @@ export const navItems: NavGroup[] = [
         icon: BoxIcon
       },
       {
+        // Agent Skills are published by the tenant admin and granted to an
+        // agent or a mission (epic gibson#1364). Every RPC needs the admin
+        // relation, so the gate hides the entry from other roles.
+        title: AGENT_SKILL_TEXT.menu,
+        href: "/dashboard/agent-skills",
+        icon: SparklesIcon,
+        gate: "agent-skills"
+      },
+      {
+        // Outside A2A agents are registered by the tenant admin and granted to
+        // a mission (epic gibson#1366). Every RPC needs the admin relation, so
+        // the gate hides the entry from other roles.
+        title: OUTSIDE_AGENT_TEXT.menu,
+        href: "/dashboard/outside-agents",
+        icon: GlobeIcon,
+        gate: "outside-agents"
+      },
+      {
         title: "Chat",
         href: "/dashboard/chat",
         icon: MessageSquareIcon,
@@ -320,6 +351,8 @@ export const navItems: NavGroup[] = [
 const GATE_METHOD = {
   ontology: "/gibson.tenant.v1.OntologyExtensionService/ListOntologyExtensionProposals",
   audit: "/gibson.tenant.v1.TenantService/ListAuditEvents",
+  "agent-skills": AGENT_SKILL_PAGE_METHOD,
+  "outside-agents": OUTSIDE_AGENT_PAGE_METHOD,
 } as const;
 
 function GatedItem({
@@ -331,7 +364,7 @@ function GatedItem({
 }) {
   if (gate === "compliance") return <ComplianceNavGate>{children}</ComplianceNavGate>;
   if (gate === "registrations") return <RegistrationsNavGate>{children}</RegistrationsNavGate>;
-  if (gate === "ontology" || gate === "audit") {
+  if (gate === "ontology" || gate === "audit" || gate === "agent-skills" || gate === "outside-agents") {
     return <AuthorizedNavGate method={GATE_METHOD[gate]}>{children}</AuthorizedNavGate>;
   }
   if (gate === "platform-health") return <PlatformHealthNavGate>{children}</PlatformHealthNavGate>;

@@ -6,7 +6,9 @@
 import * as React from "react";
 import { Download } from "lucide-react";
 
+import { exportFindingsAction } from "@/app/actions/findings";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -83,8 +85,39 @@ export function FindingsExportDialog({
   findings,
 }: FindingsExportDialogProps) {
   const [format, setFormat] = React.useState<ExportFormat>("csv");
+  const [includeEvidence, setIncludeEvidence] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  // The list holds no evidence. An export with evidence asks the daemon, which
+  // adds all evidence of each finding (include_evidence).
+  async function downloadWithEvidence() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await exportFindingsAction({
+        format: "json",
+        findingIds: findings.map((f) => f.id),
+        includeEvidence: true,
+      });
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      triggerDownload(res.data.text, "application/json", res.data.filename || "findings.json");
+      onOpenChange(false);
+    } catch {
+      setError("The export failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function handleDownload() {
+    if (format === "json" && includeEvidence) {
+      void downloadWithEvidence();
+      return;
+    }
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
 
     if (format === "csv") {
@@ -135,11 +168,29 @@ export function FindingsExportDialog({
           </div>
         </RadioGroup>
 
+        {format === "json" ? (
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="export-evidence"
+              checked={includeEvidence}
+              onCheckedChange={(v) => setIncludeEvidence(v === true)}
+            />
+            <Label htmlFor="export-evidence" className="cursor-pointer font-normal">
+              Include evidence
+            </Label>
+          </div>
+        ) : null}
+        {error ? (
+          <p role="alert" data-testid="export-error" className="text-destructive text-sm">
+            {error}
+          </p>
+        ) : null}
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleDownload} disabled={findings.length === 0}>
+          <Button onClick={handleDownload} disabled={findings.length === 0 || busy}>
             <Download />
             Download {format.toUpperCase()}
           </Button>

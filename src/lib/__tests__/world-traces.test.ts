@@ -5,6 +5,8 @@ import { describe, it, expect } from 'vitest';
 import {
   adaptCallView,
   adaptCallDetail,
+  parseModelCallItem,
+  formatModelCallCost,
   groupCallsIntoRuns,
   aggregateCalls,
   estimateCallCostUsd,
@@ -42,25 +44,123 @@ describe('adaptCallView', () => {
   });
 });
 
+describe('parseModelCallItem', () => {
+  it('reads a message whose content is a list of parts', () => {
+    expect(
+      parseModelCallItem(
+        '{"content":[{"text":"be brief","type":"input_text"}],"role":"system","type":"message"}',
+      ),
+    ).toEqual({ kind: 'message', role: 'system', text: 'be brief' });
+  });
+
+  it('reads a message whose content is a string', () => {
+    expect(parseModelCallItem('{"type":"message","role":"user","content":"hello"}')).toEqual({
+      kind: 'message',
+      role: 'user',
+      text: 'hello',
+    });
+  });
+
+  it('reads a reasoning item from its summary', () => {
+    expect(
+      parseModelCallItem('{"summary":[{"text":"hmm","type":"summary_text"}],"type":"reasoning"}'),
+    ).toEqual({ kind: 'reasoning', text: 'hmm' });
+  });
+
+  it('reads a function call and its output', () => {
+    expect(
+      parseModelCallItem(
+        '{"type":"function_call","call_id":"t1","name":"nmap","arguments":"{\\"host\\":\\"a\\"}"}',
+      ),
+    ).toEqual({ kind: 'function_call', name: 'nmap', callId: 't1', arguments: '{"host":"a"}' });
+    expect(
+      parseModelCallItem('{"call_id":"t1","output":"plain","type":"function_call_output"}'),
+    ).toEqual({ kind: 'function_call_output', callId: 't1', output: 'plain' });
+  });
+
+  it('keeps an item of an unknown type as raw JSON', () => {
+    const out = parseModelCallItem('{"type":"web_search_call","id":"w1"}');
+    expect(out.kind).toBe('unknown');
+    expect(out.kind === 'unknown' && JSON.parse(out.json)).toEqual({
+      type: 'web_search_call',
+      id: 'w1',
+    });
+  });
+
+  it('shows a JSON string item as text (a purged call)', () => {
+    expect(parseModelCallItem('"<purged text>"')).toEqual({ kind: 'text', text: '<purged text>' });
+  });
+
+  it('shows a JSON text that does not parse as raw text', () => {
+    expect(parseModelCallItem('{"type":"message", broken')).toEqual({
+      kind: 'text',
+      text: '{"type":"message", broken',
+    });
+  });
+
+  it('keeps a JSON value that is not an object as raw JSON', () => {
+    expect(parseModelCallItem('[1,2]')).toEqual({ kind: 'unknown', json: '[1,2]' });
+  });
+});
+
 describe('adaptCallDetail', () => {
-  it('maps the transcript and normalizes unknown roles to user', () => {
+  it('maps the metadata, the cache tokens and both item lists', () => {
     const out = adaptCallDetail({
       callId: 'c1',
       runId: 'r1',
-      model: 'm',
+      model: 'gpt-4o',
       scopeId: 's',
       promptTokens: 10,
       completionTokens: 5,
-      messages: [
-        { role: 'system', content: 'sys' },
-        { role: 'weird', content: 'x' },
-      ],
-      completion: 'done',
+      requestItems: ['{"type":"message","role":"user","content":"scan it"}'],
+      outputItems: ['{"type":"message","role":"assistant","content":"done"}'],
+      provider: 'openai',
+      httpStatus: 200,
+      cacheReadTokens: 7,
+      cacheWriteTokens: 3,
+      cost: '0.0021',
+      errorText: '',
     } as never);
-    expect(out.messages[0]).toEqual({ role: 'system', content: 'sys' });
-    expect(out.messages[1].role).toBe('user');
-    expect(out.completion).toBe('done');
     expect(out.totalTokens).toBe(15);
+    expect(out.provider).toBe('openai');
+    expect(out.httpStatus).toBe(200);
+    expect(out.failed).toBe(false);
+    expect(out.cacheReadTokens).toBe(7);
+    expect(out.cacheWriteTokens).toBe(3);
+    expect(out.cost).toBe('0.0021');
+    expect(out.requestItems).toEqual([{ kind: 'message', role: 'user', text: 'scan it' }]);
+    expect(out.outputItems).toEqual([{ kind: 'message', role: 'assistant', text: 'done' }]);
+  });
+
+  it('marks a model call with an HTTP status of 400 or more as failed', () => {
+    const out = adaptCallDetail({
+      callId: 'c2',
+      runId: '',
+      model: 'm',
+      scopeId: 's',
+      promptTokens: 0,
+      completionTokens: 0,
+      requestItems: ['{"type":"message","role":"user","content":"hi"}'],
+      outputItems: [],
+      provider: '',
+      httpStatus: 404,
+      cacheReadTokens: 0,
+      cacheWriteTokens: 0,
+      cost: '',
+      errorText: 'route not found',
+    } as never);
+    expect(out.failed).toBe(true);
+    expect(out.errorText).toBe('route not found');
+    expect(out.outputItems).toEqual([]);
+  });
+});
+
+describe('formatModelCallCost', () => {
+  it('shows "Unknown" for an empty cost, never a zero', () => {
+    expect(formatModelCallCost('')).toBe('Unknown');
+  });
+  it('shows a cost in US dollars', () => {
+    expect(formatModelCallCost('0.0021')).toBe('$0.0021');
   });
 });
 

@@ -197,7 +197,7 @@ interface ModelInfo {
 /**
  * Result of a connection test to a provider.
  */
-export interface ConnectionTestResult {
+interface ConnectionTestResult {
   /** Whether the connection test passed */
   success: boolean;
   /** Response latency in milliseconds */

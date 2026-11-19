@@ -234,7 +234,7 @@ function applyUpdateToKPIs(
         success?: boolean;
       };
 
-      if (missionUpdate.status === 'running') {
+      if (missionUpdate.status === 'working') {
         return {
           ...kpis,
           activeMissions: kpis.activeMissions + 1,

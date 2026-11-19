@@ -2,7 +2,16 @@
 // Copyright 2026 Zero Root AI
 
 import 'server-only';
-import { createClient, ConnectError, Code, type Client, type Interceptor } from '@connectrpc/connect';
+import {
+  createClient,
+  createContextKey,
+  createContextValues,
+  ConnectError,
+  Code,
+  type Client,
+  type ContextValues,
+  type Interceptor,
+} from '@connectrpc/connect';
 import { createGrpcTransport, Http2SessionManager } from '@connectrpc/connect-node';
 import type { DescService } from '@bufbuild/protobuf';
 import { requireUserToken } from '../auth/user-token';
@@ -180,6 +189,21 @@ function envoyStatusFrom(err: unknown): string | null {
  */
 const UNARY_CALL_DEADLINE_MS = 20_000;
 
+/**
+ * A call that the daemon holds open longer than the default bound sets its own
+ * bound with this key. The provider test waits up to 45 seconds for the route
+ * of a new provider (gibson#1394), so it asks for 60 seconds. The bound stays a
+ * finite number: no call may hang for ever.
+ */
+const CALL_DEADLINE_MS_KEY = createContextKey<number>(UNARY_CALL_DEADLINE_MS, {
+  description: 'unary call deadline in milliseconds',
+});
+
+/** Call options that give one unary call a longer deadline than the default. */
+export function withCallDeadline(deadlineMs: number): { contextValues: ContextValues } {
+  return { contextValues: createContextValues().set(CALL_DEADLINE_MS_KEY, deadlineMs) };
+}
+
 const deadlineInterceptor: Interceptor = (next) => async (req) => {
   if (req.stream) {
     return next(req);
@@ -191,14 +215,15 @@ const deadlineInterceptor: Interceptor = (next) => async (req) => {
   } else {
     req.signal.addEventListener('abort', forwardAbort, { once: true });
   }
+  const deadlineMs = req.contextValues?.get(CALL_DEADLINE_MS_KEY) ?? UNARY_CALL_DEADLINE_MS;
   const timer = setTimeout(() => {
     controller.abort(
       new ConnectError(
-        `${req.service.typeName}/${req.method.name} exceeded the dashboard's ${UNARY_CALL_DEADLINE_MS}ms unary call deadline`,
+        `${req.service.typeName}/${req.method.name} exceeded the dashboard's ${deadlineMs}ms unary call deadline`,
         Code.DeadlineExceeded,
       ),
     );
-  }, UNARY_CALL_DEADLINE_MS);
+  }, deadlineMs);
   timer.unref?.();
   try {
     return await next({ ...req, signal: controller.signal });

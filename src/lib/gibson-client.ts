@@ -34,7 +34,11 @@ import { requireUserToken } from './auth/user-token';
 // `gibson-client/transport.ts` (dashboard#814). `makeClient` and the raw
 // `createGrpcTransport` / `createClient` primitives are intentionally NOT
 // re-exported, this file consumes the sanctioned typed-client wrappers only.
-import { userClient, serviceClient } from './gibson-client/transport';
+import { userClient, serviceClient, withCallDeadline } from './gibson-client/transport';
+
+/** Bound of the provider test: the daemon waits up to 45 seconds for the route (gibson#1394). */
+const TEST_PROVIDER_DEADLINE_MS = 60_000;
+import { isActiveMission, parseMissionStatus } from '@/src/lib/missions/status';
 export { userClient, serviceClient };
 
 // Tenant CRUD has moved to the daemon's AdminTenantService (operator-pull,
@@ -379,7 +383,7 @@ export async function deleteConversation(
 interface SerializedMission {
   id: string;
   name: string;
-  /** Plain status string from the proto (e.g. "running", "completed", "failed"). */
+  /** Plain status string from the proto (e.g. "working", "completed", "failed"). */
   status: string;
   /**
    * Mission start time as Unix epoch seconds (`number`), or `null` when the
@@ -559,7 +563,7 @@ function serializeCapabilities(c: Capabilities | undefined): SerializedCapabilit
  * All proto fields are mapped:
  * - `startTime` / `endTime`: `int64` BigInt Unix seconds → `number | null`
  *   (`null` when the proto default `0` indicates the field is not set).
- * - `status`: plain string (e.g. `"running"`, `"completed"`, `"failed"`).
+ * - `status`: plain string (e.g. `"working"`, `"completed"`, `"failed"`).
  * - `progress`: `double` in [0.0, 1.0], multiply by 100 for a percentage.
  * - String fields carry the proto zero value (`''`) when unset.
  */
@@ -872,7 +876,7 @@ export async function getKPIs(tenantId: string, userId?: string): Promise<KPIs> 
   const agents = agentsResp.agents ?? [];
   const tools = toolsResp.tools ?? [];
 
-  const activeMissions = missions.filter((m) => m.status === 'running').length;
+  const activeMissions = missions.filter((m) => isActiveMission(parseMissionStatus(m.status))).length;
   const agentsOnline = agents.filter((a) => a.health === 'healthy').length;
 
   let totalFindings = 0;
@@ -1153,22 +1157,6 @@ interface DaemonProviderTestResult {
    * Spec: providers-wizard.
    */
   models: ModelDescriptor[];
-  /**
-   * True when an embedding probe was attempted and succeeded.
-   * Populated from gibson#1072 TestProviderResponse.embedding_ok (field 6).
-   */
-  embeddingOk?: boolean;
-  /**
-   * Vector dimension returned by the embedding probe.
-   * 0 when embeddingOk=false or no embedding probe was run.
-   * Populated from gibson#1072 TestProviderResponse.embedding_dimension (field 7).
-   */
-  embeddingDimension?: number;
-  /**
-   * Human-readable error from the embedding probe when embeddingOk=false.
-   * Populated from gibson#1072 TestProviderResponse.embedding_error (field 8).
-   */
-  embeddingError?: string;
 }
 
 /**
@@ -1514,30 +1502,62 @@ export async function daemonDeleteProvider(
 }
 
 /**
- * Test connectivity to a provider via the daemon TestProvider RPC.
- * The config is NOT persisted, the daemon validates and probes the upstream
- * in process memory only.
+ * Test a SAVED provider via the daemon TestProvider RPC. The daemon sends one
+ * GET of the model list through the route of the provider on the model
+ * gateway. The call takes the name of a saved provider and no credential.
+ * The daemon answers NotFound for a name that is not saved.
  *
  * Note: the proto latencyMs field is int64 (bigint in TS); this function
  * converts it to a plain number for caller convenience.
  */
 export async function daemonTestProvider(
-  input: DaemonProviderConfigInput,
+  name: string,
   userId?: string,
   tenantId?: string,
 ): Promise<DaemonProviderTestResult> {
   const client = await getAdminClient(userId, tenantId);
-  const resp = await client.testProvider({ input: toProtoDaemonConfigInput(input) });
+  // The daemon waits up to 45 seconds for the route of a new provider, so the
+  // call has a 60 second bound and not the 20 second default.
+  const resp = await client.testProvider({ name }, withCallDeadline(TEST_PROVIDER_DEADLINE_MS));
   return {
     ok: resp.ok,
     latencyMs: Number(resp.latencyMs),
     model: resp.model,
     error: resp.error || undefined,
     models: (resp.models ?? []).map(fromProtoTestedModel),
-    // Embedding probe results from gibson#1072 (fields 6–8).
-    embeddingOk: resp.embeddingOk || undefined,
-    embeddingDimension: resp.embeddingDimension > 0 ? resp.embeddingDimension : undefined,
-    embeddingError: resp.embeddingError || undefined,
+  };
+}
+
+/**
+ * The result of a model list of a saved provider. errorClass says why a failed
+ * call failed: route_not_ready, auth_failed, rate_limited, timeout, network or
+ * unknown. It is empty when ok is true.
+ */
+interface DaemonProviderModelsResult {
+  ok: boolean;
+  errorClass: string;
+  errorMessage: string;
+  latencyMs: number;
+  models: ModelDescriptor[];
+}
+
+/**
+ * List the models of a saved provider via the daemon ListProviderModels RPC.
+ * A failed call is a result with ok false, not a thrown error.
+ */
+export async function daemonListProviderModels(
+  name: string,
+  userId?: string,
+  tenantId?: string,
+): Promise<DaemonProviderModelsResult> {
+  const client = await getAdminClient(userId, tenantId);
+  const resp = await client.listProviderModels({ name });
+  return {
+    ok: resp.ok,
+    errorClass: resp.errorClass,
+    errorMessage: resp.errorMessage,
+    latencyMs: Number(resp.latencyMs),
+    models: (resp.models ?? []).map(fromProtoTestedModel),
   };
 }
 

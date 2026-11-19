@@ -8,7 +8,7 @@
  * The daemon's `gibson.world.v1.WorldService` returns flat `LlmCallView` /
  * `LlmCallDetail` messages. This module maps those proto messages into the
  * `LlmCallSummary` / `LlmRun` / `TokenSummary` / `LlmCallDetailData` shapes the
- * UI renders, groups calls into runs by `runId`, and aggregates by-model token
+ * UI renders, parses the Open Responses items of a model call, groups calls into runs by `runId`, and aggregates by-model token
  * spend with a static per-model price table. Pure + dependency-free so it is
  * unit-testable without a daemon (replaces the Langfuse-shaped trace-utils +
  * trace-runs).
@@ -20,9 +20,8 @@ import type {
   LlmRun,
   TokenSummary,
   ModelTokenBreakdown,
-  ConversationMessage,
-  MessageRole,
   LlmCallDetailData,
+  ModelCallItem,
 } from '@/src/types/trace';
 
 // ---------------------------------------------------------------------------
@@ -42,27 +41,116 @@ export function adaptCallView(c: LlmCallView): LlmCallSummary {
   };
 }
 
-const ROLES: ReadonlySet<string> = new Set(['system', 'user', 'assistant', 'tool']);
+type JsonObject = Record<string, unknown>;
 
-function normalizeRole(role: string): MessageRole {
-  return ROLES.has(role) ? (role as MessageRole) : 'user';
+function isObject(v: unknown): v is JsonObject {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
 
-/** Map a proto `LlmCallDetail` to the UI `LlmCallDetailData` (with transcript). */
+function str(v: unknown): string {
+  return typeof v === 'string' ? v : '';
+}
+
+/** Show a value as text: a string as it is, each other value as JSON. */
+function asText(v: unknown): string {
+  if (typeof v === 'string') return v;
+  if (v === undefined || v === null) return '';
+  return JSON.stringify(v, null, 2);
+}
+
+/**
+ * Join the text of a list of Open Responses content parts. A part with no
+ * `text` and no `refusal` (an image, a file) shows as its JSON.
+ */
+function partsText(parts: unknown): string {
+  if (typeof parts === 'string') return parts;
+  if (!Array.isArray(parts)) return '';
+  return parts
+    .map((part) => {
+      if (typeof part === 'string') return part;
+      if (isObject(part)) {
+        if (typeof part.text === 'string') return part.text;
+        if (typeof part.refusal === 'string') return part.refusal;
+      }
+      return JSON.stringify(part);
+    })
+    .join('\n');
+}
+
+/**
+ * Parse one Open Responses item (one JSON text) for display.
+ *
+ * A JSON text that does not parse becomes a `text` item with the raw text, so
+ * one bad item never breaks the view. A JSON string becomes a `text` item (a
+ * purged call keeps the one item `"<purged text>"`). An item of a type that
+ * this function does not know becomes an `unknown` item with the raw JSON.
+ */
+export function parseModelCallItem(raw: string): ModelCallItem {
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    return { kind: 'text', text: raw };
+  }
+  if (typeof value === 'string') return { kind: 'text', text: value };
+  if (!isObject(value)) return { kind: 'unknown', json: raw };
+
+  switch (value.type) {
+    case 'message':
+      return { kind: 'message', role: str(value.role), text: partsText(value.content) };
+    case 'reasoning':
+      return {
+        kind: 'reasoning',
+        text: [partsText(value.summary), partsText(value.content)]
+          .filter((t) => t !== '')
+          .join('\n'),
+      };
+    case 'function_call':
+      return {
+        kind: 'function_call',
+        name: str(value.name),
+        callId: str(value.call_id),
+        arguments: asText(value.arguments),
+      };
+    case 'function_call_output':
+      return {
+        kind: 'function_call_output',
+        callId: str(value.call_id),
+        output: typeof value.output === 'string' ? value.output : partsText(value.output),
+      };
+    default:
+      return { kind: 'unknown', json: JSON.stringify(value, null, 2) };
+  }
+}
+
+/** Map a proto `LlmCallDetail` to the UI `LlmCallDetailData`. */
 export function adaptCallDetail(c: LlmCallDetail): LlmCallDetailData {
   return {
     callId: c.callId,
     runId: c.runId,
     model: c.model,
     scopeId: c.scopeId,
+    provider: c.provider,
+    httpStatus: c.httpStatus,
+    failed: c.httpStatus >= 400,
     promptTokens: c.promptTokens,
     completionTokens: c.completionTokens,
     totalTokens: c.promptTokens + c.completionTokens,
-    messages: c.messages.map(
-      (m): ConversationMessage => ({ role: normalizeRole(m.role), content: m.content }),
-    ),
-    completion: c.completion,
+    cacheReadTokens: c.cacheReadTokens,
+    cacheWriteTokens: c.cacheWriteTokens,
+    cost: c.cost,
+    errorText: c.errorText,
+    requestItems: c.requestItems.map(parseModelCallItem),
+    outputItems: c.outputItems.map(parseModelCallItem),
   };
+}
+
+/**
+ * Format the cost of one model call. The cost is a decimal string in US
+ * dollars. An empty cost means that the gateway had no price for the model.
+ */
+export function formatModelCallCost(cost: string): string {
+  return cost === '' ? 'Unknown' : `$${cost}`;
 }
 
 // ---------------------------------------------------------------------------

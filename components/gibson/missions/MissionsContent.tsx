@@ -48,28 +48,29 @@ import {
   useDeleteMission,
 } from "@/src/hooks/useMissions";
 import type { Mission, MissionStatus } from "@/src/types";
+import {
+  MISSION_STATUS_LABELS,
+  canStartMission,
+  canStopMission,
+  isActiveMission,
+} from "@/src/lib/missions/status";
 
 const STATUS_BADGE_CLASSES: Record<MissionStatus, string> = {
-  pending: "border-border text-muted-foreground",
-  running: "border-primary/50 bg-primary/10 text-primary",
+  submitted: "border-border text-muted-foreground",
+  working: "border-primary/50 bg-primary/10 text-primary",
+  input_required: "border-warning/50 bg-warning/10 text-warning",
   paused: "border-alt/50 bg-alt/10 text-alt",
   completed: "border-link/50 bg-link/10 text-link",
   failed: "border-destructive/50 bg-destructive/10 text-destructive",
-  stopped: "border-border text-muted-foreground",
+  canceled: "border-border text-muted-foreground",
 };
 
-const STATUS_LABELS: Record<MissionStatus, string> = {
-  pending: "Pending",
-  running: "Running",
-  paused: "Paused",
-  completed: "Completed",
-  failed: "Failed",
-  stopped: "Stopped",
-};
+const STATUS_LABELS = MISSION_STATUS_LABELS;
 
 const KANBAN_COLUMN_ORDER: MissionStatus[] = [
-  "pending",
-  "running",
+  "submitted",
+  "working",
+  "input_required",
   "paused",
   "completed",
   "failed",
@@ -125,9 +126,9 @@ function MissionActionsMenu({ mission }: { mission: Mission }) {
   // item follows it, and a Viewer reads why instead of a failed toast.
   const { allowed, loading } = useAuthorize(MISSION_RUN_GATE_RPC);
   const canWrite = allowed && !loading;
-  const canStart = canWrite && (mission.status === "pending" || mission.status === "paused");
-  const canPause = canWrite && mission.status === "running";
-  const canStop = canWrite && (mission.status === "running" || mission.status === "paused");
+  const canStart = canWrite && canStartMission(mission.status);
+  const canPause = canWrite && isActiveMission(mission.status);
+  const canStop = canWrite && canStopMission(mission.status);
   const canClone = canWrite && Boolean(mission.missionDefinitionId);
 
   const startMutation = useStartMission();

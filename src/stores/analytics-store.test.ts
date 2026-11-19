@@ -192,12 +192,12 @@ describe('Analytics Store', () => {
       expect(state.pendingUpdates).toHaveLength(0);
     });
 
-    it('should process mission_status update for running mission', () => {
+    it('should process mission_status update for working mission', () => {
       const store = useAnalyticsStore.getState();
       const update: WebSocketUpdate = {
         type: 'mission_status',
         timestamp: new Date().toISOString(),
-        payload: { status: 'running' },
+        payload: { status: 'working' },
       };
 
       store.applyRealtimeUpdate(update);

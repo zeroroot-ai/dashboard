@@ -6,6 +6,7 @@ import { getServerSession } from '@/src/lib/auth';
 import { CsrfError, csrfErrorResponse, requireCsrf } from '@/src/lib/auth/csrf';
 import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { listMissions, resumeMission, runMission } from '@/src/lib/gibson-client';
+import { parseMissionStatus } from '@/src/lib/missions/status';
 
 /**
  * POST /api/missions/:id/start
@@ -15,9 +16,9 @@ import { listMissions, resumeMission, runMission } from '@/src/lib/gibson-client
  * right RPC:
  *
  *   paused  -> ResumeMission(missionId)               (same id stays)
- *   pending -> RunMission(missionDefinitionId, targetId)
+ *   submitted -> RunMission(missionDefinitionId, targetId)
  *              (creates a new mission run; daemon has no execute-by-id path -
- *               the original `pending` record is registered intent, the run
+ *               the original `submitted` record is registered intent, the run
  *               is a separate record)
  *
  * Both RPCs are streaming. The route reads the first event to confirm
@@ -49,7 +50,7 @@ export async function POST(
 
     const { id } = await params;
 
-    // Look up the mission so we can branch on status and (for pending
+    // Look up the mission so we can branch on status and (for submitted
     // missions) read mission_definition_id + target_id to feed RunMission.
     const missionList = await listMissions(false, 1000, session?.user?.id);
     const mission = missionList.missions.find((m) => m.id === id);
@@ -61,7 +62,7 @@ export async function POST(
       );
     }
 
-    const status = (mission.status?.toLowerCase().replace('mission_status_', '') || '').trim();
+    const status = parseMissionStatus(mission.status);
 
     if (status === 'paused') {
       const result = await resumeMission(id, session?.user?.id);
@@ -73,7 +74,7 @@ export async function POST(
       });
     }
 
-    if (status === 'pending') {
+    if (status === 'submitted') {
       if (!mission.missionDefinitionId || !mission.targetId) {
         return NextResponse.json(
           {
@@ -97,7 +98,7 @@ export async function POST(
       return NextResponse.json({
         success: true,
         message: 'Mission started',
-        // The dispatched run is a NEW mission record; the original `pending`
+        // The dispatched run is a NEW mission record; the original `submitted`
         // mission stays as the registered intent. Surface the new id so the
         // UI can navigate to / observe the actual execution.
         missionId: result.missionId || id,
@@ -109,7 +110,7 @@ export async function POST(
       {
         error: {
           code: 'CONFLICT',
-          message: `Mission is in '${status}' state; only 'pending' or 'paused' missions can be started`,
+          message: `Mission is in '${status}' state; only 'submitted' or 'paused' missions can be started`,
         },
       },
       { status: 409 }

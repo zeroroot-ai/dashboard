@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { ErrorAlert, TableSkeleton } from "@/components/gibson/shared";
 import { useMission } from "@/src/hooks/useMissions";
 import type { MissionStatus } from "@/src/types";
+import { MISSION_STATUS_LABELS } from "@/src/lib/missions/status";
 import { SecretsAccessedPanel } from "@/src/components/missions/SecretsAccessedPanel";
 import { BrainView } from "@/components/gibson/brain/BrainView";
 import { ToolStreamProgress } from "@/src/components/mission/ToolStreamProgress";
@@ -63,12 +64,13 @@ interface InFlightTool {
 }
 
 const STATUS_BADGE_CLASSES: Record<MissionStatus, string> = {
-  pending: "border-border text-muted-foreground",
-  running: "border-primary/50 bg-primary/10 text-primary",
+  submitted: "border-border text-muted-foreground",
+  working: "border-primary/50 bg-primary/10 text-primary",
+  input_required: "border-warning/50 bg-warning/10 text-warning",
   paused: "border-alt/50 bg-alt/10 text-alt",
   completed: "border-link/50 bg-link/10 text-link",
   failed: "border-destructive/50 bg-destructive/10 text-destructive",
-  stopped: "border-border text-muted-foreground",
+  canceled: "border-border text-muted-foreground",
 };
 
 interface MissionDetailPageProps {
@@ -277,8 +279,7 @@ export default function MissionDetailPage({ params }: MissionDetailPageProps) {
     );
   }
 
-  const statusLabel =
-    mission.status.charAt(0).toUpperCase() + mission.status.slice(1);
+  const statusLabel = MISSION_STATUS_LABELS[mission.status];
 
   const targetScope =
     mission.config?.scope ?? mission.config?.target ?? "-";
