@@ -86,9 +86,9 @@ describe("inbound mission client", () => {
 
   it("reads each page of the callers of one published definition", async () => {
     inbound.listInboundCallers
-      .mockResolvedValueOnce({ identityIds: ["a"], nextPageToken: "p2" })
-      .mockResolvedValueOnce({ identityIds: ["b"], nextPageToken: "" });
-    expect(await daemonListInboundCallers("recon")).toEqual(["a", "b"]);
+      .mockResolvedValueOnce({ identityIds: ["agent_principal:a"], nextPageToken: "p2" })
+      .mockResolvedValueOnce({ identityIds: ["agent_principal:b"], nextPageToken: "" });
+    expect(await daemonListInboundCallers("recon")).toEqual(["agent_principal:a", "agent_principal:b"]);
     expect(inbound.listInboundCallers).toHaveBeenNthCalledWith(1, { agent: "recon", pageSize: 1000, pageToken: "" });
     expect(inbound.listInboundCallers).toHaveBeenNthCalledWith(2, { agent: "recon", pageSize: 1000, pageToken: "p2" });
   });
@@ -109,16 +109,16 @@ describe("inbound mission client", () => {
     ).rejects.toBe(err);
   });
 
-  it("unpublishes, grants and revokes by agent and identity id", async () => {
+  it("unpublishes, and grants and revokes with the typed principal id unchanged", async () => {
     inbound.unpublishInboundMission.mockResolvedValue({});
     inbound.grantInboundCaller.mockResolvedValue({});
     inbound.revokeInboundCaller.mockResolvedValue({});
     await daemonUnpublishInboundMission("recon");
-    await daemonGrantInboundCaller("recon", "id-1");
-    await daemonRevokeInboundCaller("recon", "id-1");
+    await daemonGrantInboundCaller("recon", "agent_principal:id-1");
+    await daemonRevokeInboundCaller("recon", "agent_principal:id-1");
     expect(inbound.unpublishInboundMission).toHaveBeenCalledWith({ agent: "recon" });
-    expect(inbound.grantInboundCaller).toHaveBeenCalledWith({ agent: "recon", identityId: "id-1" });
-    expect(inbound.revokeInboundCaller).toHaveBeenCalledWith({ agent: "recon", identityId: "id-1" });
+    expect(inbound.grantInboundCaller).toHaveBeenCalledWith({ agent: "recon", identityId: "agent_principal:id-1" });
+    expect(inbound.revokeInboundCaller).toHaveBeenCalledWith({ agent: "recon", identityId: "agent_principal:id-1" });
   });
 
   it("makes a caller identity of the kind agent with only the originate ceiling and no grant", async () => {
@@ -130,7 +130,6 @@ describe("inbound mission client", () => {
     });
     expect(await daemonCreateInboundCallerIdentity("partner")).toEqual({
       principalId: "agent_principal:id-1",
-      identityId: "id-1",
       name: "partner",
       bootstrapToken: "tok",
       gibsonUrl: "https://gibson.example.com",
@@ -170,7 +169,7 @@ describe("inbound mission client", () => {
         ],
         nextPageToken: "",
       });
-    expect(await daemonListInboundCallerNames()).toEqual({ a: "one", b: "two" });
+    expect(await daemonListInboundCallerNames()).toEqual({ "agent_principal:a": "one", "agent_principal:b": "two" });
     expect(identity.listAgentIdentities).toHaveBeenNthCalledWith(2, { pageSize: 1000, pageToken: "p2", kindFilter: 1 });
   });
 

@@ -73,7 +73,10 @@ export async function daemonUnpublishInboundMission(agent: string): Promise<void
   await userClient(InboundMissionService).unpublishInboundMission({ agent });
 }
 
-/** Let one agent identity call a published definition. The id has no type prefix. */
+/**
+ * Let one agent identity call a published definition. The id is the typed
+ * principal id that CreateAgentIdentity returns, unchanged.
+ */
 export async function daemonGrantInboundCaller(agent: string, identityId: string): Promise<void> {
   await userClient(InboundMissionService).grantInboundCaller({ agent, identityId });
 }
@@ -111,7 +114,6 @@ export async function daemonCreateInboundCallerIdentity(name: string): Promise<I
   }
   return {
     principalId: resp.principalId,
-    identityId: resp.principalId.slice(AGENT_PRINCIPAL_PREFIX.length),
     name: resp.name || name,
     bootstrapToken: resp.bootstrapToken,
     gibsonUrl: resp.gibsonUrl,
@@ -123,7 +125,7 @@ export async function daemonRevokeInboundCallerIdentity(principalId: string): Pr
   await userClient(AgentIdentityService).revokeAgentIdentity({ principalId });
 }
 
-/** List the name of each agent identity of the tenant, keyed by the id with no type prefix. */
+/** List the name of each agent identity of the tenant, keyed by the typed principal id. */
 export async function daemonListInboundCallerNames(): Promise<Record<string, string>> {
   const client = userClient(AgentIdentityService);
   const identities = await walkItems("agentIdentity.agents", async (pageSize, pageToken) => {
@@ -132,9 +134,7 @@ export async function daemonListInboundCallerNames(): Promise<Record<string, str
   });
   const names: Record<string, string> = {};
   for (const i of identities) {
-    if (i.principalId.startsWith(AGENT_PRINCIPAL_PREFIX) && i.name) {
-      names[i.principalId.slice(AGENT_PRINCIPAL_PREFIX.length)] = i.name;
-    }
+    if (i.name) names[i.principalId] = i.name;
   }
   return names;
 }

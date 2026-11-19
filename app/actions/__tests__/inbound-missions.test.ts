@@ -55,7 +55,6 @@ const VALID = {
 };
 const IDENTITY = {
   principalId: "agent_principal:id-1",
-  identityId: "id-1",
   name: "partner",
   bootstrapToken: "tok",
   gibsonUrl: "https://gibson.example.com",
@@ -112,13 +111,13 @@ describe("inbound mission actions", () => {
   });
 
   it("list the callers with the name of each identity", async () => {
-    m.callers.mockResolvedValue(["id-1", "id-2"]);
-    m.names.mockResolvedValue({ "id-1": "partner" });
+    m.callers.mockResolvedValue(["agent_principal:id-1", "agent_principal:id-2"]);
+    m.names.mockResolvedValue({ "agent_principal:id-1": "partner" });
     expect(await listInboundCallersAction("recon")).toEqual({
       ok: true,
       data: [
-        { identityId: "id-1", name: "partner" },
-        { identityId: "id-2", name: "" },
+        { identityId: "agent_principal:id-1", name: "partner" },
+        { identityId: "agent_principal:id-2", name: "" },
       ],
     });
     expect(m.callers).toHaveBeenCalledWith("recon");
@@ -127,8 +126,8 @@ describe("inbound mission actions", () => {
   it("unpublish and revoke by agent and identity id", async () => {
     expect(await unpublishInboundMissionAction(" recon ")).toEqual({ ok: true, data: null });
     expect(m.unpublish).toHaveBeenCalledWith("recon");
-    expect(await revokeInboundCallerAction({ agent: "recon", identityId: " id-1 " })).toEqual({ ok: true, data: null });
-    expect(m.revoke).toHaveBeenCalledWith("recon", "id-1");
+    expect(await revokeInboundCallerAction({ agent: "recon", identityId: " agent_principal:id-1 " })).toEqual({ ok: true, data: null });
+    expect(m.revoke).toHaveBeenCalledWith("recon", "agent_principal:id-1");
     expect(await revokeInboundCallerAction({ agent: "recon", identityId: "" })).toMatchObject({ code: "bad_input" });
   });
 
@@ -165,11 +164,11 @@ describe("the publish flow", () => {
       missionDefinitionId: "def-1",
       targetIds: ["t1", "t2"],
     });
-    expect(m.grant).toHaveBeenCalledWith("recon", "id-1");
+    expect(m.grant).toHaveBeenCalledWith("recon", "agent_principal:id-1");
     expect(m.retire).not.toHaveBeenCalled();
     expect(r).toEqual({
       ok: true,
-      caller: { identityId: "id-1", name: "partner" },
+      caller: { identityId: "agent_principal:id-1", name: "partner" },
       credentials: { bootstrapToken: "tok", gibsonUrl: "https://gibson.example.com" },
     });
   });
@@ -197,7 +196,7 @@ describe("the publish flow", () => {
       error: "the definition has no agent node",
       code: "invalid_argument",
       failedStep: "publish",
-      identity: { identityId: "id-1", name: "partner", removed: true },
+      identity: { identityId: "agent_principal:id-1", name: "partner", removed: true },
       published: false,
     });
     expect(JSON.stringify(r)).not.toContain("tok");
@@ -210,7 +209,7 @@ describe("the publish flow", () => {
     expect(r).toMatchObject({
       ok: false,
       failedStep: "grant",
-      identity: { identityId: "id-1", name: "partner", removed: true },
+      identity: { identityId: "agent_principal:id-1", name: "partner", removed: true },
       published: true,
     });
     expect(JSON.stringify(r)).not.toContain("tok");
@@ -223,7 +222,7 @@ describe("the publish flow", () => {
     expect(r).toMatchObject({
       ok: false,
       failedStep: "publish",
-      identity: { identityId: "id-1", name: "partner", removed: false },
+      identity: { identityId: "agent_principal:id-1", name: "partner", removed: false },
       published: false,
     });
   });
@@ -244,7 +243,7 @@ describe("the flow that adds a caller", () => {
     expect(r).toMatchObject({
       ok: false,
       failedStep: "grant",
-      identity: { identityId: "id-1", removed: true },
+      identity: { identityId: "agent_principal:id-1", removed: true },
       published: true,
     });
   });

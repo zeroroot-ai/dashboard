@@ -29,10 +29,11 @@ export interface InboundOptionDTO {
 
 /** The new identity of one caller. The token is shown one time. */
 export interface InboundCallerIdentityDTO {
-  /** The FGA principal, for example "agent_principal:<id>". */
+  /**
+   * The typed principal id, for example "agent_principal:<id>". The caller
+   * grant takes this value unchanged.
+   */
   principalId: string;
-  /** The id with no type prefix. The caller grant uses it. */
-  identityId: string;
   name: string;
   bootstrapToken: string;
   gibsonUrl: string;
@@ -40,6 +41,7 @@ export interface InboundCallerIdentityDTO {
 
 /** One caller of a published definition. The name is empty when the identity list does not hold it. */
 export interface InboundCallerDTO {
+  /** The typed principal id, for example "agent_principal:<id>". */
   identityId: string;
   name: string;
 }

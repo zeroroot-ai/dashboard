@@ -180,7 +180,7 @@ async function runCallerFlow(
   } catch (err) {
     return { ...shownDaemonFailure(err, action), failedStep: "identity", published: publish === null };
   }
-  const caller: InboundCallerDTO = { identityId: identity.identityId, name: identity.name };
+  const caller: InboundCallerDTO = { identityId: identity.principalId, name: identity.name };
 
   let step: InboundFlowStep = publish ? "publish" : "grant";
   // The flow that only adds a caller works on a definition that is published.
@@ -191,7 +191,7 @@ async function runCallerFlow(
       published = true;
       step = "grant";
     }
-    await daemonGrantInboundCaller(agent, identity.identityId);
+    await daemonGrantInboundCaller(agent, identity.principalId);
   } catch (err) {
     // The token of this identity never reaches the browser, so the identity
     // has no use. Revoke it, and report the result of the revoke.
