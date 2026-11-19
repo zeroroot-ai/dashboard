@@ -377,6 +377,9 @@ describe("the callers of one publication", () => {
     expect(dialog).toHaveTextContent(T.revokeTitle("partner"));
     expect(dialog).toHaveTextContent(/identity stays and keeps its token/);
     expect(dialog).toHaveTextContent(/keeps read access to the missions that it already started/);
+    // The owner decided: a revoke removes the grant and keeps the identity.
+    expect(within(dialog).getAllByRole("button").map((b) => b.textContent)).toEqual([T.cancel, T.revokeConfirm]);
+    expect(dialog).not.toHaveTextContent(/retire/i);
     expect(m.revoke).not.toHaveBeenCalled();
     await user.click(within(dialog).getByRole("button", { name: T.revokeConfirm }));
     expect(m.revoke).toHaveBeenCalledWith({ agent: "recon", identityId: CALLER });
@@ -392,31 +395,6 @@ describe("the callers of one publication", () => {
     await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: T.cancel }));
     expect(m.revoke).not.toHaveBeenCalled();
     expect(m.retire).not.toHaveBeenCalled();
-  });
-
-  it("removes the grant and then retires the identity on request", async () => {
-    m.callers.mockResolvedValue({ ok: true, data: { items: [{ identityId: CALLER, name: "partner" }], truncated: false } });
-    m.revoke.mockResolvedValue({ ok: true, data: null });
-    m.retire.mockResolvedValue({ ok: true, data: undefined });
-    const user = userEvent.setup();
-    const panel = await openCallers(user);
-    await user.click(await within(panel).findByRole("button", { name: `${T.revokeButton} partner` }));
-    await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: T.revokeRetireConfirm }));
-    await waitFor(() => expect(m.retire).toHaveBeenCalledWith({ principalId: CALLER }));
-    expect(m.revoke.mock.invocationCallOrder[0]).toBeLessThan(m.retire.mock.invocationCallOrder[0]);
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith(T.revokedAndRetired));
-  });
-
-  it("says that the identity was not retired, with no text of the error", async () => {
-    m.callers.mockResolvedValue({ ok: true, data: { items: [{ identityId: CALLER, name: "partner" }], truncated: false } });
-    m.revoke.mockResolvedValue({ ok: true, data: null });
-    m.retire.mockResolvedValue({ ok: false, error: "[unavailable] upstream reset 10.0.3.4", code: "INTERNAL" });
-    const user = userEvent.setup();
-    const panel = await openCallers(user);
-    await user.click(await within(panel).findByRole("button", { name: `${T.revokeButton} partner` }));
-    await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: T.revokeRetireConfirm }));
-    expect(await within(panel).findByTestId("revoke-error")).toHaveTextContent(T.retireFailed);
-    expect(panel).not.toHaveTextContent("10.0.3.4");
   });
 
   it("says that the caller list is cut when the walk stopped at its bound", async () => {

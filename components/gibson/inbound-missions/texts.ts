@@ -95,14 +95,9 @@ export const INBOUND_MISSION_TEXT = {
   revokeTitle: (caller: string) => `Revoke the caller ${caller}?`,
   revokeBody:
     "Revoke removes the grant of this caller to this publication. The caller can start no new mission here. The identity stays and keeps its token. The caller keeps read access to the missions that it already started.",
-  revokeRetireBody:
-    "No other page retires a caller identity. To end the identity also, choose Revoke and retire. Then its token stops working.",
   revokeConfirm: "Revoke the grant",
-  revokeRetireConfirm: "Revoke and retire the identity",
   revoked: "The grant of the caller is removed.",
-  revokedAndRetired: "The grant is removed and the identity is retired.",
   revokeFailed: "The caller was not revoked.",
-  retireFailed: "The grant is removed. The identity was not retired.",
   addCallerButton: "Add a new caller",
   addingCaller: "Adding...",
   addCallerFailed: "The caller was not added.",
@@ -111,7 +106,7 @@ export const INBOUND_MISSION_TEXT = {
   unpublishButton: "Unpublish",
   unpublishTitle: "Unpublish this definition?",
   unpublishBody:
-    "Unpublish removes the publication and the grant of each caller. An outside client can start no new mission for this agent. Each caller identity stays and keeps its token. A caller keeps read access to the missions that it already started. To end an identity, open Callers and choose Revoke and retire before you unpublish.",
+    "Unpublish removes the publication and the grant of each caller. An outside client can start no new mission for this agent. Each caller identity stays and keeps its token. A caller keeps read access to the missions that it already started.",
   unpublishConfirm: "Unpublish",
   cancel: "Cancel",
   unpublished: (agent: string) => `${agent} is unpublished.`,

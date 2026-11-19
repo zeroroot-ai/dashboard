@@ -9,8 +9,8 @@
  * is always a new identity. The form offers no identity that exists.
  *
  * Revoke asks first and says what it does: it removes the grant, and the
- * identity stays with its token. The dialog can also retire the identity,
- * because no other page does that for a caller.
+ * identity stays with its token (owner decision). This page does not revoke
+ * an identity of a caller.
  */
 
 import * as React from "react";
@@ -21,7 +21,6 @@ import {
   listInboundCallersAction,
   revokeInboundCallerAction,
 } from "@/app/actions/inbound-missions";
-import { retireAgentIdentityAction } from "@/app/actions/crd/member";
 import { CredentialPanel, type Credentials } from "@/components/gibson/shared/CredentialPanel";
 import {
   AlertDialog,
@@ -49,7 +48,6 @@ import type {
   InboundCallerDTO,
   InboundCallerFlowResult,
 } from "@/src/lib/gibson-client/inbound-mission-types";
-import { revokeCleanupNote } from "@/src/lib/inbound-missions/revoke-note";
 import { CallerFlowFailure } from "./CallerFlowFailure";
 import { INBOUND_MISSION_TEXT as T } from "./texts";
 
@@ -83,7 +81,7 @@ export function InboundCallers({ agent }: { agent: string }) {
     refresh();
   }, [refresh]);
 
-  async function revoke(identityId: string, retire: boolean) {
+  async function revoke(identityId: string) {
     setBusy(true);
     setRevokeError(null);
     try {
@@ -92,20 +90,8 @@ export function InboundCallers({ agent }: { agent: string }) {
         setRevokeError(res.code === "unauthenticated" ? T.sessionExpired : res.error);
         return;
       }
+      toast.success(T.revoked);
       refresh();
-      if (!retire) {
-        toast.success(T.revoked);
-        return;
-      }
-      // The grant is gone. The identity goes next, with the one revoke action
-      // of an identity. Its error can hold proxy text, so only the cleanup
-      // message of the daemon shows, as its fixed note.
-      const retired = await retireAgentIdentityAction({ principalId: identityId });
-      if (!retired.ok) {
-        setRevokeError(revokeCleanupNote(retired.error) ?? T.retireFailed);
-        return;
-      }
-      toast.success(T.revokedAndRetired);
     } catch {
       setRevokeError(T.revokeFailed);
     } finally {
@@ -185,20 +171,12 @@ export function InboundCallers({ agent }: { agent: string }) {
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>{T.revokeTitle(c.name || c.identityId)}</AlertDialogTitle>
-                        <AlertDialogDescription asChild>
-                          <div className="space-y-2">
-                            <p>{T.revokeBody}</p>
-                            <p>{T.revokeRetireBody}</p>
-                          </div>
-                        </AlertDialogDescription>
+                        <AlertDialogDescription>{T.revokeBody}</AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>{T.cancel}</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => void revoke(c.identityId, false)}>
+                        <AlertDialogAction onClick={() => void revoke(c.identityId)}>
                           {T.revokeConfirm}
-                        </AlertDialogAction>
-                        <AlertDialogAction onClick={() => void revoke(c.identityId, true)}>
-                          {T.revokeRetireConfirm}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
