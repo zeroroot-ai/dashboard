@@ -41,6 +41,8 @@ function toDTO(e: InboundMissionEntry): InboundMissionDTO {
     targetIds: [...e.targetIds],
     publishedBy: e.publishedBy,
     createdAt: e.createdAt ? new Date(ms).toISOString() : "",
+    stale: e.stale,
+    staleReason: e.staleReason,
   };
 }
 
@@ -54,7 +56,11 @@ export async function daemonListInboundMissions(): Promise<InboundMissionDTO[]> 
   return entries.map(toDTO);
 }
 
-/** Publish one mission definition under one agent name, with the approved targets. */
+/**
+ * Publish one mission definition under one agent name, with the approved
+ * targets. The same agent, definition and targets again approve the present
+ * state of a stale publication, and the callers keep their grants.
+ */
 export async function daemonPublishInboundMission(input: {
   agent: string;
   missionDefinitionId: string;

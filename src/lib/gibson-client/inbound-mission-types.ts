@@ -19,6 +19,13 @@ export interface InboundMissionDTO {
   publishedBy: string;
   /** ISO 8601 time, or an empty string. */
   createdAt: string;
+  /**
+   * True when the mission definition or an approved target changed after the
+   * publish. The daemon refuses each inbound call until an admin publishes again.
+   */
+  stale: boolean;
+  /** What changed. Empty when `stale` is false. */
+  staleReason: string;
 }
 
 /** One name and id, for a picker. */

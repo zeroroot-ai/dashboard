@@ -17,6 +17,7 @@ export const INBOUND_MISSION_TEXT = {
   columnAgent: "Agent",
   columnDefinition: "Mission definition",
   columnTargets: "Approved targets",
+  columnMaxMissions: "Missions at one time",
   columnPublishedBy: "Published by",
   columnCreated: "Published",
 
@@ -36,6 +37,9 @@ export const INBOUND_MISSION_TEXT = {
   fieldTargets: "Approved targets",
   targetsHelp: "A call can use only these targets. A message can narrow the list, and it cannot add a target.",
   noTargets: "Your workspace has no target. Add a target first.",
+  fieldMaxMissions: "Maximum missions at one time",
+  maxMissionsHelp:
+    "The largest number of inbound missions of this publication that run or wait at one time. Enter a whole number, at least 1.",
   fieldCallerName: "Name of the new caller identity",
   callerNameHelp: "Use lowercase letters, digits and hyphens, at most 63 characters.",
   publishButton: "Publish",
@@ -57,6 +61,17 @@ export const INBOUND_MISSION_TEXT = {
     `The identity ${name} (${id}) exists and has no grant. The page could not revoke it. Its token was not shown. Revoke this identity.`,
   definitionPublished: "The definition is published. Add a caller in the list below.",
   definitionNotPublished: "The definition is not published.",
+
+  staleBadge: "Stale",
+  staleBody:
+    "The mission definition or an approved target changed after you published. The daemon refuses each inbound call. Examine the change, then publish again.",
+  republishButton: "Publish again",
+  republishTitle: "Publish this definition again?",
+  republishBody:
+    "This approves the mission definition and the targets as they are now. The callers keep their grants.",
+  republishConfirm: "Publish again",
+  republished: (agent: string) => `${agent} is published again.`,
+  republishFailed: "The definition was not published again.",
 
   callersButton: "Callers",
   callersTitle: (agent: string) => `Callers of ${agent}`,

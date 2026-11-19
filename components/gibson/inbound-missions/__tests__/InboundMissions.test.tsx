@@ -12,6 +12,7 @@ const m = vi.hoisted(() => ({
   agents: vi.fn(),
   publish: vi.fn(),
   unpublish: vi.fn(),
+  republish: vi.fn(),
   callers: vi.fn(),
   revoke: vi.fn(),
   add: vi.fn(),
@@ -24,6 +25,7 @@ vi.mock("@/app/actions/inbound-missions", () => ({
   listDefinitionAgentsAction: m.agents,
   publishInboundMissionAction: m.publish,
   unpublishInboundMissionAction: m.unpublish,
+  republishInboundMissionAction: m.republish,
   listInboundCallersAction: m.callers,
   revokeInboundCallerAction: m.revoke,
   addInboundCallerAction: m.add,
@@ -56,6 +58,8 @@ const entry = {
   targetIds: ["t1", "t-gone"],
   publishedBy: "user-1",
   createdAt: "2026-11-18T10:00:00.000Z",
+  stale: false,
+  staleReason: "",
 };
 const CALLER = "agent_principal:id-1";
 const CREDENTIALS = { bootstrapToken: "tok-123", gibsonUrl: "https://gibson.example.com" };
@@ -117,6 +121,47 @@ describe("the list of published definitions", () => {
     await user.click(screen.getByRole("button", { name: T.unpublishConfirm }));
     expect(m.unpublish).toHaveBeenCalledWith("recon");
     await waitFor(() => expect(m.list.mock.calls.length).toBeGreaterThan(1));
+  });
+});
+
+describe("a stale publication", () => {
+  const stale = { ...entry, stale: true, staleReason: "an approved target changed after it was published" };
+
+  it("shows no stale state for a publication that matches", async () => {
+    m.list.mockResolvedValue({ ok: true, data: [entry] });
+    render(<InboundMissionsContent />);
+    await screen.findByTestId("inbound-mission-row");
+    expect(screen.queryByTestId("stale-badge")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("stale-row")).not.toBeInTheDocument();
+  });
+
+  it("shows the state and the reason, and publishes again with the same fields", async () => {
+    m.list.mockResolvedValue({ ok: true, data: [stale] });
+    m.republish.mockResolvedValue({ ok: true, data: entry });
+    const user = userEvent.setup();
+    render(<InboundMissionsContent />);
+    expect(await screen.findByTestId("stale-badge")).toHaveTextContent(T.staleBadge);
+    const row = screen.getByTestId("stale-row");
+    expect(row).toHaveTextContent(T.staleBody);
+    expect(within(row).getByTestId("stale-reason")).toHaveTextContent(stale.staleReason);
+    await user.click(within(row).getByRole("button", { name: `${T.republishButton} recon` }));
+    await user.click(screen.getByRole("button", { name: T.republishConfirm }));
+    expect(m.republish).toHaveBeenCalledWith({
+      agent: "recon",
+      missionDefinitionId: "def-1",
+      targetIds: ["t1", "t-gone"],
+    });
+    await waitFor(() => expect(m.list.mock.calls.length).toBeGreaterThan(1));
+  });
+
+  it("shows the refusal of the daemon when it cannot publish again", async () => {
+    m.list.mockResolvedValue({ ok: true, data: [stale] });
+    m.republish.mockResolvedValue({ ok: false, error: "the target does not exist: t-gone", code: "not_found" });
+    const user = userEvent.setup();
+    render(<InboundMissionsContent />);
+    await user.click(await screen.findByRole("button", { name: `${T.republishButton} recon` }));
+    await user.click(screen.getByRole("button", { name: T.republishConfirm }));
+    expect(await screen.findByTestId("republish-error")).toHaveTextContent("the target does not exist: t-gone");
   });
 });
 

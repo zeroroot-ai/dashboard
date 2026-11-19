@@ -43,6 +43,7 @@ import {
   listInboundMissionsAction,
   listInboundPublishOptionsAction,
   publishInboundMissionAction,
+  republishInboundMissionAction,
   revokeInboundCallerAction,
   unpublishInboundMissionAction,
 } from "../inbound-missions";
@@ -225,6 +226,31 @@ describe("the publish flow", () => {
       identity: { identityId: "agent_principal:id-1", name: "partner", removed: false },
       published: false,
     });
+  });
+});
+
+describe("publish again", () => {
+  const AGAIN = { agent: "recon", missionDefinitionId: "def-1", targetIds: ["t1", "t2"] };
+
+  it("publishes the same fields, and makes no identity and no grant", async () => {
+    m.publish.mockResolvedValue({ agent: "recon", stale: false });
+    expect(await republishInboundMissionAction(AGAIN)).toEqual({ ok: true, data: { agent: "recon", stale: false } });
+    expect(m.publish).toHaveBeenCalledWith(AGAIN);
+    expect(order()).toEqual(["publish"]);
+  });
+
+  it("shows the refusal of the daemon, for example a target that was deleted", async () => {
+    m.publish.mockRejectedValue(new ConnectError("the target does not exist: t2", Code.NotFound));
+    expect(await republishInboundMissionAction(AGAIN)).toEqual({
+      ok: false,
+      error: "the target does not exist: t2",
+      code: "not_found",
+    });
+  });
+
+  it("refuses an empty target list and calls nothing", async () => {
+    expect(await republishInboundMissionAction({ ...AGAIN, targetIds: [] })).toMatchObject({ code: "bad_input" });
+    expect(m.publish).not.toHaveBeenCalled();
   });
 });
 

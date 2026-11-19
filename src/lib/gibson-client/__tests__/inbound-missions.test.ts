@@ -60,6 +60,8 @@ const PROTO = {
   targetIds: ["t1", "t2"],
   publishedBy: "user-1",
   createdAt: { seconds: BigInt(1_700_000_000), nanos: 0 },
+  stale: false,
+  staleReason: "",
 };
 const DTO = { ...PROTO, createdAt: "2023-11-14T22:13:20.000Z" };
 
@@ -71,6 +73,15 @@ describe("inbound mission client", () => {
     const out = await daemonListInboundMissions();
     expect(out[0]).toEqual(DTO);
     expect(out[1].createdAt).toBe("");
+  });
+
+  it("maps the stale mark and its reason", async () => {
+    inbound.listInboundMissions.mockResolvedValue({
+      entries: [{ ...PROTO, stale: true, staleReason: "an approved target changed after it was published" }],
+    });
+    const [out] = await daemonListInboundMissions();
+    expect(out.stale).toBe(true);
+    expect(out.staleReason).toBe("an approved target changed after it was published");
   });
 
   it("reads each page of the published definitions", async () => {

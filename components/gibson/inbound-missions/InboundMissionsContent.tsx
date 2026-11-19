@@ -22,6 +22,7 @@ import {
   listInboundMissionsAction,
   listInboundPublishOptionsAction,
   publishInboundMissionAction,
+  republishInboundMissionAction,
   unpublishInboundMissionAction,
 } from "@/app/actions/inbound-missions";
 import { ErrorAlert, TableSkeleton } from "@/components/gibson/shared";
@@ -37,6 +38,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -62,6 +64,9 @@ import { INBOUND_MISSION_TEXT as T } from "./texts";
 
 const SELECT_CLASS =
   "border-input bg-background text-foreground focus-visible:ring-ring/50 h-9 w-full rounded-md border px-3 text-sm focus-visible:ring-[3px] focus-visible:outline-none";
+
+/** The number of columns of the list. A row that spans the table uses it. */
+const COLUMN_COUNT = 6;
 
 type Failure = Extract<InboundCallerFlowResult, { ok: false }>;
 type Options = { definitions: InboundOptionDTO[]; targets: InboundOptionDTO[] };
@@ -277,13 +282,33 @@ function PublishForm({ options, onPublished }: { options: Options; onPublished: 
 function PublicationRow({
   entry,
   options,
-  onUnpublished,
+  onChanged,
 }: {
   entry: InboundMissionDTO;
   options: Options | null;
-  onUnpublished: () => void;
+  onChanged: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
+  const [republishError, setRepublishError] = React.useState<string | null>(null);
+
+  async function republish() {
+    setRepublishError(null);
+    try {
+      const res = await republishInboundMissionAction({
+        agent: entry.agent,
+        missionDefinitionId: entry.missionDefinitionId,
+        targetIds: entry.targetIds,
+      });
+      if (!res.ok) {
+        setRepublishError(res.code === "unauthenticated" ? T.sessionExpired : res.error);
+        return;
+      }
+      toast.success(T.republished(entry.agent));
+      onChanged();
+    } catch {
+      setRepublishError(T.republishFailed);
+    }
+  }
 
   async function unpublish() {
     try {
@@ -293,7 +318,7 @@ function PublicationRow({
         return;
       }
       toast.success(T.unpublished(entry.agent));
-      onUnpublished();
+      onChanged();
     } catch {
       toast.error(T.unpublishFailed);
     }
@@ -302,7 +327,16 @@ function PublicationRow({
   return (
     <>
       <TableRow data-testid="inbound-mission-row">
-        <TableCell className="font-medium">{entry.agent}</TableCell>
+        <TableCell className="font-medium">
+          <div className="flex items-center gap-2">
+            {entry.agent}
+            {entry.stale ? (
+              <Badge variant="destructive" data-testid="stale-badge">
+                {T.staleBadge}
+              </Badge>
+            ) : null}
+          </div>
+        </TableCell>
         <TableCell className="break-all">
           {nameOf(options?.definitions ?? [], entry.missionDefinitionId)}
         </TableCell>
@@ -348,9 +382,45 @@ function PublicationRow({
           </div>
         </TableCell>
       </TableRow>
+      {entry.stale ? (
+        <TableRow data-testid="stale-row">
+          <TableCell colSpan={COLUMN_COUNT} className="whitespace-normal">
+            <div role="alert" className="text-destructive space-y-2 text-sm">
+              <p>{T.staleBody}</p>
+              {entry.staleReason ? (
+                <p data-testid="stale-reason" className="break-words">
+                  {entry.staleReason}
+                </p>
+              ) : null}
+              {republishError ? (
+                <p data-testid="republish-error" className="break-words">
+                  {republishError}
+                </p>
+              ) : null}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="outline" aria-label={`${T.republishButton} ${entry.agent}`}>
+                    {T.republishButton}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{T.republishTitle}</AlertDialogTitle>
+                    <AlertDialogDescription>{T.republishBody}</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{T.cancel}</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => void republish()}>{T.republishConfirm}</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </TableCell>
+        </TableRow>
+      ) : null}
       {open ? (
         <TableRow>
-          <TableCell colSpan={6} className="bg-muted/30 whitespace-normal">
+          <TableCell colSpan={COLUMN_COUNT} className="bg-muted/30 whitespace-normal">
             <InboundCallers agent={entry.agent} />
           </TableCell>
         </TableRow>
@@ -441,7 +511,7 @@ export function InboundMissionsContent() {
           </TableHeader>
           <TableBody>
             {entries.map((e) => (
-              <PublicationRow key={e.agent} entry={e} options={loadedOptions} onUnpublished={reload} />
+              <PublicationRow key={e.agent} entry={e} options={loadedOptions} onChanged={reload} />
             ))}
           </TableBody>
         </Table>

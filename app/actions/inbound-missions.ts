@@ -131,6 +131,36 @@ export async function unpublishInboundMissionAction(agent: string): Promise<Inbo
   }
 }
 
+/**
+ * Publish a stale publication again with the same agent, definition and
+ * targets. The daemon approves the present state of the definition and the
+ * targets. The flow makes no identity, and the callers keep their grants.
+ */
+export async function republishInboundMissionAction(input: {
+  agent: string;
+  missionDefinitionId: string;
+  targetIds: string[];
+}): Promise<InboundActionResult<InboundMissionDTO | null>> {
+  const session = await getServerSession();
+  if (!session?.user) return UNAUTHENTICATED;
+  const a = nameSchema.safeParse(input.agent);
+  if (!a.success) return bad(a.error.issues[0]?.message);
+  const d = idSchema.safeParse(input.missionDefinitionId);
+  if (!d.success) return bad(d.error.issues[0]?.message);
+  const t = targetIdsSchema.safeParse(input.targetIds);
+  if (!t.success) return bad(t.error.issues[0]?.message);
+  try {
+    const entry = await daemonPublishInboundMission({
+      agent: a.data,
+      missionDefinitionId: d.data,
+      targetIds: t.data,
+    });
+    return { ok: true, data: entry };
+  } catch (err) {
+    return shownDaemonFailure(err, "republishInboundMissionAction");
+  }
+}
+
 /** List the callers of one published definition, each with the name of its identity. */
 export async function listInboundCallersAction(agent: string): Promise<InboundActionResult<InboundCallerDTO[]>> {
   const session = await getServerSession();
