@@ -15,6 +15,7 @@ import "server-only";
  * who published.
  */
 import { userClient } from "../gibson-client";
+import { walkItems } from "./paging";
 import {
   AgentSkillService,
   AgentSkillSource,
@@ -79,11 +80,17 @@ function subjectKind(kind: AgentSkillSubjectKindDTO): AgentSkillSubjectKind {
 export async function daemonListAgentSkills(
   opts: { name?: string; allVersions?: boolean } = {},
 ): Promise<AgentSkillDTO[]> {
-  const resp = await userClient(AgentSkillService).listAgentSkills({
-    name: opts.name ?? "",
-    allVersions: opts.allVersions ?? false,
+  const client = userClient(AgentSkillService);
+  const entries = await walkItems("tenant.agentSkills", async (pageSize, pageToken) => {
+    const resp = await client.listAgentSkills({
+      name: opts.name ?? "",
+      allVersions: opts.allVersions ?? false,
+      pageSize,
+      pageToken,
+    });
+    return { items: resp.entries, nextPageToken: resp.nextPageToken };
   });
-  return resp.entries.map(toAgentSkillDTO);
+  return entries.map(toAgentSkillDTO);
 }
 
 /** Read one version with its body and its files. An empty digest means the current version. */
@@ -143,8 +150,12 @@ export async function daemonRevokeAgentSkill(
 
 /** List the Shared Agent Skills that the operator offers. */
 export async function daemonListSharedAgentSkills(): Promise<SharedAgentSkillDTO[]> {
-  const resp = await userClient(AgentSkillService).listSharedAgentSkills({});
-  return resp.entries.map(toSharedDTO);
+  const client = userClient(AgentSkillService);
+  const entries = await walkItems("tenant.sharedAgentSkills", async (pageSize, pageToken) => {
+    const resp = await client.listSharedAgentSkills({ pageSize, pageToken });
+    return { items: resp.entries, nextPageToken: resp.nextPageToken };
+  });
+  return entries.map(toSharedDTO);
 }
 
 /** Copy one Shared Agent Skill into the tenant. It grants nothing. */
@@ -155,9 +166,13 @@ export async function daemonEnableSharedAgentSkill(name: string): Promise<AgentS
 
 /** List each agent and each mission that may load an Agent Skill. */
 export async function daemonListAgentSkillGrants(name: string): Promise<AgentSkillGrantDTO[]> {
-  const resp = await userClient(AgentSkillService).listAgentSkillGrants({ name });
+  const client = userClient(AgentSkillService);
+  const grants = await walkItems("tenant.agentSkillGrants", async (pageSize, pageToken) => {
+    const resp = await client.listAgentSkillGrants({ name, pageSize, pageToken });
+    return { items: resp.grants, nextPageToken: resp.nextPageToken };
+  });
   const out: AgentSkillGrantDTO[] = [];
-  for (const g of resp.grants) {
+  for (const g of grants) {
     if (g.subjectKind === AgentSkillSubjectKind.AGENT) {
       out.push({ kind: "agent", subjectId: g.subjectId });
     } else if (g.subjectKind === AgentSkillSubjectKind.MISSION) {

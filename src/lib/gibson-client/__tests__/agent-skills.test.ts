@@ -79,13 +79,34 @@ describe("daemonListAgentSkills", () => {
   it("lists the current version of each name by default", async () => {
     client.listAgentSkills.mockResolvedValue({ entries: [PROTO_ENTRY] });
     expect(await daemonListAgentSkills()).toEqual([DTO_ENTRY]);
-    expect(client.listAgentSkills).toHaveBeenCalledWith({ name: "", allVersions: false });
+    expect(client.listAgentSkills).toHaveBeenCalledWith({ name: "", allVersions: false, pageSize: 1000, pageToken: "" });
+  });
+
+  it("reads each page of the Agent Skill list", async () => {
+    client.listAgentSkills
+      .mockResolvedValueOnce({ entries: [PROTO_ENTRY], nextPageToken: "p2" })
+      .mockResolvedValueOnce({ entries: [{ ...PROTO_ENTRY, name: "recon" }], nextPageToken: "" });
+    const out = await daemonListAgentSkills();
+    expect(out.map((e) => e.name)).toEqual([PROTO_ENTRY.name, "recon"]);
+    expect(client.listAgentSkills).toHaveBeenCalledTimes(2);
+    expect(client.listAgentSkills).toHaveBeenNthCalledWith(1, {
+      name: "",
+      allVersions: false,
+      pageSize: 1000,
+      pageToken: "",
+    });
+    expect(client.listAgentSkills).toHaveBeenNthCalledWith(2, {
+      name: "",
+      allVersions: false,
+      pageSize: 1000,
+      pageToken: "p2",
+    });
   });
 
   it("asks for each version of one name", async () => {
     client.listAgentSkills.mockResolvedValue({ entries: [] });
     await daemonListAgentSkills({ name: "triage", allVersions: true });
-    expect(client.listAgentSkills).toHaveBeenCalledWith({ name: "triage", allVersions: true });
+    expect(client.listAgentSkills).toHaveBeenCalledWith({ name: "triage", allVersions: true, pageSize: 1000, pageToken: "" });
   });
 
   it("maps a missing publish time to an empty text", async () => {
@@ -201,7 +222,7 @@ describe("daemonListAgentSkillGrants", () => {
       { kind: "agent", subjectId: "agent-1" },
       { kind: "mission", subjectId: "m-1" },
     ]);
-    expect(client.listAgentSkillGrants).toHaveBeenCalledWith({ name: "triage" });
+    expect(client.listAgentSkillGrants).toHaveBeenCalledWith({ name: "triage", pageSize: 1000, pageToken: "" });
   });
 });
 
@@ -213,7 +234,7 @@ describe("Shared Agent Skills", () => {
     expect(await daemonListSharedAgentSkills()).toEqual([
       { name: "triage", description: "d", digest: "sha256:aa", enabled: true },
     ]);
-    expect(client.listSharedAgentSkills).toHaveBeenCalledWith({});
+    expect(client.listSharedAgentSkills).toHaveBeenCalledWith({ pageSize: 1000, pageToken: "" });
   });
 
   it("enables one by name", async () => {

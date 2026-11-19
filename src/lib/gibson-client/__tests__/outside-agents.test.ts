@@ -49,6 +49,17 @@ describe("outside agent client", () => {
     expect(out[1].createdAt).toBe("");
   });
 
+  it("reads each page of the outside agent list", async () => {
+    client.listOutsideAgents
+      .mockResolvedValueOnce({ entries: [PROTO], nextPageToken: "p2" })
+      .mockResolvedValueOnce({ entries: [{ ...PROTO, name: "relay" }], nextPageToken: "" });
+    const out = await daemonListOutsideAgents();
+    expect(out.map((e) => e.name)).toEqual(["scout", "relay"]);
+    expect(client.listOutsideAgents).toHaveBeenCalledTimes(2);
+    expect(client.listOutsideAgents).toHaveBeenNthCalledWith(1, { pageSize: 1000, pageToken: "" });
+    expect(client.listOutsideAgents).toHaveBeenNthCalledWith(2, { pageSize: 1000, pageToken: "p2" });
+  });
+
   it("reads one by name, and returns null when the entry is missing", async () => {
     client.getOutsideAgent.mockResolvedValueOnce({ entry: PROTO }).mockResolvedValueOnce({ entry: undefined });
     expect(await daemonGetOutsideAgent("scout")).toEqual(DTO);
@@ -89,6 +100,6 @@ describe("outside agent client", () => {
     expect(client.deleteOutsideAgent).toHaveBeenCalledWith({ name: "scout" });
     expect(client.grantOutsideAgent).toHaveBeenCalledWith({ name: "scout", missionId: "m1" });
     expect(client.revokeOutsideAgent).toHaveBeenCalledWith({ name: "scout", missionId: "m1" });
-    expect(client.listOutsideAgentGrants).toHaveBeenCalledWith({ name: "scout" });
+    expect(client.listOutsideAgentGrants).toHaveBeenCalledWith({ name: "scout", pageSize: 1000, pageToken: "" });
   });
 });

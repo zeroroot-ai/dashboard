@@ -9,6 +9,7 @@ import "server-only";
  * reaches the caller unchanged, so the actions can show a validation error.
  */
 import { userClient } from "../gibson-client";
+import { walkItems } from "./paging";
 import { OutsideAgentService } from "@/src/gen/gibson/tenant/v1/outside_agent_pb";
 import type { OutsideAgentEntry } from "@/src/gen/gibson/tenant/v1/outside_agent_pb";
 
@@ -28,8 +29,12 @@ function toDTO(e: OutsideAgentEntry): OutsideAgentDTO {
 
 /** List each outside agent of the tenant. */
 export async function daemonListOutsideAgents(): Promise<OutsideAgentDTO[]> {
-  const resp = await userClient(OutsideAgentService).listOutsideAgents({});
-  return resp.entries.map(toDTO);
+  const client = userClient(OutsideAgentService);
+  const entries = await walkItems("tenant.outsideAgents", async (pageSize, pageToken) => {
+    const resp = await client.listOutsideAgents({ pageSize, pageToken });
+    return { items: resp.entries, nextPageToken: resp.nextPageToken };
+  });
+  return entries.map(toDTO);
 }
 
 /** Read one outside agent. Null when the response holds no entry. */
@@ -67,6 +72,9 @@ export async function daemonRevokeOutsideAgent(name: string, missionId: string):
 
 /** List the ids of the missions that may call one outside agent. */
 export async function daemonListOutsideAgentGrants(name: string): Promise<string[]> {
-  const resp = await userClient(OutsideAgentService).listOutsideAgentGrants({ name });
-  return [...resp.missionIds];
+  const client = userClient(OutsideAgentService);
+  return walkItems("tenant.outsideAgentGrants", async (pageSize, pageToken) => {
+    const resp = await client.listOutsideAgentGrants({ name, pageSize, pageToken });
+    return { items: resp.missionIds, nextPageToken: resp.nextPageToken };
+  });
 }
