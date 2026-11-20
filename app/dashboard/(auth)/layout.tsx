@@ -9,11 +9,8 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/sidebar/app-sidebar";
 import { SiteHeader } from "@/components/layout/header";
 import { TenantHydrator } from "@/components/layout/tenant-hydrator";
-import { QuotaWidget } from "@/src/components/quota/quota-widget";
 import { getServerSession } from "@/src/lib/auth";
 import { resolveTenant } from "@/src/lib/resolve-tenant";
-import { getTenantQuotaAction } from "@/app/actions/read/getTenantQuota";
-import { logger } from "@/src/lib/logger";
 import type { Tenant } from "@/src/types/tenant";
 import { requireActiveTenant, NoActiveTenantError, StaleActiveTenantError } from '@/src/lib/auth/active-tenant';
 
@@ -64,8 +61,8 @@ export default async function AuthLayout({
   // The person's tenant, resolved server-side at sign-in (ADR-0093 decision
   // 4) and already re-confirmed against current membership by
   // getServerSession(). Pages that need it required call
-  // requireActiveTenant() themselves; the layout only needs it for CRD
-  // resolution (quota widget, etc.).
+  // requireActiveTenant() themselves; the layout only needs it to select
+  // the current tenant for the header and the sidebar.
   let activeTenantId: string | null = null;
   try {
     activeTenantId = await requireActiveTenant();
@@ -78,28 +75,6 @@ export default async function AuthLayout({
   const currentTenant: Tenant | null = activeTenantId
     ? (availableTenants.find((t) => t.id === activeTenantId) ?? null)
     : null;
-
-  // Resolve plan limits for the in-app quota widget from the daemon's
-  // GetTenantQuota RPC (tenant_quotas Postgres row), NOT the Tenant CR's
-  // spec.tier. Per ADR-0058 the dashboard's only K8s access is tenant
-  // provisioning; quota limits are a daemon read. Failures degrade silently
-  // to zero (widget hides). Spec plans-and-quotas-simplification R9.B.3.
-  let missionsLimit = 0;
-  let agentsLimit = 0;
-  if (activeTenantId) {
-    try {
-      const quota = await getTenantQuotaAction();
-      if (quota.ok) {
-        missionsLimit = quota.data.concurrentMissions;
-        agentsLimit = quota.data.concurrentAgents;
-      }
-    } catch (err) {
-      logger.warn(
-        { err: String(err), tenantId: activeTenantId },
-        "[auth-layout] could not resolve plan limits for quota widget",
-      );
-    }
-  }
 
   return (
     <SidebarProvider
@@ -123,16 +98,7 @@ export default async function AuthLayout({
       >
         <AppSidebar variant="inset" />
         <SidebarInset>
-          <SiteHeader
-            quotaWidget={
-              currentTenant ? (
-                <QuotaWidget
-                  missionsLimit={missionsLimit}
-                  agentsLimit={agentsLimit}
-                />
-              ) : null
-            }
-          />
+          <SiteHeader />
           <div className="bg-muted/40 flex flex-1 flex-col">
             <div className="@container/main p-(--content-padding) xl:group-data-[theme-content-layout=centered]/layout:container xl:group-data-[theme-content-layout=centered]/layout:mx-auto">
               {children}

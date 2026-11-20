@@ -117,7 +117,7 @@ export function correlationIdFromRequest(
  * Every ConnectError code from the daemon maps to exactly one of
  * these. Every API route returns one of these shapes (or 2xx + body).
  * The error-state UI uses `class` to drive the affordance (retry,
- * sign-in link, upgrade link, ...).
+ * sign-in link, ...).
  *
  * `provisioning` is a sub-classification of `failed_precondition`:
  * it fires when the daemon message matches the data-plane-not-yet-
@@ -149,7 +149,6 @@ interface ErrorClassEntry {
     | 'back_to_dashboard'
     | 'retry'
     | 'retry_with_support'
-    | 'upgrade'
     | 'status_page'
     | 'contact_support';
   /**
@@ -214,9 +213,8 @@ export const ERROR_CLASS_TABLE: Record<ErrorClass, ErrorClassEntry> = {
   resource_exhausted: {
     class: 'resource_exhausted',
     httpStatus: 429,
-    message:
-      "You've reached your plan's request limit. Wait a moment and try again, or upgrade your plan for higher limits.",
-    affordance: 'upgrade',
+    message: 'Too many requests. Try again in a moment.',
+    affordance: 'retry',
   },
   unavailable: {
     class: 'unavailable',

@@ -19,7 +19,7 @@ import {
   SidebarMenuItem,
   useSidebar
 } from "@/components/ui/sidebar";
-import { BellIcon, CreditCardIcon, LogOutIcon, UserCircle2Icon } from "lucide-react";
+import { BellIcon, LogOutIcon, UserCircle2Icon } from "lucide-react";
 import { DotsVerticalIcon } from "@radix-ui/react-icons";
 import { useSession } from "@/src/lib/session-client";
 // Logout uses the federated-signout route, not next-auth's client-side
@@ -89,10 +89,6 @@ export function NavUser() {
               <DropdownMenuItem>
                 <UserCircle2Icon />
                 Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon />
-                Billing
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <BellIcon />
