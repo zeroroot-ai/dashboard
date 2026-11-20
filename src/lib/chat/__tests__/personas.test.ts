@@ -11,14 +11,13 @@ describe('personas', () => {
     expect(uniqueIds.size).toBe(ids.length);
   });
 
-  it('PERSONAS map has all 10 expected IDs', () => {
+  it('PERSONAS map has all 9 expected IDs', () => {
     const expectedIds = [
       'general',
-      'recon',
-      'exploit',
+      'vulnerability-analyst',
+      'incident-responder',
       'analysis',
       'remediation',
-      'pentest-lead',
       'ciso',
       'soc-analyst',
       'developer',
@@ -63,9 +62,23 @@ describe('personas', () => {
   });
 
   it('getPersona returns the correct persona for a known ID', () => {
-    const persona = getPersona('recon');
-    expect(persona.id).toBe('recon');
-    expect(persona.label).toBe('Recon Specialist');
+    const persona = getPersona('incident-responder');
+    expect(persona.id).toBe('incident-responder');
+    expect(persona.label).toBe('Incident Responder');
+  });
+
+  it('no persona has an attacker role', () => {
+    const attackerIds = ['recon', 'exploit', 'pentest-lead'];
+    for (const id of attackerIds) {
+      expect(PERSONAS).not.toHaveProperty(id);
+    }
+    for (const persona of PERSONAS_LIST) {
+      expect(persona.label).not.toMatch(/recon|exploit|pentest/i);
+    }
+  });
+
+  it('a stored attacker role id falls back to general', () => {
+    expect(getPersona('exploit').id).toBe('general');
   });
 
   it('getPersona falls back to general for an unknown ID', () => {

@@ -659,3 +659,14 @@ describe('Chat Store, mid-stream switch: origin isolation (dashboard#555)', () =
     // above. The hook ensures saveMessages is called with the origin id, not active id.
   });
 });
+
+describe('Chat Store, the role list', () => {
+  it('offers one entry for each defender role and no attacker role', () => {
+    const ids = useChatStore.getState().agents.map((a) => a.id);
+    expect(ids).toContain('incident-responder');
+    expect(ids).toContain('vulnerability-analyst');
+    for (const id of ['recon', 'exploit', 'pentest-lead']) {
+      expect(ids).not.toContain(id);
+    }
+  });
+});

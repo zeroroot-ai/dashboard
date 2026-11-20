@@ -17,7 +17,7 @@
  *   3. The link reaches "You're in" and hands over a one-time setup link.
  *   4. The invitee sets a password, enrolls an authenticator app, signs in,
  *      and lands on /dashboard with one tenant and no workspace picker.
- *   5. Roles: an invited Viewer is refused at CreateMissionDefinition, and an
+ *   5. Roles: an invited Viewer is refused at StopMission, and an
  *      invited Editor passes that gate.
  *   6. A used link, an unknown link and an expired link reach "Invitation
  *      unavailable".
@@ -32,7 +32,7 @@
  * expired).
  */
 
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
 
 import { BASE_URL } from "./helpers/accounts";
@@ -61,7 +61,7 @@ test.describe("invite to first sign-in", () => {
     await expect(page.getByText("Invitation unavailable")).toBeVisible({ timeout: 30_000 });
   });
 
-  test("an invited Viewer signs in to one tenant and is refused at CreateMissionDefinition", async ({
+  test("an invited Viewer signs in to one tenant and is refused at StopMission", async ({
     page,
     context,
   }) => {
@@ -78,12 +78,12 @@ test.describe("invite to first sign-in", () => {
     expect(perms.status()).toBe(200);
     expect(((await perms.json()) as { isAdmin?: boolean }).isAdmin ?? false).toBe(false);
 
-    // The demo route calls CreateMissionDefinition first. A Viewer is
-    // refused there, so nothing is created and nothing runs.
-    expect(await postWithCsrf(page, "/api/missions/demo")).toBe(403);
+    // The stop route calls StopMission, a writer RPC. A Viewer is refused
+    // there, so nothing stops. The mission id is random, so no mission exists.
+    expect(await postWithCsrf(page, `/api/missions/${randomUUID()}/stop`)).toBe(403);
   });
 
-  test("an invited Editor passes the CreateMissionDefinition gate", async ({ page, context }) => {
+  test("an invited Editor passes the StopMission gate", async ({ page, context }) => {
     test.setTimeout(300_000);
     const mailpitURL = requireMailpit();
     const invitee = await inviteNewPerson(page, context, mailpitURL, "Editor");
@@ -92,8 +92,8 @@ test.describe("invite to first sign-in", () => {
     await firstSignIn(page, context, invitee, setupLink);
 
     await expect(page).toHaveURL(/\/dashboard/);
-    const status = await postWithCsrf(page, "/api/missions/demo");
-    expect(status, "an Editor was refused at CreateMissionDefinition").not.toBe(403);
+    const status = await postWithCsrf(page, `/api/missions/${randomUUID()}/stop`);
+    expect(status, "an Editor was refused at StopMission").not.toBe(403);
     expect(status).not.toBe(401);
   });
 
