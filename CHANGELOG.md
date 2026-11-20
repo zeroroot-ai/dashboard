@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.138.0](https://github.com/zeroroot-ai/dashboard/compare/v0.137.0...v0.138.0) (2026-11-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* the dashboard does not read GIBSON_TIER and does not serve /api/settings/tier.
+
+### Features
+
+* remove the plan limit screens and the tier engine ([#404](https://github.com/zeroroot-ai/dashboard/issues/404)) ([7b0fb7d](https://github.com/zeroroot-ai/dashboard/commit/7b0fb7d151956b549ee9ccc692ddc24e72d9f568))
+
 ## [0.137.0](https://github.com/zeroroot-ai/dashboard/compare/v0.136.0...v0.137.0) (2026-11-19)
 
 
