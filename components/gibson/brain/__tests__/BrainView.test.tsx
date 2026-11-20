@@ -191,6 +191,21 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe('BrainView, a Timeline position from a link', () => {
+  it('opens the frame after the linked event, tenant-wide', async () => {
+    render(<BrainView seq={0} />);
+    await waitFor(() => {
+      expect(fetched).toContain('/api/world/frame?seq=1');
+    }, FOLD_TIMEOUT);
+  });
+
+  it('ignores a position that the Timeline does not hold', async () => {
+    render(<BrainView seq={99} />);
+    await screen.findByText(/2 \/ 2 events/);
+    expect(fetched.some((u) => u.startsWith('/api/world/frame'))).toBe(false);
+  });
+});
+
 describe('BrainView, embedded chrome (mission Snapshot tab)', () => {
   it('renders the mission state folded at the current tick, not an empty panel', async () => {
     render(<BrainView mission={MISSION_ID} chrome="embedded" />);

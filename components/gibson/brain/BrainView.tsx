@@ -171,9 +171,16 @@ function decisionStatusVariant(s: string): "default" | "secondary" {
 export function BrainView({
   mission,
   chrome = "page",
+  seq: linkedSeq,
 }: {
   mission?: string;
   chrome?: "page" | "embedded";
+  /**
+   * A Timeline position from a link (the activity strip of a finding, the
+   * incident report). When the Timeline holds that event, the view selects it
+   * and shows the frame after it.
+   */
+  seq?: number;
 }) {
   const [data, setData] = useState<WorldData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -312,6 +319,15 @@ export function BrainView({
     },
     [playback.controls],
   );
+
+  // Open the position of a link once. The Timeline must hold the event first.
+  const [openedLink, setOpenedLink] = useState<number | null>(null);
+  useEffect(() => {
+    if (linkedSeq !== undefined && linkedSeq !== openedLink && linkedSeq < total) {
+      setOpenedLink(linkedSeq);
+      onSelectTick(linkedSeq);
+    }
+  }, [linkedSeq, openedLink, total, onSelectTick]);
 
   // Compute WHAT CHANGED at the selected tick by diffing the folded frame at
   // seq N-1 vs N (ADR-0101: World == fold(Timeline)). Both frames come from the

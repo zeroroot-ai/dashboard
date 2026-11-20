@@ -20,12 +20,13 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function WorldPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mission?: string }>;
+  searchParams: Promise<{ mission?: string; seq?: string }>;
 }) {
-  const { mission } = await searchParams;
+  const { mission, seq } = await searchParams;
+  const linkedSeq = /^\d+$/.test(seq ?? "") ? Number(seq) : undefined;
   return (
     <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-      <BrainView mission={mission} />
+      <BrainView mission={mission} seq={linkedSeq} />
     </Suspense>
   );
 }
