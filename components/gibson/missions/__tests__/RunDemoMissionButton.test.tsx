@@ -110,12 +110,12 @@ describe('RunDemoMissionButton', () => {
     });
   });
 
-  it('surfaces the daemon affordance message on error', async () => {
+  it('shows the error message, not the action name, on error', async () => {
     mockFetchOnce(429, {
       error: {
         class: 'resource_exhausted',
-        message: 'rate limit exceeded',
-        affordance: 'Wait for one of your running missions to complete, then retry.',
+        message: 'Too many requests. Try again in a moment.',
+        affordance: 'retry',
       },
     });
 
@@ -124,9 +124,10 @@ describe('RunDemoMissionButton', () => {
 
     await waitFor(() => {
       expect(mockToastError).toHaveBeenCalledWith(
-        'Wait for one of your running missions to complete, then retry.',
+        'Too many requests. Try again in a moment.',
       );
     });
+    expect(mockToastError).not.toHaveBeenCalledWith('retry');
     expect(mockPush).not.toHaveBeenCalled();
   });
 

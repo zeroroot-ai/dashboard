@@ -29,8 +29,8 @@ interface RunDemoMissionButtonProps extends Omit<ButtonProps, "onClick" | "type"
  * shape). On success, navigates to the mission detail page so the user can
  * watch ToolStreamProgress + see Findings/Traces populate as the scan runs.
  *
- * On error, surfaces a toast with the daemon's affordance message, no
- * navigation. The button is disabled while in flight to prevent
+ * On error, shows a toast with the message of the error body, no
+ * navigation. The `affordance` field of the body is an action name, not text. The button is disabled while in flight to prevent
  * double-dispatch.
  */
 export function RunDemoMissionButton({
@@ -56,7 +56,6 @@ export function RunDemoMissionButton({
 
       if (!response.ok) {
         const message =
-          body?.error?.affordance ||
           body?.error?.message ||
           `Failed to start demo mission (${response.status})`;
         toast.error(message);
