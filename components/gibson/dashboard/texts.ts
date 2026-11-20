@@ -92,11 +92,33 @@ export const FINDINGS_PANEL_TEXT = {
   mergeRequest: "Merge request",
 } as const;
 
+export const EXPOSURE_TEXT = {
+  title: "Exposure window and revert rate",
+  period: "The last 7 days, next to the 7 days before.",
+  windowTitle: "Median exposure window",
+  revertTitle: "Revert rate",
+  noVerified: "No finding was verified in this period. The median has no value.",
+  noMerged: "No fix was merged in this period. The rate has no value.",
+  agentTime: "Agent time",
+  waitTime: "Wait time",
+  up: "up",
+  down: "down",
+  same: "unchanged",
+  trend: (direction: string, change: string, previous: string) =>
+    direction === "unchanged"
+      ? `Unchanged from ${previous} in the period before.`
+      : `${direction} ${change} from ${previous} in the period before.`,
+  noPrevious: "The period before has no data to compare.",
+  verifiedCount: (n: number) => (n === 1 ? "1 finding verified." : `${n} findings verified.`),
+  revertCounts: (reverted: number, merged: number) => `${reverted} of ${merged} merged fixes reverted.`,
+  revertTrend: (direction: string, points: number, previous: string) =>
+    direction === "unchanged"
+      ? `Unchanged from ${previous} in the period before.`
+      : `${direction} ${points} points from ${previous} in the period before.`,
+  loadFailed: "The exposure window did not load.",
+} as const;
+
 export const UNAVAILABLE_PANELS = {
-  exposure: {
-    title: "Exposure window and revert rate",
-    text: "This data is not available yet. It needs the exposure window of each finding (gibson#1467) and the revert rate of the fixes (gibson#1468).",
-  },
   actions: {
     title: "What the agents did and who allowed it",
     text: "This data is not available yet. It needs the actions of the agents by grant and by grantor (gibson#1499).",

@@ -8,6 +8,7 @@ import { render, screen } from "@testing-library/react";
 // Each panel has its own test. Here the panel stands in for itself, so this
 // test checks the order and the content of the screen.
 vi.mock("../FindingsPanel", () => ({ FindingsPanel: () => <section data-testid="panel-findings" /> }));
+vi.mock("../ExposurePanel", () => ({ ExposurePanel: () => <section data-testid="panel-exposure" /> }));
 vi.mock("../WaitsPanel", () => ({ WaitsPanel: () => <section data-testid="panel-waits" /> }));
 vi.mock("../EvidenceExportPanel", () => ({
   EvidenceExportPanel: () => <section data-testid="panel-evidence" />,
@@ -32,13 +33,11 @@ describe("DashboardContent", () => {
     ]);
   });
 
-  it("says that the data of panels 2 and 3 is not available yet and shows no number", () => {
+  it("says that the data of panel 3 is not available yet and shows no number", () => {
     render(<DashboardContent />);
-    for (const id of ["panel-exposure", "panel-actions"]) {
-      const text = screen.getByTestId(`${id}-unavailable`).textContent ?? "";
-      expect(text).toContain("not available yet");
-      expect(text).not.toMatch(/\b\d+(\.\d+)?\s*%/);
-    }
+    const text = screen.getByTestId("panel-actions-unavailable").textContent ?? "";
+    expect(text).toContain("not available yet");
+    expect(text).not.toMatch(/\b\d+(\.\d+)?\s*%/);
   });
 
   it("holds none of the old count cards", () => {

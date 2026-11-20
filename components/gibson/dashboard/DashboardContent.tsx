@@ -13,13 +13,14 @@
  *   4. What waits on a person?
  *   5. Where is the evidence?
  *
- * Panels 2 and 3 have no backend call yet. They say so and show no number.
+ * Panel 3 has no source wired yet. It says so and shows no number.
  * Below the five panels, two tiles show the control evidence and the model
  * cost.
  */
 
 import { ControlCoverageTile } from "./ControlCoverageTile";
 import { BudgetCostTile } from "./BudgetCostTile";
+import { ExposurePanel } from "./ExposurePanel";
 import { EvidenceExportPanel } from "./EvidenceExportPanel";
 import { FindingsPanel } from "./FindingsPanel";
 import { UnavailablePanel } from "./UnavailablePanel";
@@ -36,11 +37,7 @@ export function DashboardContent() {
       <FindingsPanel />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <UnavailablePanel
-          testId="panel-exposure"
-          title={UNAVAILABLE_PANELS.exposure.title}
-          text={UNAVAILABLE_PANELS.exposure.text}
-        />
+        <ExposurePanel />
         <UnavailablePanel
           testId="panel-actions"
           title={UNAVAILABLE_PANELS.actions.title}
