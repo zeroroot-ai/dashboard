@@ -92,6 +92,13 @@ export interface Finding {
   submittedBy?: PrincipalView;
   /** The user id of the person who enrolled the submitting agent. */
   enrolledBy?: string;
+  /**
+   * The confidence of the check that raised the finding, from 0 to 1. The
+   * list call of the graph service does not return it yet, so the field stays
+   * unset and the Findings page shows "unknown". The detail call returns it
+   * (FindingDetailDTO.confidence).
+   */
+  confidence?: number;
 }
 
 interface FindingFilters {

@@ -28,11 +28,13 @@ import { useSession } from "@/src/lib/session-client";
 import { useUserRefs } from "@/src/hooks/useUserRefs";
 import { principalLabel, userIdsToResolve } from "@/src/lib/principals/label";
 import type { Finding, FindingSeverity } from "@/src/types";
+import { compareConfidence, formatConfidence } from "@/src/lib/findings/confidence";
 import { FindingsExportDialog } from "./FindingsExportDialog";
+import { FINDINGS_TEXT } from "./texts";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type SortField = "severity" | "title" | "type" | "asset" | "mission" | "discovered" | "reporter";
+type SortField = "severity" | "confidence" | "title" | "type" | "asset" | "mission" | "discovered" | "reporter";
 type SortDir = "asc" | "desc";
 
 // ── Severity helpers ─────────────────────────────────────────────────────────
@@ -216,6 +218,8 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
   // Client-side sort of the API results
   const visibleFindings = React.useMemo(() => {
     return [...findings].sort((a, b) => {
+      // An unknown confidence stays last in both directions.
+      if (sortField === "confidence") return compareConfidence(a.confidence, b.confidence, sortDir);
       let cmp = 0;
       switch (sortField) {
         case "severity":
@@ -347,6 +351,7 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
                 {(
                   [
                     { field: "severity" as SortField, label: "Severity" },
+                    { field: "confidence" as SortField, label: FINDINGS_TEXT.confidenceColumn },
                     { field: "title" as SortField, label: "Title" },
                     { field: "type" as SortField, label: "Type" },
                     { field: "asset" as SortField, label: "Affected Asset" },
@@ -370,7 +375,7 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
               {visibleFindings.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={7}
+                    colSpan={8}
                     className="text-muted-foreground py-10 text-center text-sm"
                   >
                     No findings match the current filters.
@@ -384,6 +389,11 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
                   >
                     <TableCell>
                       <SeverityBadge severity={finding.severity} />
+                    </TableCell>
+                    <TableCell>
+                      <span className="data-value text-xs tabular-nums" data-testid="finding-confidence">
+                        {formatConfidence(finding.confidence, FINDINGS_TEXT.confidenceUnknown)}
+                      </span>
                     </TableCell>
                     <TableCell className="max-w-xs">
                       <Link
