@@ -10,7 +10,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-const { mockGetFindings } = vi.hoisted(() => ({ mockGetFindings: vi.fn() }));
+const { mockGetFindings, mockListOpen } = vi.hoisted(() => ({
+  mockGetFindings: vi.fn(),
+  mockListOpen: vi.fn(),
+}));
 
 vi.mock('@/src/lib/auth', () => ({
   getServerSession: vi.fn(async () => ({ user: { id: 'u1' } })),
@@ -20,7 +23,7 @@ vi.mock('@/src/lib/auth/active-tenant', () => ({
   activeTenantApiResponse: vi.fn(),
 }));
 vi.mock('@/src/lib/gibson-client', () => ({
-  userClient: () => ({ getFindings: mockGetFindings }),
+  userClient: () => ({ getFindings: mockGetFindings, listOpenFindings: mockListOpen }),
 }));
 
 import { GET } from '../route';
@@ -31,6 +34,8 @@ function request(query = ''): NextRequest {
 
 beforeEach(() => {
   mockGetFindings.mockReset();
+  mockListOpen.mockReset();
+  mockListOpen.mockResolvedValue({ findings: [], nextPageToken: '' });
 });
 
 describe('GET /api/findings page tokens', () => {
@@ -57,5 +62,51 @@ describe('GET /api/findings page tokens', () => {
     );
     expect(body.nextCursor).toBeUndefined();
     expect(body.hasMore).toBe(false);
+  });
+});
+
+describe('GET /api/findings lifecycle fields', () => {
+  it('reads the status, the priority and the confidence from properties and the place from the open findings', async () => {
+    mockGetFindings.mockResolvedValue({
+      findings: [
+        {
+          id: 'f1',
+          name: 'A',
+          severity: 'high',
+          labels: [],
+          properties: { status: 'fixing', priority: 'P1', priority_rule: 'rule-1', confidence: '0.7' },
+        },
+        { id: 'f2', name: 'B', severity: 'low', labels: [], properties: {} },
+      ],
+      total: BigInt(2),
+      nextPageToken: '',
+    });
+    mockListOpen.mockResolvedValue({
+      findings: [
+        {
+          id: 'f1',
+          places: [{ label: 'billing-api', key: 'app:1' }],
+          mergeRequestUrl: 'https://git.example/mr/1',
+        },
+      ],
+      nextPageToken: '',
+    });
+
+    const body = await (await GET(request())).json();
+    const [a, b] = body.data;
+
+    expect(a).toMatchObject({
+      status: 'fixing',
+      priority: 'P1',
+      priorityRule: 'rule-1',
+      confidence: 0.7,
+      affectedAssets: ['billing-api'],
+      mergeRequestUrl: 'https://git.example/mr/1',
+    });
+    // No constant: a finding with no data has no status, no place and no link.
+    expect(b.status).toBeUndefined();
+    expect(b.affectedAssets).toBeUndefined();
+    expect(b.mergeRequestUrl).toBeUndefined();
+    expect(b.confidence).toBeUndefined();
   });
 });

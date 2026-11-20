@@ -78,13 +78,18 @@ export const EVIDENCE_EXPORT_TEXT = {
 
 export const FINDINGS_PANEL_TEXT = {
   title: "Findings that are not verified",
-  note: "The API does not return the status of a finding yet. This list shows the findings in the order that the API gives.",
+  note: "The list shows the rank order of the API: the priority first, then the belief of the target.",
   empty: "No findings yet.",
   loadFailed: "The findings did not load.",
   confidence: "Confidence",
   attackPath: "Attack path",
   all: "Open all findings",
-  more: (shown: number, total: number) => `Showing ${shown} of ${total} findings.`,
+  more: (shown: number) => `Showing the first ${shown} findings.`,
+  unknown: "unknown",
+  noPriority: "no priority",
+  place: "Place",
+  rule: "Rule",
+  mergeRequest: "Merge request",
 } as const;
 
 export const UNAVAILABLE_PANELS = {

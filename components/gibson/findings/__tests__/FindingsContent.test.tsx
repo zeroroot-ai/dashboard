@@ -17,7 +17,7 @@ vi.mock("../FindingsExportDialog", () => ({ FindingsExportDialog: () => null }))
 
 import { FindingsContent } from "../FindingsContent";
 
-function finding(id: string, title: string, confidence?: number) {
+function finding(id: string, title: string, confidence?: number, over: Record<string, unknown> = {}) {
   return {
     id,
     missionId: "m1",
@@ -29,6 +29,7 @@ function finding(id: string, title: string, confidence?: number) {
     discoveredAt: new Date(),
     taxonomy: {},
     ...(confidence === undefined ? {} : { confidence }),
+    ...over,
   };
 }
 
@@ -46,6 +47,28 @@ function titles(): string[] {
   const rows = screen.getAllByRole("row").slice(1);
   return rows.map((r) => within(r).getAllByRole("link")[0].textContent ?? "");
 }
+
+describe("FindingsContent, the status, the place, the priority and the merge request", () => {
+  it("shows the status, the priority, the place and the link of each finding, and unknown for a missing value", () => {
+    mockFindings([
+      finding("a", "A", 0.5, {
+        status: "fixing",
+        priority: "P1",
+        priorityRule: "internet-facing",
+        affectedAssets: ["billing-api"],
+        mergeRequestUrl: "https://git.example/mr/1",
+      }),
+      finding("b", "B", undefined, { affectedAssets: undefined }),
+    ]);
+    render(<FindingsContent docsHref="https://docs.example" />);
+    expect(screen.getAllByTestId("finding-status").map((c) => c.textContent)).toEqual(["fixing", "unknown"]);
+    expect(screen.getAllByTestId("finding-priority").map((c) => c.textContent)).toEqual(["P1", "none"]);
+    expect(screen.getByText("billing-api")).toBeInTheDocument();
+    const links = screen.getAllByTestId("finding-merge-request");
+    expect(links).toHaveLength(1);
+    expect(links[0].getAttribute("href")).toBe("https://git.example/mr/1");
+  });
+});
 
 describe("FindingsContent, the confidence column", () => {
   it("shows the confidence of each finding and unknown when the value is missing", () => {

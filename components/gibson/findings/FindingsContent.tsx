@@ -28,13 +28,14 @@ import { useUserRefs } from "@/src/hooks/useUserRefs";
 import { principalLabel, userIdsToResolve } from "@/src/lib/principals/label";
 import type { Finding, FindingSeverity } from "@/src/types";
 import { compareConfidence, formatConfidence } from "@/src/lib/findings/confidence";
+import { FINDING_PRIORITIES, FINDING_STATUSES } from "@/src/lib/findings/status";
 import { FindingsExportDialog } from "./FindingsExportDialog";
 import { FINDINGS_TEXT } from "./texts";
 import { SEVERITY_LABELS, SeverityBadge } from "./SeverityBadge";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type SortField = "severity" | "confidence" | "title" | "type" | "asset" | "mission" | "discovered" | "reporter";
+type SortField = "severity" | "status" | "priority" | "confidence" | "title" | "type" | "asset" | "mergeRequest" | "mission" | "discovered" | "reporter";
 type SortDir = "asc" | "desc";
 
 // ── Severity helpers ─────────────────────────────────────────────────────────
@@ -48,6 +49,16 @@ const SEVERITY_ORDER: Record<FindingSeverity, number> = {
   low: 3,
   info: 4,
 };
+
+/** Order of the lifecycle. A finding with no status sorts after the four statuses. */
+function statusRank(status: Finding["status"]): number {
+  return status ? FINDING_STATUSES.indexOf(status) : FINDING_STATUSES.length;
+}
+
+/** P1 first. A finding with no priority sorts after P4. */
+function priorityRank(priority: Finding["priority"]): number {
+  return priority ? FINDING_PRIORITIES.indexOf(priority) : FINDING_PRIORITIES.length;
+}
 
 // ── Sub-components ───────────────────────────────────────────────────────────
 
@@ -199,6 +210,15 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
         case "severity":
           cmp = SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity];
           break;
+        case "status":
+          cmp = statusRank(a.status) - statusRank(b.status);
+          break;
+        case "priority":
+          cmp = priorityRank(a.priority) - priorityRank(b.priority);
+          break;
+        case "mergeRequest":
+          cmp = (a.mergeRequestUrl ?? "").localeCompare(b.mergeRequestUrl ?? "");
+          break;
         case "title":
           cmp = a.title.localeCompare(b.title);
           break;
@@ -206,7 +226,7 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
           cmp = a.type.localeCompare(b.type);
           break;
         case "asset":
-          cmp = (a.affectedAssets[0] ?? "").localeCompare(b.affectedAssets[0] ?? "");
+          cmp = (a.affectedAssets?.[0] ?? "").localeCompare(b.affectedAssets?.[0] ?? "");
           break;
         case "reporter":
           cmp = reportedBy(a).localeCompare(reportedBy(b));
@@ -325,13 +345,16 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
                 {(
                   [
                     { field: "severity" as SortField, label: "Severity" },
+                    { field: "status" as SortField, label: FINDINGS_TEXT.statusColumn },
+                    { field: "priority" as SortField, label: FINDINGS_TEXT.priorityColumn },
                     { field: "confidence" as SortField, label: FINDINGS_TEXT.confidenceColumn },
                     { field: "title" as SortField, label: "Title" },
                     { field: "type" as SortField, label: "Type" },
-                    { field: "asset" as SortField, label: "Affected Asset" },
+                    { field: "asset" as SortField, label: FINDINGS_TEXT.placeColumn },
                     { field: "mission" as SortField, label: "Mission" },
                     { field: "reporter" as SortField, label: "Reported by" },
                     { field: "discovered" as SortField, label: "Discovered" },
+                    { field: "mergeRequest" as SortField, label: FINDINGS_TEXT.mergeRequestColumn },
                   ] as { field: SortField; label: string }[]
                 ).map(({ field, label }) => (
                   <TableHead
@@ -349,7 +372,7 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
               {visibleFindings.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
+                    colSpan={11}
                     className="text-muted-foreground py-10 text-center text-sm"
                   >
                     No findings match the current filters.
@@ -363,6 +386,20 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
                   >
                     <TableCell>
                       <SeverityBadge severity={finding.severity} />
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-xs font-mono" data-testid="finding-status">
+                        {finding.status ?? FINDINGS_TEXT.unknown}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className="text-xs font-mono"
+                        data-testid="finding-priority"
+                        title={finding.priorityRule}
+                      >
+                        {finding.priority ?? FINDINGS_TEXT.noPriority}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <span className="data-value text-xs tabular-nums" data-testid="finding-confidence">
@@ -384,7 +421,7 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
                     </TableCell>
                     <TableCell>
                       <span className="data-value text-xs">
-                        {finding.affectedAssets.join(", ") || "-"}
+                        {finding.affectedAssets?.join(", ") || FINDINGS_TEXT.unknown}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -399,6 +436,21 @@ export function FindingsContent({ docsHref }: { docsHref: string }) {
                       <span className="text-muted-foreground text-xs tabular-nums">
                         {formatDiscoveredAt(finding.discoveredAt)}
                       </span>
+                    </TableCell>
+                    <TableCell>
+                      {finding.mergeRequestUrl ? (
+                        <a
+                          href={finding.mergeRequestUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs underline underline-offset-2 hover:text-highlight"
+                          data-testid="finding-merge-request"
+                        >
+                          {FINDINGS_TEXT.openMergeRequest}
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">{FINDINGS_TEXT.noMergeRequest}</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

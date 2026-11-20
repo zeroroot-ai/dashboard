@@ -5,4 +5,12 @@
 export const FINDINGS_TEXT = {
   confidenceColumn: "Confidence",
   confidenceUnknown: "unknown",
+  statusColumn: "Status",
+  priorityColumn: "Priority",
+  placeColumn: "Place",
+  mergeRequestColumn: "Merge request",
+  unknown: "unknown",
+  noPriority: "none",
+  noMergeRequest: "none",
+  openMergeRequest: "Open",
 } as const;
