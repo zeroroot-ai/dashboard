@@ -118,11 +118,22 @@ export const EXPOSURE_TEXT = {
   loadFailed: "The exposure window did not load.",
 } as const;
 
-export const UNAVAILABLE_PANELS = {
-  actions: {
-    title: "What the agents did and who allowed it",
-    text: "This data is not available yet. It needs the actions of the agents by grant and by grantor (gibson#1499).",
-  },
+export const ACTIONS_TEXT = {
+  title: "What the agents did and who allowed it",
+  period: "The connector calls of the last 24 hours, by grant.",
+  empty: "No agent called a connector in this period.",
+  noGrant: "no grant recorded",
+  noGrantor: "no grantor recorded",
+  refused: "Refused",
+  lacked: "Refused. The agent lacked this grant.",
+  grantor: "Granted by",
+  agents: "Agents",
+  tools: "Tools",
+  unknown: "unknown",
+  count: (n: number) => (n === 1 ? "1 action" : `${n} actions`),
+  openAudit: "Open the audit log",
+  truncated: "The period holds more audit records than one read returns. The counts are partial.",
+  loadFailed: "The actions of the agents did not load.",
 } as const;
 
 export const DASHBOARD_TEXT = {

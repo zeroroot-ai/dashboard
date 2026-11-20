@@ -9,6 +9,7 @@ import { render, screen } from "@testing-library/react";
 // test checks the order and the content of the screen.
 vi.mock("../FindingsPanel", () => ({ FindingsPanel: () => <section data-testid="panel-findings" /> }));
 vi.mock("../ExposurePanel", () => ({ ExposurePanel: () => <section data-testid="panel-exposure" /> }));
+vi.mock("../ActionsPanel", () => ({ ActionsPanel: () => <section data-testid="panel-actions" /> }));
 vi.mock("../WaitsPanel", () => ({ WaitsPanel: () => <section data-testid="panel-waits" /> }));
 vi.mock("../EvidenceExportPanel", () => ({
   EvidenceExportPanel: () => <section data-testid="panel-evidence" />,
@@ -22,8 +23,7 @@ describe("DashboardContent", () => {
   it("shows the five panels in the order of the five questions", () => {
     const { container } = render(<DashboardContent />);
     const order = [...container.querySelectorAll("[data-testid^='panel-']")]
-      .map((el) => el.getAttribute("data-testid"))
-      .filter((id) => !id?.endsWith("-unavailable"));
+      .map((el) => el.getAttribute("data-testid"));
     expect(order).toEqual([
       "panel-findings",
       "panel-exposure",
@@ -31,13 +31,6 @@ describe("DashboardContent", () => {
       "panel-waits",
       "panel-evidence",
     ]);
-  });
-
-  it("says that the data of panel 3 is not available yet and shows no number", () => {
-    render(<DashboardContent />);
-    const text = screen.getByTestId("panel-actions-unavailable").textContent ?? "";
-    expect(text).toContain("not available yet");
-    expect(text).not.toMatch(/\b\d+(\.\d+)?\s*%/);
   });
 
   it("holds none of the old count cards", () => {

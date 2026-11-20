@@ -13,19 +13,18 @@
  *   4. What waits on a person?
  *   5. Where is the evidence?
  *
- * Panel 3 has no source wired yet. It says so and shows no number.
  * Below the five panels, two tiles show the control evidence and the model
  * cost.
  */
 
+import { ActionsPanel } from "./ActionsPanel";
 import { ControlCoverageTile } from "./ControlCoverageTile";
 import { BudgetCostTile } from "./BudgetCostTile";
 import { ExposurePanel } from "./ExposurePanel";
 import { EvidenceExportPanel } from "./EvidenceExportPanel";
 import { FindingsPanel } from "./FindingsPanel";
-import { UnavailablePanel } from "./UnavailablePanel";
 import { WaitsPanel } from "./WaitsPanel";
-import { DASHBOARD_TEXT, UNAVAILABLE_PANELS } from "./texts";
+import { DASHBOARD_TEXT } from "./texts";
 
 export function DashboardContent() {
   return (
@@ -38,11 +37,7 @@ export function DashboardContent() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ExposurePanel />
-        <UnavailablePanel
-          testId="panel-actions"
-          title={UNAVAILABLE_PANELS.actions.title}
-          text={UNAVAILABLE_PANELS.actions.text}
-        />
+        <ActionsPanel />
       </div>
 
       <WaitsPanel />
