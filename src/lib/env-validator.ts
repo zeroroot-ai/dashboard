@@ -287,11 +287,6 @@ const OPTIONAL_ENV = [
   'ZITADEL_DASHBOARD_CLIENT_ID',
   'ZITADEL_DASHBOARD_CLIENT_SECRET',
 
-  // ---- Tier / Billing metadata ----
-  // GIBSON_TIER picks a self-serve tier display config; only relevant when
-  // the dashboard is rendering tier UI. Set explicitly via Helm values.
-  'GIBSON_TIER',
-
   // ---- Misc dashboard knobs ----
   // The port of the metrics-only listener (src/lib/metrics/server.ts).
   'DASHBOARD_METRICS_PORT',

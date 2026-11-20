@@ -28,13 +28,10 @@ export interface Tenant {
 interface TenantSettings {
   mission?: {
     defaultLLMSlot?: string;
-    maxConcurrentMissions?: number;
     maxMissionDuration?: number;
   };
   limits?: {
     apiRateLimit?: number;
-    llmTokenLimit?: number;
-    storageLimit?: number;
   };
   notifications?: {
     email?: boolean;

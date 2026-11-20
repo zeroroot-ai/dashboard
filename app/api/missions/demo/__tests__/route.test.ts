@@ -163,7 +163,7 @@ describe('POST /api/missions/demo', () => {
   it('returns 500 when createMission rejects', async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: 'u1', tenantId: 't1' } });
     mockCreateMissionDefinition.mockResolvedValue({ missionDefinitionId: 'def-3' });
-    mockCreateMission.mockResolvedValue({ success: false, message: 'quota exceeded' });
+    mockCreateMission.mockResolvedValue({ success: false, message: 'rate limit exceeded' });
     mockUserClient.mockReturnValue({
       createMissionDefinition: mockCreateMissionDefinition,
       createMission: mockCreateMission,
@@ -174,14 +174,14 @@ describe('POST /api/missions/demo', () => {
 
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body.error.message).toContain('quota exceeded');
+    expect(body.error.message).toContain('rate limit exceeded');
     expect(mockRunMission).not.toHaveBeenCalled();
   });
 
   it('maps a daemon ResourceExhausted via the canonical error envelope', async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: 'u1', tenantId: 't1' } });
     mockCreateMissionDefinition.mockRejectedValue(
-      new ConnectError('over quota', Code.ResourceExhausted),
+      new ConnectError('rate limit exceeded', Code.ResourceExhausted),
     );
     mockUserClient.mockReturnValue({
       createMissionDefinition: mockCreateMissionDefinition,

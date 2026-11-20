@@ -114,7 +114,7 @@ describe('RunDemoMissionButton', () => {
     mockFetchOnce(429, {
       error: {
         class: 'resource_exhausted',
-        message: 'quota exceeded',
+        message: 'rate limit exceeded',
         affordance: 'Wait for one of your running missions to complete, then retry.',
       },
     });
