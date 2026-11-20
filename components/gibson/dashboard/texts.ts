@@ -59,3 +59,19 @@ export const COST_TEXT = {
     n === 1 ? "1 verified fix has an unknown cost." : `${n} verified fixes have an unknown cost.`,
   open: "Open Budgets",
 } as const;
+
+export const EVIDENCE_EXPORT_TEXT = {
+  title: "Evidence export",
+  intro: "Export the audit events that are evidence for the controls of NIST 800-53, for a time range.",
+  framework: "Framework",
+  start: "Start",
+  end: "End",
+  exportCsv: "Export CSV",
+  exportJson: "Export JSON",
+  exporting: "Exporting",
+  failed: "The evidence export failed.",
+  notAllowed: "Only an Owner or an Admin can export evidence.",
+  notYet:
+    "The export does not hold the verified findings with their proof and their D3FEND countermeasures yet. The backend does not map them yet.",
+  open: "Open the Compliance page",
+} as const;

@@ -33,20 +33,7 @@ import type {
 } from "@/src/lib/gibson-client/compliance";
 import { COMPLIANCE_TEXT, DEFAULT_RANGE_DAYS, coverageText } from "./texts";
 import { download, eventsOf, toCsv, toJson } from "./export";
-
-/** yyyy-mm-dd of a local date. */
-function dayString(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-
-/** The ISO range for two local days: the start day, through the end day. */
-function rangeOf(startDay: string, endDay: string): { start: string; end: string } {
-  const start = new Date(`${startDay}T00:00:00`);
-  const end = new Date(`${endDay}T00:00:00`);
-  end.setDate(end.getDate() + 1);
-  return { start: start.toISOString(), end: end.toISOString() };
-}
+import { dayString, rangeOf } from "./range";
 
 function localTime(iso: string): string {
   if (!iso) return "";
