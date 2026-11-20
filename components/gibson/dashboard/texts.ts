@@ -37,8 +37,6 @@ export const WAITS_TEXT = {
     "awaiting-scan": "Waits on a scan",
     "no-health-signal": "No health signal",
   },
-  missingKinds:
-    "This panel does not show a finding that waits on a refused merge, on a scan, or on a health signal. The API for these items is not available yet.",
   loadFailed: "The items that wait on a person did not load.",
 } as const;
 

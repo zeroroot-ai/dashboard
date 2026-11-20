@@ -10,8 +10,8 @@
  * link to the place where a person acts. A destructive action also shows its
  * blast radius and its reversibility.
  *
- * Today the one source is the queue of pending destructive actions. The
- * panel lists `WaitItem` values, so the three other kinds need no change here.
+ * The source is WorldService.ListWaitingOnPerson (gibson#1500). It gives the
+ * four kinds of items. The panel lists `WaitItem` values.
  */
 
 import * as React from "react";
@@ -126,9 +126,6 @@ export function WaitsPanel() {
             ))}
           </ul>
         )}
-        <p className="text-xs text-muted-foreground" data-testid="waits-missing-kinds">
-          {WAITS_TEXT.missingKinds}
-        </p>
       </CardContent>
     </Card>
   );

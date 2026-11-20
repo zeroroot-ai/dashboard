@@ -5,34 +5,27 @@ import * as React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 
-const { useDestructiveActions } = vi.hoisted(() => ({ useDestructiveActions: vi.fn() }));
-vi.mock("@/src/hooks/useDestructiveActions", () => ({ useDestructiveActions }));
+const { useWaitItems } = vi.hoisted(() => ({ useWaitItems: vi.fn() }));
+vi.mock("@/src/hooks/useWaitItems", () => ({ useWaitItems }));
 
 import { WaitsPanel } from "../WaitsPanel";
 
 const NOW = new Date("2026-11-20T12:00:00.000Z");
 
 function mockQueue(items: unknown[], extra: Record<string, unknown> = {}) {
-  useDestructiveActions.mockReturnValue({
-    data: { items },
-    isLoading: false,
-    error: null,
-    refetch: vi.fn(),
-    ...extra,
-  });
+  useWaitItems.mockReturnValue({ items, isLoading: false, error: null, refetch: vi.fn(), ...extra });
 }
 
 function item(id: string, requestedAt: string, over: Record<string, unknown> = {}) {
+  const t = requestedAt ? new Date(requestedAt).getTime() : null;
   return {
-    id,
-    missionId: "m",
-    scopeId: "s",
-    hypothesisId: "h",
-    technique: `tech-${id}`,
-    predicateType: "p",
+    kind: "destructive-action",
+    id: `destructive-action:${id}`,
+    title: `tech-${id}`,
+    waitStartedAtMs: t,
+    href: "/dashboard/destructive-actions",
     blastRadius: "",
     reversibility: "unspecified",
-    requestedAt,
     ...over,
   };
 }
@@ -85,21 +78,35 @@ describe("WaitsPanel", () => {
     expect(screen.getByTestId("waits-summary").textContent).toContain("Oldest: unknown");
   });
 
-  it("shows an empty state and the note about the three kinds with no source", () => {
+  it("shows the four kinds, each with its wait and one link", () => {
+    const kinds = ["destructive-action", "merge-refused", "awaiting-scan", "no-health-signal"];
+    mockQueue(
+      kinds.map((kind, i) =>
+        item(String(i), "2026-11-20T11:00:00.000Z", {
+          kind,
+          href: kind === "destructive-action" ? "/dashboard/destructive-actions" : `/dashboard/findings/f${i}`,
+        }),
+      ),
+    );
+    render(<WaitsPanel />);
+    const rows = screen.getAllByTestId("wait-row");
+    expect(rows.map((r) => r.getAttribute("data-kind")).sort()).toEqual([...kinds].sort());
+    for (const row of rows) {
+      expect(within(row).getByTestId("wait-age").textContent).toBe("Waiting: 1 h");
+      expect(within(row).getAllByRole("link")).toHaveLength(1);
+    }
+    expect(screen.getByTestId("waits-summary").textContent).toContain("4 items wait");
+  });
+
+  it("shows an empty state", () => {
     mockQueue([]);
     render(<WaitsPanel />);
     expect(screen.getByText("Nothing waits on a person.")).toBeInTheDocument();
     expect(screen.getByTestId("waits-summary").textContent).toBe("0 items wait");
-    expect(screen.getByTestId("waits-missing-kinds").textContent).toContain("not available yet");
   });
 
   it("shows an error and no count when the queue fails to load", () => {
-    useDestructiveActions.mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      error: new Error("boom"),
-      refetch: vi.fn(),
-    });
+    mockQueue([], { error: new Error("boom") });
     render(<WaitsPanel />);
     expect(screen.queryByTestId("waits-summary")).toBeNull();
     expect(screen.getByText("boom")).toBeInTheDocument();

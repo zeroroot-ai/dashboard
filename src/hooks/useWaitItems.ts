@@ -4,8 +4,11 @@
 'use client';
 
 import * as React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { readJson } from '@/src/lib/api/read-json';
+import { useTenantId } from '@/src/lib/auth/tenant';
 import { useDestructiveActions } from '@/src/hooks/useDestructiveActions';
-import { waitItemsFromDestructiveActions, type WaitItem } from '@/src/lib/waits/wait-items';
+import { waitItemsFromApi, type WaitItem, type WaitingItemDto } from '@/src/lib/waits/wait-items';
 
 interface WaitItemsResult {
   items: WaitItem[];
@@ -15,20 +18,29 @@ interface WaitItemsResult {
 }
 
 /**
- * The items that wait on a person. Today the one source is the queue of
- * pending destructive actions. The three other kinds join here when the
- * tenant API of gibson#1500 exists.
+ * The items that wait on a person: the four kinds of
+ * WorldService.ListWaitingOnPerson. The queue of pending destructive actions
+ * adds the blast radius and the reversibility to a destructive action. A
+ * failure of that queue leaves those details unknown. It does not hide the item.
  */
 export function useWaitItems(): WaitItemsResult {
+  const tenantId = useTenantId() ?? '';
+  const waiting = useQuery({
+    queryKey: ['world', tenantId, 'waiting'],
+    queryFn: () =>
+      readJson<{ items: WaitingItemDto[] }>('/api/world/waiting', 'Failed to load the items that wait on a person'),
+    staleTime: 10_000,
+    refetchInterval: 15_000,
+  });
   const destructive = useDestructiveActions();
   const items = React.useMemo(
-    () => waitItemsFromDestructiveActions(destructive.data?.items ?? []),
-    [destructive.data],
+    () => waitItemsFromApi(waiting.data?.items ?? [], destructive.data?.items ?? []),
+    [waiting.data, destructive.data],
   );
   return {
     items,
-    isLoading: destructive.isLoading,
-    error: destructive.error,
-    refetch: () => void destructive.refetch(),
+    isLoading: waiting.isLoading,
+    error: waiting.error,
+    refetch: () => void waiting.refetch(),
   };
 }
