@@ -41,3 +41,21 @@ export const WAITS_TEXT = {
     "This panel does not show a finding that waits on a refused merge, on a scan, or on a health signal. The API for these items is not available yet.",
   loadFailed: "The items that wait on a person did not load.",
 } as const;
+
+export const COST_TEXT = {
+  title: "Model cost",
+  budgetSpent: (spent: string, limit: string | null) =>
+    limit === null ? `${spent} spent, no limit set` : `${spent} of ${limit} spent`,
+  resets: (date: string) => `Period resets: ${date}`,
+  warning: "The warning threshold of the budget is crossed.",
+  limitReached: "The spend reached the limit of the budget.",
+  noBudget: "No budget is set for this organization.",
+  budgetFailed: "The budget did not load.",
+  perFix: "Median cost for each verified fix",
+  unknown: "unknown",
+  perFixNotAvailable:
+    "The cost for each verified fix is not available yet. It needs the status of each finding from the backend.",
+  perFixUnknownCount: (n: number) =>
+    n === 1 ? "1 verified fix has an unknown cost." : `${n} verified fixes have an unknown cost.`,
+  open: "Open Budgets",
+} as const;
