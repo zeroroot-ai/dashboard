@@ -76,6 +76,58 @@ function state(s: ControlEvidence_State): ControlState {
   }
 }
 
+function toControlDTO(c: {
+  controlId: string;
+  title: string;
+  family: string;
+  familyTitle: string;
+  state: ControlEvidence_State;
+  eventCount: bigint | number;
+  lastEventTime?: Timestamp;
+}): ControlEvidenceDTO {
+  return {
+    controlId: c.controlId,
+    title: c.title,
+    family: c.family,
+    familyTitle: c.familyTitle,
+    state: state(c.state),
+    eventCount: Number(c.eventCount),
+    lastEventTime: iso(c.lastEventTime),
+  };
+}
+
+/** The controls of one pack in one range, with no events. */
+export interface ControlCoverageDTO {
+  pack: string;
+  controlsWithRule: number;
+  controlsTotal: number;
+  controls: ControlEvidenceDTO[];
+}
+
+/**
+ * Read the controls of one pack in one range, and no events. Each page
+ * carries all controls, so one page of one event is enough.
+ */
+export async function daemonListControlCoverage(input: {
+  pack: string;
+  start: Date;
+  end: Date;
+}): Promise<ControlCoverageDTO> {
+  const resp = await userClient(ComplianceService).listComplianceEvidence({
+    pack: input.pack,
+    startTime: timestampFromDate(input.start),
+    endTime: timestampFromDate(input.end),
+    pageSize: 1,
+    pageToken: '',
+  });
+  return {
+    pack: resp.pack,
+    controlsWithRule: resp.controlsWithRule,
+    controlsTotal: resp.controlsTotal,
+    controls: resp.controls.map(toControlDTO),
+  };
+}
+
 /**
  * Read the evidence of one pack in one range: the controls of the first page
  * (each page carries all of them) and the events of every page.
@@ -102,15 +154,7 @@ export async function daemonListComplianceEvidence(input: {
         packVersion: resp.packVersion,
         controlsWithRule: resp.controlsWithRule,
         controlsTotal: resp.controlsTotal,
-        controls: resp.controls.map((c) => ({
-          controlId: c.controlId,
-          title: c.title,
-          family: c.family,
-          familyTitle: c.familyTitle,
-          state: state(c.state),
-          eventCount: Number(c.eventCount),
-          lastEventTime: iso(c.lastEventTime),
-        })),
+        controls: resp.controls.map(toControlDTO),
         events: [],
       };
     }
