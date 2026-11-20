@@ -43,7 +43,7 @@ interface WaitItemBase {
 }
 
 /** A destructive action with no decision. */
-export interface DestructiveActionWaitItem extends WaitItemBase {
+interface DestructiveActionWaitItem extends WaitItemBase {
   kind: "destructive-action";
   /** Empty when the daemon gives no description. */
   blastRadius: string;

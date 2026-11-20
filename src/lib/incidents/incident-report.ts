@@ -22,7 +22,7 @@ export interface FrameView {
   replaySeq: number;
 }
 
-export type ActionOutcome = "done" | "refused" | "pending-authorization" | "failed" | "unknown";
+type ActionOutcome = "done" | "refused" | "pending-authorization" | "failed" | "unknown";
 
 export interface IncidentReportView {
   incidentKey: string;

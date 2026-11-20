@@ -29,7 +29,7 @@ export interface ExposureTrend {
   previousMedianSeconds: number;
 }
 
-export interface RevertPeriodView {
+interface RevertPeriodView {
   merged: number;
   reverted: number;
   rate: number;
