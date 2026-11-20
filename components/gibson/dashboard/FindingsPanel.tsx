@@ -24,6 +24,7 @@ import { SeverityBadge } from "@/components/gibson/findings/SeverityBadge";
 import { FINDINGS_TEXT } from "@/components/gibson/findings/texts";
 import { useFindings } from "@/src/hooks/useFindings";
 import { formatConfidence } from "@/src/lib/findings/confidence";
+import { findingGraphHref } from "@/src/lib/graph/finding-link";
 import { FINDINGS_PANEL_TEXT } from "./texts";
 
 const PANEL_LIMIT = 10;
@@ -79,6 +80,13 @@ export function FindingsPanel() {
                     {FINDINGS_PANEL_TEXT.confidence}:{" "}
                     {formatConfidence(finding.confidence, FINDINGS_TEXT.confidenceUnknown)}
                   </span>
+                  <Link
+                    href={findingGraphHref(finding.id)}
+                    className="underline underline-offset-2 hover:text-highlight"
+                    data-testid="finding-attack-path"
+                  >
+                    {FINDINGS_PANEL_TEXT.attackPath}
+                  </Link>
                 </div>
               </li>
             ))}

@@ -37,6 +37,7 @@ import {
 } from '@/src/lib/graph/filters';
 import { applyNodeOps } from '@/src/lib/graph/node-ops';
 import { attackPathSets } from '@/src/lib/graph/attack-path';
+import { FINDING_PARAM } from '@/src/lib/graph/finding-link';
 import { isScrubbing } from '@/src/lib/graph/fold-scrubber';
 import { usePlayback } from '@/components/gibson/brain/playback';
 import {
@@ -302,6 +303,22 @@ export default function GraphPage() {
     canvasRef.current?.centerOn(node.id);
   }, []);
 
+  // A finding opens its view: select the node and isolate it with its
+  // neighbors, once for each finding id (dashboard#383). Exit focus shows
+  // the whole graph again.
+  const findingId = searchParams.get(FINDING_PARAM);
+  const appliedFindingRef = useRef<string | null>(null);
+  const findingNode = useMemo(
+    () => (findingId ? (mergedData.nodes.find((n) => n.id === findingId) ?? null) : null),
+    [findingId, mergedData.nodes]
+  );
+  useEffect(() => {
+    if (!findingId || !findingNode || appliedFindingRef.current === findingId) return;
+    appliedFindingRef.current = findingId;
+    isolateNode(findingId);
+    setSelectedNode(findingNode);
+  }, [findingId, findingNode, isolateNode]);
+
   // Fit-to-selection: frame the node plus its direct neighbors.
   const handleFrameNode = useCallback((node: GraphNode) => {
     const ids = new Set<string>([node.id]);
@@ -500,6 +517,17 @@ export default function GraphPage() {
           Live
         </button>
       </div>
+
+      {/* The finding of the link is not in the graph data */}
+      {findingId && !isLoading && !isError && !findingNode && (
+        <div
+          role="status"
+          data-testid="graph-finding-missing"
+          className="absolute top-16 left-1/2 -translate-x-1/2 z-20 px-3 py-1.5 rounded-lg bg-background/90 backdrop-blur-sm border border-border text-xs text-muted-foreground"
+        >
+          This finding is not in the graph view.
+        </div>
+      )}
 
       {/* Focus / hidden status bar */}
       {hasData && (focusNodeId || hiddenNodeIds.length > 0) && (

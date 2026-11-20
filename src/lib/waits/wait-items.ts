@@ -4,7 +4,8 @@
 /**
  * The items that wait on a person (epic gibson#1497, panel 4).
  *
- * The tenant API of gibson#1500 returns four kinds of items. Only the first
+ * The tenant API of gibson#1500 returns four kinds of items: a destructive
+ * action, a refused merge, a wait on a scan, and a missing health signal. Only the first
  * kind has a source today: the pending destructive actions. The other three
  * kinds are in the type, so the API can fill them with no change to the
  * panel. No code here makes an item of those kinds.
@@ -17,13 +18,6 @@ import type {
   DestructiveReversibility,
   PendingDestructiveAction,
 } from "@/src/types/destructive-actions";
-
-/** The four kinds of items that add wait time. */
-type WaitItemKind =
-  | "destructive-action"
-  | "merge-refused"
-  | "awaiting-scan"
-  | "no-health-signal";
 
 interface WaitItemBase {
   /** Stable id. The kind and the source id together are unique. */

@@ -67,6 +67,14 @@ describe("FindingsPanel", () => {
     expect(screen.getByRole("link", { name: "A" }).getAttribute("href")).toBe("/dashboard/findings/a%2Fb");
   });
 
+  it("links each finding to the graph with the finding selected", () => {
+    mockData([finding("a/b", "A", "high")]);
+    render(<FindingsPanel />);
+    expect(screen.getByTestId("finding-attack-path").getAttribute("href")).toBe(
+      "/dashboard/graph?finding=a%2Fb",
+    );
+  });
+
   it("shows how many findings the list leaves out", () => {
     mockData([finding("a", "A", "high")], 25);
     render(<FindingsPanel />);

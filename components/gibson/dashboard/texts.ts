@@ -82,6 +82,7 @@ export const FINDINGS_PANEL_TEXT = {
   empty: "No findings yet.",
   loadFailed: "The findings did not load.",
   confidence: "Confidence",
+  attackPath: "Attack path",
   all: "Open all findings",
   more: (shown: number, total: number) => `Showing ${shown} of ${total} findings.`,
 } as const;
