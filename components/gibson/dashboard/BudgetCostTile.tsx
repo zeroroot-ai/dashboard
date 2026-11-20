@@ -9,9 +9,12 @@
  * the budget crosses its limit. It also shows the median model cost for each
  * verified fix.
  *
- * The cost for each verified fix needs the status of each finding, and the
- * backend does not return it yet. The `fixCosts` prop is the typed seam. While
- * the prop is absent the tile shows "unknown" and says why. It never shows zero.
+ * The cost for each verified fix needs a model cost for each finding. The
+ * backend returns a cost only for a user, a team, an agent or a mission
+ * (UsageService), so no source feeds the `fixCosts` prop. While the prop is
+ * absent the tile shows "unknown", says why and shows how many findings were
+ * verified in the last 7 days (GetExposureTrend). It never shows zero. A
+ * mission cost is not the cost of one fix, so the tile does not derive one.
  */
 
 import * as React from "react";
@@ -22,6 +25,7 @@ import { WalletIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useExposure } from "@/src/hooks/useExposure";
 import { listBudgetStatusAction } from "@/app/actions/crud/budgets";
 import {
   formatUsd,
@@ -38,6 +42,8 @@ export function BudgetCostTile({ fixCosts }: { fixCosts?: readonly FixCost[] }) 
     staleTime: 60_000,
   });
 
+  const exposure = useExposure();
+  const verifiedCount = exposure.data?.exposure.count ?? 0;
   const median = fixCosts === undefined ? null : medianFixCost(fixCosts);
 
   let budgetBody: React.ReactNode;
@@ -108,6 +114,11 @@ export function BudgetCostTile({ fixCosts }: { fixCosts?: readonly FixCost[] }) 
           {median === null && (
             <p className="text-xs text-muted-foreground" data-testid="fix-cost-note">
               {COST_TEXT.perFixNotAvailable}
+            </p>
+          )}
+          {median === null && verifiedCount > 0 && (
+            <p className="text-xs text-muted-foreground" data-testid="fix-cost-verified">
+              {COST_TEXT.verifiedWithoutCost(verifiedCount)}
             </p>
           )}
           {median !== null && median.known && median.unknownCount > 0 && (

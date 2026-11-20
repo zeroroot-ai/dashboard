@@ -7,10 +7,16 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const { listStatus } = vi.hoisted(() => ({ listStatus: vi.fn() }));
+const { useExposure } = vi.hoisted(() => ({ useExposure: vi.fn() }));
+vi.mock("@/src/hooks/useExposure", () => ({ useExposure }));
 vi.mock("@/app/actions/crud/budgets", () => ({ listBudgetStatusAction: listStatus }));
 
 import { BudgetCostTile } from "../BudgetCostTile";
 import type { FixCost } from "@/src/lib/cost/budget-burn";
+
+beforeEach(() => {
+  useExposure.mockReturnValue({ data: undefined });
+});
 
 function renderTile(fixCosts?: readonly FixCost[]) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -78,6 +84,15 @@ describe("BudgetCostTile", () => {
     renderTile();
     expect(screen.getByTestId("fix-cost-value").textContent).toBe("unknown");
     expect(screen.getByTestId("fix-cost-note").textContent).toContain("not available yet");
+  });
+
+  it("shows how many findings were verified in the last 7 days next to the unknown cost", () => {
+    useExposure.mockReturnValue({ data: { exposure: { count: 3 } } });
+    listStatus.mockResolvedValue(status());
+    renderTile();
+    expect(screen.getByTestId("fix-cost-verified").textContent).toBe(
+      "3 findings were verified in the last 7 days. Their cost is unknown.",
+    );
   });
 
   it("shows the median cost for each verified fix when a source gives costs", async () => {

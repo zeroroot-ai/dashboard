@@ -52,7 +52,11 @@ export const COST_TEXT = {
   perFix: "Median cost for each verified fix",
   unknown: "unknown",
   perFixNotAvailable:
-    "The cost for each verified fix is not available yet. It needs the status of each finding from the backend.",
+    "The cost for each verified fix is not available yet. The backend gives no model cost for each finding.",
+  verifiedWithoutCost: (n: number) =>
+    n === 1
+      ? "1 finding was verified in the last 7 days. Its cost is unknown."
+      : `${n} findings were verified in the last 7 days. Their cost is unknown.`,
   perFixUnknownCount: (n: number) =>
     n === 1 ? "1 verified fix has an unknown cost." : `${n} verified fixes have an unknown cost.`,
   open: "Open Budgets",
