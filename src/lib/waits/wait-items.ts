@@ -19,7 +19,7 @@ import type {
 } from "@/src/types/destructive-actions";
 
 /** The four kinds of items that add wait time. */
-export type WaitItemKind =
+type WaitItemKind =
   | "destructive-action"
   | "merge-refused"
   | "awaiting-scan"
@@ -66,7 +66,7 @@ export type WaitItem =
   | NoHealthSignalWaitItem;
 
 /** The page where a person decides a destructive action. */
-export const DESTRUCTIVE_ACTIONS_HREF = "/dashboard/destructive-actions";
+const DESTRUCTIVE_ACTIONS_HREF = "/dashboard/destructive-actions";
 
 /** Make the wait items of the pending destructive actions. */
 export function waitItemsFromDestructiveActions(

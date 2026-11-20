@@ -45,9 +45,9 @@ export const TEST_TENANT: Tenant = {
 };
 
 /**
- * Wrap a render tree with QueryClient + TenantContext. The seven
+ * Wrap a render tree with QueryClient + TenantContext. The six
  * tenant-scoped data hooks (useMissions, useFindings,
- * useComponents, useTraces, useGraph, useWidgetLayout,
+ * useTraces, useGraph, useWidgetLayout,
  * useMissionCreation) call `useTenantStore` which transitively requires
  * `TenantContextProvider`. Omitting it throws
  * "useTenantContext must be used within a TenantContextProvider."

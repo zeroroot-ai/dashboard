@@ -8,8 +8,8 @@
  * `closed` flag that the blocked `for await` loop never gets a chance to
  * check (it is waiting on the daemon's NEXT event, not polling).
  *
- * This route is opened unconditionally on every `/dashboard` render
- * (`useEventStream()` in components/gibson/dashboard/DashboardContent.tsx),
+ * This route is opened by the Events page
+ * (`useEventStream()` in components/gibson/events/EventsContent.tsx),
  * and the browser's EventSource reconnects with its own backoff on every
  * network hiccup. Each reconnect is a brand new invocation of this route
  * handler; without the fix, each one leaks one abandoned subscribe stream.

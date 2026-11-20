@@ -7,7 +7,6 @@ import * as React from "react";
 import Link from "next/link";
 import { ArrowUpDown, ChevronDown, ChevronUp, Download, Search, ShieldAlertIcon } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -31,6 +30,7 @@ import type { Finding, FindingSeverity } from "@/src/types";
 import { compareConfidence, formatConfidence } from "@/src/lib/findings/confidence";
 import { FindingsExportDialog } from "./FindingsExportDialog";
 import { FINDINGS_TEXT } from "./texts";
+import { SEVERITY_LABELS, SeverityBadge } from "./SeverityBadge";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -49,33 +49,7 @@ const SEVERITY_ORDER: Record<FindingSeverity, number> = {
   info: 4,
 };
 
-const SEVERITY_BADGE_CLASS: Record<FindingSeverity, string> = {
-  critical: "border-destructive/40 bg-destructive/10/60 text-destructive",
-  high: "border-alt/40 bg-alt/10/60 text-alt",
-  medium: "border-alt/40 bg-alt/10/60 text-alt",
-  low: "border-highlight/40 bg-highlight/10/60 text-highlight",
-  info: "border-border bg-muted/60 text-muted-foreground",
-};
-
-const SEVERITY_LABELS: Record<FindingSeverity, string> = {
-  critical: "Critical",
-  high: "High",
-  medium: "Medium",
-  low: "Low",
-  info: "Info",
-};
-
 // ── Sub-components ───────────────────────────────────────────────────────────
-
-function SeverityBadge({ severity }: { severity: FindingSeverity }) {
-  return (
-    <Badge
-      className={`border font-mono text-xs uppercase tracking-wide ${SEVERITY_BADGE_CLASS[severity]}`}
-    >
-      {SEVERITY_LABELS[severity]}
-    </Badge>
-  );
-}
 
 function SortIcon({
   field,

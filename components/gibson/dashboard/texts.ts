@@ -75,3 +75,28 @@ export const EVIDENCE_EXPORT_TEXT = {
     "The export does not hold the verified findings with their proof and their D3FEND countermeasures yet. The backend does not map them yet.",
   open: "Open the Compliance page",
 } as const;
+
+export const FINDINGS_PANEL_TEXT = {
+  title: "Findings that are not verified",
+  note: "The API does not return the status of a finding yet. This list shows the findings in the order that the API gives.",
+  empty: "No findings yet.",
+  loadFailed: "The findings did not load.",
+  confidence: "Confidence",
+  all: "Open all findings",
+  more: (shown: number, total: number) => `Showing ${shown} of ${total} findings.`,
+} as const;
+
+export const UNAVAILABLE_PANELS = {
+  exposure: {
+    title: "Exposure window and revert rate",
+    text: "This data is not available yet. It needs the exposure window of each finding (gibson#1467) and the revert rate of the fixes (gibson#1468).",
+  },
+  actions: {
+    title: "What the agents did and who allowed it",
+    text: "This data is not available yet. It needs the actions of the agents by grant and by grantor (gibson#1499).",
+  },
+} as const;
+
+export const DASHBOARD_TEXT = {
+  title: "Console",
+} as const;
