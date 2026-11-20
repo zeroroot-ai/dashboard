@@ -6,8 +6,8 @@
 /**
  * Tenant store, context-backed compatibility shim.
  *
- * The dashboard's nine tenant-scoped data hooks (useMissions, useFindings,
- * useAlerts, useAnalytics, useComponents, useTraces, useGraph,
+ * The dashboard's seven tenant-scoped data hooks (useMissions, useFindings,
+ * useComponents, useTraces, useGraph,
  * useWidgetLayout, useMissionCreation) call `useTenantStore((s) =>
  * s.currentTenant)` to scope React Query keys and daemon-RPC requests to
  * the active tenant. This module preserves that selector API but reads

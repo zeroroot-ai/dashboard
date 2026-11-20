@@ -6,8 +6,7 @@
 /**
  * The one Integrations page (ADR-0065, dashboard#86): plugins and connectors
  * are two tabs of one page. The active tab is in the `tab` query parameter,
- * so a link or a bookmark opens the right tab, and the old routes
- * /dashboard/plugins and /dashboard/connectors redirect to it.
+ * so a link or a bookmark opens the right tab.
  */
 
 import * as React from "react";

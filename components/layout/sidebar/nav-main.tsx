@@ -339,6 +339,13 @@ export const navItems: NavGroup[] = [
     title: "Configuration",
     items: [
       {
+        // Model cost and tokens for each user, team, agent and mission
+        // (dashboard#390). The page had no link before.
+        title: "Usage",
+        href: "/dashboard/pages/usage",
+        icon: GaugeIcon,
+      },
+      {
         // The settings index redirects to /pages/settings/account. The
         // settings page itself has its own sidebar with the full surface
         // (Account, Billing, Providers, Agents, Plugins, Model Access,

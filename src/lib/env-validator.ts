@@ -208,13 +208,6 @@ export const REQUIRED_ENV: readonly RequiredEnvSpec[] = [
 
   // ---- Feature switches ----
   {
-    name: 'DASHBOARD_CAPTCHA_PROVIDER',
-    kind: 'string',
-    hint:
-      'CAPTCHA provider id: "turnstile" | "hcaptcha" | "disabled". ' +
-      'Explicit choice required, no implicit disable.',
-  },
-  {
     name: 'DASHBOARD_HIBP_ENABLED',
     kind: 'boolean',
     hint:
@@ -258,9 +251,6 @@ const OPTIONAL_ENV = [
   // src/lib/auth/auth-secrets.ts is the one reader.
   'AUTH_SECRET_PREVIOUS',
 
-  // ---- CAPTCHA secret (gated by DASHBOARD_CAPTCHA_PROVIDER) ----
-  'DASHBOARD_CAPTCHA_SECRET_KEY',
-
   // ---- Neutral billing connection points (dashboard#226, ADR-0060) ----
   // The dashboard holds no billing code. A private component connects through
   // an account URL and an external signup step. All of these are optional and
@@ -301,11 +291,6 @@ const OPTIONAL_ENV = [
   'DASHBOARD_DEBUG',
   // Logging level; defaults via isProduction in logger.ts.
   'LOG_LEVEL',
-
-  // ---- SA identity map override ----
-  // The chart writes the map to /shared/sa-identity-map.json by default;
-  // SA_IDENTITY_MAP_PATH is an override hatch only.
-  'SA_IDENTITY_MAP_PATH',
 
   // ---- Public Next.js variables ----
   // NEXT_PUBLIC_* are evaluated at build time and ship to the browser; not a

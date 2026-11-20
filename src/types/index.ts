@@ -414,21 +414,6 @@ interface ApiResponse<T> {
 }
 
 // ============================================================================
-// Re-export Analytics Types
-// ============================================================================
-
-export type {
-  KPIData,
-  TimeRange,
-  FindingsOverTime,
-  CategoryCount,
-  SeverityDistribution,
-  MissionHeatmap,
-  AgentPerformance,
-} from './analytics';
-
-
-// ============================================================================
 // Re-export Tenant Types
 // ============================================================================
 

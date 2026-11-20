@@ -24,9 +24,7 @@ const pluginsBase = ['plugins'] as const;
 const findingsBase = ['findings'] as const;
 const eventsBase = ['events'] as const;
 const graphBase = ['graph'] as const;
-const analyticsBase = ['analytics'] as const;
 const userBase = ['user'] as const;
-const alertsBase = ['alerts'] as const;
 const banksBase = ['banks'] as const;
 const usersBase = ['users'] as const;
 
@@ -117,27 +115,6 @@ export const queryKeys = {
     layout: (tenantId: string, type?: string) => [...graphBase, tenantId, 'layout', type] as const,
   },
 
-  // Analytics
-  analytics: {
-    all: analyticsBase,
-    kpis: (tenantId: string) => [...analyticsBase, tenantId, 'kpis'] as const,
-    findings: {
-      all: [...analyticsBase, 'findings'] as const,
-      timeSeries: (tenantId: string, timeRange?: string) =>
-        [...analyticsBase, tenantId, 'findings', 'time-series', timeRange] as const,
-      bySeverity: (tenantId: string) => [...analyticsBase, tenantId, 'findings', 'by-severity'] as const,
-      byCategory: (tenantId: string) => [...analyticsBase, tenantId, 'findings', 'by-category'] as const,
-    },
-    missions: {
-      all: [...analyticsBase, 'missions'] as const,
-      heatmap: (tenantId: string) => [...analyticsBase, tenantId, 'missions', 'heatmap'] as const,
-    },
-    agents: {
-      all: [...analyticsBase, 'agents'] as const,
-      performance: (tenantId: string) => [...analyticsBase, tenantId, 'agents', 'performance'] as const,
-    },
-  },
-
   // User preferences
   user: {
     all: userBase,
@@ -148,14 +125,6 @@ export const queryKeys = {
   users: {
     all: usersBase,
     resolve: (tenantId: string, ids: readonly string[]) => [...usersBase, tenantId, 'resolve', ...ids] as const,
-  },
-
-  // Alerts
-  alerts: {
-    all: alertsBase,
-    lists: (tenantId: string) => [...alertsBase, tenantId, 'list'] as const,
-    list: (tenantId: string, filters?: { limit?: number; unreadOnly?: boolean }) =>
-      [...alertsBase, tenantId, 'list', filters] as const,
   },
 
   // Traces

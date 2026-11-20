@@ -46,7 +46,7 @@ import {
   GetMyPermissionsResponseSchema,
 } from '@/src/gen/gibson/daemon/v1/daemon_pb';
 
-const DEFAULT_TTL_MS = 5 * 60 * 1_000; // 5 minutes, mirrors permissions-cache.ts
+const DEFAULT_TTL_MS = 5 * 60 * 1_000; // 5 minutes
 
 function getTtlSeconds(): number {
   const raw = process.env['NEXT_PUBLIC_PERMISSIONS_CACHE_TTL_MS'];
