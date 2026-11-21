@@ -197,6 +197,23 @@ describe('SignupPage — open-registration, no /login redirect (B)', () => {
       privacyUrl: 'https://www.zeroroot.ai/privacy',
     });
   });
+
+  it('B.3: renders the form for an old SaaS link with ?plan=team, with no redirect and no error', async () => {
+    mockGetDeploymentProfile.mockReturnValue(SAAS_PROFILE);
+    // Next.js still hands the page the query of an old pricing link. The page
+    // reads none of it, so the link opens the same form.
+    const withQuery = SignupPage as unknown as (props: {
+      searchParams: Promise<Record<string, string>>;
+    }) => Promise<unknown>;
+    const page = (await withQuery({ searchParams: Promise.resolve({ plan: 'team' }) })) as {
+      props: { children: { props: Record<string, unknown> } };
+    };
+    expect(mockRedirect).not.toHaveBeenCalled();
+    expect(page.props.children.props).toEqual({
+      termsUrl: 'https://www.zeroroot.ai/terms',
+      privacyUrl: 'https://www.zeroroot.ai/privacy',
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------

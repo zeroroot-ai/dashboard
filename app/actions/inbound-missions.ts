@@ -78,13 +78,6 @@ const targetIdsSchema = z
   .max(100, "Choose at most 100 targets.")
   .refine((ids) => new Set(ids).size === ids.length, "A target appears two times.");
 
-// The daemon accepts 1 to 10000 and has no default.
-const maxActiveMissionsSchema = z
-  .number({ error: "Enter the maximum number of missions at one time." })
-  .int("The maximum number of missions must be a whole number.")
-  .min(1, "The maximum number of missions must be at least 1.")
-  .max(10000, "The maximum number of missions must be at most 10000.");
-
 /**
  * The walk of the published definitions stopped at its bound. A check for the
  * absence of an agent cannot pass then, so the action refuses (fail closed).
@@ -187,7 +180,6 @@ export async function republishInboundMissionAction(
       agent: stored.agent,
       missionDefinitionId: stored.missionDefinitionId,
       targetIds: stored.targetIds,
-      maxActiveMissions: stored.maxActiveMissions,
     });
     return { ok: true, data: entry };
   } catch (err) {
@@ -290,7 +282,7 @@ async function runCallerFlow(
   action: string,
   agent: string,
   callerName: string,
-  publish: { missionDefinitionId: string; targetIds: string[]; maxActiveMissions: number } | null,
+  publish: { missionDefinitionId: string; targetIds: string[] } | null,
 ): Promise<InboundCallerFlowResult> {
   let identity: InboundCallerIdentityDTO;
   try {
@@ -360,7 +352,6 @@ export async function publishInboundMissionAction(input: {
   agent: string;
   missionDefinitionId: string;
   targetIds: string[];
-  maxActiveMissions: number;
   callerName: string;
 }): Promise<InboundCallerFlowResult> {
   const session = await getServerSession();
@@ -371,16 +362,14 @@ export async function publishInboundMissionAction(input: {
   if (!d.success) return bad(d.error.issues[0]?.message);
   const t = targetIdsSchema.safeParse(input.targetIds);
   if (!t.success) return bad(t.error.issues[0]?.message);
-  const n = maxActiveMissionsSchema.safeParse(input.maxActiveMissions);
-  if (!n.success) return bad(n.error.issues[0]?.message);
   const c = nameSchema.safeParse(input.callerName);
   if (!c.success) return bad(c.error.issues[0]?.message);
   const denied = await refuseUnlessAllowed("publishInboundMissionAction", [PUBLISH_METHOD, GRANT_METHOD]);
   if (denied) return denied;
   // The daemon accepts a publish of an agent that is published with the same
-  // definition and targets: it approves the present state again and replaces
-  // the limit. This form must never do that, so it refuses a published agent
-  // before it makes an identity.
+  // definition and targets: it approves the present state again. This form
+  // must never do that, so it refuses a published agent before it makes an
+  // identity.
   try {
     const present = await daemonWalkInboundMissions();
     if (present.items.some((e) => e.agent === a.data)) {
@@ -398,7 +387,6 @@ export async function publishInboundMissionAction(input: {
   return runCallerFlow("publishInboundMissionAction", a.data, c.data, {
     missionDefinitionId: d.data,
     targetIds: t.data,
-    maxActiveMissions: n.data,
   });
 }
 

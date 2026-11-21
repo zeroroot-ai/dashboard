@@ -118,8 +118,6 @@ function PublishForm({
   const [agents, setAgents] = React.useState<AgentsRead | null>(null);
   const [agent, setAgent] = React.useState("");
   const [targetIds, setTargetIds] = React.useState<string[]>([]);
-  // The limit has no default. The admin must enter it.
-  const [maxMissions, setMaxMissions] = React.useState("");
   const [callerName, setCallerName] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [failure, setFailure] = React.useState<Failure | null>(null);
@@ -149,7 +147,6 @@ function PublishForm({
         agent,
         missionDefinitionId: definitionId,
         targetIds,
-        maxActiveMissions: Number(maxMissions),
         callerName,
       });
       if (!res.ok) {
@@ -165,7 +162,6 @@ function PublishForm({
       setAgents(null);
       setAgent("");
       setTargetIds([]);
-      setMaxMissions("");
       setCallerName("");
     } catch {
       setFailure({ ok: false, error: T.publishFailed });
@@ -188,14 +184,10 @@ function PublishForm({
   }
 
   const agentNames = agents && "agents" in agents ? agents.agents : [];
-  const limit = Number(maxMissions);
   const ready =
     definitionId !== "" &&
     agent !== "" &&
     targetIds.length > 0 &&
-    maxMissions.trim() !== "" &&
-    Number.isInteger(limit) &&
-    limit >= 1 &&
     callerName.trim() !== "";
 
   return (
@@ -278,23 +270,6 @@ function PublishForm({
           </div>
         )}
       </fieldset>
-
-      <div className="max-w-md space-y-1.5">
-        <Label htmlFor="im-max-missions">{T.fieldMaxMissions}</Label>
-        <Input
-          id="im-max-missions"
-          type="number"
-          inputMode="numeric"
-          min={1}
-          max={10000}
-          step={1}
-          value={maxMissions}
-          onChange={(e) => setMaxMissions(e.target.value)}
-          required
-          autoComplete="off"
-        />
-        <p className="text-muted-foreground text-xs">{T.maxMissionsHelp}</p>
-      </div>
 
       <div className="max-w-md space-y-1.5">
         <Label htmlFor="im-caller-name">{T.fieldCallerName}</Label>
@@ -386,7 +361,6 @@ function PublicationRow({
             ))}
           </ul>
         </TableCell>
-        <TableCell data-testid="max-missions">{entry.maxActiveMissions}</TableCell>
         <TableCell className="font-mono text-xs break-all">{entry.publishedBy}</TableCell>
         <TableCell>{formatPublishedAt(entry.createdAt)}</TableCell>
         <TableCell>
@@ -551,7 +525,6 @@ export function InboundMissionsContent() {
               <TableHead>{T.columnAgent}</TableHead>
               <TableHead>{T.columnDefinition}</TableHead>
               <TableHead>{T.columnTargets}</TableHead>
-              <TableHead>{T.columnMaxMissions}</TableHead>
               <TableHead>{T.columnPublishedBy}</TableHead>
               <TableHead>{T.columnCreated}</TableHead>
               <TableHead />
