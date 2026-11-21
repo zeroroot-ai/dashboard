@@ -16,4 +16,4 @@ permissions:
 
 jobs:
   vault-auth-method-deny-list:
-    uses: zeroroot-ai/.github/.github/workflows/vault-auth-method-deny-list.yml@a88e99f641209c147aad6cbd3b6d62c2764485ca # v0.21.3
+    uses: zeroroot-ai/.github/.github/workflows/vault-auth-method-deny-list.yml@88cbc77697ff7143c98f29f3c4d80a93a666d601 # v0.23.0
