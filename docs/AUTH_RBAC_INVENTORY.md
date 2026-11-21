@@ -31,6 +31,14 @@ _(none rendered)_
 - ingressDeny rules: 0
 - egressDeny rules: 0
 
+### CiliumNetworkPolicy: `gibson-agentgateway`
+- description: The daemon, the dashboard backend and the Edge reach the listeners of the agentgateway proxy.
+- selector: `{"matchExpressions":[{"key":"app.kubernetes.io/component","operator":"In","values":["daemon","dashboard","envoy"]},{"key":"gibson.zeroroot.ai/net-role","operator":"In","values":["platform"]}]}`
+- ingress rules: 0
+- egress rules: 1
+- ingressDeny rules: 0
+- egressDeny rules: 0
+
 ### CiliumNetworkPolicy: `gibson-control-plane`
 - description: Platform pods reach the webhook ports.
 - selector: `{"matchLabels":{"gibson.zeroroot.ai/net-role":"platform"}}`
