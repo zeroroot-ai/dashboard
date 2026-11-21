@@ -14,7 +14,6 @@
  */
 
 import { z } from "zod";
-import { planIDs, type PlanID } from "@/src/generated/plans";
 
 // ---------------------------------------------------------------------------
 // Primitives
@@ -67,14 +66,6 @@ export const componentRefSchema = z
  * Admin, Editor = writer, Viewer = member). Owner is never assigned this way. */
 export const memberRoleSchema = z.enum(["admin", "writer", "member"]);
 
-// Canonical Gibson plan IDs, derived from the generated plan registry
-// (src/generated/plans.ts), which mirrors the operator's plans.PlanID Go
-// enum via gen-plans.mjs reading plans.yaml. Legacy ids (solo / squad /
-// platform / enterprise-cloud / enterprise-onprem / public-sector / free /
-// pro) are remapped by the tenant-operator's migrate-tenant-tiers Job and
-// rejected by the validating webhook.
-export const tenantTierSchema = z.enum(planIDs as unknown as readonly [PlanID, ...PlanID[]]);
-
 export const agentModeSchema = z.enum(["autonomous", "supervised"]);
 
 /**
@@ -97,7 +88,6 @@ export const provisionTenantInput = z
   .object({
     displayName: displayNameSchema,
     owner: z.string().min(1, "owner is required"),
-    tier: tenantTierSchema.optional(),
   })
   .strict();
 
@@ -117,7 +107,6 @@ export const updateTenantInput = z
     name: tenantNameSchema,
     patch: z
       .object({
-        tier: tenantTierSchema.optional(),
         displayName: displayNameSchema.optional(),
       })
       .strict(),

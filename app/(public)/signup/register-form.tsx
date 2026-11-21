@@ -32,13 +32,8 @@ import { registerAction } from "@/app/actions/register";
 import { REGISTER_TEXT } from "./register-texts";
 import { registerInputSchema, type RegisterInput } from "./types";
 
-interface RegisterFormProps {
-  /** The plan id the daemon gets. The approval rung shows no plan. */
-  tier: string;
-}
-
 type TextField = {
-  name: Exclude<Path<RegisterInput>, "tier">;
+  name: Path<RegisterInput>;
   label: string;
   type: "text" | "email" | "password";
   autoComplete: string;
@@ -58,7 +53,7 @@ const FIELDS: TextField[] = [
   },
 ];
 
-export function RegisterForm({ tier }: RegisterFormProps) {
+export function RegisterForm() {
   const [done, setDone] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const form = useForm<RegisterInput>({
@@ -68,7 +63,6 @@ export function RegisterForm({ tier }: RegisterFormProps) {
       lastName: "",
       email: "",
       workspaceName: "",
-      tier,
       password: "",
       passwordConfirm: "",
     },

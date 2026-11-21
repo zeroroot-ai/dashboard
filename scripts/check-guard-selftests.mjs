@@ -49,7 +49,6 @@ const GUARDS = [
   // "generator runs immediately before its own checker" defect, which made all
   // of them incapable of failing; their self-tests exist to keep that from
   // recurring silently.
-  "check-plans-fresh.mjs",
   "check-authz-registry-fresh.mjs",
   "check-mission-schema-fresh.mjs",
   // The templates drift gate (dashboard#1156). It guards the vendored ADK

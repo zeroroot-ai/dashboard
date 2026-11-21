@@ -50,18 +50,18 @@ freshness, etc.). Do not disable them, fix the underlying code.
 ## Standalone build (outside the polyrepo workspace)
 
 `pnpm build` runs the prebuild chain, which includes the freshness gates
-(`check-plans-fresh.mjs`, `check-authz-registry-fresh.mjs`,
+(`check-authz-registry-fresh.mjs`,
 `check-mission-schema-fresh.mjs`) whose
 generators read sibling private repos in the canonical `~/Code/zeroroot.ai/`
 workspace. Those siblings are not present in a standalone checkout.
 
 The generators themselves are **not** part of `prebuild`; regeneration is
-explicit (`pnpm gen:plans`, `pnpm gen:authz`, `pnpm gen:mission-schema`) and
+explicit (`pnpm gen:authz`, `pnpm gen:mission-schema`) and
 requires the workspace. The committed generated files
-(`src/generated/plans.ts`, `src/gen/authz/registry.ts`, `src/data/mission-definition.schema.json`) are the
+(`src/gen/authz/registry.ts`, `src/data/mission-definition.schema.json`) are the
 source of truth at build time.
 
-No skip envs are needed, and none exist for these four gates. Each gate asks
+No skip envs are needed, and none exist for these gates. Each gate asks
 its generator `--probe` whether the upstream source is on disk. When it is not,
 the gate runs its STRUCTURAL pass instead: the committed artifact must exist,
 be non-empty, parse, and carry its generator's header, so a deleted or emptied

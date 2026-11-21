@@ -12,7 +12,6 @@
   ],
   "ignore": [
     "src/gen/**",
-    "src/generated/**",
     "src/data/**",
     "out/**",
     ".next/**",

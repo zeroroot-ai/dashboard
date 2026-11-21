@@ -96,8 +96,8 @@ export type RegisterRequest = Message<"gibson.tenant.v1.RegisterRequest"> & {
   workspaceName: string;
 
   /**
-   * tier is the canonical plan id. Required, and resolved against the same
-   * server-side plan gate the open rung uses.
+   * tier is an optional plan id. Gibson does not judge it. Step 2 of
+   * gibson#1531 deletes it.
    *
    * @generated from field: string tier = 4;
    */
@@ -199,7 +199,8 @@ export type RequestEmailVerificationRequest = Message<"gibson.tenant.v1.RequestE
   workspaceName: string;
 
   /**
-   * tier is the canonical plan id ("team", "org", "enterprise"). Required.
+   * tier is an optional plan id. Gibson does not judge it. It goes to the
+   * external signup step. Step 2 of gibson#1531 deletes it.
    *
    * @generated from field: string tier = 4;
    */
@@ -433,12 +434,9 @@ export type SignupResponse = Message<"gibson.tenant.v1.SignupResponse"> & {
   ownerUserId: string;
 
   /**
-   * plan_id is the canonical plan the server-side gate resolved and provisioned
-   * against — the same value enqueued for the operator, not the raw
-   * verification-row tier string. Callers must never see an id the gate did not
-   * accept, so this is populated from the resolved plan rather than echoed from
-   * the request. Additive: field 4 is free and no reserved range covers it
-   * (gibson#1325).
+   * plan_id is the plan id of the verification row, the same value enqueued
+   * for the operator (gibson#1325). Empty when the caller gave none. Step 2 of
+   * gibson#1531 deletes it.
    *
    * @generated from field: string plan_id = 4;
    */

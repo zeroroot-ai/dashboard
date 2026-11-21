@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 // Package gibson.tenant.v1 defines TenantService — the slimmed core
-// tenant-management surface covering onboarding, quota, audit events,
+// tenant-management surface covering onboarding, audit events,
 // findings export, and mission drafts.
 //
 // The following surfaces have been extracted into focused services in this
@@ -35,7 +35,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/tenant.proto.
  */
 export const file_gibson_tenant_v1_tenant: GenFile = /*@__PURE__*/
-  fileDesc("Ch1naWJzb24vdGVuYW50L3YxL3RlbmFudC5wcm90bxIQZ2lic29uLnRlbmFudC52MSI6ChlHZXRPbmJvYXJkaW5nU3RhdGVSZXF1ZXN0Eh0KCXRlbmFudF9pZBgBIAEoCUIKukgHcgUQARiACCLnAQoaR2V0T25ib2FyZGluZ1N0YXRlUmVzcG9uc2USFAoMY3VycmVudF9zdGVwGAEgASgJEhcKD2NvbXBsZXRlZF9zdGVwcxgCIAMoCRJRCgtzZXR1cF90YXNrcxgDIAMoCzI8LmdpYnNvbi50ZW5hbnQudjEuR2V0T25ib2FyZGluZ1N0YXRlUmVzcG9uc2UuU2V0dXBUYXNrc0VudHJ5EhQKDGNvbXBsZXRlZF9hdBgEIAEoCRoxCg9TZXR1cFRhc2tzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASL+AQocVXBkYXRlT25ib2FyZGluZ1N0YXRlUmVxdWVzdBIdCgl0ZW5hbnRfaWQYASABKAlCCrpIB3IFEAEYgAgSHgoMY3VycmVudF9zdGVwGAIgASgJQgi6SAVyAxiAIBIXCg9jb21wbGV0ZWRfc3RlcHMYAyADKAkSUwoLc2V0dXBfdGFza3MYBCADKAsyPi5naWJzb24udGVuYW50LnYxLlVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlcXVlc3QuU2V0dXBUYXNrc0VudHJ5GjEKD1NldHVwVGFza3NFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIh8KHVVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlc3BvbnNlIjQKFUdldFRlbmFudFF1b3RhUmVxdWVzdBIbCgl0ZW5hbnRfaWQYASABKAlCCLpIBXIDGIAIItQCChZHZXRUZW5hbnRRdW90YVJlc3BvbnNlEhsKE2NvbmN1cnJlbnRfbWlzc2lvbnMYDCABKAUSGQoRY29uY3VycmVudF9hZ2VudHMYAyABKAUSEgoKdXBkYXRlZF9hdBgHIAEoCRIPCgdwbGFuX2lkGA0gASgJSgQIARACSgQIAhADSgQIBBAFSgQIBRAGSgQIBhAHSgQICBAJSgQICRAKSgQIChALSgQICxAMUgVxdW90YVIFc2VhdHNSCnN0b3JhZ2VfZ2JSDnJldGVudGlvbl9kYXlzUhpzYW5kYm94X2xhdW5jaGVzX3Blcl9tb250aFINY3VycmVudF9zZWF0c1IZY3VycmVudF9jb25jdXJyZW50X2FnZW50c1ISY3VycmVudF9zdG9yYWdlX2diUiNjdXJyZW50X3NhbmRib3hfbGF1bmNoZXNfdGhpc19tb250aCI5ChpHZXRUZW5hbnRRdW90YVVzYWdlUmVxdWVzdBIbCgl0ZW5hbnRfaWQYASABKAlCCLpIBXIDGIAIIk0KG0dldFRlbmFudFF1b3RhVXNhZ2VSZXNwb25zZRIXCg9taXNzaW9uc19hY3RpdmUYASABKAMSFQoNYWdlbnRzX2FjdGl2ZRgCIAEoAyLcAgoKQXVkaXRFdmVudBISCgpldmVudF90eXBlGAEgASgJEhEKCXRpbWVzdGFtcBgCIAEoCRITCgthY3Rvcl9lbWFpbBgEIAEoCRIRCgl0ZW5hbnRfaWQYBSABKAkSFgoOdGFyZ2V0X3VzZXJfaWQYBiABKAkSOgoHZGV0YWlscxgIIAMoCzIpLmdpYnNvbi50ZW5hbnQudjEuQXVkaXRFdmVudC5EZXRhaWxzRW50cnkSEAoIdHJhY2VfaWQYCSABKAkSFAoMYWN0b3Jfc291cmNlGAogASgJEhAKCGFjdG9yX2lkGAsgASgJEhUKDXRhcmdldF9vYmplY3QYDCABKAkaLgoMRGV0YWlsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFKBAgDEARKBAgHEAhSDWFjdG9yX3VzZXJfaWRSD3RhcmdldF9yZXNvdXJjZSKPAgoWTGlzdEF1ZGl0RXZlbnRzUmVxdWVzdBIbCgl0ZW5hbnRfaWQYASABKAlCCLpIBXIDGIAIEhMKC2V2ZW50X3R5cGVzGAIgAygJEh8KDWFjdG9yX3VzZXJfaWQYAyABKAlCCLpIBXIDGIAIEh4KDHRhcmdldF9tYXRjaBgEIAEoCUIIukgFcgMYgCASGwoJZnJvbV90aW1lGAUgASgJQgi6SAVyAxiAIBIZCgd0b190aW1lGAYgASgJQgi6SAVyAxiAIBIRCglwYWdlX3NpemUYCSABKAUSHAoKcGFnZV90b2tlbhgKIAEoCUIIukgFcgMYgAhKBAgHEAhKBAgIEAlSBWxpbWl0UgZjdXJzb3IicwoXTGlzdEF1ZGl0RXZlbnRzUmVzcG9uc2USLAoGZXZlbnRzGAEgAygLMhwuZ2lic29uLnRlbmFudC52MS5BdWRpdEV2ZW50EhcKD25leHRfcGFnZV90b2tlbhgDIAEoCUoECAIQA1ILbmV4dF9jdXJzb3IiGgoYR2V0QXVkaXRSZXRlbnRpb25SZXF1ZXN0IlkKDkF1ZGl0UmV0ZW50aW9uEhYKDmluc3RhbGxfbW9udGhzGAEgASgFEhUKDXRlbmFudF9tb250aHMYAiABKAUSGAoQZWZmZWN0aXZlX21vbnRocxgDIAEoBSJQChlHZXRBdWRpdFJldGVudGlvblJlc3BvbnNlEjMKCXJldGVudGlvbhgBIAEoCzIgLmdpYnNvbi50ZW5hbnQudjEuQXVkaXRSZXRlbnRpb24iNgoYU2V0QXVkaXRSZXRlbnRpb25SZXF1ZXN0EhoKBm1vbnRocxgBIAEoBUIKukgHGgUYsAkoACJQChlTZXRBdWRpdFJldGVudGlvblJlc3BvbnNlEjMKCXJldGVudGlvbhgBIAEoCzIgLmdpYnNvbi50ZW5hbnQudjEuQXVkaXRSZXRlbnRpb24iVAoORmluZGluZ0ZpbHRlcnMSEAoIc2V2ZXJpdHkYASADKAkSDAoEdHlwZRgCIAMoCRISCgptaXNzaW9uX2lkGAMgASgJEg4KBnNlYXJjaBgEIAEoCSLNAQoVRXhwb3J0RmluZGluZ3NSZXF1ZXN0EhsKCXRlbmFudF9pZBgBIAEoCUIIukgFcgMYgAgSGAoGZm9ybWF0GAIgASgJQgi6SAVyAxiAIBITCgtmaW5kaW5nX2lkcxgDIAMoCRIxCgdmaWx0ZXJzGAQgASgLMiAuZ2lic29uLnRlbmFudC52MS5GaW5kaW5nRmlsdGVycxIbChNpbmNsdWRlX3JlbWVkaWF0aW9uGAUgASgIEhgKEGluY2x1ZGVfZXZpZGVuY2UYBiABKAgiVwoWRXhwb3J0RmluZGluZ3NSZXNwb25zZRIMCgRkYXRhGAEgASgMEg4KBmZvcm1hdBgCIAEoCRIQCghmaWxlbmFtZRgDIAEoCRINCgVjb3VudBgEIAEoBSIyChFHZXRGaW5kaW5nUmVxdWVzdBIdCgpmaW5kaW5nX2lkGAEgASgJQgm6SAZyBBABGEAikgIKDUZpbmRpbmdEZXRhaWwSCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSEwoLZGVzY3JpcHRpb24YAyABKAkSEAoIY2F0ZWdvcnkYBCABKAkSEAoIc2V2ZXJpdHkYBSABKAkSEgoKY29uZmlkZW5jZRgGIAEoARISCgptaXNzaW9uX2lkGAcgASgJEhIKCmFnZW50X25hbWUYCCABKAkSFAoMc3VibWl0dGVkX2J5GAkgASgJEi4KCmNyZWF0ZWRfYXQYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEisKCGV2aWRlbmNlGAsgAygLMhkuZ2lic29uLnR5cGVzLnYxLkV2aWRlbmNlIkYKEkdldEZpbmRpbmdSZXNwb25zZRIwCgdmaW5kaW5nGAEgASgLMh8uZ2lic29uLnRlbmFudC52MS5GaW5kaW5nRGV0YWlsIrkBChdTYXZlTWlzc2lvbkRyYWZ0UmVxdWVzdBIbCgl0ZW5hbnRfaWQYASABKAlCCLpIBXIDGIAIEhYKBG5hbWUYAiABKAlCCLpIBXIDGIAIEh4KCmN1ZV9zb3VyY2UYAyABKAlCCrpIB3IFGICAgAgSGgoIZHJhZnRfaWQYBCABKAlCCLpIBXIDGIAIEicKFW1pc3Npb25fZGVmaW5pdGlvbl9pZBgFIAEoCUIIukgFcgMYgAhSBHlhbWwiLAoYU2F2ZU1pc3Npb25EcmFmdFJlc3BvbnNlEhAKCGRyYWZ0X2lkGAEgASgJInQKGExpc3RNaXNzaW9uRHJhZnRzUmVxdWVzdBIbCgl0ZW5hbnRfaWQYASABKAlCCLpIBXIDGIAIEh0KCXBhZ2Vfc2l6ZRgCIAEoBUIKukgHGgUY6AcoABIcCgpwYWdlX3Rva2VuGAMgASgJQgi6SAVyAxiACCJvCgxNaXNzaW9uRHJhZnQSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRISCgpjcmVhdGVkX2F0GAMgASgJEhIKCnVwZGF0ZWRfYXQYBCABKAkSHQoVbWlzc2lvbl9kZWZpbml0aW9uX2lkGAUgASgJImQKGUxpc3RNaXNzaW9uRHJhZnRzUmVzcG9uc2USLgoGZHJhZnRzGAEgAygLMh4uZ2lic29uLnRlbmFudC52MS5NaXNzaW9uRHJhZnQSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIlMKFkdldE1pc3Npb25EcmFmdFJlcXVlc3QSGwoJdGVuYW50X2lkGAEgASgJQgi6SAVyAxiACBIcCghkcmFmdF9pZBgCIAEoCUIKukgHcgUQARiACCJMChdHZXRNaXNzaW9uRHJhZnRSZXNwb25zZRIxCgVkcmFmdBgBIAEoCzIiLmdpYnNvbi50ZW5hbnQudjEuTWlzc2lvbkRyYWZ0RnVsbCKNAQoQTWlzc2lvbkRyYWZ0RnVsbBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhIKCmNyZWF0ZWRfYXQYAyABKAkSEgoKdXBkYXRlZF9hdBgEIAEoCRISCgpjdWVfc291cmNlGAUgASgJEh0KFW1pc3Npb25fZGVmaW5pdGlvbl9pZBgGIAEoCVIEeWFtbCJWChlEZWxldGVNaXNzaW9uRHJhZnRSZXF1ZXN0EhsKCXRlbmFudF9pZBgBIAEoCUIIukgFcgMYgAgSHAoIZHJhZnRfaWQYAiABKAlCCrpIB3IFEAEYgAgiHAoaRGVsZXRlTWlzc2lvbkRyYWZ0UmVzcG9uc2Uy5g8KDVRlbmFudFNlcnZpY2USnQEKEkdldE9uYm9hcmRpbmdTdGF0ZRIrLmdpYnNvbi50ZW5hbnQudjEuR2V0T25ib2FyZGluZ1N0YXRlUmVxdWVzdBosLmdpYnNvbi50ZW5hbnQudjEuR2V0T25ib2FyZGluZ1N0YXRlUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEqYBChVVcGRhdGVPbmJvYXJkaW5nU3RhdGUSLi5naWJzb24udGVuYW50LnYxLlVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlcXVlc3QaLy5naWJzb24udGVuYW50LnYxLlVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKQAQoOR2V0VGVuYW50UXVvdGESJy5naWJzb24udGVuYW50LnYxLkdldFRlbmFudFF1b3RhUmVxdWVzdBooLmdpYnNvbi50ZW5hbnQudjEuR2V0VGVuYW50UXVvdGFSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKgAQoTR2V0VGVuYW50UXVvdGFVc2FnZRIsLmdpYnNvbi50ZW5hbnQudjEuR2V0VGVuYW50UXVvdGFVc2FnZVJlcXVlc3QaLS5naWJzb24udGVuYW50LnYxLkdldFRlbmFudFF1b3RhVXNhZ2VSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkwEKD0xpc3RBdWRpdEV2ZW50cxIoLmdpYnNvbi50ZW5hbnQudjEuTGlzdEF1ZGl0RXZlbnRzUmVxdWVzdBopLmdpYnNvbi50ZW5hbnQudjEuTGlzdEF1ZGl0RXZlbnRzUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSmQEKEUdldEF1ZGl0UmV0ZW50aW9uEiouZ2lic29uLnRlbmFudC52MS5HZXRBdWRpdFJldGVudGlvblJlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkdldEF1ZGl0UmV0ZW50aW9uUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSmQEKEVNldEF1ZGl0UmV0ZW50aW9uEiouZ2lic29uLnRlbmFudC52MS5TZXRBdWRpdFJldGVudGlvblJlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLlNldEF1ZGl0UmV0ZW50aW9uUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkQEKDkV4cG9ydEZpbmRpbmdzEicuZ2lic29uLnRlbmFudC52MS5FeHBvcnRGaW5kaW5nc1JlcXVlc3QaKC5naWJzb24udGVuYW50LnYxLkV4cG9ydEZpbmRpbmdzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoUBCgpHZXRGaW5kaW5nEiMuZ2lic29uLnRlbmFudC52MS5HZXRGaW5kaW5nUmVxdWVzdBokLmdpYnNvbi50ZW5hbnQudjEuR2V0RmluZGluZ1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKXAQoQU2F2ZU1pc3Npb25EcmFmdBIpLmdpYnNvbi50ZW5hbnQudjEuU2F2ZU1pc3Npb25EcmFmdFJlcXVlc3QaKi5naWJzb24udGVuYW50LnYxLlNhdmVNaXNzaW9uRHJhZnRSZXNwb25zZSIsirUYKAoGd3JpdGVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSmgEKEUxpc3RNaXNzaW9uRHJhZnRzEiouZ2lic29uLnRlbmFudC52MS5MaXN0TWlzc2lvbkRyYWZ0c1JlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkxpc3RNaXNzaW9uRHJhZnRzUmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpQBCg9HZXRNaXNzaW9uRHJhZnQSKC5naWJzb24udGVuYW50LnYxLkdldE1pc3Npb25EcmFmdFJlcXVlc3QaKS5naWJzb24udGVuYW50LnYxLkdldE1pc3Npb25EcmFmdFJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKdAQoSRGVsZXRlTWlzc2lvbkRyYWZ0EisuZ2lic29uLnRlbmFudC52MS5EZWxldGVNaXNzaW9uRHJhZnRSZXF1ZXN0GiwuZ2lic29uLnRlbmFudC52MS5EZWxldGVNaXNzaW9uRHJhZnRSZXNwb25zZSIsirUYKAoGd3JpdGVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IANCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_google_protobuf_timestamp, file_gibson_auth_v1_options, file_gibson_types_v1_types, file_buf_validate_validate]);
+  fileDesc("Ch1naWJzb24vdGVuYW50L3YxL3RlbmFudC5wcm90bxIQZ2lic29uLnRlbmFudC52MSI6ChlHZXRPbmJvYXJkaW5nU3RhdGVSZXF1ZXN0Eh0KCXRlbmFudF9pZBgBIAEoCUIKukgHcgUQARiACCLnAQoaR2V0T25ib2FyZGluZ1N0YXRlUmVzcG9uc2USFAoMY3VycmVudF9zdGVwGAEgASgJEhcKD2NvbXBsZXRlZF9zdGVwcxgCIAMoCRJRCgtzZXR1cF90YXNrcxgDIAMoCzI8LmdpYnNvbi50ZW5hbnQudjEuR2V0T25ib2FyZGluZ1N0YXRlUmVzcG9uc2UuU2V0dXBUYXNrc0VudHJ5EhQKDGNvbXBsZXRlZF9hdBgEIAEoCRoxCg9TZXR1cFRhc2tzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASL+AQocVXBkYXRlT25ib2FyZGluZ1N0YXRlUmVxdWVzdBIdCgl0ZW5hbnRfaWQYASABKAlCCrpIB3IFEAEYgAgSHgoMY3VycmVudF9zdGVwGAIgASgJQgi6SAVyAxiAIBIXCg9jb21wbGV0ZWRfc3RlcHMYAyADKAkSUwoLc2V0dXBfdGFza3MYBCADKAsyPi5naWJzb24udGVuYW50LnYxLlVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlcXVlc3QuU2V0dXBUYXNrc0VudHJ5GjEKD1NldHVwVGFza3NFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIh8KHVVwZGF0ZU9uYm9hcmRpbmdTdGF0ZVJlc3BvbnNlItwCCgpBdWRpdEV2ZW50EhIKCmV2ZW50X3R5cGUYASABKAkSEQoJdGltZXN0YW1wGAIgASgJEhMKC2FjdG9yX2VtYWlsGAQgASgJEhEKCXRlbmFudF9pZBgFIAEoCRIWCg50YXJnZXRfdXNlcl9pZBgGIAEoCRI6CgdkZXRhaWxzGAggAygLMikuZ2lic29uLnRlbmFudC52MS5BdWRpdEV2ZW50LkRldGFpbHNFbnRyeRIQCgh0cmFjZV9pZBgJIAEoCRIUCgxhY3Rvcl9zb3VyY2UYCiABKAkSEAoIYWN0b3JfaWQYCyABKAkSFQoNdGFyZ2V0X29iamVjdBgMIAEoCRouCgxEZXRhaWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUoECAMQBEoECAcQCFINYWN0b3JfdXNlcl9pZFIPdGFyZ2V0X3Jlc291cmNlIo8CChZMaXN0QXVkaXRFdmVudHNSZXF1ZXN0EhsKCXRlbmFudF9pZBgBIAEoCUIIukgFcgMYgAgSEwoLZXZlbnRfdHlwZXMYAiADKAkSHwoNYWN0b3JfdXNlcl9pZBgDIAEoCUIIukgFcgMYgAgSHgoMdGFyZ2V0X21hdGNoGAQgASgJQgi6SAVyAxiAIBIbCglmcm9tX3RpbWUYBSABKAlCCLpIBXIDGIAgEhkKB3RvX3RpbWUYBiABKAlCCLpIBXIDGIAgEhEKCXBhZ2Vfc2l6ZRgJIAEoBRIcCgpwYWdlX3Rva2VuGAogASgJQgi6SAVyAxiACEoECAcQCEoECAgQCVIFbGltaXRSBmN1cnNvciJzChdMaXN0QXVkaXRFdmVudHNSZXNwb25zZRIsCgZldmVudHMYASADKAsyHC5naWJzb24udGVuYW50LnYxLkF1ZGl0RXZlbnQSFwoPbmV4dF9wYWdlX3Rva2VuGAMgASgJSgQIAhADUgtuZXh0X2N1cnNvciIaChhHZXRBdWRpdFJldGVudGlvblJlcXVlc3QiWQoOQXVkaXRSZXRlbnRpb24SFgoOaW5zdGFsbF9tb250aHMYASABKAUSFQoNdGVuYW50X21vbnRocxgCIAEoBRIYChBlZmZlY3RpdmVfbW9udGhzGAMgASgFIlAKGUdldEF1ZGl0UmV0ZW50aW9uUmVzcG9uc2USMwoJcmV0ZW50aW9uGAEgASgLMiAuZ2lic29uLnRlbmFudC52MS5BdWRpdFJldGVudGlvbiI2ChhTZXRBdWRpdFJldGVudGlvblJlcXVlc3QSGgoGbW9udGhzGAEgASgFQgq6SAcaBRiwCSgAIlAKGVNldEF1ZGl0UmV0ZW50aW9uUmVzcG9uc2USMwoJcmV0ZW50aW9uGAEgASgLMiAuZ2lic29uLnRlbmFudC52MS5BdWRpdFJldGVudGlvbiJUCg5GaW5kaW5nRmlsdGVycxIQCghzZXZlcml0eRgBIAMoCRIMCgR0eXBlGAIgAygJEhIKCm1pc3Npb25faWQYAyABKAkSDgoGc2VhcmNoGAQgASgJIs0BChVFeHBvcnRGaW5kaW5nc1JlcXVlc3QSGwoJdGVuYW50X2lkGAEgASgJQgi6SAVyAxiACBIYCgZmb3JtYXQYAiABKAlCCLpIBXIDGIAgEhMKC2ZpbmRpbmdfaWRzGAMgAygJEjEKB2ZpbHRlcnMYBCABKAsyIC5naWJzb24udGVuYW50LnYxLkZpbmRpbmdGaWx0ZXJzEhsKE2luY2x1ZGVfcmVtZWRpYXRpb24YBSABKAgSGAoQaW5jbHVkZV9ldmlkZW5jZRgGIAEoCCJXChZFeHBvcnRGaW5kaW5nc1Jlc3BvbnNlEgwKBGRhdGEYASABKAwSDgoGZm9ybWF0GAIgASgJEhAKCGZpbGVuYW1lGAMgASgJEg0KBWNvdW50GAQgASgFIjIKEUdldEZpbmRpbmdSZXF1ZXN0Eh0KCmZpbmRpbmdfaWQYASABKAlCCbpIBnIEEAEYQCKSAgoNRmluZGluZ0RldGFpbBIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIQCghjYXRlZ29yeRgEIAEoCRIQCghzZXZlcml0eRgFIAEoCRISCgpjb25maWRlbmNlGAYgASgBEhIKCm1pc3Npb25faWQYByABKAkSEgoKYWdlbnRfbmFtZRgIIAEoCRIUCgxzdWJtaXR0ZWRfYnkYCSABKAkSLgoKY3JlYXRlZF9hdBgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASKwoIZXZpZGVuY2UYCyADKAsyGS5naWJzb24udHlwZXMudjEuRXZpZGVuY2UiRgoSR2V0RmluZGluZ1Jlc3BvbnNlEjAKB2ZpbmRpbmcYASABKAsyHy5naWJzb24udGVuYW50LnYxLkZpbmRpbmdEZXRhaWwiuQEKF1NhdmVNaXNzaW9uRHJhZnRSZXF1ZXN0EhsKCXRlbmFudF9pZBgBIAEoCUIIukgFcgMYgAgSFgoEbmFtZRgCIAEoCUIIukgFcgMYgAgSHgoKY3VlX3NvdXJjZRgDIAEoCUIKukgHcgUYgICACBIaCghkcmFmdF9pZBgEIAEoCUIIukgFcgMYgAgSJwoVbWlzc2lvbl9kZWZpbml0aW9uX2lkGAUgASgJQgi6SAVyAxiACFIEeWFtbCIsChhTYXZlTWlzc2lvbkRyYWZ0UmVzcG9uc2USEAoIZHJhZnRfaWQYASABKAkidAoYTGlzdE1pc3Npb25EcmFmdHNSZXF1ZXN0EhsKCXRlbmFudF9pZBgBIAEoCUIIukgFcgMYgAgSHQoJcGFnZV9zaXplGAIgASgFQgq6SAcaBRjoBygAEhwKCnBhZ2VfdG9rZW4YAyABKAlCCLpIBXIDGIAIIm8KDE1pc3Npb25EcmFmdBIKCgJpZBgBIAEoCRIMCgRuYW1lGAIgASgJEhIKCmNyZWF0ZWRfYXQYAyABKAkSEgoKdXBkYXRlZF9hdBgEIAEoCRIdChVtaXNzaW9uX2RlZmluaXRpb25faWQYBSABKAkiZAoZTGlzdE1pc3Npb25EcmFmdHNSZXNwb25zZRIuCgZkcmFmdHMYASADKAsyHi5naWJzb24udGVuYW50LnYxLk1pc3Npb25EcmFmdBIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiUwoWR2V0TWlzc2lvbkRyYWZ0UmVxdWVzdBIbCgl0ZW5hbnRfaWQYASABKAlCCLpIBXIDGIAIEhwKCGRyYWZ0X2lkGAIgASgJQgq6SAdyBRABGIAIIkwKF0dldE1pc3Npb25EcmFmdFJlc3BvbnNlEjEKBWRyYWZ0GAEgASgLMiIuZ2lic29uLnRlbmFudC52MS5NaXNzaW9uRHJhZnRGdWxsIo0BChBNaXNzaW9uRHJhZnRGdWxsEgoKAmlkGAEgASgJEgwKBG5hbWUYAiABKAkSEgoKY3JlYXRlZF9hdBgDIAEoCRISCgp1cGRhdGVkX2F0GAQgASgJEhIKCmN1ZV9zb3VyY2UYBSABKAkSHQoVbWlzc2lvbl9kZWZpbml0aW9uX2lkGAYgASgJUgR5YW1sIlYKGURlbGV0ZU1pc3Npb25EcmFmdFJlcXVlc3QSGwoJdGVuYW50X2lkGAEgASgJQgi6SAVyAxiACBIcCghkcmFmdF9pZBgCIAEoCUIKukgHcgUQARiACCIcChpEZWxldGVNaXNzaW9uRHJhZnRSZXNwb25zZTKwDQoNVGVuYW50U2VydmljZRKdAQoSR2V0T25ib2FyZGluZ1N0YXRlEisuZ2lic29uLnRlbmFudC52MS5HZXRPbmJvYXJkaW5nU3RhdGVSZXF1ZXN0GiwuZ2lic29uLnRlbmFudC52MS5HZXRPbmJvYXJkaW5nU3RhdGVSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSpgEKFVVwZGF0ZU9uYm9hcmRpbmdTdGF0ZRIuLmdpYnNvbi50ZW5hbnQudjEuVXBkYXRlT25ib2FyZGluZ1N0YXRlUmVxdWVzdBovLmdpYnNvbi50ZW5hbnQudjEuVXBkYXRlT25ib2FyZGluZ1N0YXRlUmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpMBCg9MaXN0QXVkaXRFdmVudHMSKC5naWJzb24udGVuYW50LnYxLkxpc3RBdWRpdEV2ZW50c1JlcXVlc3QaKS5naWJzb24udGVuYW50LnYxLkxpc3RBdWRpdEV2ZW50c1Jlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpkBChFHZXRBdWRpdFJldGVudGlvbhIqLmdpYnNvbi50ZW5hbnQudjEuR2V0QXVkaXRSZXRlbnRpb25SZXF1ZXN0GisuZ2lic29uLnRlbmFudC52MS5HZXRBdWRpdFJldGVudGlvblJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpkBChFTZXRBdWRpdFJldGVudGlvbhIqLmdpYnNvbi50ZW5hbnQudjEuU2V0QXVkaXRSZXRlbnRpb25SZXF1ZXN0GisuZ2lic29uLnRlbmFudC52MS5TZXRBdWRpdFJldGVudGlvblJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpEBCg5FeHBvcnRGaW5kaW5ncxInLmdpYnNvbi50ZW5hbnQudjEuRXhwb3J0RmluZGluZ3NSZXF1ZXN0GiguZ2lic29uLnRlbmFudC52MS5FeHBvcnRGaW5kaW5nc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKFAQoKR2V0RmluZGluZxIjLmdpYnNvbi50ZW5hbnQudjEuR2V0RmluZGluZ1JlcXVlc3QaJC5naWJzb24udGVuYW50LnYxLkdldEZpbmRpbmdSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSlwEKEFNhdmVNaXNzaW9uRHJhZnQSKS5naWJzb24udGVuYW50LnYxLlNhdmVNaXNzaW9uRHJhZnRSZXF1ZXN0GiouZ2lic29uLnRlbmFudC52MS5TYXZlTWlzc2lvbkRyYWZ0UmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpoBChFMaXN0TWlzc2lvbkRyYWZ0cxIqLmdpYnNvbi50ZW5hbnQudjEuTGlzdE1pc3Npb25EcmFmdHNSZXF1ZXN0GisuZ2lic29uLnRlbmFudC52MS5MaXN0TWlzc2lvbkRyYWZ0c1Jlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKUAQoPR2V0TWlzc2lvbkRyYWZ0EiguZ2lic29uLnRlbmFudC52MS5HZXRNaXNzaW9uRHJhZnRSZXF1ZXN0GikuZ2lic29uLnRlbmFudC52MS5HZXRNaXNzaW9uRHJhZnRSZXNwb25zZSIsirUYKAoGd3JpdGVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSnQEKEkRlbGV0ZU1pc3Npb25EcmFmdBIrLmdpYnNvbi50ZW5hbnQudjEuRGVsZXRlTWlzc2lvbkRyYWZ0UmVxdWVzdBosLmdpYnNvbi50ZW5hbnQudjEuRGVsZXRlTWlzc2lvbkRyYWZ0UmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADQlRaUmdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi90ZW5hbnQvdjE7dGVuYW50djFiBnByb3RvMw", [file_google_protobuf_timestamp, file_gibson_auth_v1_options, file_gibson_types_v1_types, file_buf_validate_validate]);
 
 /**
  * GetOnboardingStateRequest queries the onboarding progress for a tenant.
@@ -140,102 +140,6 @@ export const UpdateOnboardingStateResponseSchema: GenMessage<UpdateOnboardingSta
   messageDesc(file_gibson_tenant_v1_tenant, 3);
 
 /**
- * GetTenantQuotaRequest requests the quota configuration (limits) for a tenant.
- *
- * @generated from message gibson.tenant.v1.GetTenantQuotaRequest
- */
-export type GetTenantQuotaRequest = Message<"gibson.tenant.v1.GetTenantQuotaRequest"> & {
-  /**
-   * @generated from field: string tenant_id = 1;
-   */
-  tenantId: string;
-};
-
-/**
- * Describes the message gibson.tenant.v1.GetTenantQuotaRequest.
- * Use `create(GetTenantQuotaRequestSchema)` to create a new message.
- */
-export const GetTenantQuotaRequestSchema: GenMessage<GetTenantQuotaRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 4);
-
-/**
- * GetTenantQuotaResponse carries the tenant quota limits.
- *
- * @generated from message gibson.tenant.v1.GetTenantQuotaResponse
- */
-export type GetTenantQuotaResponse = Message<"gibson.tenant.v1.GetTenantQuotaResponse"> & {
-  /**
-   * @generated from field: int32 concurrent_missions = 12;
-   */
-  concurrentMissions: number;
-
-  /**
-   * @generated from field: int32 concurrent_agents = 3;
-   */
-  concurrentAgents: number;
-
-  /**
-   * @generated from field: string updated_at = 7;
-   */
-  updatedAt: string;
-
-  /**
-   * @generated from field: string plan_id = 13;
-   */
-  planId: string;
-};
-
-/**
- * Describes the message gibson.tenant.v1.GetTenantQuotaResponse.
- * Use `create(GetTenantQuotaResponseSchema)` to create a new message.
- */
-export const GetTenantQuotaResponseSchema: GenMessage<GetTenantQuotaResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 5);
-
-/**
- * GetTenantQuotaUsageRequest requests the live counter snapshot.
- *
- * @generated from message gibson.tenant.v1.GetTenantQuotaUsageRequest
- */
-export type GetTenantQuotaUsageRequest = Message<"gibson.tenant.v1.GetTenantQuotaUsageRequest"> & {
-  /**
-   * @generated from field: string tenant_id = 1;
-   */
-  tenantId: string;
-};
-
-/**
- * Describes the message gibson.tenant.v1.GetTenantQuotaUsageRequest.
- * Use `create(GetTenantQuotaUsageRequestSchema)` to create a new message.
- */
-export const GetTenantQuotaUsageRequestSchema: GenMessage<GetTenantQuotaUsageRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 6);
-
-/**
- * GetTenantQuotaUsageResponse carries the live counter values.
- *
- * @generated from message gibson.tenant.v1.GetTenantQuotaUsageResponse
- */
-export type GetTenantQuotaUsageResponse = Message<"gibson.tenant.v1.GetTenantQuotaUsageResponse"> & {
-  /**
-   * @generated from field: int64 missions_active = 1;
-   */
-  missionsActive: bigint;
-
-  /**
-   * @generated from field: int64 agents_active = 2;
-   */
-  agentsActive: bigint;
-};
-
-/**
- * Describes the message gibson.tenant.v1.GetTenantQuotaUsageResponse.
- * Use `create(GetTenantQuotaUsageResponseSchema)` to create a new message.
- */
-export const GetTenantQuotaUsageResponseSchema: GenMessage<GetTenantQuotaUsageResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 7);
-
-/**
  * AuditEvent represents a single audit log entry.
  *
  * @generated from message gibson.tenant.v1.AuditEvent
@@ -311,7 +215,7 @@ export type AuditEvent = Message<"gibson.tenant.v1.AuditEvent"> & {
  * Use `create(AuditEventSchema)` to create a new message.
  */
 export const AuditEventSchema: GenMessage<AuditEvent> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 8);
+  messageDesc(file_gibson_tenant_v1_tenant, 4);
 
 /**
  * ListAuditEventsRequest queries audit events for a tenant.
@@ -371,7 +275,7 @@ export type ListAuditEventsRequest = Message<"gibson.tenant.v1.ListAuditEventsRe
  * Use `create(ListAuditEventsRequestSchema)` to create a new message.
  */
 export const ListAuditEventsRequestSchema: GenMessage<ListAuditEventsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 9);
+  messageDesc(file_gibson_tenant_v1_tenant, 5);
 
 /**
  * ListAuditEventsResponse returns a page of audit events.
@@ -397,7 +301,7 @@ export type ListAuditEventsResponse = Message<"gibson.tenant.v1.ListAuditEventsR
  * Use `create(ListAuditEventsResponseSchema)` to create a new message.
  */
 export const ListAuditEventsResponseSchema: GenMessage<ListAuditEventsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 10);
+  messageDesc(file_gibson_tenant_v1_tenant, 6);
 
 /**
  * GetAuditRetentionRequest reads the audit retention period of the caller's
@@ -413,7 +317,7 @@ export type GetAuditRetentionRequest = Message<"gibson.tenant.v1.GetAuditRetenti
  * Use `create(GetAuditRetentionRequestSchema)` to create a new message.
  */
 export const GetAuditRetentionRequestSchema: GenMessage<GetAuditRetentionRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 11);
+  messageDesc(file_gibson_tenant_v1_tenant, 7);
 
 /**
  * AuditRetention is the audit retention period of one tenant, in months.
@@ -450,7 +354,7 @@ export type AuditRetention = Message<"gibson.tenant.v1.AuditRetention"> & {
  * Use `create(AuditRetentionSchema)` to create a new message.
  */
 export const AuditRetentionSchema: GenMessage<AuditRetention> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 12);
+  messageDesc(file_gibson_tenant_v1_tenant, 8);
 
 /**
  * GetAuditRetentionResponse carries the audit retention period.
@@ -469,7 +373,7 @@ export type GetAuditRetentionResponse = Message<"gibson.tenant.v1.GetAuditRetent
  * Use `create(GetAuditRetentionResponseSchema)` to create a new message.
  */
 export const GetAuditRetentionResponseSchema: GenMessage<GetAuditRetentionResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 13);
+  messageDesc(file_gibson_tenant_v1_tenant, 9);
 
 /**
  * SetAuditRetentionRequest sets the audit retention period of the caller's
@@ -492,7 +396,7 @@ export type SetAuditRetentionRequest = Message<"gibson.tenant.v1.SetAuditRetenti
  * Use `create(SetAuditRetentionRequestSchema)` to create a new message.
  */
 export const SetAuditRetentionRequestSchema: GenMessage<SetAuditRetentionRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 14);
+  messageDesc(file_gibson_tenant_v1_tenant, 10);
 
 /**
  * SetAuditRetentionResponse carries the audit retention period after the
@@ -512,7 +416,7 @@ export type SetAuditRetentionResponse = Message<"gibson.tenant.v1.SetAuditRetent
  * Use `create(SetAuditRetentionResponseSchema)` to create a new message.
  */
 export const SetAuditRetentionResponseSchema: GenMessage<SetAuditRetentionResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 15);
+  messageDesc(file_gibson_tenant_v1_tenant, 11);
 
 /**
  * FindingFilters allows filtering the findings included in an export.
@@ -546,7 +450,7 @@ export type FindingFilters = Message<"gibson.tenant.v1.FindingFilters"> & {
  * Use `create(FindingFiltersSchema)` to create a new message.
  */
 export const FindingFiltersSchema: GenMessage<FindingFilters> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 16);
+  messageDesc(file_gibson_tenant_v1_tenant, 12);
 
 /**
  * ExportFindingsRequest specifies the format and scope of a findings export.
@@ -590,7 +494,7 @@ export type ExportFindingsRequest = Message<"gibson.tenant.v1.ExportFindingsRequ
  * Use `create(ExportFindingsRequestSchema)` to create a new message.
  */
 export const ExportFindingsRequestSchema: GenMessage<ExportFindingsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 17);
+  messageDesc(file_gibson_tenant_v1_tenant, 13);
 
 /**
  * ExportFindingsResponse carries the serialized export content.
@@ -624,7 +528,7 @@ export type ExportFindingsResponse = Message<"gibson.tenant.v1.ExportFindingsRes
  * Use `create(ExportFindingsResponseSchema)` to create a new message.
  */
 export const ExportFindingsResponseSchema: GenMessage<ExportFindingsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 18);
+  messageDesc(file_gibson_tenant_v1_tenant, 14);
 
 /**
  * GetFindingRequest names one finding of the caller's tenant.
@@ -645,7 +549,7 @@ export type GetFindingRequest = Message<"gibson.tenant.v1.GetFindingRequest"> & 
  * Use `create(GetFindingRequestSchema)` to create a new message.
  */
 export const GetFindingRequestSchema: GenMessage<GetFindingRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 19);
+  messageDesc(file_gibson_tenant_v1_tenant, 15);
 
 /**
  * FindingDetail is one finding with all of its evidence.
@@ -721,7 +625,7 @@ export type FindingDetail = Message<"gibson.tenant.v1.FindingDetail"> & {
  * Use `create(FindingDetailSchema)` to create a new message.
  */
 export const FindingDetailSchema: GenMessage<FindingDetail> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 20);
+  messageDesc(file_gibson_tenant_v1_tenant, 16);
 
 /**
  * GetFindingResponse carries the finding with its evidence.
@@ -740,7 +644,7 @@ export type GetFindingResponse = Message<"gibson.tenant.v1.GetFindingResponse"> 
  * Use `create(GetFindingResponseSchema)` to create a new message.
  */
 export const GetFindingResponseSchema: GenMessage<GetFindingResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 21);
+  messageDesc(file_gibson_tenant_v1_tenant, 17);
 
 /**
  * SaveMissionDraftRequest persists a mission CUE draft.
@@ -779,7 +683,7 @@ export type SaveMissionDraftRequest = Message<"gibson.tenant.v1.SaveMissionDraft
  * Use `create(SaveMissionDraftRequestSchema)` to create a new message.
  */
 export const SaveMissionDraftRequestSchema: GenMessage<SaveMissionDraftRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 22);
+  messageDesc(file_gibson_tenant_v1_tenant, 18);
 
 /**
  * SaveMissionDraftResponse returns the ID of the saved or updated draft.
@@ -798,7 +702,7 @@ export type SaveMissionDraftResponse = Message<"gibson.tenant.v1.SaveMissionDraf
  * Use `create(SaveMissionDraftResponseSchema)` to create a new message.
  */
 export const SaveMissionDraftResponseSchema: GenMessage<SaveMissionDraftResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 23);
+  messageDesc(file_gibson_tenant_v1_tenant, 19);
 
 /**
  * ListMissionDraftsRequest queries the saved drafts for a tenant.
@@ -832,7 +736,7 @@ export type ListMissionDraftsRequest = Message<"gibson.tenant.v1.ListMissionDraf
  * Use `create(ListMissionDraftsRequestSchema)` to create a new message.
  */
 export const ListMissionDraftsRequestSchema: GenMessage<ListMissionDraftsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 24);
+  messageDesc(file_gibson_tenant_v1_tenant, 20);
 
 /**
  * MissionDraft carries the metadata for a saved mission draft.
@@ -871,7 +775,7 @@ export type MissionDraft = Message<"gibson.tenant.v1.MissionDraft"> & {
  * Use `create(MissionDraftSchema)` to create a new message.
  */
 export const MissionDraftSchema: GenMessage<MissionDraft> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 25);
+  messageDesc(file_gibson_tenant_v1_tenant, 21);
 
 /**
  * ListMissionDraftsResponse carries the list of mission drafts for a tenant.
@@ -897,7 +801,7 @@ export type ListMissionDraftsResponse = Message<"gibson.tenant.v1.ListMissionDra
  * Use `create(ListMissionDraftsResponseSchema)` to create a new message.
  */
 export const ListMissionDraftsResponseSchema: GenMessage<ListMissionDraftsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 26);
+  messageDesc(file_gibson_tenant_v1_tenant, 22);
 
 /**
  * GetMissionDraftRequest fetches a single draft's full content.
@@ -921,7 +825,7 @@ export type GetMissionDraftRequest = Message<"gibson.tenant.v1.GetMissionDraftRe
  * Use `create(GetMissionDraftRequestSchema)` to create a new message.
  */
 export const GetMissionDraftRequestSchema: GenMessage<GetMissionDraftRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 27);
+  messageDesc(file_gibson_tenant_v1_tenant, 23);
 
 /**
  * GetMissionDraftResponse returns a single draft including its CUE content.
@@ -940,7 +844,7 @@ export type GetMissionDraftResponse = Message<"gibson.tenant.v1.GetMissionDraftR
  * Use `create(GetMissionDraftResponseSchema)` to create a new message.
  */
 export const GetMissionDraftResponseSchema: GenMessage<GetMissionDraftResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 28);
+  messageDesc(file_gibson_tenant_v1_tenant, 24);
 
 /**
  * MissionDraftFull is MissionDraft plus the CUE source content.
@@ -984,7 +888,7 @@ export type MissionDraftFull = Message<"gibson.tenant.v1.MissionDraftFull"> & {
  * Use `create(MissionDraftFullSchema)` to create a new message.
  */
 export const MissionDraftFullSchema: GenMessage<MissionDraftFull> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 29);
+  messageDesc(file_gibson_tenant_v1_tenant, 25);
 
 /**
  * DeleteMissionDraftRequest removes a saved draft.
@@ -1008,7 +912,7 @@ export type DeleteMissionDraftRequest = Message<"gibson.tenant.v1.DeleteMissionD
  * Use `create(DeleteMissionDraftRequestSchema)` to create a new message.
  */
 export const DeleteMissionDraftRequestSchema: GenMessage<DeleteMissionDraftRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 30);
+  messageDesc(file_gibson_tenant_v1_tenant, 26);
 
 /**
  * DeleteMissionDraftResponse is empty — Delete is idempotent.
@@ -1023,11 +927,11 @@ export type DeleteMissionDraftResponse = Message<"gibson.tenant.v1.DeleteMission
  * Use `create(DeleteMissionDraftResponseSchema)` to create a new message.
  */
 export const DeleteMissionDraftResponseSchema: GenMessage<DeleteMissionDraftResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_tenant, 31);
+  messageDesc(file_gibson_tenant_v1_tenant, 27);
 
 /**
  * TenantService provides the core tenant-management operations: onboarding
- * state, quota, audit events, findings export, and mission drafts.
+ * state, audit events, findings export, and mission drafts.
  *
  * ---------------------------------------------------------------------------
  * Onboarding
@@ -1055,28 +959,6 @@ export const TenantService: GenService<{
     methodKind: "unary";
     input: typeof UpdateOnboardingStateRequestSchema;
     output: typeof UpdateOnboardingStateResponseSchema;
-  },
-  /**
-   * GetTenantQuota retrieves the configured resource quotas (limits) for a
-   * tenant. Returns zero values for any quota not explicitly set.
-   *
-   * @generated from rpc gibson.tenant.v1.TenantService.GetTenantQuota
-   */
-  getTenantQuota: {
-    methodKind: "unary";
-    input: typeof GetTenantQuotaRequestSchema;
-    output: typeof GetTenantQuotaResponseSchema;
-  },
-  /**
-   * GetTenantQuotaUsage returns the live counter values (current usage) from
-   * Redis. Cheap (single MGET); does not consult Postgres.
-   *
-   * @generated from rpc gibson.tenant.v1.TenantService.GetTenantQuotaUsage
-   */
-  getTenantQuotaUsage: {
-    methodKind: "unary";
-    input: typeof GetTenantQuotaUsageRequestSchema;
-    output: typeof GetTenantQuotaUsageResponseSchema;
   },
   /**
    * ListAuditEvents returns audit events for a tenant.

@@ -473,16 +473,14 @@ function main() {
   }
 
   // SKIP_GEN_AUTHZ_REGISTRY=1: trust the committed src/gen/authz/registry.ts
-  // and skip regeneration. Same pattern as gen-plans.mjs's SKIP_GEN_PLANS.
+  // and skip regeneration.
   // Used in container builds where the SDK + gibson source trees are not
   // present. The host build runs the full regen + drift gate, so trusting
   // the committed file inside the container is safe.
   //
   // Never honored in --stdout mode: that mode exists for the drift gate,
   // which needs real generator output. Returning early there would emit an
-  // empty capture and the gate would read it as drift. (gen-plans.mjs guards
-  // its SKIP the same way; this one did not, and would have started lying the
-  // moment the gate's own SKIP escape was removed in dashboard#1019.)
+  // empty capture and the gate would read it as drift.
   if (!stdout && process.env.SKIP_GEN_AUTHZ_REGISTRY === '1' && existsSync(OUTPUT_PATH)) {
     process.stdout.write(
       `[gen-authz-registry] SKIP_GEN_AUTHZ_REGISTRY=1, using pre-generated ${OUTPUT_PATH}\n`,

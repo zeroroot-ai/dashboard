@@ -39,7 +39,7 @@ import { AdminTenantService } from '@/src/gen/gibson/tenant/v1/admin_tenant_pb';
 import { userClient } from '@/src/lib/gibson-client';
 import { emitCrdAuditFromGate } from '@/src/lib/audit/crd';
 
-import { type ActionErrorCode, type ActionResult, type TenantTier } from './types';
+import { type ActionErrorCode, type ActionResult } from './types';
 import { requireCrdSession } from './_authz';
 import {
   provisionTenantInput,
@@ -92,14 +92,13 @@ function rpcError<T>(e: unknown): ActionResult<T> {
  *
  * Async (operator-pull): the daemon enqueues the provision and returns an
  * op_id; the tenant-operator creates the Tenant CR with spec
- * {displayName, owner, tier}. The returned `name`/`namespace` are derived from
+ * {displayName, owner}. The returned `name`/`namespace` are derived from
  * the slug (the same values the operator will use as `metadata.name` /
  * `tenant-<name>`); the CR itself appears after the operator reconciles.
  */
 export async function provisionTenantAction(input: {
   displayName: string;
   owner: string;
-  tier?: TenantTier;
 }): Promise<ActionResult<{ name: string; namespace: string; opId: string }>> {
   const inputKeys = Object.keys(input ?? {});
   const gate = await requireCrdSession<{ name: string; namespace: string; opId: string }>({
@@ -144,7 +143,6 @@ export async function provisionTenantAction(input: {
       tenantId: name,
       displayName: parsed.data.displayName,
       ownerEmail: parsed.data.owner,
-      tier: parsed.data.tier ?? 'team',
     });
     revalidatePath('/dashboard');
     emitCrdAuditFromGate({
@@ -237,14 +235,14 @@ export async function deleteTenantAction(
 }
 
 /**
- * Record intent to patch a tenant's tier and/or display name. Only the fields
+ * Record intent to patch a tenant's display name. Only the fields
  * present in `patch` are sent (via the request's `*_set` flags); unset fields
  * are left untouched by the operator. Async (operator-pull): returns success on
  * enqueue.
  */
 export async function updateTenantAction(
   name: string,
-  patch: { tier?: TenantTier; displayName?: string },
+  patch: { displayName?: string },
 ): Promise<ActionResult> {
   const inputKeys = ['name', 'patch'];
   const gate = await requireCrdSession({
@@ -269,7 +267,6 @@ export async function updateTenantAction(
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Invalid input', code: 'BAD_INPUT' };
   }
 
-  const tierSet = parsed.data.patch.tier !== undefined;
   const displayNameSet = parsed.data.patch.displayName !== undefined;
 
   try {
@@ -278,8 +275,6 @@ export async function updateTenantAction(
       tenantId: name,
       // Send only the fields the patch marks set; the *_set flags tell the
       // operator which Tenant.spec fields to apply (vs. leave untouched).
-      tier: parsed.data.patch.tier ?? '',
-      tierSet,
       displayName: parsed.data.patch.displayName ?? '',
       displayNameSet,
     });

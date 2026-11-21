@@ -69,7 +69,7 @@ if (profile.signupRung === "closed") {
   redirect("/login");
 }
 if (profile.signupRung === "approval") {
-  return <RegisterForm tier={selfServeTierIds[0] ?? "solo"} />;
+  return <RegisterForm />;
 }
 ```
 

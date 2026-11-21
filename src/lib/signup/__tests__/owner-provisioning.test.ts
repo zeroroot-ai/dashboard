@@ -71,27 +71,24 @@ describe('signup service wrappers', () => {
       attemptId: 'attempt-1',
       ownerEmail: 'owner@acme.test',
       workspaceName: 'Acme',
-      tier: 'team',
       clientIp: '203.0.113.7',
     });
     // Empty-tenant contract: same as the unauthenticated SetSignupProgress RPC.
     expect(mockServiceClient).toHaveBeenCalledWith(SignupService, '');
   });
 
-  it('maps the request fields and defaults absent names to empty strings', async () => {
+  it('maps the request fields, sends no tier and defaults absent names to empty strings', async () => {
     mockRequest.mockResolvedValue({});
     await requestSignupVerification({
       attemptId: 'attempt-2',
       ownerEmail: 'owner@acme.test',
       workspaceName: 'Acme',
-      tier: 'org',
       clientIp: '203.0.113.7',
     });
     expect(mockRequest).toHaveBeenCalledWith({
       attemptId: 'attempt-2',
       ownerEmail: 'owner@acme.test',
       workspaceName: 'Acme',
-      tier: 'org',
       ownerFirstName: '',
       ownerLastName: '',
       clientIp: '203.0.113.7',
@@ -104,7 +101,6 @@ describe('signup service wrappers', () => {
       attemptId: 'attempt-3',
       ownerEmail: 'owner@acme.test',
       workspaceName: 'Acme',
-      tier: 'team',
       clientIp: '',
     });
     // A password at this point would be a stored credential for an address
@@ -112,7 +108,7 @@ describe('signup service wrappers', () => {
     expect(mockRequest.mock.calls[0]?.[0]).not.toHaveProperty('password');
   });
 
-  it('returns the redeemed session fields', async () => {
+  it('returns the redeemed session fields and drops the tier the daemon still sends', async () => {
     mockRedeem.mockResolvedValue({
       verifiedSessionToken: 'sess-1',
       attemptId: 'attempt-4',
@@ -129,7 +125,6 @@ describe('signup service wrappers', () => {
       attemptId: 'attempt-4',
       ownerEmail: 'owner@acme.test',
       workspaceName: 'Acme',
-      tier: 'team',
     });
   });
 
@@ -191,18 +186,18 @@ describe('signup service wrappers', () => {
     });
   });
 
-  it('sends the client address on Register (dashboard#286)', async () => {
+  it('sends the client address and no tier on Register (dashboard#286)', async () => {
     mockRegister.mockReset().mockResolvedValue({});
     await registerForApproval({
       attemptId: 'a-1',
       ownerEmail: 'ada@example.com',
       workspaceName: 'Analytical Engines',
-      tier: 'solo',
       ownerFirstName: 'Ada',
       ownerLastName: 'Lovelace',
       password: 'pw',
       clientIp: '203.0.113.7',
     });
     expect(mockRegister).toHaveBeenCalledWith(expect.objectContaining({ clientIp: '203.0.113.7' }));
+    expect(mockRegister.mock.calls[0]?.[0]).not.toHaveProperty('tier');
   });
 });

@@ -30,12 +30,12 @@ beforeEach(() => {
 
 describe("approveRegistrationAction", () => {
   it("calls the daemon approval with the registration id and returns the queued tenant", async () => {
-    mockApprove.mockResolvedValue({ tenantId: "acme-research", ownerUserId: "u-1", planId: "team" });
+    mockApprove.mockResolvedValue({ tenantId: "acme-research", ownerUserId: "u-1" });
     const res = await approveRegistrationAction("reg-1");
     expect(mockApprove).toHaveBeenCalledWith({ registrationId: "reg-1" });
     expect(res).toEqual({
       ok: true,
-      data: { tenantId: "acme-research", ownerUserId: "u-1", planId: "team" },
+      data: { tenantId: "acme-research", ownerUserId: "u-1" },
     });
   });
 

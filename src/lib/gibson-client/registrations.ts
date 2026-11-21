@@ -23,8 +23,6 @@ export interface PendingRegistrationDTO {
   registrationId: string;
   ownerEmail: string;
   workspaceName: string;
-  /** The plan the person asked for, as typed. */
-  tier: string;
   ownerFirstName: string;
   ownerLastName: string;
   /** When the registration arrived, as an ISO 8601 string. Null when the daemon sent none. */
@@ -34,7 +32,6 @@ export interface PendingRegistrationDTO {
 export interface ApprovedRegistrationDTO {
   tenantId: string;
   ownerUserId: string;
-  planId: string;
 }
 
 /** The queue size that one read returns. The daemon caps it too. */
@@ -49,7 +46,6 @@ export async function daemonListPendingRegistrations(): Promise<PendingRegistrat
     registrationId: r.registrationId,
     ownerEmail: r.ownerEmail,
     workspaceName: r.workspaceName,
-    tier: r.tier,
     ownerFirstName: r.ownerFirstName,
     ownerLastName: r.ownerLastName,
     receivedAt: r.receivedAt ? timestampDate(r.receivedAt).toISOString() : null,
@@ -61,7 +57,7 @@ export async function daemonApproveRegistration(
   registrationId: string,
 ): Promise<ApprovedRegistrationDTO> {
   const resp = await userClient(AdminTenantService).adminApproveRegistration({ registrationId });
-  return { tenantId: resp.tenantId, ownerUserId: resp.ownerUserId, planId: resp.planId };
+  return { tenantId: resp.tenantId, ownerUserId: resp.ownerUserId };
 }
 
 /** Reject one registration. The reason goes to the audit event only. */

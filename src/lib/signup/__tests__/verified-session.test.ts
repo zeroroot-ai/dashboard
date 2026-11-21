@@ -6,8 +6,9 @@
  *
  * The property under test is TAMPER-EVIDENCE. `httpOnly` keeps the cookie away
  * from script on the page; it says nothing about the person holding the
- * browser, who can put whatever they like in it. `tier` rides in this cookie
- * and the dashboard prices from it, so every field has to be unforgeable.
+ * browser, who can put whatever they like in it. The step link rides in this
+ * cookie and the dashboard sends the browser to it, so every field has to be
+ * unforgeable.
  *
  * Refs GHSA-r74f.
  */
@@ -25,7 +26,6 @@ const SESSION: VerifiedSignupSession = {
   attemptId: 'aaaaaaaa-0000-0000-0000-000000000001',
   email: 'owner@example.com',
   workspaceName: 'Example Workspace',
-  tier: 'team',
 };
 
 /** Re-sign nothing: produce a payload with a syntactically valid but wrong sig. */
@@ -68,19 +68,22 @@ describe('verified-session codec', () => {
     expect(decodeVerifiedSession(forge(SESSION))).toBeNull();
   });
 
-  it('rejects a tier swapped for a cheaper one', () => {
-    const cheaper = { ...SESSION, tier: 'starter' };
-    expect(decodeVerifiedSession(forge(cheaper))).toBeNull();
+  it('rejects a workspace name swapped for another one', () => {
+    const other = { ...SESSION, workspaceName: 'Other Workspace' };
+    expect(decodeVerifiedSession(forge(other))).toBeNull();
   });
 
-  it('rejects a tier edited inside an otherwise genuine cookie', () => {
+  it('rejects a workspace name edited inside an otherwise genuine cookie', () => {
     // Take a real signed cookie and rewrite one character of the payload. The
     // signature is still a real signature, just not of THIS payload.
     const genuine = encodeVerifiedSession(SESSION);
     const lastDot = genuine.lastIndexOf('.');
     const payload = genuine.slice(0, lastDot);
     const signature = genuine.slice(lastDot + 1);
-    const tampered = payload.replace('"tier":"team"', '"tier":"starter"');
+    const tampered = payload.replace(
+      '"workspaceName":"Example Workspace"',
+      '"workspaceName":"Other Workspace"',
+    );
 
     expect(tampered).not.toBe(payload);
     expect(decodeVerifiedSession(`${tampered}.${signature}`)).toBeNull();
@@ -93,7 +96,7 @@ describe('verified-session codec', () => {
   });
 
   it('rejects a signature lifted from a different session', () => {
-    const other = encodeVerifiedSession({ ...SESSION, tier: 'starter' });
+    const other = encodeVerifiedSession({ ...SESSION, workspaceName: 'Other Workspace' });
     const otherSig = other.slice(other.lastIndexOf('.') + 1);
     const mine = encodeVerifiedSession(SESSION);
     const minePayload = mine.slice(0, mine.lastIndexOf('.'));
@@ -123,7 +126,7 @@ describe('verified-session codec', () => {
   it('still strips the capability from the display projection', () => {
     const display = displayOnly(SESSION);
     expect(display).not.toHaveProperty('verifiedSessionToken');
-    expect(display.tier).toBe('team');
+    expect(display.workspaceName).toBe('Example Workspace');
   });
 
   it('strips the step link from the display projection', () => {

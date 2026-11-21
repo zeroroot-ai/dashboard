@@ -69,7 +69,6 @@ describe("provisionTenantAction", () => {
     const r = await provisionTenantAction({
       displayName: "Acme Corp",
       owner: "alice@acme.io",
-      tier: "org",
     });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
@@ -83,16 +82,7 @@ describe("provisionTenantAction", () => {
       tenantId: "acme-corp",
       displayName: "Acme Corp",
       ownerEmail: "alice@acme.io",
-      tier: "org",
     });
-  });
-
-  it("defaults tier to 'team' when unset (matching the legacy `?? team`)", async () => {
-    const r = await provisionTenantAction({ displayName: "Beta", owner: "b@x.io" });
-    expect(r.ok).toBe(true);
-    expect(mocks.adminProvisionTenant).toHaveBeenCalledWith(
-      expect.objectContaining({ tenantId: "beta", tier: "team" }),
-    );
   });
 
   it("rejects an empty display name as BAD_INPUT without an RPC", async () => {
@@ -115,34 +105,18 @@ describe("provisionTenantAction", () => {
 });
 
 describe("updateTenantAction", () => {
-  it("sends only tier when the patch sets tier alone (display_name_set=false)", async () => {
-    const r = await updateTenantAction("acme", { tier: "enterprise" });
-    expect(r.ok).toBe(true);
-    expect(mocks.adminUpdateTenant).toHaveBeenCalledWith({
-      tenantId: "acme",
-      tier: "enterprise",
-      tierSet: true,
-      displayName: "",
-      displayNameSet: false,
-    });
-  });
-
-  it("sends only display_name when the patch sets displayName alone (tier_set=false)", async () => {
+  it("sends the display name and no tier", async () => {
     const r = await updateTenantAction("acme", { displayName: "Acme Inc" });
     expect(r.ok).toBe(true);
     expect(mocks.adminUpdateTenant).toHaveBeenCalledWith({
       tenantId: "acme",
-      tier: "",
-      tierSet: false,
       displayName: "Acme Inc",
       displayNameSet: true,
     });
   });
 
-  it("rejects an invalid tier as BAD_INPUT without an RPC", async () => {
-    const r = await updateTenantAction("acme", {
-      tier: "bogus" as unknown as "team",
-    });
+  it("rejects an empty display name as BAD_INPUT without an RPC", async () => {
+    const r = await updateTenantAction("acme", { displayName: "" });
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.code).toBe("BAD_INPUT");

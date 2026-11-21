@@ -19,15 +19,10 @@
  */
 
 import { z } from "zod";
-import { selfServeTierIds } from "@/src/lib/pricing-display";
 
 // ---------------------------------------------------------------------------
 // Form schema
 // ---------------------------------------------------------------------------
-
-// `selfServeTierIds` is a readonly array, z.enum requires a non-empty tuple.
-// Cast is safe because the array is guaranteed non-empty at build time.
-const tierTuple = selfServeTierIds as unknown as [string, ...string[]];
 
 export const signupInputSchema = z.object({
   firstName: z
@@ -57,8 +52,6 @@ export const signupInputSchema = z.object({
       "Company name may only contain letters, numbers, spaces, hyphens, and underscores",
     ),
 
-  tier: z.enum(tierTuple, { error: "Select a valid plan" }),
-
   acceptToS: z.literal(true, { error: "Please accept the Terms of Service to continue" }),
 
   acceptPrivacy: z.literal(true, { error: "Please accept the Privacy Policy to continue" }),
@@ -75,7 +68,7 @@ export type SignupInput = z.infer<typeof signupInputSchema>;
  * mail round-trip would mean holding a credential for an address that, at the
  * moment it was stored, nobody had shown they controlled.
  *
- * Everything else about the signup — address, company name, plan — is NOT in
+ * Everything else about the signup — address and company name — is NOT in
  * this schema and is NOT sent at completion. The daemon reads all of it back
  * from the verification row the session resolves to, so a redeemed session
  * cannot be pointed at a different address.
@@ -113,7 +106,6 @@ export const registerInputSchema = z
     lastName: signupInputSchema.shape.lastName,
     email: signupInputSchema.shape.email,
     workspaceName: signupInputSchema.shape.workspaceName,
-    tier: signupInputSchema.shape.tier,
     password: completeSignupInputSchema.shape.password,
     passwordConfirm: z.string(),
   })
@@ -275,7 +267,7 @@ export type SignupActionResult =
 /**
  * Input to `completeSignup`, the step that runs on /signup/complete.
  *
- * Note how little is here. The email, company name and plan are all absent by
+ * Note how little is here. The email and company name are both absent by
  * design: the daemon reads them from the verification row the
  * session cookie resolves to. A completion call therefore cannot describe a
  * signup other than the one whose link was opened.

@@ -264,7 +264,6 @@ export async function signupAction(
         attemptId,
         ownerEmail: ctx.input.email,
         workspaceName: ctx.input.workspaceName,
-        tier: ctx.input.tier,
         ownerFirstName: ctx.input.firstName,
         ownerLastName: ctx.input.lastName,
         clientIp: ip,
@@ -274,7 +273,7 @@ export async function signupAction(
     }
 
     logger.info(
-      { action: "signup_verification_requested", attemptId, tier: ctx.input.tier },
+      { action: "signup_verification_requested", attemptId },
       "verification requested; nothing provisioned",
     );
     return { ok: true, phase: "verify_email", attemptId };
@@ -386,7 +385,7 @@ async function finishProvisioning(ctx: Ctx): Promise<SignupActionResult> {
  * completeSignup finishes a VERIFIED signup.
  *
  * Its authority is the verified-session cookie and nothing else. Note what it
- * does not accept from the caller: no email, no company name, no plan. All of
+ * does not accept from the caller: no email and no company name. Both of
  * those are read daemon-side from the verification row the session resolves
  * to, so a caller who redeemed a link for one address cannot provision a
  * workspace for another. The only input is the password the user just typed.
@@ -445,7 +444,7 @@ export async function completeSignup(
 
   try {
     // 1. Create the founding-owner identity + enqueue the tenant. The daemon
-    //    reads the address, company name and plan from its own verification
+    //    reads the address and company name from its own verification
     //    row; this call supplies only the session and the password.
     await advanceStep(ctx.attemptId, "create_user");
     const clientIp = await resolveClientIp();
@@ -580,7 +579,6 @@ function ctxFromSession(session: VerifiedSignupSession): Ctx {
       workspaceName: session.workspaceName,
       firstName: "",
       lastName: "",
-      tier: session.tier as SignupInput["tier"],
       acceptToS: true,
       acceptPrivacy: true,
     },
@@ -646,7 +644,6 @@ function logAudit(
       email: ctx.input.email,
       tenantSlug: ctx.tenantSlug,
       zitadelUserId: ctx.zitadelUserId,
-      tier: ctx.input.tier,
       failureCode: failureCode ?? null,
     },
     "signup completed",

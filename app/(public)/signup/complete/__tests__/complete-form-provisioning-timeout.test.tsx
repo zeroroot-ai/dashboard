@@ -76,7 +76,6 @@ const CARD_FREE_PROPS = {
     attemptId: ATTEMPT,
     email: 'ada@example.com',
     workspaceName: 'ada-security',
-    tier: 'team',
   },
   passwordPolicy: DEFAULT_PASSWORD_POLICY,
   stepText: null,
