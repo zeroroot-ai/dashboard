@@ -424,7 +424,7 @@ export async function leaky() { return 1; }
       name: "ungated export under app/(authenticated)/ is caught (widened paths)",
       expectFail: true,
       files: {
-        "app/(authenticated)/_actions/quota.ts": `"use server";
+        "app/(authenticated)/_actions/usage.ts": `"use server";
 export async function leaky() { return 1; }
 `,
       },

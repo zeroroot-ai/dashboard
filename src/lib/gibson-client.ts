@@ -7,7 +7,6 @@ import { principalView } from '@/src/lib/gibson-client/principal';
 import type { PrincipalView } from '@/src/lib/banks/view';
 import { ConnectError, Code } from '@connectrpc/connect';
 import { DaemonService } from '@/src/gen/gibson/daemon/v1/daemon_pb';
-import { TenantService } from '@/src/gen/gibson/tenant/v1/tenant_pb';
 import { ProviderService } from '@/src/gen/gibson/tenant/v1/provider_pb';
 import { UserService } from '@/src/gen/gibson/tenant/v1/user_pb';
 import type {
@@ -70,11 +69,6 @@ async function getAdminClient(_userId?: string, _tenantId?: string) {
 async function getUserServiceClient(_userId?: string, _tenantId?: string) {
   await requireUserToken();
   return userClient(UserService);
-}
-
-async function getTenantServiceClient(_userId?: string, _tenantId?: string) {
-  await requireUserToken();
-  return userClient(TenantService);
 }
 
 // ---------------------------------------------------------------------------
@@ -218,29 +212,6 @@ export async function getMissionDefinition(name: string, userId?: string, tenant
 }
 
 export { ConnectError, Code };
-
-// ============================================================================
-// Tenant Management API
-// ============================================================================
-
-/**
- * Retrieve the live counter values (current usage) for a tenant via
- * TenantAdminService.GetTenantQuotaUsage. Cheap (single Redis MGET on
- * the daemon side); no caching here. Spec plans-and-quotas-simplification
- * R9.B.
- */
-export async function getTenantQuotaUsage(
-  tenantId: string,
-  targetTenantId: string,
-  userId?: string
-): Promise<{ missionsActive: number; agentsActive: number }> {
-  const client = await getTenantServiceClient(userId, tenantId);
-  const response = await client.getTenantQuotaUsage({ tenantId: targetTenantId });
-  return {
-    missionsActive: Number(response.missionsActive ?? 0),
-    agentsActive: Number(response.agentsActive ?? 0),
-  };
-}
 
 // ============================================================================
 // Conversation History, UserService RPCs (spec: chat-conversation-persistence)

@@ -41,7 +41,6 @@ function toDTO(e: InboundMissionEntry): InboundMissionDTO {
     agent: e.agent,
     missionDefinitionId: e.missionDefinitionId,
     targetIds: [...e.targetIds],
-    maxActiveMissions: e.maxActiveMissions,
     publishedBy: e.publishedBy,
     createdAt: e.createdAt ? new Date(ms).toISOString() : "",
     stale: e.stale,
@@ -76,20 +75,17 @@ export async function daemonListInboundMissions(): Promise<InboundMissionDTO[]> 
 /**
  * Publish one mission definition under one agent name, with the approved
  * targets. The same agent, definition and targets again approve the present
- * state of a stale publication, and the callers keep their grants. The limit
- * of missions at one time is required, and the daemon has no default for it.
+ * state of a stale publication, and the callers keep their grants.
  */
 export async function daemonPublishInboundMission(input: {
   agent: string;
   missionDefinitionId: string;
   targetIds: string[];
-  maxActiveMissions: number;
 }): Promise<InboundMissionDTO | null> {
   const resp = await userClient(InboundMissionService).publishInboundMission({
     agent: input.agent,
     missionDefinitionId: input.missionDefinitionId,
     targetIds: input.targetIds,
-    maxActiveMissions: input.maxActiveMissions,
   });
   return resp.entry ? toDTO(resp.entry) : null;
 }

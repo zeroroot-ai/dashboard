@@ -77,8 +77,8 @@ export type PendingRegistration = Message<"gibson.tenant.v1.PendingRegistration"
   workspaceName: string;
 
   /**
-   * tier is the plan they asked for, as they typed it. The plan gate runs at
-   * approval time, so an unknown tier is refused then rather than hidden here.
+   * tier is the optional plan they asked for, as they typed it. Gibson does
+   * not judge it. Step 2 of gibson#1531 deletes it.
    *
    * @generated from field: string tier = 4;
    */
@@ -212,8 +212,8 @@ export type AdminApproveRegistrationResponse = Message<"gibson.tenant.v1.AdminAp
   ownerUserId: string;
 
   /**
-   * plan_id is the canonical plan the server-side gate resolved, the same
-   * value enqueued for the operator.
+   * plan_id is the plan id of the registration, the same value enqueued for
+   * the operator. Empty when the person gave none.
    *
    * @generated from field: string plan_id = 3;
    */
@@ -305,8 +305,8 @@ export type AdminProvisionTenantRequest = Message<"gibson.tenant.v1.AdminProvisi
   ownerEmail: string;
 
   /**
-   * tier becomes Tenant.spec.tier ("team"/"org"/"enterprise"/...). Empty
-   * defaults to "team" (matching provisionTenantAction's `?? 'team'`).
+   * tier becomes Tenant.spec.tier. It is optional, and an empty tier gives
+   * a Tenant with no spec.tier. Step 2 of gibson#1531 deletes it.
    *
    * @generated from field: string tier = 4;
    */

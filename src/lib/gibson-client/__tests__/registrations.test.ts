@@ -39,7 +39,7 @@ beforeEach(() => {
 });
 
 describe('registrations client', () => {
-  it('maps each pending registration, the id included', async () => {
+  it('maps each pending registration, the id included, and drops the tier', async () => {
     list.mockResolvedValue({
       registrations: [
         {
@@ -66,7 +66,6 @@ describe('registrations client', () => {
         registrationId: 'reg-1',
         ownerEmail: 'ada@example.test',
         workspaceName: 'Analytical',
-        tier: 'team',
         ownerFirstName: 'Ada',
         ownerLastName: 'Lovelace',
         receivedAt: '2026-10-07T09:30:00.000Z',
@@ -75,7 +74,6 @@ describe('registrations client', () => {
         registrationId: 'reg-2',
         ownerEmail: 'alan@example.test',
         workspaceName: 'Bombe',
-        tier: 'org',
         ownerFirstName: '',
         ownerLastName: '',
         receivedAt: null,
@@ -85,11 +83,10 @@ describe('registrations client', () => {
   });
 
   it('names the registration in an approval and returns the queued tenant', async () => {
-    approve.mockResolvedValue({ tenantId: 'analytical', ownerUserId: 'u1', planId: 'team' });
+    approve.mockResolvedValue({ tenantId: 'analytical', ownerUserId: 'u1' });
     await expect(daemonApproveRegistration('reg-1')).resolves.toEqual({
       tenantId: 'analytical',
       ownerUserId: 'u1',
-      planId: 'team',
     });
     expect(approve).toHaveBeenCalledWith({ registrationId: 'reg-1' });
   });

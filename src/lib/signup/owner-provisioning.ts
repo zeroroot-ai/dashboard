@@ -19,7 +19,7 @@
  *   getSignupStep             — reads the state of that external step.
  *
  * ORDERING is enforced daemon-side, not here. The completion RPC takes no
- * email, workspace name or tier — it reads all of them back from the
+ * email or workspace name — it reads both back from the
  * verification row the session resolves to — so a caller cannot prove control
  * of one address and provision another. Nothing in this module can reorder the
  * flow into something weaker.
@@ -51,8 +51,6 @@ interface RequestSignupVerificationInput {
   ownerEmail: string;
   /** Human-readable workspace / company name; the daemon derives the slug. */
   workspaceName: string;
-  /** Canonical plan id ("team" | "org" | "enterprise"). */
-  tier: string;
   /** Owner's given name (optional). */
   ownerFirstName?: string;
   /** Owner's family name (optional). */
@@ -79,7 +77,6 @@ export async function requestSignupVerification(
     attemptId: input.attemptId,
     ownerEmail: input.ownerEmail,
     workspaceName: input.workspaceName,
-    tier: input.tier,
     ownerFirstName: input.ownerFirstName ?? '',
     ownerLastName: input.ownerLastName ?? '',
     clientIp: input.clientIp,
@@ -99,7 +96,6 @@ export interface RedeemedSignupVerification {
   ownerEmail: string;
   /** Echoed for display on the completion page. */
   workspaceName: string;
-  tier: string;
 }
 
 /**
@@ -123,7 +119,6 @@ export async function redeemSignupVerification(input: {
     attemptId: resp.attemptId,
     ownerEmail: resp.ownerEmail,
     workspaceName: resp.workspaceName,
-    tier: resp.tier,
   };
 }
 
@@ -207,8 +202,6 @@ interface RegisterForApprovalInput {
   ownerEmail: string;
   /** Human-readable workspace / company name; the daemon derives the slug. */
   workspaceName: string;
-  /** Canonical plan id of the install. */
-  tier: string;
   ownerFirstName: string;
   ownerLastName: string;
   /** The password the registrant chose. It reaches the identity provider only. */
@@ -239,7 +232,6 @@ export async function registerForApproval(input: RegisterForApprovalInput): Prom
     attemptId: input.attemptId,
     ownerEmail: input.ownerEmail,
     workspaceName: input.workspaceName,
-    tier: input.tier,
     ownerFirstName: input.ownerFirstName,
     ownerLastName: input.ownerLastName,
     password: input.password,

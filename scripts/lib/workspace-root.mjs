@@ -9,12 +9,11 @@
  * A repository NAME and a path INSIDE that repository:
  *
  * ```js
- * requireRepoPath("charts", "helm/gibson-operators/files/plans.yaml");
  * requireRepoPath("sdk", "gen/mission-definition.schema.json");
  * ```
  *
- * Both halves are durable. `charts` is `github.com/zeroroot-ai/charts`, and
- * `helm/gibson-operators/files/plans.yaml` is a path in that repository. No
+ * Both halves are durable. `sdk` is `github.com/zeroroot-ai/sdk`, and
+ * `gen/mission-definition.schema.json` is a path in that repository. No
  * caller states where the clones sit on any particular machine.
  *
  * ## Where the resolver looks

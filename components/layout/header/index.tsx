@@ -3,7 +3,6 @@
 
 "use client";
 
-import type { ReactNode } from "react";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { Separator } from "@/components/ui/separator";
@@ -27,17 +26,7 @@ function ConnectionStatus() {
   );
 }
 
-interface SiteHeaderProps {
-
-  /**
-   * Quota widget slot. The auth layout renders <QuotaWidget /> into this
-   * slot with the active tenant's plan limits resolved server-side. Spec
-   * plans-and-quotas-simplification R9.B.3.
-   */
-  quotaWidget?: ReactNode;
-}
-
-export function SiteHeader({ quotaWidget }: SiteHeaderProps = {}) {
+export function SiteHeader() {
   const { toggleSidebar, open } = useSidebar();
 
   return (
@@ -51,12 +40,6 @@ export function SiteHeader({ quotaWidget }: SiteHeaderProps = {}) {
         <Search />
 
         <div className="ml-auto flex items-center gap-2">
-          {quotaWidget ? (
-            <>
-              {quotaWidget}
-              <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
-            </>
-          ) : null}
           <TenantDisplay />
           <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
           <Notifications />

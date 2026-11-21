@@ -59,7 +59,6 @@ const entry = {
   agent: "recon",
   missionDefinitionId: "def-1",
   targetIds: ["t1", "t-gone"],
-  maxActiveMissions: 3,
   publishedBy: "user-1",
   createdAt: "2026-11-18T10:00:00.000Z",
   stale: false,
@@ -92,7 +91,6 @@ async function fillPublishForm(user: ReturnType<typeof userEvent.setup>) {
   await waitFor(() => expect(screen.getByLabelText(T.fieldAgent)).toBeEnabled());
   await user.selectOptions(screen.getByLabelText(T.fieldAgent), "recon");
   await user.click(screen.getByRole("checkbox", { name: "web" }));
-  await user.type(screen.getByLabelText(T.fieldMaxMissions), "3");
   await user.type(screen.getByLabelText(T.fieldCallerName), "partner");
 }
 
@@ -106,7 +104,6 @@ describe("the list of published definitions", () => {
     expect(within(row).getByText("web")).toBeInTheDocument();
     // A target that the list of targets does not hold shows as its id.
     expect(within(row).getByText("t-gone")).toBeInTheDocument();
-    expect(within(row).getByTestId("max-missions")).toHaveTextContent("3");
     expect(within(row).getByText("user-1")).toBeInTheDocument();
     expect(within(row).getByText(new Date(entry.createdAt).toLocaleString())).toBeInTheDocument();
   });
@@ -205,7 +202,6 @@ describe("the publish form", () => {
       agent: "recon",
       missionDefinitionId: "def-1",
       targetIds: ["t1"],
-      maxActiveMissions: 3,
       callerName: "partner",
     });
     expect(await screen.findByText(T.credentialsTitle("partner"))).toBeInTheDocument();
@@ -226,22 +222,6 @@ describe("the publish form", () => {
     expect(screen.getByRole("button", { name: T.publishButton })).toBeEnabled();
     await user.click(screen.getByRole("checkbox", { name: "web" }));
     expect(screen.getByRole("button", { name: T.publishButton })).toBeDisabled();
-  });
-
-  it("gives the limit no default, and needs a whole number of at least 1", async () => {
-    const user = userEvent.setup();
-    render(<InboundMissionsContent />);
-    await fillPublishForm(user);
-    const limit = screen.getByLabelText(T.fieldMaxMissions);
-    expect(limit).toBeRequired();
-    await user.clear(limit);
-    expect(limit).toHaveValue(null);
-    expect(screen.getByRole("button", { name: T.publishButton })).toBeDisabled();
-    await user.type(limit, "0");
-    expect(screen.getByRole("button", { name: T.publishButton })).toBeDisabled();
-    await user.clear(limit);
-    await user.type(limit, "2");
-    expect(screen.getByRole("button", { name: T.publishButton })).toBeEnabled();
   });
 
   it("shows what was made when the publish step fails, and shows no token", async () => {

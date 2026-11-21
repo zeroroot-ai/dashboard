@@ -44,7 +44,6 @@ import { useAuthorize } from "@/src/lib/auth/use-authorize";
 // (relation: admin). Non-admins default to the "my-access" scope.
 const COMPONENT_MANAGE_RPC =
   "/gibson.tenant.v1.MembershipService/SetComponentAccess";
-import { useTierLimits } from "@/src/hooks/useTierLimits";
 import { useAccessibleComponents } from "@/src/hooks/useAccessibleComponents";
 
 type Scope = AccessScopeSelection["scope"];
@@ -87,7 +86,6 @@ function scopeParam(
 export function ToolsContent() {
   const { allowed: canManage, loading: authLoading } =
     useAuthorize(COMPONENT_MANAGE_RPC);
-  const { data: tier } = useTierLimits();
 
   const [scope, setScope] = useState<AccessScopeSelection>({
     scope: "my-access",

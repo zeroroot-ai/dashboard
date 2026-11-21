@@ -18,7 +18,7 @@
  * gate by:
  *   - Mocking next/navigation so redirect() is captured rather than throwing.
  *   - Mocking getDeploymentProfile() to control the resolved posture per test.
- *   - Mocking out downstream modules (SignupForm, pricing, password-policy)
+ *   - Mocking out downstream modules (SignupForm, password-policy)
  *     so we only exercise the early-exit gate, not form rendering.
  *
  * Mock hoisting: vi.hoisted() is used for mocks whose factory references a
@@ -77,17 +77,8 @@ vi.mock('@/src/lib/deployment-profile', () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Pricing and password-policy mocks — avoid import-time side effects.
+// Password-policy mock — avoids import-time side effects.
 // ---------------------------------------------------------------------------
-
-vi.mock('@/src/lib/pricing-display', () => ({
-  selfServeTierIds: ['solo', 'team', 'enterprise'] as const,
-  pricingDisplays: [
-    { id: 'solo', name: 'Solo' },
-    { id: 'team', name: 'Team' },
-    { id: 'enterprise', name: 'Enterprise' },
-  ],
-}));
 
 vi.mock('@/src/lib/zitadel/password-policy-cache', () => ({
   DEFAULT_PASSWORD_POLICY: {
@@ -151,13 +142,6 @@ const SAAS_PROFILE = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Minimal searchParams Promise — no plan param, simulating a direct URL hit. */
-function makeSearchParams(
-  params: Record<string, string> = {},
-): Promise<Record<string, string | string[] | undefined>> {
-  return Promise.resolve(params);
-}
-
 // ---------------------------------------------------------------------------
 // A) Closed-registration gate: /signup redirects to /login
 // ---------------------------------------------------------------------------
@@ -170,21 +154,13 @@ describe('SignupPage — closed-registration gate (A)', () => {
 
   it('A.1: calls redirect("/login") on the closed rung', async () => {
     mockGetDeploymentProfile.mockReturnValue(CLOSED_PROFILE);
-    await SignupPage({ searchParams: makeSearchParams() });
+    await SignupPage();
     expect(mockRedirect).toHaveBeenCalledWith('/login');
-  });
-
-  it('A.2: redirect is called before plan resolution — fires even with a valid plan param', async () => {
-    mockGetDeploymentProfile.mockReturnValue(CLOSED_PROFILE);
-    // A valid plan param should make no difference: the redirect fires first.
-    await SignupPage({ searchParams: makeSearchParams({ plan: 'team' }) });
-    expect(mockRedirect).toHaveBeenCalledWith('/login');
-    expect(mockRedirect).toHaveBeenCalledTimes(1);
   });
 
   it('A.3: redirect target is exactly /login (not /, not /signup)', async () => {
     mockGetDeploymentProfile.mockReturnValue(CLOSED_PROFILE);
-    await SignupPage({ searchParams: makeSearchParams() });
+    await SignupPage();
     const [target] = mockRedirect.mock.calls[0] ?? [];
     expect(target).toBe('/login');
   });
@@ -202,21 +178,41 @@ describe('SignupPage — open-registration, no /login redirect (B)', () => {
 
   it('B.1: does NOT call redirect("/login") on the open rung (self-hosted)', async () => {
     mockGetDeploymentProfile.mockReturnValue(OPEN_SELF_HOSTED_PROFILE);
-    await SignupPage({ searchParams: makeSearchParams() });
+    await SignupPage();
     const loginRedirects = mockRedirect.mock.calls.filter(
       (call) => call[0] === '/login',
     );
     expect(loginRedirects).toHaveLength(0);
   });
 
-  it('B.2: does NOT call redirect("/login") on the open rung (SaaS, with valid plan)', async () => {
+  it('B.2: renders the form on SaaS with no plan parameter, and no redirect at all', async () => {
     mockGetDeploymentProfile.mockReturnValue(SAAS_PROFILE);
-    // Provide a valid plan to bypass the pricing redirect in the SaaS path.
-    await SignupPage({ searchParams: makeSearchParams({ plan: 'team' }) });
-    const loginRedirects = mockRedirect.mock.calls.filter(
-      (call) => call[0] === '/login',
-    );
-    expect(loginRedirects).toHaveLength(0);
+    // There is one plan: no `?plan=` and no bounce to a pricing page.
+    const page = (await SignupPage()) as {
+      props: { children: { props: Record<string, unknown> } };
+    };
+    expect(mockRedirect).not.toHaveBeenCalled();
+    expect(page.props.children.props).toEqual({
+      termsUrl: 'https://www.zeroroot.ai/terms',
+      privacyUrl: 'https://www.zeroroot.ai/privacy',
+    });
+  });
+
+  it('B.3: renders the form for an old SaaS link with ?plan=team, with no redirect and no error', async () => {
+    mockGetDeploymentProfile.mockReturnValue(SAAS_PROFILE);
+    // Next.js still hands the page the query of an old pricing link. The page
+    // reads none of it, so the link opens the same form.
+    const withQuery = SignupPage as unknown as (props: {
+      searchParams: Promise<Record<string, string>>;
+    }) => Promise<unknown>;
+    const page = (await withQuery({ searchParams: Promise.resolve({ plan: 'team' }) })) as {
+      props: { children: { props: Record<string, unknown> } };
+    };
+    expect(mockRedirect).not.toHaveBeenCalled();
+    expect(page.props.children.props).toEqual({
+      termsUrl: 'https://www.zeroroot.ai/terms',
+      privacyUrl: 'https://www.zeroroot.ai/privacy',
+    });
   });
 });
 
@@ -230,14 +226,14 @@ describe('SignupPage — approval rung (C)', () => {
     mockGetDeploymentProfile.mockReset();
   });
 
-  it('C.1: renders RegisterForm with the first self-serve tier, and no redirect', async () => {
+  it('C.1: renders RegisterForm with no tier, and no redirect', async () => {
     mockGetDeploymentProfile.mockReturnValue(APPROVAL_PROFILE);
-    const page = (await SignupPage({ searchParams: makeSearchParams() })) as {
+    const page = (await SignupPage()) as {
       type: { name?: string };
-      props: { tier?: string };
+      props: Record<string, unknown>;
     };
     expect(mockRedirect).not.toHaveBeenCalled();
     expect(page.type.name).toBe('RegisterForm');
-    expect(page.props.tier).toBe('solo');
+    expect(page.props).not.toHaveProperty('tier');
   });
 });

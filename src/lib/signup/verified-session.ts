@@ -14,7 +14,7 @@
  * receives the token, only the display fields alongside it.
  *
  * The cookie also carries the fields the completion page shows (address,
- * workspace name, tier) and, after completion, the external step link. Those
+ * workspace name) and, after completion, the external step link. Those
  * are not secrets in the same sense — they belong to the
  * person who just proved control of the mailbox — but they ride in the same
  * httpOnly cookie because there is no reason for the browser to read them
@@ -27,12 +27,9 @@
  *
  * THE COOKIE IS SIGNED. httpOnly stops a script on the page reading it; it does
  * nothing about the person holding the browser, who can put whatever they like
- * in it and send it back. That mattered because `tier` rides in here and the
- * dashboard displays it: the daemon resolves the plan from its own
- * verification row (`row.Tier`) and provisions accordingly, so a browser-chosen
- * tier could not change what got provisioned. After completion the cookie also
- * carries the external step link and the tenant slug, and a changed link would
- * send the user somewhere else.
+ * in it and send it back. After completion the cookie carries the external
+ * step link and the tenant slug, and a changed link would send the user
+ * somewhere else.
  *
  * Signing removes the class rather than the one field: every value in the
  * payload is now tamper-evident, and a cookie that does not verify is treated
@@ -78,7 +75,6 @@ export interface VerifiedSignupSession {
   attemptId: string;
   email: string;
   workspaceName: string;
-  tier: string;
   /**
    * Set at completion when the daemon returned an external signup step
    * (gibson#895): the step URL with the opaque step token. The step page sends
@@ -227,8 +223,7 @@ export function decodeVerifiedSession(
       s.verifiedSessionToken === '' ||
       typeof s.attemptId !== 'string' ||
       typeof s.email !== 'string' ||
-      typeof s.workspaceName !== 'string' ||
-      typeof s.tier !== 'string'
+      typeof s.workspaceName !== 'string'
     ) {
       return null;
     }
@@ -237,7 +232,6 @@ export function decodeVerifiedSession(
       attemptId: s.attemptId,
       email: s.email,
       workspaceName: s.workspaceName,
-      tier: s.tier,
       ...(typeof s.stepLink === 'string' && s.stepLink !== ''
         ? { stepLink: s.stepLink }
         : {}),
@@ -260,7 +254,6 @@ export function verifiedSessionFrom(
     attemptId: redeemed.attemptId,
     email: redeemed.ownerEmail,
     workspaceName: redeemed.workspaceName,
-    tier: redeemed.tier,
   };
 }
 

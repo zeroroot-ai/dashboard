@@ -42,7 +42,6 @@ const ROWS = [
     registrationId: "reg-1",
     ownerEmail: "ada@example.test",
     workspaceName: "Analytical",
-    tier: "team",
     ownerFirstName: "Ada",
     ownerLastName: "Lovelace",
     receivedAt: "2026-10-07T09:30:00.000Z",
@@ -51,7 +50,6 @@ const ROWS = [
     registrationId: "reg-2",
     ownerEmail: "alan@example.test",
     workspaceName: "Bombe",
-    tier: "org",
     ownerFirstName: "",
     ownerLastName: "",
     receivedAt: null,
@@ -104,7 +102,7 @@ describe("RegistrationsContent", () => {
   it("approves a registration by its id and reads the queue again", async () => {
     mockApprove.mockResolvedValue({
       ok: true,
-      data: { tenantId: "analytical", ownerUserId: "u1", planId: "team" },
+      data: { tenantId: "analytical", ownerUserId: "u1" },
     });
     wrap(<RegistrationsContent />);
     const rows = await screen.findAllByTestId("registration-row");

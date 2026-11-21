@@ -31,7 +31,6 @@ import {
   type DiscoveredItem,
 } from "@/app/actions/read/listAccessibleComponents";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
-import { useTierLimits } from "@/src/hooks/useTierLimits";
 import { useAccessibleComponents } from "@/src/hooks/useAccessibleComponents";
 
 // Tenant-wide component management is gated on the component-management RPC
@@ -79,7 +78,6 @@ function scopeParam(
 export function AgentsContent() {
   const { allowed: canManage, loading: authLoading } =
     useAuthorize(COMPONENT_MANAGE_RPC);
-  const { data: tier } = useTierLimits();
 
   const [scope, setScope] = useState<AccessScopeSelection>({
     scope: "my-access",

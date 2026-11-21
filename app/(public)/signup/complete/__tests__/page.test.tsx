@@ -61,7 +61,6 @@ const SESSION: VerifiedSignupSession = {
   attemptId: 'aaaaaaaa-0000-0000-0000-000000000001',
   email: 'owner@example.com',
   workspaceName: 'Example',
-  tier: 'team',
 };
 
 const STEP_TEXT = {

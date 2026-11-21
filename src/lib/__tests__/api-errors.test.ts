@@ -95,12 +95,19 @@ describe('ERROR_CLASS_TABLE', () => {
         'back_to_dashboard',
         'retry',
         'retry_with_support',
-        'upgrade',
         'status_page',
         'contact_support',
       ]).toContain(entry.affordance);
     },
   );
+
+  it('ResourceExhausted class shows a neutral rate limit text with a retry action', () => {
+    const entry = ERROR_CLASS_TABLE.resource_exhausted;
+    expect(entry.message).toBe('Too many requests. Try again in a moment.');
+    expect(entry.affordance).toBe('retry');
+    expect(entry.message.toLowerCase()).not.toContain('plan');
+    expect(entry.message.toLowerCase()).not.toContain('upgrade');
+  });
 
   it('FailedPrecondition class is warm + actionable (no panic words)', () => {
     // The slice's UX note specifies the message lands warmly. We

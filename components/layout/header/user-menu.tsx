@@ -13,7 +13,6 @@ import { submitFederatedSignout } from "@/src/lib/auth/federated-signout-client"
 import {
   BadgeCheck,
   Bell,
-  CreditCard,
   LogOut,
 } from "lucide-react";
 
@@ -27,8 +26,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useTierLimits } from "@/src/hooks/useTierLimits";
 
 function getInitials(name?: string | null): string {
   if (!name) return "??";
@@ -42,7 +39,6 @@ function getInitials(name?: string | null): string {
 
 export default function UserMenu() {
   const { data: session } = useSession();
-  const { data: tier, isLoading: tierLoading } = useTierLimits();
   const user = session?.user;
   const name = user?.name || "User";
   const email = user?.email || "";
@@ -77,10 +73,6 @@ export default function UserMenu() {
             Account
           </DropdownMenuItem>
           <DropdownMenuItem>
-            <CreditCard />
-            Billing
-          </DropdownMenuItem>
-          <DropdownMenuItem>
             <Bell />
             Notifications
           </DropdownMenuItem>
@@ -94,15 +86,6 @@ export default function UserMenu() {
           <LogOut />
           Log out
         </DropdownMenuItem>
-        <div className="bg-muted mt-1.5 rounded-md border">
-          <div className="text-muted-foreground flex items-center p-3 text-sm">
-            {tierLoading ? (
-              <Skeleton className="h-4 w-24" />
-            ) : (
-              <span>{tier?.config.displayName ?? "-"} plan</span>
-            )}
-          </div>
-        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );

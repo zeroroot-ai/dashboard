@@ -32,10 +32,6 @@ vi.mock('@/src/lib/signup/client-ip', () => ({
   resolveClientIp: () => mockClientIp(),
 }));
 vi.mock('@/src/lib/logger', () => ({ logger: { error: vi.fn() } }));
-vi.mock('@/src/lib/pricing-display', () => ({
-  selfServeTierIds: ['solo', 'team'] as const,
-  pricingDisplays: [],
-}));
 
 import { registerAction } from '../register';
 import { REGISTER_TEXT } from '@/app/(public)/signup/register-texts';
@@ -45,7 +41,6 @@ const INPUT = {
   lastName: 'Lovelace',
   email: 'Ada@Example.com',
   workspaceName: 'Analytical Engines',
-  tier: 'solo',
   password: 'correct horse battery staple',
   passwordConfirm: 'correct horse battery staple',
 };
@@ -68,9 +63,9 @@ describe('registerAction', () => {
       ownerFirstName: 'Ada',
       ownerLastName: 'Lovelace',
       workspaceName: 'Analytical Engines',
-      tier: 'solo',
       password: INPUT.password,
     });
+    expect(sent).not.toHaveProperty('tier');
     expect(sent.attemptId).toMatch(/^[0-9a-f-]{36}$/);
   });
 
