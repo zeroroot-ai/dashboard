@@ -59,7 +59,6 @@ const PROTO = {
   agent: "recon",
   missionDefinitionId: "def-1",
   targetIds: ["t1", "t2"],
-  maxActiveMissions: 3,
   publishedBy: "user-1",
   createdAt: { seconds: BigInt(1_700_000_000), nanos: 0 },
   stale: false,
@@ -134,9 +133,9 @@ describe("inbound mission client", () => {
     expect(out.items).toHaveLength(10);
   });
 
-  it("publishes with the agent, the definition, the targets and the limit", async () => {
+  it("publishes with the agent, the definition and the targets", async () => {
     inbound.publishInboundMission.mockResolvedValueOnce({ entry: PROTO }).mockResolvedValueOnce({ entry: undefined });
-    const input = { agent: "recon", missionDefinitionId: "def-1", targetIds: ["t1", "t2"], maxActiveMissions: 3 };
+    const input = { agent: "recon", missionDefinitionId: "def-1", targetIds: ["t1", "t2"] };
     expect(await daemonPublishInboundMission(input)).toEqual(DTO);
     expect(inbound.publishInboundMission).toHaveBeenCalledWith(input);
     expect(await daemonPublishInboundMission(input)).toBeNull();
@@ -146,7 +145,7 @@ describe("inbound mission client", () => {
     const err = new ConnectError("the definition has no agent node for the agent", Code.InvalidArgument);
     inbound.publishInboundMission.mockRejectedValue(err);
     await expect(
-      daemonPublishInboundMission({ agent: "x", missionDefinitionId: "d", targetIds: ["t"], maxActiveMissions: 1 }),
+      daemonPublishInboundMission({ agent: "x", missionDefinitionId: "d", targetIds: ["t"] }),
     ).rejects.toBe(err);
   });
 

@@ -22,7 +22,7 @@ import {
   WORKSPACE_ROOT_ENV,
 } from "./workspace-root.mjs";
 
-const PLANS_REL = "helm/gibson-operators/files/plans.yaml";
+const CHARTS_REL = "helm/testdata/golden/values-baseline.withcaps.yaml";
 const SDK_REL = "gen/mission-definition.schema.json";
 
 // The walk reaches shared ancestors such as the temp dir and the filesystem
@@ -72,13 +72,13 @@ beforeAll(() => {
 
   // Layout 1: every checkout a direct child of the workspace.
   flat = newScratch("flat");
-  repo(flat, "charts", [PLANS_REL]);
+  repo(flat, "charts", [CHARTS_REL]);
   repo(flat, "sdk", [SDK_REL]);
   repo(flat, "dashboard", ["package.json"]);
 
   // Layout 2: checkouts under grouping directories, this workstation's shape.
   grouped = newScratch("grouped");
-  repo(join(grouped, "closed/platform"), "charts", [PLANS_REL]);
+  repo(join(grouped, "closed/platform"), "charts", [CHARTS_REL]);
   repo(join(grouped, "open"), "sdk", [SDK_REL]);
   mainCheckout = join(grouped, "closed/platform/dashboard");
   repo(join(grouped, "closed/platform"), "dashboard", ["package.json"]);
@@ -97,7 +97,7 @@ beforeAll(() => {
   // resolver must walk past it to the real checkout.
   decoyWorkspace = newScratch("decoy");
   mkdirSync(join(decoyWorkspace, "charts/helm"), { recursive: true });
-  repo(join(decoyWorkspace, "real"), "charts", [PLANS_REL]);
+  repo(join(decoyWorkspace, "real"), "charts", [CHARTS_REL]);
   repo(decoyWorkspace, "dashboard", ["package.json"]);
 });
 
@@ -113,10 +113,10 @@ describe("ancestorsOf", () => {
 
 describe("resolveRepoPath", () => {
   it("resolves a checkout that is a sibling of this one", () => {
-    const got = resolveRepoPath("charts", PLANS_REL, {
+    const got = resolveRepoPath("charts", CHARTS_REL, {
       from: join(flat, "dashboard"),
     });
-    expect(got?.path).toBe(join(flat, "charts", PLANS_REL));
+    expect(got?.path).toBe(join(flat, "charts", CHARTS_REL));
     expect(got?.repoRoot).toBe(join(flat, "charts"));
     expect(got?.via).toBe("search");
   });
@@ -127,8 +127,8 @@ describe("resolveRepoPath", () => {
   });
 
   it("resolves from a worktree nested inside the checkout", () => {
-    expect(resolveRepoPath("charts", PLANS_REL, { from: nestedWorktree })?.path).toBe(
-      join(grouped, "closed/platform/charts", PLANS_REL),
+    expect(resolveRepoPath("charts", CHARTS_REL, { from: nestedWorktree })?.path).toBe(
+      join(grouped, "closed/platform/charts", CHARTS_REL),
     );
   });
 
@@ -150,10 +150,10 @@ describe("resolveRepoPath", () => {
   // directory has the right name", so a same-named empty directory is skipped.
   it("walks past a directory that carries the name but not the file", () => {
     expect(
-      resolveRepoPath("charts", PLANS_REL, {
+      resolveRepoPath("charts", CHARTS_REL, {
         from: join(decoyWorkspace, "dashboard"),
       })?.path,
-    ).toBe(join(decoyWorkspace, "real/charts", PLANS_REL));
+    ).toBe(join(decoyWorkspace, "real/charts", CHARTS_REL));
   });
 
   // The descent must not enter another repository's tree, or a vendored copy
@@ -161,22 +161,22 @@ describe("resolveRepoPath", () => {
   it("does not descend into a checkout while searching", () => {
     const buried = newScratch("buried");
     repo(buried, "dashboard", ["package.json"]);
-    repo(join(buried, "dashboard/third_party"), ABSENT_REPO, [PLANS_REL]);
+    repo(join(buried, "dashboard/third_party"), ABSENT_REPO, [CHARTS_REL]);
     expect(
-      resolveRepoPath(ABSENT_REPO, PLANS_REL, { from: join(buried, "dashboard") }),
+      resolveRepoPath(ABSENT_REPO, CHARTS_REL, { from: join(buried, "dashboard") }),
     ).toBeNull();
   });
 
   it("returns null when no such checkout is reachable", () => {
-    expect(resolveRepoPath(ABSENT_REPO, PLANS_REL, { from: orphanCheckout })).toBeNull();
+    expect(resolveRepoPath(ABSENT_REPO, CHARTS_REL, { from: orphanCheckout })).toBeNull();
   });
 
   it("honors GIBSON_WORKSPACE_ROOT for a child checkout", () => {
     const prev = process.env[WORKSPACE_ROOT_ENV];
     process.env[WORKSPACE_ROOT_ENV] = flat;
     try {
-      const got = resolveRepoPath("charts", PLANS_REL, { from: orphanCheckout });
-      expect(got?.path).toBe(join(flat, "charts", PLANS_REL));
+      const got = resolveRepoPath("charts", CHARTS_REL, { from: orphanCheckout });
+      expect(got?.path).toBe(join(flat, "charts", CHARTS_REL));
       expect(got?.via).toBe("env");
     } finally {
       if (prev === undefined) delete process.env[WORKSPACE_ROOT_ENV];
@@ -203,8 +203,8 @@ describe("resolveRepoPath", () => {
     const prev = process.env[WORKSPACE_ROOT_ENV];
     process.env[WORKSPACE_ROOT_ENV] = join(grouped, "nope");
     try {
-      expect(resolveRepoPath("charts", PLANS_REL, { from: mainCheckout })).toBeNull();
-      expect(resolveRepoPath(ABSENT_REPO, PLANS_REL, { from: mainCheckout })).toBeNull();
+      expect(resolveRepoPath("charts", CHARTS_REL, { from: mainCheckout })).toBeNull();
+      expect(resolveRepoPath(ABSENT_REPO, CHARTS_REL, { from: mainCheckout })).toBeNull();
     } finally {
       if (prev === undefined) delete process.env[WORKSPACE_ROOT_ENV];
       else process.env[WORKSPACE_ROOT_ENV] = prev;
@@ -216,7 +216,7 @@ describe("resolveRepoPath", () => {
     process.env[WORKSPACE_ROOT_ENV] = "../checkouts";
     try {
       expect(() =>
-        resolveRepoPath("charts", PLANS_REL, { from: mainCheckout }),
+        resolveRepoPath("charts", CHARTS_REL, { from: mainCheckout }),
       ).toThrow(/must be an absolute path/);
     } finally {
       if (prev === undefined) delete process.env[WORKSPACE_ROOT_ENV];
@@ -227,19 +227,19 @@ describe("resolveRepoPath", () => {
 
 describe("requireRepoPath", () => {
   it("returns the path when found", () => {
-    expect(requireRepoPath("charts", PLANS_REL, { from: workspaceWorktree })).toBe(
-      join(grouped, "closed/platform/charts", PLANS_REL),
+    expect(requireRepoPath("charts", CHARTS_REL, { from: workspaceWorktree })).toBe(
+      join(grouped, "closed/platform/charts", CHARTS_REL),
     );
   });
 
   it("throws a diagnostic naming the repository, the path and the override", () => {
     let message = "";
     try {
-      requireRepoPath(ABSENT_REPO, PLANS_REL, { from: orphanCheckout });
+      requireRepoPath(ABSENT_REPO, CHARTS_REL, { from: orphanCheckout });
     } catch (e) {
       message = e.message;
     }
-    expect(message).toContain(PLANS_REL);
+    expect(message).toContain(CHARTS_REL);
     expect(message).toContain(`zeroroot-ai/${ABSENT_REPO}`);
     expect(message).toContain(orphanCheckout);
     expect(message).toContain(WORKSPACE_ROOT_ENV);

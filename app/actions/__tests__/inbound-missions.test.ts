@@ -63,7 +63,6 @@ const VALID = {
   agent: "recon",
   missionDefinitionId: "def-1",
   targetIds: ["t1", "t2"],
-  maxActiveMissions: 3,
   callerName: "partner",
 };
 const IDENTITY = {
@@ -167,10 +166,6 @@ describe("the publish flow", () => {
     [{ missionDefinitionId: " " }, /required/i],
     [{ targetIds: [] }, /at least one target/i],
     [{ targetIds: ["t1", "t1"] }, /two times/i],
-    [{ maxActiveMissions: 0 }, /at least 1/i],
-    [{ maxActiveMissions: 1.5 }, /whole number/i],
-    [{ maxActiveMissions: Number.NaN }, /maximum number of missions/i],
-    [{ maxActiveMissions: 10001 }, /at most 10000/i],
   ])("refuses the input %j and calls nothing", async (patch, message) => {
     const r = await publishInboundMissionAction({ ...VALID, ...patch });
     expect(r).toMatchObject({ ok: false, code: "bad_input" });
@@ -218,7 +213,6 @@ describe("the publish flow", () => {
       agent: "recon",
       missionDefinitionId: "def-1",
       targetIds: ["t1", "t2"],
-      maxActiveMissions: 3,
     });
     expect(m.grant).toHaveBeenCalledWith("recon", "agent_principal:id-1");
     expect(m.retire).not.toHaveBeenCalled();
@@ -459,12 +453,11 @@ describe("publish again", () => {
     agent: "recon",
     missionDefinitionId: "def-1",
     targetIds: ["t1", "t2"],
-    maxActiveMissions: 3,
     stale: true,
     staleReason: "an approved target changed after it was published",
   };
 
-  it("sends the stored definition, targets and limit, and makes no identity and no grant", async () => {
+  it("sends the stored definition and targets, and makes no identity and no grant", async () => {
     m.walk.mockResolvedValue({ items: [{ ...STORED, agent: "scan" }, STORED], truncated: false });
     m.publish.mockResolvedValue({ agent: "recon", stale: false });
     expect(await republishInboundMissionAction(" recon ")).toEqual({
@@ -475,19 +468,17 @@ describe("publish again", () => {
       agent: "recon",
       missionDefinitionId: "def-1",
       targetIds: ["t1", "t2"],
-      maxActiveMissions: 3,
     });
     expect(order()).toEqual(["publish"]);
   });
 
-  it("ignores a definition, a target list and a limit that the browser sends", async () => {
+  it("ignores a definition and a target list that the browser sends", async () => {
     m.walk.mockResolvedValue({ items: [STORED], truncated: false });
     m.publish.mockResolvedValue({ agent: "recon" });
     const forged = {
       agent: "recon",
       missionDefinitionId: "def-evil",
       targetIds: ["t-evil"],
-      maxActiveMissions: 10000,
     };
     // A direct call can pass any value. The action takes the agent name only.
     const call = republishInboundMissionAction as unknown as (input: unknown) => Promise<{ ok: boolean }>;
@@ -495,7 +486,7 @@ describe("publish again", () => {
     expect(m.publish).not.toHaveBeenCalled();
     await republishInboundMissionAction("recon");
     expect(m.publish).toHaveBeenCalledTimes(1);
-    expect(JSON.stringify(m.publish.mock.calls[0])).not.toMatch(/def-evil|t-evil|10000/);
+    expect(JSON.stringify(m.publish.mock.calls[0])).not.toMatch(/def-evil|t-evil/);
   });
 
   it("refuses a publication that is not stale, and one that does not exist", async () => {

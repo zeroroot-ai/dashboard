@@ -17,7 +17,6 @@ export const INBOUND_MISSION_TEXT = {
   columnAgent: "Agent",
   columnDefinition: "Mission definition",
   columnTargets: "Approved targets",
-  columnMaxMissions: "Missions at one time",
   columnPublishedBy: "Published by",
   columnCreated: "Published",
 
@@ -37,9 +36,6 @@ export const INBOUND_MISSION_TEXT = {
   fieldTargets: "Approved targets",
   targetsHelp: "A call can use only these targets. A message can narrow the list, and it cannot add a target.",
   noTargets: "Your workspace has no target. Add a target first.",
-  fieldMaxMissions: "Maximum missions at one time",
-  maxMissionsHelp:
-    "The largest number of inbound missions of this publication that run or wait at one time. Enter a whole number from 1 to 10000.",
   fieldCallerName: "Name of the new caller identity",
   callerNameHelp: "Use lowercase letters, digits and hyphens, at most 63 characters.",
   publishButton: "Publish",
