@@ -128,7 +128,6 @@ const VALID_INPUT = {
   lastName: 'User',
   email: 'test@example.com',
   workspaceName: 'test-workspace',
-  tier: 'team',
   acceptToS: true as const,
   acceptPrivacy: true as const,
 };
@@ -170,7 +169,6 @@ function seedVerifiedSession(extra: Record<string, unknown> = {}) {
       attemptId: ATTEMPT,
       email: 'test@example.com',
       workspaceName: 'test-workspace',
-      tier: 'team',
       ...extra,
     } as Parameters<typeof encodeVerifiedSession>[0]),
   );
@@ -187,7 +185,6 @@ function seedForgedSession(extra: Record<string, unknown> = {}) {
     attemptId: ATTEMPT,
     email: 'test@example.com',
     workspaceName: 'test-workspace',
-    tier: 'team',
     ...extra,
   });
   mockCookieStore.store.set(SIGNUP_VERIFIED_COOKIE, `${payload}.${'0'.repeat(64)}`);
@@ -264,7 +261,6 @@ describe('signupAction', () => {
         attemptId: ATTEMPT,
         ownerEmail: 'test@example.com',
         workspaceName: 'test-workspace',
-        tier: 'team',
         clientIp: '203.0.113.7',
       }),
     );
@@ -289,13 +285,15 @@ describe('signupAction', () => {
     if (!result.ok) expect(result.code).toBe('RATE_LIMITED');
   });
 
-  it('maps a bad plan to INTERNAL_ERROR, not TOS_MISSING', async () => {
-    const result = await signupAction({ ...VALID_INPUT, tier: 'no-such-plan' });
+  it('sends no tier with the verification request, even when the caller adds one', async () => {
+    vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_NOT_FOUND);
+    const result = await signupAction(
+      { ...VALID_INPUT, tier: 'org' } as typeof VALID_INPUT,
+      ATTEMPT,
+    );
 
-    expect(result.ok).toBe(false);
-    expect(!result.ok && result.code).toBe('INTERNAL_ERROR');
-    expect(!result.ok && result.fieldErrors?.tier).toBe('Select a valid plan');
-    expect(mockRequestSignupVerification).not.toHaveBeenCalled();
+    expect(result.ok).toBe(true);
+    expect(mockRequestSignupVerification.mock.calls[0]?.[0]).not.toHaveProperty('tier');
   });
 
   it.each(['acceptToS', 'acceptPrivacy'])('maps a missing %s to TOS_MISSING', async (field) => {
@@ -402,8 +400,8 @@ describe('completeSignup', () => {
   //
   // The cookie is httpOnly, which stops a script on the page reading it. It
   // does nothing about the person holding the browser. The cookie carries the
-  // tier and, after completion, the step link, so an unsigned cookie could
-  // send the user somewhere else.
+  // workspace name and, after completion, the step link, so an unsigned cookie
+  // could send the user somewhere else.
 
   it('refuses a forged cookie outright, and creates nothing', async () => {
     seedForgedSession();
@@ -417,22 +415,21 @@ describe('completeSignup', () => {
     expect(mockCompleteSignupOwner).not.toHaveBeenCalled();
   });
 
-  it('a tier changed inside a genuine cookie is refused', async () => {
-    // Start from a REAL signed cookie on the dearer plan, then rewrite just the
-    // tier to a real, cheaper, valid plan — the exact edit the attack needs.
-    // `team` is a live plan id, so this does not pass merely because the forged
-    // value fails plan lookup: it fails because the signature no longer holds.
+  it('a workspace name changed inside a genuine cookie is refused', async () => {
+    // Start from a REAL signed cookie, then rewrite just the workspace name.
+    // It fails because the signature no longer holds.
     vi.mocked(getTenantProvisioningStatus).mockResolvedValue(STATUS_READY);
     const genuine = encodeVerifiedSession({
       verifiedSessionToken: 'sess-1',
       attemptId: ATTEMPT,
       email: 'test@example.com',
       workspaceName: 'test-workspace',
-      tier: 'org',
     });
     const lastDot = genuine.lastIndexOf('.');
     const downgraded =
-      genuine.slice(0, lastDot).replace('"tier":"org"', '"tier":"team"') +
+      genuine
+        .slice(0, lastDot)
+        .replace('"workspaceName":"test-workspace"', '"workspaceName":"other-workspace"') +
       genuine.slice(lastDot);
     expect(downgraded).not.toBe(genuine);
     mockCookieStore.store.set(SIGNUP_VERIFIED_COOKIE, downgraded);

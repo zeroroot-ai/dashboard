@@ -46,7 +46,6 @@ const REDEEMED = {
   attemptId: 'aaaaaaaa-0000-0000-0000-000000000001',
   ownerEmail: 'ada@example.com',
   workspaceName: 'ada-security',
-  tier: 'team',
 };
 
 describe('GET /signup/verify', () => {

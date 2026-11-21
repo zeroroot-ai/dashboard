@@ -8,7 +8,7 @@
  * (dashboard#193, gibson#620, ADR-0074).
  *
  * One row for each registration that waits for a decision, oldest first:
- * the email, the name, the workspace, the plan and the time it arrived.
+ * the email, the name, the workspace and the time it arrived.
  * Approve activates the account and queues the workspace.
  * Reject keeps the account inactive and records a reason in the audit log.
  * Every visible text is in ./texts.ts or is data from the daemon.
@@ -118,7 +118,6 @@ export function RegistrationsContent() {
               <TableHead>{REGISTRATIONS_TEXT.columnEmail}</TableHead>
               <TableHead>{REGISTRATIONS_TEXT.columnName}</TableHead>
               <TableHead>{REGISTRATIONS_TEXT.columnWorkspace}</TableHead>
-              <TableHead>{REGISTRATIONS_TEXT.columnPlan}</TableHead>
               <TableHead>{REGISTRATIONS_TEXT.columnReceived}</TableHead>
               <TableHead />
             </TableRow>
@@ -129,7 +128,6 @@ export function RegistrationsContent() {
                 <TableCell>{r.ownerEmail}</TableCell>
                 <TableCell>{fullName(r)}</TableCell>
                 <TableCell>{r.workspaceName}</TableCell>
-                <TableCell>{r.tier}</TableCell>
                 <TableCell>
                   {r.receivedAt ? (
                     <time dateTime={r.receivedAt}>{new Date(r.receivedAt).toLocaleString()}</time>

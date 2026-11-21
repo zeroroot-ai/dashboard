@@ -76,7 +76,6 @@ export async function registerAction(rawInput: RegisterInput): Promise<RegisterA
       attemptId: randomUUID(),
       ownerEmail: email,
       workspaceName: input.workspaceName.trim(),
-      tier: input.tier,
       ownerFirstName: input.firstName.trim(),
       ownerLastName: input.lastName.trim(),
       password: input.password,

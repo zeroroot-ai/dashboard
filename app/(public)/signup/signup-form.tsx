@@ -72,23 +72,6 @@ import { signupInputSchema, type SignupInput } from "./types";
 // ---------------------------------------------------------------------------
 
 interface SignupFormProps {
-  /** Validated plan ID, used both for the tier field and the read-only display. */
-  plan: string;
-  /** Human-readable plan name, e.g. "Squad". */
-  planDisplayName: string;
-  /**
-   * Full URL of the marketing pricing page, e.g. "https://www.zeroroot.ai/pricing".
-   * Derived server-side from WWW_URL (dashboard#917 / deploy#1055).
-   * Null on self-hosted (WWW_URL unset) — the "Edit plan" link is hidden so
-   * self-hosted users are never bounced off-cluster to the SaaS marketing site.
-   */
-  pricingUrl: string | null;
-  /**
-   * Whether the form shows the chosen plan. True on the SaaS profile, where
-   * the user picked a plan on the marketing site. False on self-hosted, where
-   * plans are a SaaS concept. dashboard#923 / PRD dashboard#920.
-   */
-  showPlan: boolean;
   /**
    * Full URL of the Terms of Service page, e.g. "https://www.zeroroot.ai/terms".
    * Derived server-side from marketingUrl (dashboard#924 / PRD dashboard#920).
@@ -112,10 +95,6 @@ interface SignupFormProps {
 // email and creates nothing else. The password is collected on
 // /signup/complete, after the emailed link is redeemed.
 export function SignupForm({
-  plan,
-  planDisplayName,
-  pricingUrl,
-  showPlan,
   termsUrl,
   privacyUrl,
 }: SignupFormProps) {
@@ -133,8 +112,6 @@ export function SignupForm({
       lastName: "",
       email: "",
       workspaceName: "",
-      // tier is pre-filled from the URL query param.
-      tier: plan as SignupInput["tier"],
       // Checkboxes start unchecked, the schema requires literal true.
       acceptToS: undefined as unknown as true,
       acceptPrivacy: undefined as unknown as true,
@@ -304,32 +281,6 @@ export function SignupForm({
               className="space-y-5"
               noValidate
             >
-              {/* Read-only plan display, SaaS only (showPlan). Self-hosted
-                  runs unlimited-metered entitlements with no plan picker, so
-                  the row is hidden there. dashboard#923 / PRD dashboard#920. */}
-              {showPlan && (
-                <div className="flex items-center justify-between rounded-md border border-border bg-muted/50 px-3 py-2">
-                  <span className="text-sm text-muted-foreground">Plan</span>
-                  <div className="flex items-center gap-2">
-                    <strong className="text-sm font-medium">
-                      {planDisplayName}
-                    </strong>
-                    {/* "Edit plan" link is SaaS-only (dashboard#917).
-                        Hidden on self-hosted (pricingUrl null) so users are
-                        never bounced off-cluster to the marketing site. */}
-                    {pricingUrl !== null && (
-                      <Link
-                        href={pricingUrl}
-                        className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground transition-colors"
-                        tabIndex={isDisabled ? -1 : undefined}
-                      >
-                        Edit plan
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              )}
-
               {/* Name row, 2-col on sm+ */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* First name */}

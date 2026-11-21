@@ -8,14 +8,12 @@
 
 import { describe, it, expect } from "vitest";
 
-import { planIDs } from "@/src/generated/plans";
 import {
   dns1123Label,
   emailSchema,
   componentKindSchema,
   componentRefSchema,
   memberRoleSchema,
-  tenantTierSchema,
   agentModeSchema,
   displayNameSchema,
   provisionTenantInput,
@@ -145,18 +143,6 @@ describe("memberRoleSchema", () => {
   });
 });
 
-describe("tenantTierSchema", () => {
-  it.each(planIDs)("accepts %s", (t) => {
-    expect(tenantTierSchema.safeParse(t).success).toBe(true);
-  });
-  it.each(["free", "pro", "solo", "paid"])(
-    "rejects deprecated/unknown tier %s",
-    (t) => {
-      expect(tenantTierSchema.safeParse(t).success).toBe(false);
-    },
-  );
-});
-
 describe("agentModeSchema", () => {
   it.each(["autonomous", "supervised"])("accepts %s", (m) => {
     expect(agentModeSchema.safeParse(m).success).toBe(true);
@@ -171,9 +157,9 @@ describe("provisionTenantInput", () => {
     const r = provisionTenantInput.safeParse({ displayName: "Acme", owner: "user-1" });
     expect(r.success).toBe(true);
   });
-  it("accepts with tier", () => {
-    const r = provisionTenantInput.safeParse({ displayName: "Acme", owner: "user-1", tier: planIDs[0] });
-    expect(r.success).toBe(true);
+  it("rejects a tier (there is one plan)", () => {
+    const r = provisionTenantInput.safeParse({ displayName: "Acme", owner: "user-1", tier: "team" });
+    expect(r.success).toBe(false);
   });
   it("rejects extra key", () => {
     const r = provisionTenantInput.safeParse({ displayName: "Acme", owner: "u", foo: 1 });
@@ -202,11 +188,15 @@ describe("deleteTenantInput", () => {
 
 describe("updateTenantInput", () => {
   it("accepts partial patch", () => {
-    const r = updateTenantInput.safeParse({ name: "acme", patch: { tier: planIDs[0] } });
+    const r = updateTenantInput.safeParse({ name: "acme", patch: { displayName: "Acme" } });
     expect(r.success).toBe(true);
   });
+  it("rejects a tier on patch (there is one plan)", () => {
+    const r = updateTenantInput.safeParse({ name: "acme", patch: { tier: "team" } });
+    expect(r.success).toBe(false);
+  });
   it("rejects extra key on patch", () => {
-    const r = updateTenantInput.safeParse({ name: "acme", patch: { tier: "platform", foo: 1 } });
+    const r = updateTenantInput.safeParse({ name: "acme", patch: { displayName: "Acme", foo: 1 } });
     expect(r.success).toBe(false);
   });
 });

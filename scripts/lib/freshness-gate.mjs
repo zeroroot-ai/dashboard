@@ -6,13 +6,13 @@
  *
  * ## Why this exists
  *
- * The `prebuild` freshness gates (plans, authz registry, mission schema)
+ * The `prebuild` freshness gates (authz registry, mission schema)
  * each guard one committed generated file against one canonical upstream
  * source. Until dashboard#1019 they were four near-identical scripts, each
  * invoked in `prebuild` *immediately after its own generator had rewritten the
  * artifact*. Every gate therefore diffed the generator's output against the
  * generator's output and was structurally incapable of failing. The real drift
- * that had accumulated in `src/generated/plans.ts` sat in the repo unreported.
+ * that had accumulated in a generated plan table sat in the repo unreported.
  *
  * The fix has two halves:
  *

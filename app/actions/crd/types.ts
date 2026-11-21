@@ -65,9 +65,4 @@ export type ActionResult<T = void> =
  */
 export type MemberRole = "owner" | "admin" | "writer" | "member";
 
-/**
- * A tenant plan tier. Re-exported from the generated plan registry, which
- * mirrors the operator's `plans.PlanID` Go enum.
- */
-export type { PlanID as TenantTier } from "@/src/generated/plans";
 
