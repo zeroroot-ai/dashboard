@@ -7,9 +7,8 @@ import { logger } from '@/src/lib/logger';
 /**
  * GET /api/events/stream
  *
- * Server-Sent Events endpoint for real-time event streaming. Mounted
- * unconditionally by DashboardContent, so it opens on every /dashboard
- * render (`useEventStream()`, dashboard#107 follow-up investigation).
+ * Server-Sent Events endpoint for real-time event streaming. The Events page
+ * opens it (`useEventStream()`, dashboard#107 follow-up investigation).
  *
  * Attempts to proxy the Gibson daemon's Subscribe RPC as SSE.
  * Falls back to a heartbeat-only stream if the daemon stream is unavailable

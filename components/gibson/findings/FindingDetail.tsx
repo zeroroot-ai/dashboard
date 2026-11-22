@@ -18,6 +18,7 @@ import { ErrorAlert, TableSkeleton } from "@/components/gibson/shared";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { FindingDetailDTO } from "@/src/lib/gibson-client/finding-types";
+import { ActivityStrip } from "./ActivityStrip";
 import { EvidenceList } from "./EvidenceList";
 
 async function read(id: string): Promise<FindingDetailDTO | { error: string }> {
@@ -130,6 +131,8 @@ export function FindingDetail({ id }: { id: string }) {
           </dl>
         </CardContent>
       </Card>
+
+      <ActivityStrip findingId={id} />
 
       <Card>
         <CardHeader>

@@ -12,6 +12,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { PERSONAS_LIST } from '@/src/lib/chat/personas';
 import type { UIMessage } from 'ai';
 
 // ============================================================================
@@ -25,7 +26,6 @@ export interface ChatAgent {
   name: string;
   description: string;
   status: AgentStatus;
-  capabilities: string[];
   icon?: string;
 }
 
@@ -174,40 +174,14 @@ interface ChatState {
 // Default agents
 // ============================================================================
 
-const DEFAULT_AGENTS: ChatAgent[] = [
-  {
-    id: 'general',
-    name: 'General Assistant',
-    description: 'General purpose assistant for questions and guidance',
-    status: 'online',
-    capabilities: ['general', 'help', 'documentation'],
-    icon: 'bot',
-  },
-  {
-    id: 'recon',
-    name: 'Reconnaissance Agent',
-    description: 'Specializes in target enumeration and discovery',
-    status: 'online',
-    capabilities: ['recon', 'enumeration', 'osint'],
-    icon: 'search',
-  },
-  {
-    id: 'exploit',
-    name: 'Exploit Agent',
-    description: 'Vulnerability exploitation and payload generation',
-    status: 'online',
-    capabilities: ['exploit', 'payloads', 'vulnerabilities'],
-    icon: 'zap',
-  },
-  {
-    id: 'analysis',
-    name: 'Analysis Agent',
-    description: 'Deep analysis of findings and attack paths',
-    status: 'online',
-    capabilities: ['analysis', 'reporting', 'correlation'],
-    icon: 'activity',
-  },
-];
+/** One selector entry for each defender role in `personas.ts`. */
+const DEFAULT_AGENTS: ChatAgent[] = PERSONAS_LIST.map((persona) => ({
+  id: persona.id,
+  name: persona.label,
+  description: persona.description,
+  status: 'online',
+  icon: persona.icon,
+}));
 
 // ============================================================================
 // Store
@@ -447,11 +421,17 @@ export const useChatStore = create<ChatState>()(
     }),
     {
       name: 'gibson-chat-store',
+      // Version 1 drops the stored agent list and the stored selection. The
+      // role list now comes from code, and a stored attacker role must not stay.
+      version: 1,
+      migrate: (persisted) => ({
+        pinnedConversationIds:
+          (persisted as { pinnedConversationIds?: string[] } | undefined)?.pinnedConversationIds ?? [],
+      }),
       // conversations/activeConversationId are daemon-backed (Redis via UserService).
       // Pin preferences are local-only: no cross-device sync needed for a UI sort hint.
       partialize: (state) => ({
         selectedAgentId: state.selectedAgentId,
-        agents: state.agents,
         pinnedConversationIds: state.pinnedConversationIds,
       }),
     }

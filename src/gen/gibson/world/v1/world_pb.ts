@@ -6,13 +6,15 @@ import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegen
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_gibson_auth_v1_options } from "../../auth/v1/options_pb";
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file gibson/world/v1/world.proto.
  */
 export const file_gibson_world_v1_world: GenFile = /*@__PURE__*/
-  fileDesc("ChtnaWJzb24vd29ybGQvdjEvd29ybGQucHJvdG8SD2dpYnNvbi53b3JsZC52MSJdCgtNaXNzaW9uVmlldxIKCgJpZBgBIAEoCRIMCgRnb2FsGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIOCgZyZWFzb24YBCABKAkSFAoMYmVsaWVmX21vZGVsGAUgASgJInUKCEhvc3RWaWV3EhAKCHNjb3BlX2lkGAEgASgJEg8KB2FkZHJlc3MYAiABKAkSEgoKb3Blbl9wb3J0cxgDIAMoBRINCgVqdWljeRgEIAEoARIRCglhdHRlbnRpb24YBSABKAESEAoIc3VycHJpc2UYBiABKAkiXQoLRmluZGluZ1ZpZXcSCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSEAoIc2NvcGVfaWQYAyABKAkSDwoHYWRkcmVzcxgEIAEoCRIQCghzZXZlcml0eRgFIAEoCSJcCgxXb3JrSXRlbVZpZXcSCgoCaWQYASABKAkSEgoKbWlzc2lvbl9pZBgCIAEoCRIMCgRraW5kGAMgASgJEg4KBnRhcmdldBgEIAEoCRIOCgZzdGF0dXMYBSABKAkiRQoURGVjaXNpb25EaXNwYXRjaFZpZXcSDwoHd29ya19pZBgBIAEoCRIMCgRraW5kGAIgASgJEg4KBnRhcmdldBgDIAEoCSKtAQoMRGVjaXNpb25WaWV3EgoKAmlkGAEgASgJEhIKCm1pc3Npb25faWQYAiABKAkSDgoGY3Vyc29yGAMgASgDEg4KBnN0YXR1cxgEIAEoCRI5CgpkaXNwYXRjaGVzGAUgAygLMiUuZ2lic29uLndvcmxkLnYxLkRlY2lzaW9uRGlzcGF0Y2hWaWV3Eg8KB291dGNvbWUYBiABKAkSEQoJcmF0aW9uYWxlGAcgASgJIjsKDVRpbWVsaW5lRXZlbnQSCwoDc2VxGAEgASgEEgwKBGtpbmQYAiABKAkSDwoHc3VtbWFyeRgDIAEoCSKBAQoLTGxtQ2FsbFZpZXcSDwoHY2FsbF9pZBgBIAEoCRIOCgZydW5faWQYAiABKAkSDQoFbW9kZWwYAyABKAkSEAoIc2NvcGVfaWQYBCABKAkSFQoNcHJvbXB0X3Rva2VucxgFIAEoBRIZChFjb21wbGV0aW9uX3Rva2VucxgGIAEoBSJSChNMaXN0TWlzc2lvbnNSZXF1ZXN0Eh0KCXBhZ2Vfc2l6ZRgBIAEoBUIKukgHGgUY6AcoABIcCgpwYWdlX3Rva2VuGAIgASgJQgi6SAVyAxiACCJfChRMaXN0TWlzc2lvbnNSZXNwb25zZRIuCghtaXNzaW9ucxgBIAMoCzIcLmdpYnNvbi53b3JsZC52MS5NaXNzaW9uVmlldxIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiTwoQTGlzdEhvc3RzUmVxdWVzdBIdCglwYWdlX3NpemUYASABKAVCCrpIBxoFGOgHKAASHAoKcGFnZV90b2tlbhgCIAEoCUIIukgFcgMYgAgiVgoRTGlzdEhvc3RzUmVzcG9uc2USKAoFaG9zdHMYASADKAsyGS5naWJzb24ud29ybGQudjEuSG9zdFZpZXcSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIlIKE0xpc3RGaW5kaW5nc1JlcXVlc3QSHQoJcGFnZV9zaXplGAEgASgFQgq6SAcaBRjoBygAEhwKCnBhZ2VfdG9rZW4YAiABKAlCCLpIBXIDGIAIIl8KFExpc3RGaW5kaW5nc1Jlc3BvbnNlEi4KCGZpbmRpbmdzGAEgAygLMhwuZ2lic29uLndvcmxkLnYxLkZpbmRpbmdWaWV3EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJSChNMaXN0TGxtQ2FsbHNSZXF1ZXN0Eh0KCXBhZ2Vfc2l6ZRgBIAEoBUIKukgHGgUY6AcoABIcCgpwYWdlX3Rva2VuGAIgASgJQgi6SAVyAxiACCJgChRMaXN0TGxtQ2FsbHNSZXNwb25zZRIvCglsbG1fY2FsbHMYASADKAsyHC5naWJzb24ud29ybGQudjEuTGxtQ2FsbFZpZXcSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJItICCg1MbG1DYWxsRGV0YWlsEg8KB2NhbGxfaWQYASABKAkSDgoGcnVuX2lkGAIgASgJEg0KBW1vZGVsGAMgASgJEhAKCHNjb3BlX2lkGAQgASgJEhUKDXByb21wdF90b2tlbnMYBSABKAUSGQoRY29tcGxldGlvbl90b2tlbnMYBiABKAUSFQoNcmVxdWVzdF9pdGVtcxgJIAMoCRIUCgxvdXRwdXRfaXRlbXMYCiADKAkSEAoIcHJvdmlkZXIYCyABKAkSEwoLaHR0cF9zdGF0dXMYDCABKAUSGQoRY2FjaGVfcmVhZF90b2tlbnMYDSABKAUSGgoSY2FjaGVfd3JpdGVfdG9rZW5zGA4gASgFEgwKBGNvc3QYDyABKAkSEgoKZXJyb3JfdGV4dBgQIAEoCUoECAcQCEoECAgQCVIIbWVzc2FnZXNSCmNvbXBsZXRpb24iLgoRR2V0TGxtQ2FsbFJlcXVlc3QSGQoHY2FsbF9pZBgBIAEoCUIIukgFcgMYgAgiQgoSR2V0TGxtQ2FsbFJlc3BvbnNlEiwKBGNhbGwYASABKAsyHi5naWJzb24ud29ybGQudjEuTGxtQ2FsbERldGFpbCJvChJHZXRUaW1lbGluZVJlcXVlc3QSHAoKbWlzc2lvbl9pZBgBIAEoCUIIukgFcgMYgAgSHQoJcGFnZV9zaXplGAIgASgFQgq6SAcaBRjoBygAEhwKCnBhZ2VfdG9rZW4YAyABKAlCCLpIBXIDGIAIIl4KE0dldFRpbWVsaW5lUmVzcG9uc2USLgoGZXZlbnRzGAEgAygLMh4uZ2lic29uLndvcmxkLnYxLlRpbWVsaW5lRXZlbnQSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIj4KEUdldEZyYW1lQXRSZXF1ZXN0EgsKA3NlcRgBIAEoBBIcCgptaXNzaW9uX2lkGAIgASgJQgi6SAVyAxiACCLKAgoSR2V0RnJhbWVBdFJlc3BvbnNlEgsKA3NlcRgBIAEoBBINCgV0b3RhbBgCIAEoBBIuCghtaXNzaW9ucxgDIAMoCzIcLmdpYnNvbi53b3JsZC52MS5NaXNzaW9uVmlldxIoCgVob3N0cxgEIAMoCzIZLmdpYnNvbi53b3JsZC52MS5Ib3N0VmlldxIuCghmaW5kaW5ncxgFIAMoCzIcLmdpYnNvbi53b3JsZC52MS5GaW5kaW5nVmlldxIrCgR3b3JrGAYgAygLMh0uZ2lic29uLndvcmxkLnYxLldvcmtJdGVtVmlldxIwCglkZWNpc2lvbnMYByADKAsyHS5naWJzb24ud29ybGQudjEuRGVjaXNpb25WaWV3Ei8KCWxsbV9jYWxscxgIIAMoCzIcLmdpYnNvbi53b3JsZC52MS5MbG1DYWxsVmlldyJkCglMYWJlbFZpZXcSEQoJdGFyZ2V0X2lkGAEgASgJEg8KB3ZlcmRpY3QYAiABKAkSEAoIc2V2ZXJpdHkYAyABKAkSEAoIY2F0ZWdvcnkYBCABKAkSDwoHdXNlcl9pZBgFIAEoCSKuAQoKUmV2aWV3SXRlbRIRCgl0YXJnZXRfaWQYASABKAkSDAoEa2luZBgCIAEoCRINCgV0aXRsZRgDIAEoCRIQCghzY29wZV9pZBgEIAEoCRIPCgdhZGRyZXNzGAUgASgJEhAKCHNldmVyaXR5GAYgASgJEhAKCGxhYmVsbGVkGAcgASgIEikKBWxhYmVsGAggASgLMhouZ2lic29uLndvcmxkLnYxLkxhYmVsVmlldyJVChZMaXN0UmV2aWV3UXVldWVSZXF1ZXN0Eh0KCXBhZ2Vfc2l6ZRgBIAEoBUIKukgHGgUY6AcoABIcCgpwYWdlX3Rva2VuGAIgASgJQgi6SAVyAxiACCJeChdMaXN0UmV2aWV3UXVldWVSZXNwb25zZRIqCgVpdGVtcxgBIAMoCzIbLmdpYnNvbi53b3JsZC52MS5SZXZpZXdJdGVtEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSKpAQoSU3VibWl0TGFiZWxSZXF1ZXN0Eh0KCXRhcmdldF9pZBgBIAEoCUIKukgHcgUQARiACBIZCgd2ZXJkaWN0GAIgASgJQgi6SAVyAxiAIBIaCghzZXZlcml0eRgDIAEoCUIIukgFcgMYgCASGgoIY2F0ZWdvcnkYBCABKAlCCLpIBXIDGIAgEiEKD2lkZW1wb3RlbmN5X2tleRgFIAEoCUIIukgFcgMYgAEiFQoTU3VibWl0TGFiZWxSZXNwb25zZSJQChFMaXN0TGFiZWxzUmVxdWVzdBIdCglwYWdlX3NpemUYASABKAVCCrpIBxoFGOgHKAASHAoKcGFnZV90b2tlbhgCIAEoCUIIukgFcgMYgAgiWQoSTGlzdExhYmVsc1Jlc3BvbnNlEioKBmxhYmVscxgBIAMoCzIaLmdpYnNvbi53b3JsZC52MS5MYWJlbFZpZXcSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIiUKFUdldENhbGlicmF0aW9uUmVxdWVzdBIMCgRiaW5zGAEgASgFIm4KEkNhbGlicmF0aW9uQmluVmlldxILCgNsb3cYASABKAESDAoEaGlnaBgCIAEoARIJCgFuGAMgASgFEhYKDm1lYW5fcHJlZGljdGVkGAQgASgBEhoKEm9ic2VydmVkX2ZyZXF1ZW5jeRgFIAEoASK0AQoYVGVjaG5pcXVlQ2FsaWJyYXRpb25WaWV3EhEKCXRlY2huaXF1ZRgBIAEoCRIJCgFuGAIgASgFEhYKDm1lYW5fcHJlZGljdGVkGAMgASgBEhoKEm9ic2VydmVkX2ZyZXF1ZW5jeRgEIAEoARITCgticmllcl9zY29yZRgFIAEoARIxCgRiaW5zGAYgAygLMiMuZ2lic29uLndvcmxkLnYxLkNhbGlicmF0aW9uQmluVmlldyK3AQoWR2V0Q2FsaWJyYXRpb25SZXNwb25zZRIOCgZ0ZW5hbnQYASABKAkSOgoHb3ZlcmFsbBgCIAEoCzIpLmdpYnNvbi53b3JsZC52MS5UZWNobmlxdWVDYWxpYnJhdGlvblZpZXcSPwoMYnlfdGVjaG5pcXVlGAMgAygLMikuZ2lic29uLndvcmxkLnYxLlRlY2huaXF1ZUNhbGlicmF0aW9uVmlldxIQCgh1bnNjb3JlZBgEIAEoBSJSChNMaXN0T3BlbkJldHNSZXF1ZXN0Eh0KCXBhZ2Vfc2l6ZRgBIAEoBUIKukgHGgUY6AcoABIcCgpwYWdlX3Rva2VuGAIgASgJQgi6SAVyAxiACCKqAQoUUmVmZXJlbmNlZEVudGl0eVZpZXcSDQoFbGFiZWwYASABKAkSTgoNaWRfcHJvcGVydGllcxgCIAMoCzI3LmdpYnNvbi53b3JsZC52MS5SZWZlcmVuY2VkRW50aXR5Vmlldy5JZFByb3BlcnRpZXNFbnRyeRozChFJZFByb3BlcnRpZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIp4BCgdPcGVuQmV0EhUKDWh5cG90aGVzaXNfaWQYASABKAkSDQoFY2xhaW0YAiABKAkSEAoIcHJvcG9zZXIYAyABKAkSEgoKY29uZmlkZW5jZRgEIAEoARI3CghldmlkZW5jZRgFIAMoCzIlLmdpYnNvbi53b3JsZC52MS5SZWZlcmVuY2VkRW50aXR5VmlldxIOCgZydW5faWQYBiABKAkiVwoUTGlzdE9wZW5CZXRzUmVzcG9uc2USJgoEYmV0cxgBIAMoCzIYLmdpYnNvbi53b3JsZC52MS5PcGVuQmV0EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJTChdMaXN0UHJvb2ZSZXZpZXdzUmVxdWVzdBIaCglwYWdlX3NpemUYASABKAVCB7pIBBoCKAASHAoKcGFnZV90b2tlbhgCIAEoCUIIukgFcgMYgAgiQQoRUHJvb2ZFdmlkZW5jZVZpZXcSDAoEdHlwZRgBIAEoCRINCgV0aXRsZRgCIAEoCRIPCgdjb250ZW50GAMgASgJIrMBCgtQcm9vZlJldmlldxIVCg1oeXBvdGhlc2lzX2lkGAEgASgJEhIKCm1pc3Npb25faWQYAiABKAkSEAoIc2NvcGVfaWQYAyABKAkSEQoJdGVjaG5pcXVlGAQgASgJEjQKCGV2aWRlbmNlGAUgAygLMiIuZ2lic29uLndvcmxkLnYxLlByb29mRXZpZGVuY2VWaWV3Eh4KFnN1Ym1pdHRlZF9hdF91bml4X25hbm8YBiABKAMiYgoYTGlzdFByb29mUmV2aWV3c1Jlc3BvbnNlEi0KB3Jldmlld3MYASADKAsyHC5naWJzb24ud29ybGQudjEuUHJvb2ZSZXZpZXcSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIlQKFlNldHRsZUJldEJ5SElUTFJlcXVlc3QSHwoNaHlwb3RoZXNpc19pZBgBIAEoCUIIukgFcgMYgAgSGQoHdmVyZGljdBgCIAEoCUIIukgFcgMYgCAiKgoXU2V0dGxlQmV0QnlISVRMUmVzcG9uc2USDwoHc2V0dGxlZBgBIAEoCCJPChRHZXRSZXB1dGF0aW9uUmVxdWVzdBIbCgl0ZWNobmlxdWUYASABKAlCCLpIBXIDGIAgEhoKCHNjb3BlX2lkGAIgASgJQgi6SAVyAxiACCJoChVHZXRSZXB1dGF0aW9uUmVzcG9uc2USDQoFcHJpb3IYAyABKAESEgoKaGFzX3JlY29yZBgEIAEoCEoECAEQAkoECAIQA1IOcHJpb3Jfc3RyZW5ndGhSEGhhc190cmFja19yZWNvcmQyyBAKDFdvcmxkU2VydmljZRKJAQoMTGlzdE1pc3Npb25zEiQuZ2lic29uLndvcmxkLnYxLkxpc3RNaXNzaW9uc1JlcXVlc3QaJS5naWJzb24ud29ybGQudjEuTGlzdE1pc3Npb25zUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoABCglMaXN0SG9zdHMSIS5naWJzb24ud29ybGQudjEuTGlzdEhvc3RzUmVxdWVzdBoiLmdpYnNvbi53b3JsZC52MS5MaXN0SG9zdHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSiQEKDExpc3RGaW5kaW5ncxIkLmdpYnNvbi53b3JsZC52MS5MaXN0RmluZGluZ3NSZXF1ZXN0GiUuZ2lic29uLndvcmxkLnYxLkxpc3RGaW5kaW5nc1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKJAQoMTGlzdExsbUNhbGxzEiQuZ2lic29uLndvcmxkLnYxLkxpc3RMbG1DYWxsc1JlcXVlc3QaJS5naWJzb24ud29ybGQudjEuTGlzdExsbUNhbGxzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoMBCgpHZXRMbG1DYWxsEiIuZ2lic29uLndvcmxkLnYxLkdldExsbUNhbGxSZXF1ZXN0GiMuZ2lic29uLndvcmxkLnYxLkdldExsbUNhbGxSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMShgEKC0dldFRpbWVsaW5lEiMuZ2lic29uLndvcmxkLnYxLkdldFRpbWVsaW5lUmVxdWVzdBokLmdpYnNvbi53b3JsZC52MS5HZXRUaW1lbGluZVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKDAQoKR2V0RnJhbWVBdBIiLmdpYnNvbi53b3JsZC52MS5HZXRGcmFtZUF0UmVxdWVzdBojLmdpYnNvbi53b3JsZC52MS5HZXRGcmFtZUF0UmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpIBCg9MaXN0UmV2aWV3UXVldWUSJy5naWJzb24ud29ybGQudjEuTGlzdFJldmlld1F1ZXVlUmVxdWVzdBooLmdpYnNvbi53b3JsZC52MS5MaXN0UmV2aWV3UXVldWVSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMShgEKC1N1Ym1pdExhYmVsEiMuZ2lic29uLndvcmxkLnYxLlN1Ym1pdExhYmVsUmVxdWVzdBokLmdpYnNvbi53b3JsZC52MS5TdWJtaXRMYWJlbFJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKDAQoKTGlzdExhYmVscxIiLmdpYnNvbi53b3JsZC52MS5MaXN0TGFiZWxzUmVxdWVzdBojLmdpYnNvbi53b3JsZC52MS5MaXN0TGFiZWxzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEo8BCg5HZXRDYWxpYnJhdGlvbhImLmdpYnNvbi53b3JsZC52MS5HZXRDYWxpYnJhdGlvblJlcXVlc3QaJy5naWJzb24ud29ybGQudjEuR2V0Q2FsaWJyYXRpb25SZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSjAEKDUdldFJlcHV0YXRpb24SJS5naWJzb24ud29ybGQudjEuR2V0UmVwdXRhdGlvblJlcXVlc3QaJi5naWJzb24ud29ybGQudjEuR2V0UmVwdXRhdGlvblJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKJAQoMTGlzdE9wZW5CZXRzEiQuZ2lic29uLndvcmxkLnYxLkxpc3RPcGVuQmV0c1JlcXVlc3QaJS5naWJzb24ud29ybGQudjEuTGlzdE9wZW5CZXRzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpUBChBMaXN0UHJvb2ZSZXZpZXdzEiguZ2lic29uLndvcmxkLnYxLkxpc3RQcm9vZlJldmlld3NSZXF1ZXN0GikuZ2lic29uLndvcmxkLnYxLkxpc3RQcm9vZlJldmlld3NSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkgEKD1NldHRsZUJldEJ5SElUTBInLmdpYnNvbi53b3JsZC52MS5TZXR0bGVCZXRCeUhJVExSZXF1ZXN0GiguZ2lic29uLndvcmxkLnYxLlNldHRsZUJldEJ5SElUTFJlc3BvbnNlIiyKtRgoCgZ3cml0ZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgA0JSWlBnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vd29ybGQvdjE7d29ybGR2MWIGcHJvdG8z", [file_gibson_auth_v1_options, file_buf_validate_validate]);
+  fileDesc("ChtnaWJzb24vd29ybGQvdjEvd29ybGQucHJvdG8SD2dpYnNvbi53b3JsZC52MSJdCgtNaXNzaW9uVmlldxIKCgJpZBgBIAEoCRIMCgRnb2FsGAIgASgJEg4KBnN0YXR1cxgDIAEoCRIOCgZyZWFzb24YBCABKAkSFAoMYmVsaWVmX21vZGVsGAUgASgJInUKCEhvc3RWaWV3EhAKCHNjb3BlX2lkGAEgASgJEg8KB2FkZHJlc3MYAiABKAkSEgoKb3Blbl9wb3J0cxgDIAMoBRINCgVqdWljeRgEIAEoARIRCglhdHRlbnRpb24YBSABKAESEAoIc3VycHJpc2UYBiABKAkiXQoLRmluZGluZ1ZpZXcSCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSEAoIc2NvcGVfaWQYAyABKAkSDwoHYWRkcmVzcxgEIAEoCRIQCghzZXZlcml0eRgFIAEoCSJcCgxXb3JrSXRlbVZpZXcSCgoCaWQYASABKAkSEgoKbWlzc2lvbl9pZBgCIAEoCRIMCgRraW5kGAMgASgJEg4KBnRhcmdldBgEIAEoCRIOCgZzdGF0dXMYBSABKAkiRQoURGVjaXNpb25EaXNwYXRjaFZpZXcSDwoHd29ya19pZBgBIAEoCRIMCgRraW5kGAIgASgJEg4KBnRhcmdldBgDIAEoCSKtAQoMRGVjaXNpb25WaWV3EgoKAmlkGAEgASgJEhIKCm1pc3Npb25faWQYAiABKAkSDgoGY3Vyc29yGAMgASgDEg4KBnN0YXR1cxgEIAEoCRI5CgpkaXNwYXRjaGVzGAUgAygLMiUuZ2lic29uLndvcmxkLnYxLkRlY2lzaW9uRGlzcGF0Y2hWaWV3Eg8KB291dGNvbWUYBiABKAkSEQoJcmF0aW9uYWxlGAcgASgJIqQBCg1UaW1lbGluZUV2ZW50EgsKA3NlcRgBIAEoBBIMCgRraW5kGAIgASgJEg8KB3N1bW1hcnkYAyABKAkSKAoEdGltZRgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEgoKcmVwbGF5X3NlcRgFIAEoBBISCgpmaW5kaW5nX2lkGAYgASgJEhUKDW1lcmdlX3JlcXVlc3QYByABKAkigQEKC0xsbUNhbGxWaWV3Eg8KB2NhbGxfaWQYASABKAkSDgoGcnVuX2lkGAIgASgJEg0KBW1vZGVsGAMgASgJEhAKCHNjb3BlX2lkGAQgASgJEhUKDXByb21wdF90b2tlbnMYBSABKAUSGQoRY29tcGxldGlvbl90b2tlbnMYBiABKAUiUgoTTGlzdE1pc3Npb25zUmVxdWVzdBIdCglwYWdlX3NpemUYASABKAVCCrpIBxoFGOgHKAASHAoKcGFnZV90b2tlbhgCIAEoCUIIukgFcgMYgAgiXwoUTGlzdE1pc3Npb25zUmVzcG9uc2USLgoIbWlzc2lvbnMYASADKAsyHC5naWJzb24ud29ybGQudjEuTWlzc2lvblZpZXcSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIk8KEExpc3RIb3N0c1JlcXVlc3QSHQoJcGFnZV9zaXplGAEgASgFQgq6SAcaBRjoBygAEhwKCnBhZ2VfdG9rZW4YAiABKAlCCLpIBXIDGIAIIlYKEUxpc3RIb3N0c1Jlc3BvbnNlEigKBWhvc3RzGAEgAygLMhkuZ2lic29uLndvcmxkLnYxLkhvc3RWaWV3EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJSChNMaXN0RmluZGluZ3NSZXF1ZXN0Eh0KCXBhZ2Vfc2l6ZRgBIAEoBUIKukgHGgUY6AcoABIcCgpwYWdlX3Rva2VuGAIgASgJQgi6SAVyAxiACCJfChRMaXN0RmluZGluZ3NSZXNwb25zZRIuCghmaW5kaW5ncxgBIAMoCzIcLmdpYnNvbi53b3JsZC52MS5GaW5kaW5nVmlldxIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiUgoTTGlzdExsbUNhbGxzUmVxdWVzdBIdCglwYWdlX3NpemUYASABKAVCCrpIBxoFGOgHKAASHAoKcGFnZV90b2tlbhgCIAEoCUIIukgFcgMYgAgiYAoUTGlzdExsbUNhbGxzUmVzcG9uc2USLwoJbGxtX2NhbGxzGAEgAygLMhwuZ2lic29uLndvcmxkLnYxLkxsbUNhbGxWaWV3EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSLSAgoNTGxtQ2FsbERldGFpbBIPCgdjYWxsX2lkGAEgASgJEg4KBnJ1bl9pZBgCIAEoCRINCgVtb2RlbBgDIAEoCRIQCghzY29wZV9pZBgEIAEoCRIVCg1wcm9tcHRfdG9rZW5zGAUgASgFEhkKEWNvbXBsZXRpb25fdG9rZW5zGAYgASgFEhUKDXJlcXVlc3RfaXRlbXMYCSADKAkSFAoMb3V0cHV0X2l0ZW1zGAogAygJEhAKCHByb3ZpZGVyGAsgASgJEhMKC2h0dHBfc3RhdHVzGAwgASgFEhkKEWNhY2hlX3JlYWRfdG9rZW5zGA0gASgFEhoKEmNhY2hlX3dyaXRlX3Rva2VucxgOIAEoBRIMCgRjb3N0GA8gASgJEhIKCmVycm9yX3RleHQYECABKAlKBAgHEAhKBAgIEAlSCG1lc3NhZ2VzUgpjb21wbGV0aW9uIi4KEUdldExsbUNhbGxSZXF1ZXN0EhkKB2NhbGxfaWQYASABKAlCCLpIBXIDGIAIIkIKEkdldExsbUNhbGxSZXNwb25zZRIsCgRjYWxsGAEgASgLMh4uZ2lic29uLndvcmxkLnYxLkxsbUNhbGxEZXRhaWwijQEKEkdldFRpbWVsaW5lUmVxdWVzdBIcCgptaXNzaW9uX2lkGAEgASgJQgi6SAVyAxiACBIcCgpmaW5kaW5nX2lkGAQgASgJQgi6SAVyAxiACBIdCglwYWdlX3NpemUYAiABKAVCCrpIBxoFGOgHKAASHAoKcGFnZV90b2tlbhgDIAEoCUIIukgFcgMYgAgiXgoTR2V0VGltZWxpbmVSZXNwb25zZRIuCgZldmVudHMYASADKAsyHi5naWJzb24ud29ybGQudjEuVGltZWxpbmVFdmVudBIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiPgoRR2V0RnJhbWVBdFJlcXVlc3QSCwoDc2VxGAEgASgEEhwKCm1pc3Npb25faWQYAiABKAlCCLpIBXIDGIAIIsoCChJHZXRGcmFtZUF0UmVzcG9uc2USCwoDc2VxGAEgASgEEg0KBXRvdGFsGAIgASgEEi4KCG1pc3Npb25zGAMgAygLMhwuZ2lic29uLndvcmxkLnYxLk1pc3Npb25WaWV3EigKBWhvc3RzGAQgAygLMhkuZ2lic29uLndvcmxkLnYxLkhvc3RWaWV3Ei4KCGZpbmRpbmdzGAUgAygLMhwuZ2lic29uLndvcmxkLnYxLkZpbmRpbmdWaWV3EisKBHdvcmsYBiADKAsyHS5naWJzb24ud29ybGQudjEuV29ya0l0ZW1WaWV3EjAKCWRlY2lzaW9ucxgHIAMoCzIdLmdpYnNvbi53b3JsZC52MS5EZWNpc2lvblZpZXcSLwoJbGxtX2NhbGxzGAggAygLMhwuZ2lic29uLndvcmxkLnYxLkxsbUNhbGxWaWV3ImQKCUxhYmVsVmlldxIRCgl0YXJnZXRfaWQYASABKAkSDwoHdmVyZGljdBgCIAEoCRIQCghzZXZlcml0eRgDIAEoCRIQCghjYXRlZ29yeRgEIAEoCRIPCgd1c2VyX2lkGAUgASgJIq4BCgpSZXZpZXdJdGVtEhEKCXRhcmdldF9pZBgBIAEoCRIMCgRraW5kGAIgASgJEg0KBXRpdGxlGAMgASgJEhAKCHNjb3BlX2lkGAQgASgJEg8KB2FkZHJlc3MYBSABKAkSEAoIc2V2ZXJpdHkYBiABKAkSEAoIbGFiZWxsZWQYByABKAgSKQoFbGFiZWwYCCABKAsyGi5naWJzb24ud29ybGQudjEuTGFiZWxWaWV3IlUKFkxpc3RSZXZpZXdRdWV1ZVJlcXVlc3QSHQoJcGFnZV9zaXplGAEgASgFQgq6SAcaBRjoBygAEhwKCnBhZ2VfdG9rZW4YAiABKAlCCLpIBXIDGIAIIl4KF0xpc3RSZXZpZXdRdWV1ZVJlc3BvbnNlEioKBWl0ZW1zGAEgAygLMhsuZ2lic29uLndvcmxkLnYxLlJldmlld0l0ZW0SFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIqkBChJTdWJtaXRMYWJlbFJlcXVlc3QSHQoJdGFyZ2V0X2lkGAEgASgJQgq6SAdyBRABGIAIEhkKB3ZlcmRpY3QYAiABKAlCCLpIBXIDGIAgEhoKCHNldmVyaXR5GAMgASgJQgi6SAVyAxiAIBIaCghjYXRlZ29yeRgEIAEoCUIIukgFcgMYgCASIQoPaWRlbXBvdGVuY3lfa2V5GAUgASgJQgi6SAVyAxiAASIVChNTdWJtaXRMYWJlbFJlc3BvbnNlIlAKEUxpc3RMYWJlbHNSZXF1ZXN0Eh0KCXBhZ2Vfc2l6ZRgBIAEoBUIKukgHGgUY6AcoABIcCgpwYWdlX3Rva2VuGAIgASgJQgi6SAVyAxiACCJZChJMaXN0TGFiZWxzUmVzcG9uc2USKgoGbGFiZWxzGAEgAygLMhouZ2lic29uLndvcmxkLnYxLkxhYmVsVmlldxIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiJQoVR2V0Q2FsaWJyYXRpb25SZXF1ZXN0EgwKBGJpbnMYASABKAUibgoSQ2FsaWJyYXRpb25CaW5WaWV3EgsKA2xvdxgBIAEoARIMCgRoaWdoGAIgASgBEgkKAW4YAyABKAUSFgoObWVhbl9wcmVkaWN0ZWQYBCABKAESGgoSb2JzZXJ2ZWRfZnJlcXVlbmN5GAUgASgBIrQBChhUZWNobmlxdWVDYWxpYnJhdGlvblZpZXcSEQoJdGVjaG5pcXVlGAEgASgJEgkKAW4YAiABKAUSFgoObWVhbl9wcmVkaWN0ZWQYAyABKAESGgoSb2JzZXJ2ZWRfZnJlcXVlbmN5GAQgASgBEhMKC2JyaWVyX3Njb3JlGAUgASgBEjEKBGJpbnMYBiADKAsyIy5naWJzb24ud29ybGQudjEuQ2FsaWJyYXRpb25CaW5WaWV3IrcBChZHZXRDYWxpYnJhdGlvblJlc3BvbnNlEg4KBnRlbmFudBgBIAEoCRI6CgdvdmVyYWxsGAIgASgLMikuZ2lic29uLndvcmxkLnYxLlRlY2huaXF1ZUNhbGlicmF0aW9uVmlldxI/CgxieV90ZWNobmlxdWUYAyADKAsyKS5naWJzb24ud29ybGQudjEuVGVjaG5pcXVlQ2FsaWJyYXRpb25WaWV3EhAKCHVuc2NvcmVkGAQgASgFIlIKE0xpc3RPcGVuQmV0c1JlcXVlc3QSHQoJcGFnZV9zaXplGAEgASgFQgq6SAcaBRjoBygAEhwKCnBhZ2VfdG9rZW4YAiABKAlCCLpIBXIDGIAIIqoBChRSZWZlcmVuY2VkRW50aXR5VmlldxINCgVsYWJlbBgBIAEoCRJOCg1pZF9wcm9wZXJ0aWVzGAIgAygLMjcuZ2lic29uLndvcmxkLnYxLlJlZmVyZW5jZWRFbnRpdHlWaWV3LklkUHJvcGVydGllc0VudHJ5GjMKEUlkUHJvcGVydGllc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEingEKB09wZW5CZXQSFQoNaHlwb3RoZXNpc19pZBgBIAEoCRINCgVjbGFpbRgCIAEoCRIQCghwcm9wb3NlchgDIAEoCRISCgpjb25maWRlbmNlGAQgASgBEjcKCGV2aWRlbmNlGAUgAygLMiUuZ2lic29uLndvcmxkLnYxLlJlZmVyZW5jZWRFbnRpdHlWaWV3Eg4KBnJ1bl9pZBgGIAEoCSJXChRMaXN0T3BlbkJldHNSZXNwb25zZRImCgRiZXRzGAEgAygLMhguZ2lic29uLndvcmxkLnYxLk9wZW5CZXQSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIlMKF0xpc3RQcm9vZlJldmlld3NSZXF1ZXN0EhoKCXBhZ2Vfc2l6ZRgBIAEoBUIHukgEGgIoABIcCgpwYWdlX3Rva2VuGAIgASgJQgi6SAVyAxiACCJBChFQcm9vZkV2aWRlbmNlVmlldxIMCgR0eXBlGAEgASgJEg0KBXRpdGxlGAIgASgJEg8KB2NvbnRlbnQYAyABKAkiswEKC1Byb29mUmV2aWV3EhUKDWh5cG90aGVzaXNfaWQYASABKAkSEgoKbWlzc2lvbl9pZBgCIAEoCRIQCghzY29wZV9pZBgDIAEoCRIRCgl0ZWNobmlxdWUYBCABKAkSNAoIZXZpZGVuY2UYBSADKAsyIi5naWJzb24ud29ybGQudjEuUHJvb2ZFdmlkZW5jZVZpZXcSHgoWc3VibWl0dGVkX2F0X3VuaXhfbmFubxgGIAEoAyJiChhMaXN0UHJvb2ZSZXZpZXdzUmVzcG9uc2USLQoHcmV2aWV3cxgBIAMoCzIcLmdpYnNvbi53b3JsZC52MS5Qcm9vZlJldmlldxIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiVAoWU2V0dGxlQmV0QnlISVRMUmVxdWVzdBIfCg1oeXBvdGhlc2lzX2lkGAEgASgJQgi6SAVyAxiACBIZCgd2ZXJkaWN0GAIgASgJQgi6SAVyAxiAICIqChdTZXR0bGVCZXRCeUhJVExSZXNwb25zZRIPCgdzZXR0bGVkGAEgASgIIk8KFEdldFJlcHV0YXRpb25SZXF1ZXN0EhsKCXRlY2huaXF1ZRgBIAEoCUIIukgFcgMYgCASGgoIc2NvcGVfaWQYAiABKAlCCLpIBXIDGIAIImgKFUdldFJlcHV0YXRpb25SZXNwb25zZRINCgVwcmlvchgDIAEoARISCgpoYXNfcmVjb3JkGAQgASgISgQIARACSgQIAhADUg5wcmlvcl9zdHJlbmd0aFIQaGFzX3RyYWNrX3JlY29yZCI0ChJHZXRFeHBvc3VyZVJlcXVlc3QSHgoKZmluZGluZ19pZBgBIAEoCUIKukgHcgUQARiAAiLiAQoTR2V0RXhwb3N1cmVSZXNwb25zZRINCgVmb3VuZBgBIAEoCBISCgpmaW5kaW5nX2lkGAIgASgJEikKBXN0YXJ0GAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBInCgNlbmQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhAKCHZlcmlmaWVkGAUgASgIEhUKDXRvdGFsX3NlY29uZHMYBiABKAMSFAoMd2FpdF9zZWNvbmRzGAcgASgDEhUKDWFnZW50X3NlY29uZHMYCCABKAMiPwoXR2V0RXhwb3N1cmVUcmVuZFJlcXVlc3QSJAoOcGVyaW9kX3NlY29uZHMYASABKANCDLpICSIHGIDnhA8oACLNAQoYR2V0RXhwb3N1cmVUcmVuZFJlc3BvbnNlEhYKDnBlcmlvZF9zZWNvbmRzGAEgASgDEg0KBWNvdW50GAIgASgFEhYKDm1lZGlhbl9zZWNvbmRzGAMgASgDEhwKFG1lZGlhbl9hZ2VudF9zZWNvbmRzGAQgASgDEhsKE21lZGlhbl93YWl0X3NlY29uZHMYBSABKAMSFgoOcHJldmlvdXNfY291bnQYBiABKAUSHwoXcHJldmlvdXNfbWVkaWFuX3NlY29uZHMYByABKAMiPAoUR2V0UmV2ZXJ0UmF0ZVJlcXVlc3QSJAoOcGVyaW9kX3NlY29uZHMYASABKANCDLpICSIHGIDnhA8oACI+CgxSZXZlcnRQZXJpb2QSDgoGbWVyZ2VkGAEgASgFEhAKCHJldmVydGVkGAIgASgFEgwKBHJhdGUYAyABKAEikAEKFUdldFJldmVydFJhdGVSZXNwb25zZRIWCg5wZXJpb2Rfc2Vjb25kcxgBIAEoAxIuCgdjdXJyZW50GAIgASgLMh0uZ2lic29uLndvcmxkLnYxLlJldmVydFBlcmlvZBIvCghwcmV2aW91cxgDIAEoCzIdLmdpYnNvbi53b3JsZC52MS5SZXZlcnRQZXJpb2QiKgoMRmluZGluZ1BsYWNlEg0KBWxhYmVsGAEgASgJEgsKA2tleRgCIAEoCSK6AgoPT3BlbkZpbmRpbmdWaWV3EgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEhAKCHNjb3BlX2lkGAMgASgJEg8KB2FkZHJlc3MYBCABKAkSEAoIc2V2ZXJpdHkYBSABKAkSDgoGc3RhdHVzGAYgASgJEhAKCHByaW9yaXR5GAcgASgJEhUKDXByaW9yaXR5X3J1bGUYCCABKAkSEgoKY29uZmlkZW5jZRgJIAEoARIVCg1tZXJnZV9yZXF1ZXN0GAogASgJEhkKEW1lcmdlX3JlcXVlc3RfdXJsGAsgASgJEi0KBnBsYWNlcxgMIAMoCzIdLmdpYnNvbi53b3JsZC52MS5GaW5kaW5nUGxhY2USFQoNdGFyZ2V0X2JlbGllZhgNIAEoARISCgpjaGVja19raW5kGA4gASgJIlYKF0xpc3RPcGVuRmluZGluZ3NSZXF1ZXN0Eh0KCXBhZ2Vfc2l6ZRgBIAEoBUIKukgHGgUY6AcoABIcCgpwYWdlX3Rva2VuGAIgASgJQgi6SAVyAxiACCJnChhMaXN0T3BlbkZpbmRpbmdzUmVzcG9uc2USMgoIZmluZGluZ3MYASADKAsyIC5naWJzb24ud29ybGQudjEuT3BlbkZpbmRpbmdWaWV3EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSKqAQoZTGlzdEFjdGlvbnNCeUdyYW50UmVxdWVzdBIoCgRmcm9tGAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBImCgJ0bxgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASHQoJcGFnZV9zaXplGAMgASgFQgq6SAcaBRjoBygAEhwKCnBhZ2VfdG9rZW4YBCABKAlCCLpIBXIDGIAIIvoBCgtBY3Rpb25Hcm91cBIUCgxncmFudF9vYmplY3QYASABKAkSFgoOZ3JhbnRfcmVsYXRpb24YAiABKAkSDwoHZ3JhbnRvchgDIAEoCRIPCgdyZWZ1c2VkGAQgASgIEg0KBWNvdW50GAUgASgFEikKBWZpcnN0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIoCgRsYXN0GAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIOCgZhZ2VudHMYCCADKAkSDQoFdG9vbHMYCSADKAkSGAoQYXVkaXRfcmVjb3JkX2lkcxgKIAMoCSJ2ChpMaXN0QWN0aW9uc0J5R3JhbnRSZXNwb25zZRIsCgZncm91cHMYASADKAsyHC5naWJzb24ud29ybGQudjEuQWN0aW9uR3JvdXASEQoJdHJ1bmNhdGVkGAIgASgIEhcKD25leHRfcGFnZV90b2tlbhgDIAEoCSJZChpMaXN0V2FpdGluZ09uUGVyc29uUmVxdWVzdBIdCglwYWdlX3NpemUYASABKAVCCrpIBxoFGOgHKAASHAoKcGFnZV90b2tlbhgCIAEoCUIIukgFcgMYgAgiagoLV2FpdGluZ0l0ZW0SDAoEa2luZBgBIAEoCRIKCgJpZBgCIAEoCRIpCgVzaW5jZRgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFgoOd2FpdGVkX3NlY29uZHMYBCABKAMiYwobTGlzdFdhaXRpbmdPblBlcnNvblJlc3BvbnNlEisKBWl0ZW1zGAEgAygLMhwuZ2lic29uLndvcmxkLnYxLldhaXRpbmdJdGVtEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCTLOFwoMV29ybGRTZXJ2aWNlEokBCgxMaXN0TWlzc2lvbnMSJC5naWJzb24ud29ybGQudjEuTGlzdE1pc3Npb25zUmVxdWVzdBolLmdpYnNvbi53b3JsZC52MS5MaXN0TWlzc2lvbnNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgAEKCUxpc3RIb3N0cxIhLmdpYnNvbi53b3JsZC52MS5MaXN0SG9zdHNSZXF1ZXN0GiIuZ2lic29uLndvcmxkLnYxLkxpc3RIb3N0c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKJAQoMTGlzdEZpbmRpbmdzEiQuZ2lic29uLndvcmxkLnYxLkxpc3RGaW5kaW5nc1JlcXVlc3QaJS5naWJzb24ud29ybGQudjEuTGlzdEZpbmRpbmdzUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEokBCgxMaXN0TGxtQ2FsbHMSJC5naWJzb24ud29ybGQudjEuTGlzdExsbUNhbGxzUmVxdWVzdBolLmdpYnNvbi53b3JsZC52MS5MaXN0TGxtQ2FsbHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSgwEKCkdldExsbUNhbGwSIi5naWJzb24ud29ybGQudjEuR2V0TGxtQ2FsbFJlcXVlc3QaIy5naWJzb24ud29ybGQudjEuR2V0TGxtQ2FsbFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKGAQoLR2V0VGltZWxpbmUSIy5naWJzb24ud29ybGQudjEuR2V0VGltZWxpbmVSZXF1ZXN0GiQuZ2lic29uLndvcmxkLnYxLkdldFRpbWVsaW5lUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoMBCgpHZXRGcmFtZUF0EiIuZ2lic29uLndvcmxkLnYxLkdldEZyYW1lQXRSZXF1ZXN0GiMuZ2lic29uLndvcmxkLnYxLkdldEZyYW1lQXRSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSkgEKD0xpc3RSZXZpZXdRdWV1ZRInLmdpYnNvbi53b3JsZC52MS5MaXN0UmV2aWV3UXVldWVSZXF1ZXN0GiguZ2lic29uLndvcmxkLnYxLkxpc3RSZXZpZXdRdWV1ZVJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKGAQoLU3VibWl0TGFiZWwSIy5naWJzb24ud29ybGQudjEuU3VibWl0TGFiZWxSZXF1ZXN0GiQuZ2lic29uLndvcmxkLnYxLlN1Ym1pdExhYmVsUmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoMBCgpMaXN0TGFiZWxzEiIuZ2lic29uLndvcmxkLnYxLkxpc3RMYWJlbHNSZXF1ZXN0GiMuZ2lic29uLndvcmxkLnYxLkxpc3RMYWJlbHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSjwEKDkdldENhbGlicmF0aW9uEiYuZ2lic29uLndvcmxkLnYxLkdldENhbGlicmF0aW9uUmVxdWVzdBonLmdpYnNvbi53b3JsZC52MS5HZXRDYWxpYnJhdGlvblJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKMAQoNR2V0UmVwdXRhdGlvbhIlLmdpYnNvbi53b3JsZC52MS5HZXRSZXB1dGF0aW9uUmVxdWVzdBomLmdpYnNvbi53b3JsZC52MS5HZXRSZXB1dGF0aW9uUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEokBCgxMaXN0T3BlbkJldHMSJC5naWJzb24ud29ybGQudjEuTGlzdE9wZW5CZXRzUmVxdWVzdBolLmdpYnNvbi53b3JsZC52MS5MaXN0T3BlbkJldHNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSlQEKEExpc3RQcm9vZlJldmlld3MSKC5naWJzb24ud29ybGQudjEuTGlzdFByb29mUmV2aWV3c1JlcXVlc3QaKS5naWJzb24ud29ybGQudjEuTGlzdFByb29mUmV2aWV3c1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKSAQoPU2V0dGxlQmV0QnlISVRMEicuZ2lic29uLndvcmxkLnYxLlNldHRsZUJldEJ5SElUTFJlcXVlc3QaKC5naWJzb24ud29ybGQudjEuU2V0dGxlQmV0QnlISVRMUmVzcG9uc2UiLIq1GCgKBndyaXRlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEoYBCgtHZXRFeHBvc3VyZRIjLmdpYnNvbi53b3JsZC52MS5HZXRFeHBvc3VyZVJlcXVlc3QaJC5naWJzb24ud29ybGQudjEuR2V0RXhwb3N1cmVSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSlQEKEEdldEV4cG9zdXJlVHJlbmQSKC5naWJzb24ud29ybGQudjEuR2V0RXhwb3N1cmVUcmVuZFJlcXVlc3QaKS5naWJzb24ud29ybGQudjEuR2V0RXhwb3N1cmVUcmVuZFJlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKMAQoNR2V0UmV2ZXJ0UmF0ZRIlLmdpYnNvbi53b3JsZC52MS5HZXRSZXZlcnRSYXRlUmVxdWVzdBomLmdpYnNvbi53b3JsZC52MS5HZXRSZXZlcnRSYXRlUmVzcG9uc2UiLIq1GCgKBm1lbWJlchIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEpUBChBMaXN0T3BlbkZpbmRpbmdzEiguZ2lic29uLndvcmxkLnYxLkxpc3RPcGVuRmluZGluZ3NSZXF1ZXN0GikuZ2lic29uLndvcmxkLnYxLkxpc3RPcGVuRmluZGluZ3NSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSmgEKEkxpc3RBY3Rpb25zQnlHcmFudBIqLmdpYnNvbi53b3JsZC52MS5MaXN0QWN0aW9uc0J5R3JhbnRSZXF1ZXN0GisuZ2lic29uLndvcmxkLnYxLkxpc3RBY3Rpb25zQnlHcmFudFJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADEp4BChNMaXN0V2FpdGluZ09uUGVyc29uEisuZ2lic29uLndvcmxkLnYxLkxpc3RXYWl0aW5nT25QZXJzb25SZXF1ZXN0GiwuZ2lic29uLndvcmxkLnYxLkxpc3RXYWl0aW5nT25QZXJzb25SZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IANCUlpQZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3dvcmxkL3YxO3dvcmxkdjFiBnByb3RvMw", [file_gibson_auth_v1_options, file_buf_validate_validate, file_google_protobuf_timestamp]);
 
 /**
  * MissionView is one mission as the World holds it.
@@ -333,6 +335,35 @@ export type TimelineEvent = Message<"gibson.world.v1.TimelineEvent"> & {
    * @generated from field: string summary = 3;
    */
   summary: string;
+
+  /**
+   * time is the time that the event holds: the time of the fact, or the time
+   * when the daemon read it. It is not set for an event that holds no time.
+   *
+   * @generated from field: google.protobuf.Timestamp time = 4;
+   */
+  time?: Timestamp | undefined;
+
+  /**
+   * replay_seq is the seq to give GetFrameAt (with the same mission_id) for
+   * the World just after this event. It is seq + 1.
+   *
+   * @generated from field: uint64 replay_seq = 5;
+   */
+  replaySeq: bigint;
+
+  /**
+   * finding_id and merge_request name the finding and the merge request that
+   * the event is about. Each is empty when the event names none.
+   *
+   * @generated from field: string finding_id = 6;
+   */
+  findingId: string;
+
+  /**
+   * @generated from field: string merge_request = 7;
+   */
+  mergeRequest: string;
 };
 
 /**
@@ -748,6 +779,15 @@ export type GetTimelineRequest = Message<"gibson.world.v1.GetTimelineRequest"> &
    * @generated from field: string mission_id = 1;
    */
   missionId: string;
+
+  /**
+   * finding_id keeps only the events of one finding: the events that name it,
+   * and the events of each merge request of its fixes. Each event keeps its
+   * seq in the unfiltered Timeline, so replay_seq still opens its frame.
+   *
+   * @generated from field: string finding_id = 4;
+   */
+  findingId: string;
 
   /**
    * page_size is the most events one page returns. Zero means 100.
@@ -1722,6 +1762,619 @@ export const GetReputationResponseSchema: GenMessage<GetReputationResponse> = /*
   messageDesc(file_gibson_world_v1_world, 46);
 
 /**
+ * @generated from message gibson.world.v1.GetExposureRequest
+ */
+export type GetExposureRequest = Message<"gibson.world.v1.GetExposureRequest"> & {
+  /**
+   * @generated from field: string finding_id = 1;
+   */
+  findingId: string;
+};
+
+/**
+ * Describes the message gibson.world.v1.GetExposureRequest.
+ * Use `create(GetExposureRequestSchema)` to create a new message.
+ */
+export const GetExposureRequestSchema: GenMessage<GetExposureRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 47);
+
+/**
+ * @generated from message gibson.world.v1.GetExposureResponse
+ */
+export type GetExposureResponse = Message<"gibson.world.v1.GetExposureResponse"> & {
+  /**
+   * found is false when the Timeline holds no event for the finding.
+   *
+   * @generated from field: bool found = 1;
+   */
+  found: boolean;
+
+  /**
+   * @generated from field: string finding_id = 2;
+   */
+  findingId: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp start = 3;
+   */
+  start?: Timestamp | undefined;
+
+  /**
+   * end is the time of the `verified` event, or the time of the read.
+   *
+   * @generated from field: google.protobuf.Timestamp end = 4;
+   */
+  end?: Timestamp | undefined;
+
+  /**
+   * @generated from field: bool verified = 5;
+   */
+  verified: boolean;
+
+  /**
+   * @generated from field: int64 total_seconds = 6;
+   */
+  totalSeconds: bigint;
+
+  /**
+   * wait_seconds is the time in which the fix waits on a person or on a tool of
+   * the buyer. agent_seconds is the rest.
+   *
+   * @generated from field: int64 wait_seconds = 7;
+   */
+  waitSeconds: bigint;
+
+  /**
+   * @generated from field: int64 agent_seconds = 8;
+   */
+  agentSeconds: bigint;
+};
+
+/**
+ * Describes the message gibson.world.v1.GetExposureResponse.
+ * Use `create(GetExposureResponseSchema)` to create a new message.
+ */
+export const GetExposureResponseSchema: GenMessage<GetExposureResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 48);
+
+/**
+ * @generated from message gibson.world.v1.GetExposureTrendRequest
+ */
+export type GetExposureTrendRequest = Message<"gibson.world.v1.GetExposureTrendRequest"> & {
+  /**
+   * period_seconds is the length of one period. Zero means 7 days.
+   *
+   * @generated from field: int64 period_seconds = 1;
+   */
+  periodSeconds: bigint;
+};
+
+/**
+ * Describes the message gibson.world.v1.GetExposureTrendRequest.
+ * Use `create(GetExposureTrendRequestSchema)` to create a new message.
+ */
+export const GetExposureTrendRequestSchema: GenMessage<GetExposureTrendRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 49);
+
+/**
+ * @generated from message gibson.world.v1.GetExposureTrendResponse
+ */
+export type GetExposureTrendResponse = Message<"gibson.world.v1.GetExposureTrendResponse"> & {
+  /**
+   * @generated from field: int64 period_seconds = 1;
+   */
+  periodSeconds: bigint;
+
+  /**
+   * count is the number of findings verified in the period.
+   *
+   * @generated from field: int32 count = 2;
+   */
+  count: number;
+
+  /**
+   * @generated from field: int64 median_seconds = 3;
+   */
+  medianSeconds: bigint;
+
+  /**
+   * @generated from field: int64 median_agent_seconds = 4;
+   */
+  medianAgentSeconds: bigint;
+
+  /**
+   * @generated from field: int64 median_wait_seconds = 5;
+   */
+  medianWaitSeconds: bigint;
+
+  /**
+   * @generated from field: int32 previous_count = 6;
+   */
+  previousCount: number;
+
+  /**
+   * @generated from field: int64 previous_median_seconds = 7;
+   */
+  previousMedianSeconds: bigint;
+};
+
+/**
+ * Describes the message gibson.world.v1.GetExposureTrendResponse.
+ * Use `create(GetExposureTrendResponseSchema)` to create a new message.
+ */
+export const GetExposureTrendResponseSchema: GenMessage<GetExposureTrendResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 50);
+
+/**
+ * @generated from message gibson.world.v1.GetRevertRateRequest
+ */
+export type GetRevertRateRequest = Message<"gibson.world.v1.GetRevertRateRequest"> & {
+  /**
+   * period_seconds is the length of one period. Zero means 7 days.
+   *
+   * @generated from field: int64 period_seconds = 1;
+   */
+  periodSeconds: bigint;
+};
+
+/**
+ * Describes the message gibson.world.v1.GetRevertRateRequest.
+ * Use `create(GetRevertRateRequestSchema)` to create a new message.
+ */
+export const GetRevertRateRequestSchema: GenMessage<GetRevertRateRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 51);
+
+/**
+ * @generated from message gibson.world.v1.RevertPeriod
+ */
+export type RevertPeriod = Message<"gibson.world.v1.RevertPeriod"> & {
+  /**
+   * @generated from field: int32 merged = 1;
+   */
+  merged: number;
+
+  /**
+   * @generated from field: int32 reverted = 2;
+   */
+  reverted: number;
+
+  /**
+   * rate is reverted divided by merged. It is 0 when nothing merged.
+   *
+   * @generated from field: double rate = 3;
+   */
+  rate: number;
+};
+
+/**
+ * Describes the message gibson.world.v1.RevertPeriod.
+ * Use `create(RevertPeriodSchema)` to create a new message.
+ */
+export const RevertPeriodSchema: GenMessage<RevertPeriod> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 52);
+
+/**
+ * @generated from message gibson.world.v1.GetRevertRateResponse
+ */
+export type GetRevertRateResponse = Message<"gibson.world.v1.GetRevertRateResponse"> & {
+  /**
+   * @generated from field: int64 period_seconds = 1;
+   */
+  periodSeconds: bigint;
+
+  /**
+   * @generated from field: gibson.world.v1.RevertPeriod current = 2;
+   */
+  current?: RevertPeriod | undefined;
+
+  /**
+   * @generated from field: gibson.world.v1.RevertPeriod previous = 3;
+   */
+  previous?: RevertPeriod | undefined;
+};
+
+/**
+ * Describes the message gibson.world.v1.GetRevertRateResponse.
+ * Use `create(GetRevertRateResponseSchema)` to create a new message.
+ */
+export const GetRevertRateResponseSchema: GenMessage<GetRevertRateResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 53);
+
+/**
+ * FindingPlace is the Application or the Host that a finding touches.
+ *
+ * @generated from message gibson.world.v1.FindingPlace
+ */
+export type FindingPlace = Message<"gibson.world.v1.FindingPlace"> & {
+  /**
+   * @generated from field: string label = 1;
+   */
+  label: string;
+
+  /**
+   * @generated from field: string key = 2;
+   */
+  key: string;
+};
+
+/**
+ * Describes the message gibson.world.v1.FindingPlace.
+ * Use `create(FindingPlaceSchema)` to create a new message.
+ */
+export const FindingPlaceSchema: GenMessage<FindingPlace> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 54);
+
+/**
+ * OpenFindingView is a finding that is not `verified`.
+ *
+ * @generated from message gibson.world.v1.OpenFindingView
+ */
+export type OpenFindingView = Message<"gibson.world.v1.OpenFindingView"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string scope_id = 3;
+   */
+  scopeId: string;
+
+  /**
+   * @generated from field: string address = 4;
+   */
+  address: string;
+
+  /**
+   * @generated from field: string severity = 5;
+   */
+  severity: string;
+
+  /**
+   * status is open, fixing or fixed.
+   *
+   * @generated from field: string status = 6;
+   */
+  status: string;
+
+  /**
+   * priority is P1 to P4. It is empty until the triage agent sets one.
+   *
+   * @generated from field: string priority = 7;
+   */
+  priority: string;
+
+  /**
+   * @generated from field: string priority_rule = 8;
+   */
+  priorityRule: string;
+
+  /**
+   * confidence is the confidence of the check that raised the finding, from 0
+   * to 1. It is 0 when the store holds no record of the finding.
+   *
+   * @generated from field: double confidence = 9;
+   */
+  confidence: number;
+
+  /**
+   * merge_request is the key of the merge request of the fix. It is empty for
+   * a finding with no fix. merge_request_url is the same value when it is a URL.
+   *
+   * @generated from field: string merge_request = 10;
+   */
+  mergeRequest: string;
+
+  /**
+   * @generated from field: string merge_request_url = 11;
+   */
+  mergeRequestUrl: string;
+
+  /**
+   * @generated from field: repeated gibson.world.v1.FindingPlace places = 12;
+   */
+  places: FindingPlace[];
+
+  /**
+   * target_belief is the belief of the target, from 0 to 1.
+   *
+   * @generated from field: double target_belief = 13;
+   */
+  targetBelief: number;
+
+  /**
+   * @generated from field: string check_kind = 14;
+   */
+  checkKind: string;
+};
+
+/**
+ * Describes the message gibson.world.v1.OpenFindingView.
+ * Use `create(OpenFindingViewSchema)` to create a new message.
+ */
+export const OpenFindingViewSchema: GenMessage<OpenFindingView> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 55);
+
+/**
+ * @generated from message gibson.world.v1.ListOpenFindingsRequest
+ */
+export type ListOpenFindingsRequest = Message<"gibson.world.v1.ListOpenFindingsRequest"> & {
+  /**
+   * page_size is the most findings one page returns. Zero means 100.
+   *
+   * @generated from field: int32 page_size = 1;
+   */
+  pageSize: number;
+
+  /**
+   * @generated from field: string page_token = 2;
+   */
+  pageToken: string;
+};
+
+/**
+ * Describes the message gibson.world.v1.ListOpenFindingsRequest.
+ * Use `create(ListOpenFindingsRequestSchema)` to create a new message.
+ */
+export const ListOpenFindingsRequestSchema: GenMessage<ListOpenFindingsRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 56);
+
+/**
+ * @generated from message gibson.world.v1.ListOpenFindingsResponse
+ */
+export type ListOpenFindingsResponse = Message<"gibson.world.v1.ListOpenFindingsResponse"> & {
+  /**
+   * @generated from field: repeated gibson.world.v1.OpenFindingView findings = 1;
+   */
+  findings: OpenFindingView[];
+
+  /**
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
+};
+
+/**
+ * Describes the message gibson.world.v1.ListOpenFindingsResponse.
+ * Use `create(ListOpenFindingsResponseSchema)` to create a new message.
+ */
+export const ListOpenFindingsResponseSchema: GenMessage<ListOpenFindingsResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 57);
+
+/**
+ * @generated from message gibson.world.v1.ListActionsByGrantRequest
+ */
+export type ListActionsByGrantRequest = Message<"gibson.world.v1.ListActionsByGrantRequest"> & {
+  /**
+   * from and to are the time range. A zero from means 24 hours before to. A
+   * zero to means now.
+   *
+   * @generated from field: google.protobuf.Timestamp from = 1;
+   */
+  from?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp to = 2;
+   */
+  to?: Timestamp | undefined;
+
+  /**
+   * page_size is the most groups one page returns. Zero means 100.
+   *
+   * @generated from field: int32 page_size = 3;
+   */
+  pageSize: number;
+
+  /**
+   * page_token is the next_page_token of the previous page, for the same
+   * range. Empty starts at the first group.
+   *
+   * @generated from field: string page_token = 4;
+   */
+  pageToken: string;
+};
+
+/**
+ * Describes the message gibson.world.v1.ListActionsByGrantRequest.
+ * Use `create(ListActionsByGrantRequestSchema)` to create a new message.
+ */
+export const ListActionsByGrantRequestSchema: GenMessage<ListActionsByGrantRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 58);
+
+/**
+ * @generated from message gibson.world.v1.ActionGroup
+ */
+export type ActionGroup = Message<"gibson.world.v1.ActionGroup"> & {
+  /**
+   * grant_object and grant_relation name the grant that allowed the action. For
+   * a refused action they name the grant that it lacked.
+   *
+   * @generated from field: string grant_object = 1;
+   */
+  grantObject: string;
+
+  /**
+   * @generated from field: string grant_relation = 2;
+   */
+  grantRelation: string;
+
+  /**
+   * grantor is the person who gave the grant. It is empty when the audit record
+   * holds no grant for the action, and for a refused action.
+   *
+   * @generated from field: string grantor = 3;
+   */
+  grantor: string;
+
+  /**
+   * @generated from field: bool refused = 4;
+   */
+  refused: boolean;
+
+  /**
+   * @generated from field: int32 count = 5;
+   */
+  count: number;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp first = 6;
+   */
+  first?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp last = 7;
+   */
+  last?: Timestamp | undefined;
+
+  /**
+   * @generated from field: repeated string agents = 8;
+   */
+  agents: string[];
+
+  /**
+   * @generated from field: repeated string tools = 9;
+   */
+  tools: string[];
+
+  /**
+   * audit_record_ids are the ids of the audit records of the actions of the
+   * group, in the order of their time. The result record of each call is in
+   * the list, and the intent record is not.
+   *
+   * @generated from field: repeated string audit_record_ids = 10;
+   */
+  auditRecordIds: string[];
+};
+
+/**
+ * Describes the message gibson.world.v1.ActionGroup.
+ * Use `create(ActionGroupSchema)` to create a new message.
+ */
+export const ActionGroupSchema: GenMessage<ActionGroup> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 59);
+
+/**
+ * @generated from message gibson.world.v1.ListActionsByGrantResponse
+ */
+export type ListActionsByGrantResponse = Message<"gibson.world.v1.ListActionsByGrantResponse"> & {
+  /**
+   * @generated from field: repeated gibson.world.v1.ActionGroup groups = 1;
+   */
+  groups: ActionGroup[];
+
+  /**
+   * truncated is true when the range holds more audit records than one read
+   * returns.
+   *
+   * @generated from field: bool truncated = 2;
+   */
+  truncated: boolean;
+
+  /**
+   * next_page_token continues the list. Empty means this is the last page.
+   *
+   * @generated from field: string next_page_token = 3;
+   */
+  nextPageToken: string;
+};
+
+/**
+ * Describes the message gibson.world.v1.ListActionsByGrantResponse.
+ * Use `create(ListActionsByGrantResponseSchema)` to create a new message.
+ */
+export const ListActionsByGrantResponseSchema: GenMessage<ListActionsByGrantResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 60);
+
+/**
+ * @generated from message gibson.world.v1.ListWaitingOnPersonRequest
+ */
+export type ListWaitingOnPersonRequest = Message<"gibson.world.v1.ListWaitingOnPersonRequest"> & {
+  /**
+   * page_size is the most items one page returns. Zero means 100.
+   *
+   * @generated from field: int32 page_size = 1;
+   */
+  pageSize: number;
+
+  /**
+   * @generated from field: string page_token = 2;
+   */
+  pageToken: string;
+};
+
+/**
+ * Describes the message gibson.world.v1.ListWaitingOnPersonRequest.
+ * Use `create(ListWaitingOnPersonRequestSchema)` to create a new message.
+ */
+export const ListWaitingOnPersonRequestSchema: GenMessage<ListWaitingOnPersonRequest> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 61);
+
+/**
+ * @generated from message gibson.world.v1.WaitingItem
+ */
+export type WaitingItem = Message<"gibson.world.v1.WaitingItem"> & {
+  /**
+   * kind is destructive_action, merge_refused, next_scan or no_health_signal.
+   *
+   * @generated from field: string kind = 1;
+   */
+  kind: string;
+
+  /**
+   * id is the id of the finding, or of the hypothesis for a destructive action.
+   *
+   * @generated from field: string id = 2;
+   */
+  id: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp since = 3;
+   */
+  since?: Timestamp | undefined;
+
+  /**
+   * @generated from field: int64 waited_seconds = 4;
+   */
+  waitedSeconds: bigint;
+};
+
+/**
+ * Describes the message gibson.world.v1.WaitingItem.
+ * Use `create(WaitingItemSchema)` to create a new message.
+ */
+export const WaitingItemSchema: GenMessage<WaitingItem> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 62);
+
+/**
+ * @generated from message gibson.world.v1.ListWaitingOnPersonResponse
+ */
+export type ListWaitingOnPersonResponse = Message<"gibson.world.v1.ListWaitingOnPersonResponse"> & {
+  /**
+   * @generated from field: repeated gibson.world.v1.WaitingItem items = 1;
+   */
+  items: WaitingItem[];
+
+  /**
+   * next_page_token continues the list. Empty means this is the last page.
+   *
+   * @generated from field: string next_page_token = 2;
+   */
+  nextPageToken: string;
+};
+
+/**
+ * Describes the message gibson.world.v1.ListWaitingOnPersonResponse.
+ * Use `create(ListWaitingOnPersonResponseSchema)` to create a new message.
+ */
+export const ListWaitingOnPersonResponseSchema: GenMessage<ListWaitingOnPersonResponse> = /*@__PURE__*/
+  messageDesc(file_gibson_world_v1_world, 63);
+
+/**
  * WorldService is the daemon-mediated read path into the ECS brain (epic
  * ecs-brain, gibson#752). The daemon resolves the caller's tenant server-side
  * and reads only that tenant's live brain World + Timeline (one World per tenant,
@@ -1924,6 +2577,79 @@ export const WorldService: GenService<{
     methodKind: "unary";
     input: typeof SettleBetByHITLRequestSchema;
     output: typeof SettleBetByHITLResponseSchema;
+  },
+  /**
+   * GetExposure returns the exposure window of one finding: the time from its
+   * first evidence to its `verified` event, or to now for a finding that is not
+   * verified. It splits the window into agent time and wait time (gibson#1467).
+   *
+   * @generated from rpc gibson.world.v1.WorldService.GetExposure
+   */
+  getExposure: {
+    methodKind: "unary";
+    input: typeof GetExposureRequestSchema;
+    output: typeof GetExposureResponseSchema;
+  },
+  /**
+   * GetExposureTrend returns the median exposure window of the findings that
+   * were verified in a period, next to the median of the period before it
+   * (gibson#1467).
+   *
+   * @generated from rpc gibson.world.v1.WorldService.GetExposureTrend
+   */
+  getExposureTrend: {
+    methodKind: "unary";
+    input: typeof GetExposureTrendRequestSchema;
+    output: typeof GetExposureTrendResponseSchema;
+  },
+  /**
+   * GetRevertRate returns the share of merged fixes that an agent reverted in a
+   * period, next to the share of the period before it (gibson#1468).
+   *
+   * @generated from rpc gibson.world.v1.WorldService.GetRevertRate
+   */
+  getRevertRate: {
+    methodKind: "unary";
+    input: typeof GetRevertRateRequestSchema;
+    output: typeof GetRevertRateResponseSchema;
+  },
+  /**
+   * ListOpenFindings returns the findings that are not `verified`. The order is
+   * the priority (P1 to P4), then the belief of the target. A finding with no
+   * priority ranks by its severity (gibson#1498).
+   *
+   * @generated from rpc gibson.world.v1.WorldService.ListOpenFindings
+   */
+  listOpenFindings: {
+    methodKind: "unary";
+    input: typeof ListOpenFindingsRequestSchema;
+    output: typeof ListOpenFindingsResponseSchema;
+  },
+  /**
+   * ListActionsByGrant returns the connector calls of the agents in a time
+   * range, grouped by the grant that allowed each one and by the person who gave
+   * the grant. A refused call shows the grant that it lacked (gibson#1499).
+   * The read shows the audit records of the whole tenant, so it takes the
+   * relation of the tenant audit log, admin, as ListAuditEvents does
+   * (gibson#1556 review m7).
+   *
+   * @generated from rpc gibson.world.v1.WorldService.ListActionsByGrant
+   */
+  listActionsByGrant: {
+    methodKind: "unary";
+    input: typeof ListActionsByGrantRequestSchema;
+    output: typeof ListActionsByGrantResponseSchema;
+  },
+  /**
+   * ListWaitingOnPerson returns each item that waits on a person, with the wait
+   * time so far (gibson#1500).
+   *
+   * @generated from rpc gibson.world.v1.WorldService.ListWaitingOnPerson
+   */
+  listWaitingOnPerson: {
+    methodKind: "unary";
+    input: typeof ListWaitingOnPersonRequestSchema;
+    output: typeof ListWaitingOnPersonResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_gibson_world_v1_world, 0);

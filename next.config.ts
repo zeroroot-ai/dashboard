@@ -324,7 +324,5 @@ const nextConfig: NextConfig = {
 };
 
 // No MDX adapter. The customer docs moved to their own deployable
-// (dashboard#820); the only .mdx left in this app is under
-// app/dashboard/(auth)/docs, which is read with readFileSync and rendered
-// by react-markdown at request time, not compiled by a bundler plugin.
+// (dashboard#820), so this app holds no .mdx file.
 export default nextConfig;

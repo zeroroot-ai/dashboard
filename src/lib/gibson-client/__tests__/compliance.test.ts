@@ -19,7 +19,11 @@ vi.mock('../../gibson-client', () => ({
 }));
 vi.mock('../domain-packs', () => ({ daemonListDomainPacks: mockPacks }));
 
-import { daemonListCompliancePacks, daemonListComplianceEvidence } from '../compliance';
+import {
+  daemonListCompliancePacks,
+  daemonListComplianceEvidence,
+  daemonListControlCoverage,
+} from '../compliance';
 import { ControlEvidence_State } from '@/src/gen/gibson/tenant/v1/compliance_pb';
 
 beforeEach(() => {
@@ -89,5 +93,39 @@ describe('daemonListComplianceEvidence', () => {
     expect(out.controls[0].state).toBe('has_evidence');
     expect(out.events.map((e) => e.auditRecordId)).toEqual(['e1', 'e2']);
     expect(mockList.mock.calls[1][0].pageToken).toBe('p2');
+  });
+});
+
+describe('daemonListControlCoverage', () => {
+  it('reads one page of one event and returns the controls only', async () => {
+    mockList.mockResolvedValue({
+      pack: 'nist',
+      packVersion: 1,
+      controlsWithRule: 1,
+      controlsTotal: 1,
+      controls: [
+        {
+          controlId: 'AC-2',
+          title: 't',
+          family: 'AC',
+          familyTitle: 'Access Control',
+          state: ControlEvidence_State.HAS_EVIDENCE,
+          eventCount: BigInt(4),
+          lastEventTime: { seconds: BigInt(1_700_000_000), nanos: 0 },
+        },
+      ],
+      events: [],
+      nextPageToken: 'more',
+    });
+    const out = await daemonListControlCoverage({
+      pack: 'nist',
+      start: new Date('2026-08-01T00:00:00Z'),
+      end: new Date('2026-11-01T00:00:00Z'),
+    });
+    expect(mockList).toHaveBeenCalledTimes(1);
+    expect(mockList.mock.calls[0][0]).toMatchObject({ pack: 'nist', pageSize: 1, pageToken: '' });
+    expect(out.controls[0]).toMatchObject({ controlId: 'AC-2', state: 'has_evidence', eventCount: 4 });
+    expect(out.controls[0].lastEventTime).toBe('2023-11-14T22:13:20.000Z');
+    expect('events' in out).toBe(false);
   });
 });

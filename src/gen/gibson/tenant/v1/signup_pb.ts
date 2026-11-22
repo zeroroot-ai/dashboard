@@ -39,7 +39,7 @@
 //   the same thing, not a second completion path: approval runs exactly the
 //   work Signup runs.
 //
-//   Signup therefore takes NO owner email, workspace name, tier or profile from
+//   Signup therefore takes NO owner email, workspace name or profile from
 //   the client. Every one of those is read back from the verification row the
 //   session resolves to. A client that could supply them could point a redeemed
 //   session at a different address, which would defeat the verification it just
@@ -61,7 +61,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/signup.proto.
  */
 export const file_gibson_tenant_v1_signup: GenFile = /*@__PURE__*/
-  fileDesc("Ch1naWJzb24vdGVuYW50L3YxL3NpZ251cC5wcm90bxIQZ2lic29uLnRlbmFudC52MSKKAgoPUmVnaXN0ZXJSZXF1ZXN0EhwKCmF0dGVtcHRfaWQYASABKAlCCLpIBXIDGIAIEh0KC293bmVyX2VtYWlsGAIgASgJQgi6SAVyAxiAIBIgCg53b3Jrc3BhY2VfbmFtZRgDIAEoCUIIukgFcgMYgAgSFgoEdGllchgEIAEoCUIIukgFcgMYgCASIgoQb3duZXJfZmlyc3RfbmFtZRgFIAEoCUIIukgFcgMYgAgSIQoPb3duZXJfbGFzdF9uYW1lGAYgASgJQgi6SAVyAxiACBIcCghwYXNzd29yZBgHIAEoCUIKukgHcgUYgICACBIbCgljbGllbnRfaXAYCCABKAlCCLpIBXIDGIAgIikKEFJlZ2lzdGVyUmVzcG9uc2VKBAgBEAJSD3JlZ2lzdHJhdGlvbl9pZCL8AQofUmVxdWVzdEVtYWlsVmVyaWZpY2F0aW9uUmVxdWVzdBIcCgphdHRlbXB0X2lkGAEgASgJQgi6SAVyAxiACBIdCgtvd25lcl9lbWFpbBgCIAEoCUIIukgFcgMYgCASIAoOd29ya3NwYWNlX25hbWUYAyABKAlCCLpIBXIDGIAIEhYKBHRpZXIYBCABKAlCCLpIBXIDGIAgEiIKEG93bmVyX2ZpcnN0X25hbWUYBSABKAlCCLpIBXIDGIAIEiEKD293bmVyX2xhc3RfbmFtZRgGIAEoCUIIukgFcgMYgAgSGwoJY2xpZW50X2lwGAcgASgJQgi6SAVyAxiAICIiCiBSZXF1ZXN0RW1haWxWZXJpZmljYXRpb25SZXNwb25zZSJYCh5SZWRlZW1FbWFpbFZlcmlmaWNhdGlvblJlcXVlc3QSGQoFdG9rZW4YASABKAlCCrpIB3IFGICAgAgSGwoJY2xpZW50X2lwGAIgASgJQgi6SAVyAxiAICKQAQofUmVkZWVtRW1haWxWZXJpZmljYXRpb25SZXNwb25zZRIeChZ2ZXJpZmllZF9zZXNzaW9uX3Rva2VuGAEgASgJEhIKCmF0dGVtcHRfaWQYAiABKAkSEwoLb3duZXJfZW1haWwYAyABKAkSFgoOd29ya3NwYWNlX25hbWUYBCABKAkSDAoEdGllchgFIAEoCSKUAgoNU2lnbnVwUmVxdWVzdBIcCgphdHRlbXB0X2lkGAEgASgJQgi6SAVyAxiACBIeCghwYXNzd29yZBgIIAEoCUIMukgJcgcQARiAgIAIEioKFnZlcmlmaWVkX3Nlc3Npb25fdG9rZW4YCSABKAlCCrpIB3IFGICAgAgSGwoJY2xpZW50X2lwGAogASgJQgi6SAVyAxiAIEoECAIQA0oECAMQBEoECAQQBUoECAUQBkoECAYQB0oECAcQCFILb3duZXJfZW1haWxSDndvcmtzcGFjZV9uYW1lUgR0aWVyUhBvd25lcl9maXJzdF9uYW1lUg9vd25lcl9sYXN0X25hbWVSEnN0cmlwZV9jdXN0b21lcl9pZCKIAQoOU2lnbnVwUmVzcG9uc2USEQoJdGVuYW50X2lkGAEgASgJEhUKDW93bmVyX3VzZXJfaWQYAyABKAkSDwoHcGxhbl9pZBgEIAEoCRIQCghzdGVwX3VybBgFIAEoCRISCgpzdGVwX3Rva2VuGAYgASgJSgQIAhADUg9hbHJlYWR5X2V4aXN0ZWQiNAoUR2V0U2lnbnVwU3RlcFJlcXVlc3QSHAoKYXR0ZW1wdF9pZBgBIAEoCUIIukgFcgMYgAgiSQoVR2V0U2lnbnVwU3RlcFJlc3BvbnNlEjAKBXN0YXRlGAEgASgOMiEuZ2lic29uLnRlbmFudC52MS5TaWdudXBTdGVwU3RhdGUqqQEKD1NpZ251cFN0ZXBTdGF0ZRIhCh1TSUdOVVBfU1RFUF9TVEFURV9VTlNQRUNJRklFRBAAEhoKFlNJR05VUF9TVEVQX1NUQVRFX05PTkUQARIdChlTSUdOVVBfU1RFUF9TVEFURV9XQUlUSU5HEAISGgoWU0lHTlVQX1NURVBfU1RBVEVfRE9ORRADEhwKGFNJR05VUF9TVEVQX1NUQVRFX0ZBSUxFRBAEMr4ECg1TaWdudXBTZXJ2aWNlEokBChhSZXF1ZXN0RW1haWxWZXJpZmljYXRpb24SMS5naWJzb24udGVuYW50LnYxLlJlcXVlc3RFbWFpbFZlcmlmaWNhdGlvblJlcXVlc3QaMi5naWJzb24udGVuYW50LnYxLlJlcXVlc3RFbWFpbFZlcmlmaWNhdGlvblJlc3BvbnNlIgaKtRgCKAEShgEKF1JlZGVlbUVtYWlsVmVyaWZpY2F0aW9uEjAuZ2lic29uLnRlbmFudC52MS5SZWRlZW1FbWFpbFZlcmlmaWNhdGlvblJlcXVlc3QaMS5naWJzb24udGVuYW50LnYxLlJlZGVlbUVtYWlsVmVyaWZpY2F0aW9uUmVzcG9uc2UiBoq1GAIoARJTCgZTaWdudXASHy5naWJzb24udGVuYW50LnYxLlNpZ251cFJlcXVlc3QaIC5naWJzb24udGVuYW50LnYxLlNpZ251cFJlc3BvbnNlIgaKtRgCKAESaAoNR2V0U2lnbnVwU3RlcBImLmdpYnNvbi50ZW5hbnQudjEuR2V0U2lnbnVwU3RlcFJlcXVlc3QaJy5naWJzb24udGVuYW50LnYxLkdldFNpZ251cFN0ZXBSZXNwb25zZSIGirUYAigBElkKCFJlZ2lzdGVyEiEuZ2lic29uLnRlbmFudC52MS5SZWdpc3RlclJlcXVlc3QaIi5naWJzb24udGVuYW50LnYxLlJlZ2lzdGVyUmVzcG9uc2UiBoq1GAIoAUJUWlJnaXRodWIuY29tL3plcm9yb290LWFpL2dpYnNvbi9pbnRlcm5hbC9zZXJ2ZXIvZGFlbW9uL2FwaS9naWJzb24vdGVuYW50L3YxO3RlbmFudHYxYgZwcm90bzM", [file_gibson_auth_v1_options, file_buf_validate_validate]);
+  fileDesc("Ch1naWJzb24vdGVuYW50L3YxL3NpZ251cC5wcm90bxIQZ2lic29uLnRlbmFudC52MSL+AQoPUmVnaXN0ZXJSZXF1ZXN0EhwKCmF0dGVtcHRfaWQYASABKAlCCLpIBXIDGIAIEh0KC293bmVyX2VtYWlsGAIgASgJQgi6SAVyAxiAIBIgCg53b3Jrc3BhY2VfbmFtZRgDIAEoCUIIukgFcgMYgAgSIgoQb3duZXJfZmlyc3RfbmFtZRgFIAEoCUIIukgFcgMYgAgSIQoPb3duZXJfbGFzdF9uYW1lGAYgASgJQgi6SAVyAxiACBIcCghwYXNzd29yZBgHIAEoCUIKukgHcgUYgICACBIbCgljbGllbnRfaXAYCCABKAlCCLpIBXIDGIAgSgQIBBAFUgR0aWVyIikKEFJlZ2lzdGVyUmVzcG9uc2VKBAgBEAJSD3JlZ2lzdHJhdGlvbl9pZCLwAQofUmVxdWVzdEVtYWlsVmVyaWZpY2F0aW9uUmVxdWVzdBIcCgphdHRlbXB0X2lkGAEgASgJQgi6SAVyAxiACBIdCgtvd25lcl9lbWFpbBgCIAEoCUIIukgFcgMYgCASIAoOd29ya3NwYWNlX25hbWUYAyABKAlCCLpIBXIDGIAIEiIKEG93bmVyX2ZpcnN0X25hbWUYBSABKAlCCLpIBXIDGIAIEiEKD293bmVyX2xhc3RfbmFtZRgGIAEoCUIIukgFcgMYgAgSGwoJY2xpZW50X2lwGAcgASgJQgi6SAVyAxiAIEoECAQQBVIEdGllciIiCiBSZXF1ZXN0RW1haWxWZXJpZmljYXRpb25SZXNwb25zZSJYCh5SZWRlZW1FbWFpbFZlcmlmaWNhdGlvblJlcXVlc3QSGQoFdG9rZW4YASABKAlCCrpIB3IFGICAgAgSGwoJY2xpZW50X2lwGAIgASgJQgi6SAVyAxiAICKOAQofUmVkZWVtRW1haWxWZXJpZmljYXRpb25SZXNwb25zZRIeChZ2ZXJpZmllZF9zZXNzaW9uX3Rva2VuGAEgASgJEhIKCmF0dGVtcHRfaWQYAiABKAkSEwoLb3duZXJfZW1haWwYAyABKAkSFgoOd29ya3NwYWNlX25hbWUYBCABKAlKBAgFEAZSBHRpZXIilAIKDVNpZ251cFJlcXVlc3QSHAoKYXR0ZW1wdF9pZBgBIAEoCUIIukgFcgMYgAgSHgoIcGFzc3dvcmQYCCABKAlCDLpICXIHEAEYgICACBIqChZ2ZXJpZmllZF9zZXNzaW9uX3Rva2VuGAkgASgJQgq6SAdyBRiAgIAIEhsKCWNsaWVudF9pcBgKIAEoCUIIukgFcgMYgCBKBAgCEANKBAgDEARKBAgEEAVKBAgFEAZKBAgGEAdKBAgHEAhSC293bmVyX2VtYWlsUg53b3Jrc3BhY2VfbmFtZVIEdGllclIQb3duZXJfZmlyc3RfbmFtZVIPb3duZXJfbGFzdF9uYW1lUhJzdHJpcGVfY3VzdG9tZXJfaWQihgEKDlNpZ251cFJlc3BvbnNlEhEKCXRlbmFudF9pZBgBIAEoCRIVCg1vd25lcl91c2VyX2lkGAMgASgJEhAKCHN0ZXBfdXJsGAUgASgJEhIKCnN0ZXBfdG9rZW4YBiABKAlKBAgCEANKBAgEEAVSD2FscmVhZHlfZXhpc3RlZFIHcGxhbl9pZCI0ChRHZXRTaWdudXBTdGVwUmVxdWVzdBIcCgphdHRlbXB0X2lkGAEgASgJQgi6SAVyAxiACCJJChVHZXRTaWdudXBTdGVwUmVzcG9uc2USMAoFc3RhdGUYASABKA4yIS5naWJzb24udGVuYW50LnYxLlNpZ251cFN0ZXBTdGF0ZSqpAQoPU2lnbnVwU3RlcFN0YXRlEiEKHVNJR05VUF9TVEVQX1NUQVRFX1VOU1BFQ0lGSUVEEAASGgoWU0lHTlVQX1NURVBfU1RBVEVfTk9ORRABEh0KGVNJR05VUF9TVEVQX1NUQVRFX1dBSVRJTkcQAhIaChZTSUdOVVBfU1RFUF9TVEFURV9ET05FEAMSHAoYU0lHTlVQX1NURVBfU1RBVEVfRkFJTEVEEAQyvgQKDVNpZ251cFNlcnZpY2USiQEKGFJlcXVlc3RFbWFpbFZlcmlmaWNhdGlvbhIxLmdpYnNvbi50ZW5hbnQudjEuUmVxdWVzdEVtYWlsVmVyaWZpY2F0aW9uUmVxdWVzdBoyLmdpYnNvbi50ZW5hbnQudjEuUmVxdWVzdEVtYWlsVmVyaWZpY2F0aW9uUmVzcG9uc2UiBoq1GAIoARKGAQoXUmVkZWVtRW1haWxWZXJpZmljYXRpb24SMC5naWJzb24udGVuYW50LnYxLlJlZGVlbUVtYWlsVmVyaWZpY2F0aW9uUmVxdWVzdBoxLmdpYnNvbi50ZW5hbnQudjEuUmVkZWVtRW1haWxWZXJpZmljYXRpb25SZXNwb25zZSIGirUYAigBElMKBlNpZ251cBIfLmdpYnNvbi50ZW5hbnQudjEuU2lnbnVwUmVxdWVzdBogLmdpYnNvbi50ZW5hbnQudjEuU2lnbnVwUmVzcG9uc2UiBoq1GAIoARJoCg1HZXRTaWdudXBTdGVwEiYuZ2lic29uLnRlbmFudC52MS5HZXRTaWdudXBTdGVwUmVxdWVzdBonLmdpYnNvbi50ZW5hbnQudjEuR2V0U2lnbnVwU3RlcFJlc3BvbnNlIgaKtRgCKAESWQoIUmVnaXN0ZXISIS5naWJzb24udGVuYW50LnYxLlJlZ2lzdGVyUmVxdWVzdBoiLmdpYnNvbi50ZW5hbnQudjEuUmVnaXN0ZXJSZXNwb25zZSIGirUYAigBQlRaUmdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi90ZW5hbnQvdjE7dGVuYW50djFiBnByb3RvMw", [file_gibson_auth_v1_options, file_buf_validate_validate]);
 
 /**
  * RegisterRequest carries the whole registration on the approval rung. There
@@ -94,14 +94,6 @@ export type RegisterRequest = Message<"gibson.tenant.v1.RegisterRequest"> & {
    * @generated from field: string workspace_name = 3;
    */
   workspaceName: string;
-
-  /**
-   * tier is an optional plan id. Gibson does not judge it. Step 2 of
-   * gibson#1531 deletes it.
-   *
-   * @generated from field: string tier = 4;
-   */
-  tier: string;
 
   /**
    * owner_first_name / owner_last_name populate the human-user profile.
@@ -197,14 +189,6 @@ export type RequestEmailVerificationRequest = Message<"gibson.tenant.v1.RequestE
    * @generated from field: string workspace_name = 3;
    */
   workspaceName: string;
-
-  /**
-   * tier is an optional plan id. Gibson does not judge it. It goes to the
-   * external signup step. Step 2 of gibson#1531 deletes it.
-   *
-   * @generated from field: string tier = 4;
-   */
-  tier: string;
 
   /**
    * owner_first_name / owner_last_name populate the eventual human-user
@@ -326,16 +310,11 @@ export type RedeemEmailVerificationResponse = Message<"gibson.tenant.v1.RedeemEm
   ownerEmail: string;
 
   /**
-   * workspace_name / tier are echoed for display on the completion page.
+   * workspace_name is echoed for display on the completion page.
    *
    * @generated from field: string workspace_name = 4;
    */
   workspaceName: string;
-
-  /**
-   * @generated from field: string tier = 5;
-   */
-  tier: string;
 };
 
 /**
@@ -432,15 +411,6 @@ export type SignupResponse = Message<"gibson.tenant.v1.SignupResponse"> & {
    * @generated from field: string owner_user_id = 3;
    */
   ownerUserId: string;
-
-  /**
-   * plan_id is the plan id of the verification row, the same value enqueued
-   * for the operator (gibson#1325). Empty when the caller gave none. Step 2 of
-   * gibson#1531 deletes it.
-   *
-   * @generated from field: string plan_id = 4;
-   */
-  planId: string;
 
   /**
    * step_url is where the browser goes for the external signup step. Empty

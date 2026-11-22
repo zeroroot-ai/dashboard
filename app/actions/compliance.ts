@@ -20,7 +20,9 @@ import { z } from "zod";
 import {
   daemonListComplianceEvidence,
   daemonListCompliancePacks,
+  daemonListControlCoverage,
   type ComplianceEvidenceDTO,
+  type ControlCoverageDTO,
 } from "@/src/lib/gibson-client/compliance";
 import { getServerSession } from "@/src/lib/auth";
 import { permissionDeniedResult } from "@/src/lib/auth/assert-authorized";
@@ -76,5 +78,33 @@ export async function getComplianceEvidenceAction(input: {
     const denied = permissionDeniedResult(err);
     if (denied) return denied;
     return serverActionError(err, { action: "getComplianceEvidenceAction" });
+  }
+}
+
+/** The controls of one pack in one time range, with no events. The first screen uses it. */
+export async function getControlCoverageAction(input: {
+  pack: string;
+  start: string;
+  end: string;
+}): Promise<ComplianceActionResult<ControlCoverageDTO>> {
+  const session = await getServerSession();
+  if (!session?.user) {
+    return { ok: false, error: "Unauthenticated", code: "unauthenticated" };
+  }
+  const parsed = evidenceInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "The pack or the time range is not valid.", code: "invalid" };
+  }
+  try {
+    const data = await daemonListControlCoverage({
+      pack: parsed.data.pack,
+      start: new Date(parsed.data.start),
+      end: new Date(parsed.data.end),
+    });
+    return { ok: true, data };
+  } catch (err) {
+    const denied = permissionDeniedResult(err);
+    if (denied) return denied;
+    return serverActionError(err, { action: "getControlCoverageAction" });
   }
 }

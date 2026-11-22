@@ -12,6 +12,8 @@ vi.mock("@/app/actions/findings", () => ({
   exportFindingsAction: exportFindings,
 }));
 
+vi.mock("../ActivityStrip", () => ({ ActivityStrip: ({ findingId }: { findingId: string }) => <div data-testid="activity-strip" data-finding={findingId} /> }));
+
 import { FindingDetail } from "../FindingDetail";
 import { FindingsExportDialog } from "../FindingsExportDialog";
 import type { Finding } from "@/src/types";

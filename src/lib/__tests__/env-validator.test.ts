@@ -66,7 +66,6 @@ const VALID_ENV: Record<string, string> = {
   DATABASE_URL: 'postgres://user:pass@db:5432/gibson_dashboard',
 
   // Feature switches
-  DASHBOARD_CAPTCHA_PROVIDER: 'disabled',
   DASHBOARD_HIBP_ENABLED: 'true',
 
   // Force production codepath so prodOnly entries are enforced, the test

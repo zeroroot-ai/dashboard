@@ -46,13 +46,9 @@ import {
   UsersIcon,
   ChevronRight,
   CrosshairIcon,
-  ClipboardCheckIcon,
-  ClipboardListIcon,
   GaugeIcon,
   GlobeIcon,
   LayoutDashboardIcon,
-  GavelIcon,
-  ListTreeIcon,
   MessageSquareIcon,
   NetworkIcon,
   Plug2Icon,
@@ -88,6 +84,7 @@ type NavGate =
   | "agent-skills"
   | "outside-agents"
   | "inbound-missions"
+  | "grants"
   | "platform-health";
 
 type NavGroup = {
@@ -114,7 +111,7 @@ type NavItem = {
    * "ontology", "audit", "agent-skills", "outside-agents" and
    * "inbound-missions": the entry shows only for the
    * Owner and the Admin, the roles that may call the page's RPC
-   * (dashboard#191, G23, gibson#1364).
+   * (dashboard#191, G23, gibson#1364). "grants" works the same way.
    * "platform-health": the entry shows only for the Platform owner, the
    * caller that may read the platform health (hosted#174).
    */
@@ -133,19 +130,9 @@ export const navItems: NavGroup[] = [
         icon: LayoutDashboardIcon
       },
       {
-        title: "Missions",
-        href: "/dashboard/missions",
-        icon: CrosshairIcon
-      },
-      {
         title: "Targets",
         href: "/dashboard/targets",
         icon: ServerIcon
-      },
-      {
-        title: "Mission Results",
-        href: "/dashboard/results",
-        icon: ClipboardListIcon
       },
       {
         title: "World",
@@ -158,22 +145,45 @@ export const navItems: NavGroup[] = [
         icon: AlertTriangleIcon
       },
       {
-        title: "Review Queue",
-        href: "/dashboard/review",
-        icon: ClipboardCheckIcon
-      },
-      {
-        // The HITL settle queue (ADR-0123, dashboard#97): a human judges the
-        // bets the fleet is unsure about, and every verdict feeds the learning
-        // loop. Distinct from the review queue, which labels surfaced surprises.
-        title: "Settle Queue",
-        href: "/dashboard/hitl-settle",
-        icon: GavelIcon
-      },
-      {
-        title: "Traces",
-        href: "/dashboard/traces",
-        icon: ListTreeIcon
+        // The first screen answers the five questions of a blue team manager
+        // (epic gibson#1497, dashboard#388). Missions, grants and traces sit
+        // one level down, with the two queues in which a person gives a
+        // verdict. No agent waits on these two queues (ADR-0108).
+        title: "Agent activity",
+        href: "/dashboard/missions",
+        icon: CrosshairIcon,
+        items: [
+          {
+            title: "Missions",
+            href: "/dashboard/missions"
+          },
+          {
+            title: "Mission Results",
+            href: "/dashboard/results"
+          },
+          {
+            // The grants of the tenant. Every RPC needs the admin relation,
+            // so the gate hides the entry from other roles.
+            title: "Grants",
+            href: "/dashboard/pages/settings/grants",
+            gate: "grants"
+          },
+          {
+            title: "Traces",
+            href: "/dashboard/traces"
+          },
+          {
+            title: "Review Queue",
+            href: "/dashboard/review"
+          },
+          {
+            // The HITL settle queue (ADR-0123, dashboard#97): a person judges
+            // the bets that the fleet is unsure about, and every verdict feeds
+            // the learning loop. The review queue labels surfaced surprises.
+            title: "Settle Queue",
+            href: "/dashboard/hitl-settle"
+          }
+        ]
       },
       {
         title: "Knowledge Graph",
@@ -339,6 +349,13 @@ export const navItems: NavGroup[] = [
     title: "Configuration",
     items: [
       {
+        // Model cost and tokens for each user, team, agent and mission
+        // (dashboard#390). The page had no link before.
+        title: "Usage",
+        href: "/dashboard/pages/usage",
+        icon: GaugeIcon,
+      },
+      {
         // The settings index redirects to /pages/settings/account. The
         // settings page itself has its own sidebar with the full surface
         // (Account, Billing, Providers, Agents, Plugins, Model Access,
@@ -367,6 +384,7 @@ const GATE_METHOD = {
   "agent-skills": AGENT_SKILL_PAGE_METHOD,
   "outside-agents": OUTSIDE_AGENT_PAGE_METHOD,
   "inbound-missions": INBOUND_MISSION_PAGE_METHOD,
+  grants: "/gibson.tenant.v1.GrantsService/ListActiveGrants",
 } as const;
 
 function GatedItem({
@@ -383,7 +401,8 @@ function GatedItem({
     gate === "audit" ||
     gate === "agent-skills" ||
     gate === "outside-agents" ||
-    gate === "inbound-missions"
+    gate === "inbound-missions" ||
+    gate === "grants"
   ) {
     return <AuthorizedNavGate method={GATE_METHOD[gate]}>{children}</AuthorizedNavGate>;
   }
@@ -423,19 +442,20 @@ export function NavMain() {
                             className="min-w-48 rounded-lg">
                             <DropdownMenuLabel>{item.title}</DropdownMenuLabel>
                             {item.items?.map((item) => (
-                              <DropdownMenuItem
-                                className="hover:text-foreground active:text-foreground hover:bg-[var(--primary)]/10! active:bg-[var(--primary)]/10!"
-                                asChild
-                                key={item.title}>
-                                <a href={item.href}>{item.title}</a>
-                              </DropdownMenuItem>
+                              <GatedItem key={item.title} gate={item.gate}>
+                                <DropdownMenuItem
+                                  className="hover:text-foreground active:text-foreground hover:bg-[var(--primary)]/10! active:bg-[var(--primary)]/10!"
+                                  asChild>
+                                  <a href={item.href}>{item.title}</a>
+                                </DropdownMenuItem>
+                              </GatedItem>
                             ))}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
                       <Collapsible
                         className="group/collapsible block group-data-[collapsible=icon]:hidden"
-                        defaultOpen={!!item.items.find((s) => s.href === pathname)}>
+                        defaultOpen={!!item.items.find((s) => pathname === s.href || pathname.startsWith(`${s.href}/`))}>
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton
                             className="hover:text-foreground active:text-foreground hover:bg-[var(--primary)]/10 active:bg-[var(--primary)]/10"
@@ -447,17 +467,19 @@ export function NavMain() {
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <SidebarMenuSub>
-                            {item?.items?.map((subItem, key) => (
-                              <SidebarMenuSubItem key={key}>
-                                <SidebarMenuSubButton
-                                  className="hover:text-foreground active:text-foreground hover:bg-[var(--primary)]/10 active:bg-[var(--primary)]/10"
-                                  isActive={pathname === subItem.href}
-                                  asChild>
-                                  <Link href={subItem.href} target={subItem.newTab ? "_blank" : ""} rel={subItem.newTab ? "noopener noreferrer" : undefined}>
-                                    <span>{subItem.title}</span>
-                                  </Link>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
+                            {item?.items?.map((subItem) => (
+                              <GatedItem key={subItem.title} gate={subItem.gate}>
+                                <SidebarMenuSubItem>
+                                  <SidebarMenuSubButton
+                                    className="hover:text-foreground active:text-foreground hover:bg-[var(--primary)]/10 active:bg-[var(--primary)]/10"
+                                    isActive={pathname === subItem.href}
+                                    asChild>
+                                    <Link href={subItem.href} target={subItem.newTab ? "_blank" : ""} rel={subItem.newTab ? "noopener noreferrer" : undefined}>
+                                      <span>{subItem.title}</span>
+                                    </Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              </GatedItem>
                             ))}
                           </SidebarMenuSub>
                         </CollapsibleContent>

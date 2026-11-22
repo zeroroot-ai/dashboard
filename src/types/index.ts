@@ -2,6 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 import type { PrincipalView } from '@/src/lib/banks/view';
+import type { FindingPriority, FindingStatus } from '@/src/lib/findings/status';
 
 /**
  * Base Type Definitions
@@ -85,13 +86,28 @@ export interface Finding {
   description: string;
   evidence?: Record<string, unknown>;
   remediation?: string;
-  affectedAssets: string[];
+  /** The places that the finding touches. Unset when the call gives no place. */
+  affectedAssets?: string[];
   discoveredAt: Date;
   taxonomy: TaxonomyReference;
   /** Who submitted the finding: the agent, or a person who filed it by hand. */
   submittedBy?: PrincipalView;
   /** The user id of the person who enrolled the submitting agent. */
   enrolledBy?: string;
+  /**
+   * The confidence of the check that raised the finding, from 0 to 1. The
+   * list call of the graph service returns it in `properties` (gibson#1498).
+   * The field stays unset when the daemon sends none, and the Findings page
+   * shows "unknown".
+   */
+  confidence?: number;
+  /** The status in the daemon. Unset when the daemon sends none. */
+  status?: FindingStatus;
+  /** P1 to P4, and the rule that gave it. Unset until the triage agent sets one. */
+  priority?: FindingPriority;
+  priorityRule?: string;
+  /** The URL of the merge request of the fix. Unset for a finding with no fix. */
+  mergeRequestUrl?: string;
 }
 
 interface FindingFilters {
@@ -412,21 +428,6 @@ interface ApiResponse<T> {
   error?: ApiError;
   timestamp: Date;
 }
-
-// ============================================================================
-// Re-export Analytics Types
-// ============================================================================
-
-export type {
-  KPIData,
-  TimeRange,
-  FindingsOverTime,
-  CategoryCount,
-  SeverityDistribution,
-  MissionHeatmap,
-  AgentPerformance,
-} from './analytics';
-
 
 // ============================================================================
 // Re-export Tenant Types

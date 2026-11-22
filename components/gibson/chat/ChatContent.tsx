@@ -24,8 +24,11 @@ import { toast } from 'sonner';
 import {
   Bot,
   Bug,
+  Briefcase,
+  ClipboardCheck,
+  Code,
+  Monitor,
   Search,
-  Zap,
   Activity,
   Shield,
   Plus,
@@ -94,10 +97,12 @@ import { apiFetch } from '@/src/lib/api/fetch';
 
 const AGENT_ICONS: Record<string, LucideIcon> = {
   bot: Bot,
-  search: Search,
-  zap: Zap,
   activity: Activity,
   shield: Shield,
+  briefcase: Briefcase,
+  monitor: Monitor,
+  code: Code,
+  'clipboard-check': ClipboardCheck,
 };
 
 function getAgentIcon(iconName?: string): LucideIcon {

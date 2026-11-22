@@ -126,42 +126,6 @@ function CardGridSkeleton({ count = 4, className }: CardGridSkeletonProps) {
   );
 }
 
-// ── KPICardsSkeleton ───────────────────────────────────────────────────────────
-
-interface KPICardsSkeletonProps {
-  className?: string;
-}
-
-/**
- * Skeleton row of 4 KPI cards matching the DashboardContent KpiCards layout:
- * 2 cols on mobile, 4 on large screens.
- */
-export function KPICardsSkeleton({ className }: KPICardsSkeletonProps) {
-  return (
-    <div
-      className={cn('grid grid-cols-2 gap-4 lg:grid-cols-4', className)}
-      role="status"
-      aria-label="Loading KPI data"
-      aria-busy="true"
-    >
-      {Array.from({ length: 4 }).map((_, idx) => (
-        <div
-          key={idx}
-          className="flex flex-col gap-3 overflow-hidden rounded-lg border border-highlight/30 bg-highlight/10/10 p-4"
-        >
-          {/* Card header: label + icon */}
-          <div className="flex items-center justify-between">
-            <Skeleton className={cn(SKEL, 'h-3 w-24')} />
-            <Skeleton className={cn(SKEL, 'h-4 w-4 rounded-sm')} />
-          </div>
-          {/* Large numeric value */}
-          <Skeleton className={cn(SKEL, 'h-8 w-16')} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ── PageHeaderSkeleton ─────────────────────────────────────────────────────────
 
 interface PageHeaderSkeletonProps {

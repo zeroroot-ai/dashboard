@@ -9,6 +9,11 @@ import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { requireActiveTenant, activeTenantApiResponse } from '@/src/lib/auth/active-tenant';
 import { userClient } from '@/src/lib/gibson-client';
 import { GraphService } from '@/src/gen/gibson/graph/v1/graph_pb';
+import { WorldService } from '@/src/gen/gibson/world/v1/world_pb';
+import { walkItems } from '@/src/lib/gibson-client/paging';
+import { logger } from '@/src/lib/logger';
+import { safeHttpUrl } from '@/src/lib/findings/open-findings';
+import { parseFindingPriority, parseFindingStatus } from '@/src/lib/findings/status';
 import type { Finding, PaginatedResponse } from '@/src/types';
 
 /**
@@ -16,6 +21,14 @@ import type { Finding, PaginatedResponse } from '@/src/types';
  *
  * Retrieve findings from the knowledge graph with filtering and pagination.
  * Calls GraphService.GetFindings, routes through Envoy + ext-authz.
+ *
+ * The status, the priority with its rule and the confidence come from the
+ * `properties` of GetFindings (gibson#1498). The place and the merge request
+ * come from WorldService.ListOpenFindings, which lists the findings that are
+ * not verified. A verified finding has no place and no merge request here.
+ * The route sets no constant for a field of a finding. When ListOpenFindings
+ * fails, the place and the merge request columns stay empty and the page of
+ * findings still loads.
  *
  * Spec: dashboard-neo4j-crud-removal (Phase 3, Task 11).
  */
@@ -46,17 +59,29 @@ export async function GET(request: NextRequest) {
     // for the first page.
     const pageToken = searchParams.get('cursor') ?? '';
 
-    const resp = await userClient(GraphService).getFindings({
-      severityFilter: severity,
-      categoryFilter: category,
-      missionId,
-      search,
-      pageSize: limit,
-      pageToken,
-    });
+    const [resp, open] = await Promise.all([
+      userClient(GraphService).getFindings({
+        severityFilter: severity,
+        categoryFilter: category,
+        missionId,
+        search,
+        pageSize: limit,
+        pageToken,
+      }),
+      walkItems('world.openFindings', async (pageSize, token) => {
+        const r = await userClient(WorldService).listOpenFindings({ pageSize, pageToken: token });
+        return { items: r.findings, nextPageToken: r.nextPageToken };
+      }).catch((err: unknown) => {
+        logger.warn({ err }, 'ListOpenFindings failed, so the place and merge request columns are empty');
+        return [];
+      }),
+    ]);
+    const openById = new Map(open.map((o) => [o.id, o]));
 
     const findings = resp.findings.map((f) => {
       const labels = f.labels;
+      const place = openById.get(f.id);
+      const confidence = Number(f.properties['confidence']);
       return {
         id: f.id,
         missionId: f.missionId || '',
@@ -64,10 +89,14 @@ export async function GET(request: NextRequest) {
         title: f.name || 'Unknown',
         description: f.description || '',
         severity: (f.severity || 'info') as Finding['severity'],
-        affectedAssets: [] as string[],
+        ...(place ? { affectedAssets: place.places.map((p) => p.label || p.key) } : {}),
         discoveredAt: f.createdAt ? new Date(Number(f.createdAt.seconds) * 1000) : new Date(),
         taxonomy: {},
-        status: 'open',
+        status: parseFindingStatus(f.properties['status']),
+        priority: parseFindingPriority(f.properties['priority']),
+        priorityRule: f.properties['priority_rule'] || undefined,
+        confidence: Number.isFinite(confidence) && confidence > 0 ? confidence : undefined,
+        mergeRequestUrl: place ? safeHttpUrl(place.mergeRequestUrl) || undefined : undefined,
         source: labels.includes('Vulnerability') ? 'vulnerability-scan' : 'agent',
         category: f.type || (labels.includes('Vulnerability') ? 'vulnerability' : 'finding'),
         missionName: f.properties['missionName'] || undefined,

@@ -22,9 +22,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import Link from 'next/link';
 import { ExternalLink, GitBranch, Crosshair, Pin, PinOff, EyeOff, Focus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { GraphNode } from '@/src/types/graph';
+import { incidentReportHref } from '@/src/lib/incidents/incident-report';
 
 interface NodeDetailPanelProps {
   node: GraphNode | null;
@@ -154,6 +156,21 @@ export function NodeDetailPanel({
                 Open in mission view
                 <ExternalLink className="w-3 h-3" />
               </a>
+            </div>
+          )}
+
+          {/* Incident report link */}
+          {node.labels.includes('Incident') && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground w-28 flex-shrink-0">Incident</span>
+              <Link
+                href={incidentReportHref(node.id)}
+                className="flex items-center gap-1 text-xs text-primary hover:underline"
+                data-testid="incident-report-link"
+              >
+                Open the incident report
+                <ExternalLink className="w-3 h-3" />
+              </Link>
             </div>
           )}
 

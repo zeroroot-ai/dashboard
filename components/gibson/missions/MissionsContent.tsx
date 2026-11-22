@@ -35,7 +35,6 @@ import { principalLabel, userIdsToResolve } from "@/src/lib/principals/label";
 import * as Kanban from "@/components/ui/kanban";
 
 import { TableSkeleton, ErrorAlert } from "@/components/gibson/shared";
-import { RunDemoMissionButton } from "./RunDemoMissionButton";
 import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import { MISSION_RUN_DENIED_COPY, MISSION_RUN_GATE_RPC, NewMissionButton } from "@/components/gibson/missions/NewMissionButton";
 import { AuthGatedButton } from "@/components/gibson/auth/AuthGatedButton";
@@ -470,10 +469,7 @@ export function MissionsContent() {
       {/* Header */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h1 className="text-xl font-bold tracking-tight font-mono lg:text-2xl">Mission Results</h1>
-        <div className="flex items-center gap-2">
-          <RunDemoMissionButton variant="outline" />
-          <NewMissionButton />
-        </div>
+        <NewMissionButton />
       </div>
 
       {/* Error state */}
@@ -495,9 +491,8 @@ export function MissionsContent() {
         <EmptyState
           icon={CrosshairIcon}
           title="No missions yet"
-          description="A mission orchestrates one or more agents against a target. Run the one-click demo to see findings flow in, or author your own."
-          primaryCta={<RunDemoMissionButton />}
-          secondaryCta={<NewMissionButton variant="ghost">Create your own</NewMissionButton>}
+          description="A mission orchestrates one or more agents against a target. Author one to start."
+          primaryCta={<NewMissionButton />}
         />
       )}
       {!isLoading && !error && missions.length > 0 && (

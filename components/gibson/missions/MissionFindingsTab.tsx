@@ -141,7 +141,7 @@ export function MissionFindingsTab({ missionId }: MissionFindingsTabProps) {
           cmp = a.type.localeCompare(b.type);
           break;
         case "asset":
-          cmp = (a.affectedAssets[0] ?? "").localeCompare(b.affectedAssets[0] ?? "");
+          cmp = (a.affectedAssets?.[0] ?? "").localeCompare(b.affectedAssets?.[0] ?? "");
           break;
         case "discovered":
           cmp = getDiscoveredTs(b.discoveredAt) - getDiscoveredTs(a.discoveredAt);
@@ -227,7 +227,7 @@ export function MissionFindingsTab({ missionId }: MissionFindingsTabProps) {
                 </TableCell>
                 <TableCell>
                   <span className="data-value text-xs">
-                    {finding.affectedAssets.join(", ") || "-"}
+                    {finding.affectedAssets?.join(", ") || "-"}
                   </span>
                 </TableCell>
                 <TableCell>

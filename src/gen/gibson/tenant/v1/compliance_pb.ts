@@ -27,7 +27,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/compliance.proto.
  */
 export const file_gibson_tenant_v1_compliance: GenFile = /*@__PURE__*/
-  fileDesc("CiFnaWJzb24vdGVuYW50L3YxL2NvbXBsaWFuY2UucHJvdG8SEGdpYnNvbi50ZW5hbnQudjEixgEKHUxpc3RDb21wbGlhbmNlRXZpZGVuY2VSZXF1ZXN0EhYKBHBhY2sYASABKAlCCLpIBXIDGIAIEi4KCnN0YXJ0X3RpbWUYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiwKCGVuZF90aW1lGAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCglwYWdlX3NpemUYBCABKAUSHAoKcGFnZV90b2tlbhgFIAEoCUIIukgFcgMYgAgi9wEKHkxpc3RDb21wbGlhbmNlRXZpZGVuY2VSZXNwb25zZRIMCgRwYWNrGAEgASgJEhQKDHBhY2tfdmVyc2lvbhgCIAEoBRIaChJjb250cm9sc193aXRoX3J1bGUYAyABKAUSFgoOY29udHJvbHNfdG90YWwYBCABKAUSMwoIY29udHJvbHMYBSADKAsyIS5naWJzb24udGVuYW50LnYxLkNvbnRyb2xFdmlkZW5jZRIvCgZldmVudHMYBiADKAsyHy5naWJzb24udGVuYW50LnYxLkV2aWRlbmNlRXZlbnQSFwoPbmV4dF9wYWdlX3Rva2VuGAcgASgJIrwCCg9Db250cm9sRXZpZGVuY2USEgoKY29udHJvbF9pZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIOCgZmYW1pbHkYAyABKAkSFAoMZmFtaWx5X3RpdGxlGAQgASgJEjYKBXN0YXRlGAUgASgOMicuZ2lic29uLnRlbmFudC52MS5Db250cm9sRXZpZGVuY2UuU3RhdGUSEwoLZXZlbnRfY291bnQYBiABKAMSMwoPbGFzdF9ldmVudF90aW1lGAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJeCgVTdGF0ZRIVChFTVEFURV9VTlNQRUNJRklFRBAAEhEKDVNUQVRFX05PX1JVTEUQARITCg9TVEFURV9OT19FVkVOVFMQAhIWChJTVEFURV9IQVNfRVZJREVOQ0UQAyK1AQoNRXZpZGVuY2VFdmVudBIXCg9hdWRpdF9yZWNvcmRfaWQYASABKAkSKAoEdGltZRgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDgoGYWN0aW9uGAMgASgJEhAKCGFjdG9yX2lkGAQgASgJEhUKDXJlc291cmNlX3R5cGUYBSABKAkSEwoLcmVzb3VyY2VfaWQYBiABKAkSEwoLY29udHJvbF9pZHMYByADKAkyvgEKEUNvbXBsaWFuY2VTZXJ2aWNlEqgBChZMaXN0Q29tcGxpYW5jZUV2aWRlbmNlEi8uZ2lic29uLnRlbmFudC52MS5MaXN0Q29tcGxpYW5jZUV2aWRlbmNlUmVxdWVzdBowLmdpYnNvbi50ZW5hbnQudjEuTGlzdENvbXBsaWFuY2VFdmlkZW5jZVJlc3BvbnNlIiuKtRgnCgVhZG1pbhIGdGVuYW50GhR0ZW5hbnRfZnJvbV9pZGVudGl0eSADQlRaUmdpdGh1Yi5jb20vemVyb3Jvb3QtYWkvZ2lic29uL2ludGVybmFsL3NlcnZlci9kYWVtb24vYXBpL2dpYnNvbi90ZW5hbnQvdjE7dGVuYW50djFiBnByb3RvMw", [file_buf_validate_validate, file_gibson_auth_v1_options, file_google_protobuf_timestamp]);
+  fileDesc("CiFnaWJzb24vdGVuYW50L3YxL2NvbXBsaWFuY2UucHJvdG8SEGdpYnNvbi50ZW5hbnQudjEixgEKHUxpc3RDb21wbGlhbmNlRXZpZGVuY2VSZXF1ZXN0EhYKBHBhY2sYASABKAlCCLpIBXIDGIAIEi4KCnN0YXJ0X3RpbWUYAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEiwKCGVuZF90aW1lGAMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCglwYWdlX3NpemUYBCABKAUSHAoKcGFnZV90b2tlbhgFIAEoCUIIukgFcgMYgAgi9wEKHkxpc3RDb21wbGlhbmNlRXZpZGVuY2VSZXNwb25zZRIMCgRwYWNrGAEgASgJEhQKDHBhY2tfdmVyc2lvbhgCIAEoBRIaChJjb250cm9sc193aXRoX3J1bGUYAyABKAUSFgoOY29udHJvbHNfdG90YWwYBCABKAUSMwoIY29udHJvbHMYBSADKAsyIS5naWJzb24udGVuYW50LnYxLkNvbnRyb2xFdmlkZW5jZRIvCgZldmVudHMYBiADKAsyHy5naWJzb24udGVuYW50LnYxLkV2aWRlbmNlRXZlbnQSFwoPbmV4dF9wYWdlX3Rva2VuGAcgASgJIv4CCg9Db250cm9sRXZpZGVuY2USEgoKY29udHJvbF9pZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIOCgZmYW1pbHkYAyABKAkSFAoMZmFtaWx5X3RpdGxlGAQgASgJEjYKBXN0YXRlGAUgASgOMicuZ2lic29uLnRlbmFudC52MS5Db250cm9sRXZpZGVuY2UuU3RhdGUSEwoLZXZlbnRfY291bnQYBiABKAMSMwoPbGFzdF9ldmVudF90aW1lGAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBJACg9jb3VudGVybWVhc3VyZXMYCCADKAsyJy5naWJzb24udGVuYW50LnYxLkNvbnRyb2xDb3VudGVybWVhc3VyZSJeCgVTdGF0ZRIVChFTVEFURV9VTlNQRUNJRklFRBAAEhEKDVNUQVRFX05PX1JVTEUQARITCg9TVEFURV9OT19FVkVOVFMQAhIWChJTVEFURV9IQVNfRVZJREVOQ0UQAyJdChVDb250cm9sQ291bnRlcm1lYXN1cmUSCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRIOCgZ0YWN0aWMYAyABKAkSGgoSbWFwcGVkX2NvbnRyb2xfaWRzGAQgAygJIrUBCg1FdmlkZW5jZUV2ZW50EhcKD2F1ZGl0X3JlY29yZF9pZBgBIAEoCRIoCgR0aW1lGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIOCgZhY3Rpb24YAyABKAkSEAoIYWN0b3JfaWQYBCABKAkSFQoNcmVzb3VyY2VfdHlwZRgFIAEoCRITCgtyZXNvdXJjZV9pZBgGIAEoCRITCgtjb250cm9sX2lkcxgHIAMoCTK+AQoRQ29tcGxpYW5jZVNlcnZpY2USqAEKFkxpc3RDb21wbGlhbmNlRXZpZGVuY2USLy5naWJzb24udGVuYW50LnYxLkxpc3RDb21wbGlhbmNlRXZpZGVuY2VSZXF1ZXN0GjAuZ2lic29uLnRlbmFudC52MS5MaXN0Q29tcGxpYW5jZUV2aWRlbmNlUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IANCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_buf_validate_validate, file_gibson_auth_v1_options, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message gibson.tenant.v1.ListComplianceEvidenceRequest
@@ -179,6 +179,15 @@ export type ControlEvidence = Message<"gibson.tenant.v1.ControlEvidence"> & {
    * @generated from field: google.protobuf.Timestamp last_event_time = 7;
    */
   lastEventTime?: Timestamp | undefined;
+
+  /**
+   * countermeasures are the countermeasures that the D3FEND pack maps to this
+   * control. They are set only when the tenant enabled the pack mitre-d3fend.
+   * A countermeasure is context for the control. It is not evidence.
+   *
+   * @generated from field: repeated gibson.tenant.v1.ControlCountermeasure countermeasures = 8;
+   */
+  countermeasures: ControlCountermeasure[];
 };
 
 /**
@@ -227,6 +236,47 @@ export enum ControlEvidence_State {
  */
 export const ControlEvidence_StateSchema: GenEnum<ControlEvidence_State> = /*@__PURE__*/
   enumDesc(file_gibson_tenant_v1_compliance, 2, 0);
+
+/**
+ * ControlCountermeasure names one D3FEND countermeasure next to a control.
+ *
+ * @generated from message gibson.tenant.v1.ControlCountermeasure
+ */
+export type ControlCountermeasure = Message<"gibson.tenant.v1.ControlCountermeasure"> & {
+  /**
+   * id is the D3FEND id of the countermeasure, for example "D3-FA".
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * tactic is the D3FEND tactic, for example "Detect".
+   *
+   * @generated from field: string tactic = 3;
+   */
+  tactic: string;
+
+  /**
+   * mapped_control_ids are the controls that D3FEND maps to the
+   * countermeasure, when they are this control or one of its enhancements.
+   *
+   * @generated from field: repeated string mapped_control_ids = 4;
+   */
+  mappedControlIds: string[];
+};
+
+/**
+ * Describes the message gibson.tenant.v1.ControlCountermeasure.
+ * Use `create(ControlCountermeasureSchema)` to create a new message.
+ */
+export const ControlCountermeasureSchema: GenMessage<ControlCountermeasure> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_compliance, 3);
 
 /**
  * EvidenceEvent is one audit record that is evidence for one control or
@@ -279,7 +329,7 @@ export type EvidenceEvent = Message<"gibson.tenant.v1.EvidenceEvent"> & {
  * Use `create(EvidenceEventSchema)` to create a new message.
  */
 export const EvidenceEventSchema: GenMessage<EvidenceEvent> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_compliance, 3);
+  messageDesc(file_gibson_tenant_v1_compliance, 4);
 
 /**
  * @generated from service gibson.tenant.v1.ComplianceService

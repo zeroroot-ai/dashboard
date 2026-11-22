@@ -46,7 +46,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/admin_tenant.proto.
  */
 export const file_gibson_tenant_v1_admin_tenant: GenFile = /*@__PURE__*/
-  fileDesc("CiNnaWJzb24vdGVuYW50L3YxL2FkbWluX3RlbmFudC5wcm90bxIQZ2lic29uLnRlbmFudC52MSLiAQoTUGVuZGluZ1JlZ2lzdHJhdGlvbhIXCg9yZWdpc3RyYXRpb25faWQYASABKAkSEwoLb3duZXJfZW1haWwYAiABKAkSFgoOd29ya3NwYWNlX25hbWUYAyABKAkSDAoEdGllchgEIAEoCRIYChBvd25lcl9maXJzdF9uYW1lGAUgASgJEhcKD293bmVyX2xhc3RfbmFtZRgGIAEoCRIvCgtyZWNlaXZlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBKBAgHEAhSDXJlZ2lzdGVyZWRfYXQiZAokQWRtaW5MaXN0UGVuZGluZ1JlZ2lzdHJhdGlvbnNSZXF1ZXN0EhEKCXBhZ2Vfc2l6ZRgCIAEoBRIcCgpwYWdlX3Rva2VuGAMgASgJQgi6SAVyAxiACEoECAEQAlIFbGltaXQifgolQWRtaW5MaXN0UGVuZGluZ1JlZ2lzdHJhdGlvbnNSZXNwb25zZRI8Cg1yZWdpc3RyYXRpb25zGAEgAygLMiUuZ2lic29uLnRlbmFudC52MS5QZW5kaW5nUmVnaXN0cmF0aW9uEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJGCh9BZG1pbkFwcHJvdmVSZWdpc3RyYXRpb25SZXF1ZXN0EiMKD3JlZ2lzdHJhdGlvbl9pZBgBIAEoCUIKukgHcgUQARiACCJdCiBBZG1pbkFwcHJvdmVSZWdpc3RyYXRpb25SZXNwb25zZRIRCgl0ZW5hbnRfaWQYASABKAkSFQoNb3duZXJfdXNlcl9pZBgCIAEoCRIPCgdwbGFuX2lkGAMgASgJImEKHkFkbWluUmVqZWN0UmVnaXN0cmF0aW9uUmVxdWVzdBIjCg9yZWdpc3RyYXRpb25faWQYASABKAlCCrpIB3IFEAEYgAgSGgoGcmVhc29uGAIgASgJQgq6SAdyBRiAgIAIIiEKH0FkbWluUmVqZWN0UmVnaXN0cmF0aW9uUmVzcG9uc2UilwEKG0FkbWluUHJvdmlzaW9uVGVuYW50UmVxdWVzdBIdCgl0ZW5hbnRfaWQYASABKAlCCrpIB3IFEAEYgAgSIAoMZGlzcGxheV9uYW1lGAIgASgJQgq6SAdyBRABGIAIEh8KC293bmVyX2VtYWlsGAMgASgJQgq6SAdyBRABGIAgEhYKBHRpZXIYBCABKAlCCLpIBXIDGIAgIi0KHEFkbWluUHJvdmlzaW9uVGVuYW50UmVzcG9uc2USDQoFb3BfaWQYASABKAkinQEKGEFkbWluVXBkYXRlVGVuYW50UmVxdWVzdBIdCgl0ZW5hbnRfaWQYASABKAlCCrpIB3IFEAEYgAgSFgoEdGllchgCIAEoCUIIukgFcgMYgCASEAoIdGllcl9zZXQYAyABKAgSHgoMZGlzcGxheV9uYW1lGAQgASgJQgi6SAVyAxiACBIYChBkaXNwbGF5X25hbWVfc2V0GAUgASgIIioKGUFkbWluVXBkYXRlVGVuYW50UmVzcG9uc2USDQoFb3BfaWQYASABKAkiOQoYQWRtaW5EZWxldGVUZW5hbnRSZXF1ZXN0Eh0KCXRlbmFudF9pZBgBIAEoCUIKukgHcgUQARiACCIqChlBZG1pbkRlbGV0ZVRlbmFudFJlc3BvbnNlEg0KBW9wX2lkGAEgASgJIh8KHUFkbWluR2V0UGxhdGZvcm1IZWFsdGhSZXF1ZXN0IoIBChNQbGF0Zm9ybVBsYW5lSGVhbHRoEg0KBXBsYW5lGAEgASgJEjMKBXN0YXRlGAIgASgOMiQuZ2lic29uLnRlbmFudC52MS5QbGF0Zm9ybVBsYW5lU3RhdGUSDgoGZGV0YWlsGAMgASgJEhcKD2NoZWNrZWRfYXRfdW5peBgEIAEoAyJXCh5BZG1pbkdldFBsYXRmb3JtSGVhbHRoUmVzcG9uc2USNQoGcGxhbmVzGAEgAygLMiUuZ2lic29uLnRlbmFudC52MS5QbGF0Zm9ybVBsYW5lSGVhbHRoKqIBChJQbGF0Zm9ybVBsYW5lU3RhdGUSJAogUExBVEZPUk1fUExBTkVfU1RBVEVfVU5TUEVDSUZJRUQQABIgChxQTEFURk9STV9QTEFORV9TVEFURV9IRUFMVEhZEAESIgoeUExBVEZPUk1fUExBTkVfU1RBVEVfVU5IRUFMVEhZEAISIAocUExBVEZPUk1fUExBTkVfU1RBVEVfVU5LTk9XThADMvoJChJBZG1pblRlbmFudFNlcnZpY2USqwEKFEFkbWluUHJvdmlzaW9uVGVuYW50Ei0uZ2lic29uLnRlbmFudC52MS5BZG1pblByb3Zpc2lvblRlbmFudFJlcXVlc3QaLi5naWJzb24udGVuYW50LnYxLkFkbWluUHJvdmlzaW9uVGVuYW50UmVzcG9uc2UiNIq1GDAKDnBsYXRmb3JtX293bmVyEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAESogEKEUFkbWluVXBkYXRlVGVuYW50EiouZ2lic29uLnRlbmFudC52MS5BZG1pblVwZGF0ZVRlbmFudFJlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkFkbWluVXBkYXRlVGVuYW50UmVzcG9uc2UiNIq1GDAKDnBsYXRmb3JtX293bmVyEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAESogEKEUFkbWluRGVsZXRlVGVuYW50EiouZ2lic29uLnRlbmFudC52MS5BZG1pbkRlbGV0ZVRlbmFudFJlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkFkbWluRGVsZXRlVGVuYW50UmVzcG9uc2UiNIq1GDAKDnBsYXRmb3JtX293bmVyEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAESxgEKHUFkbWluTGlzdFBlbmRpbmdSZWdpc3RyYXRpb25zEjYuZ2lic29uLnRlbmFudC52MS5BZG1pbkxpc3RQZW5kaW5nUmVnaXN0cmF0aW9uc1JlcXVlc3QaNy5naWJzb24udGVuYW50LnYxLkFkbWluTGlzdFBlbmRpbmdSZWdpc3RyYXRpb25zUmVzcG9uc2UiNIq1GDAKDnBsYXRmb3JtX293bmVyEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAEStwEKGEFkbWluQXBwcm92ZVJlZ2lzdHJhdGlvbhIxLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5BcHByb3ZlUmVnaXN0cmF0aW9uUmVxdWVzdBoyLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5BcHByb3ZlUmVnaXN0cmF0aW9uUmVzcG9uc2UiNIq1GDAKDnBsYXRmb3JtX293bmVyEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAEStAEKF0FkbWluUmVqZWN0UmVnaXN0cmF0aW9uEjAuZ2lic29uLnRlbmFudC52MS5BZG1pblJlamVjdFJlZ2lzdHJhdGlvblJlcXVlc3QaMS5naWJzb24udGVuYW50LnYxLkFkbWluUmVqZWN0UmVnaXN0cmF0aW9uUmVzcG9uc2UiNIq1GDAKDnBsYXRmb3JtX293bmVyEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAESsQEKFkFkbWluR2V0UGxhdGZvcm1IZWFsdGgSLy5naWJzb24udGVuYW50LnYxLkFkbWluR2V0UGxhdGZvcm1IZWFsdGhSZXF1ZXN0GjAuZ2lic29uLnRlbmFudC52MS5BZG1pbkdldFBsYXRmb3JtSGVhbHRoUmVzcG9uc2UiNIq1GDAKDnBsYXRmb3JtX293bmVyEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAFCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_google_protobuf_timestamp, file_gibson_auth_v1_options, file_buf_validate_validate]);
+  fileDesc("CiNnaWJzb24vdGVuYW50L3YxL2FkbWluX3RlbmFudC5wcm90bxIQZ2lic29uLnRlbmFudC52MSLgAQoTUGVuZGluZ1JlZ2lzdHJhdGlvbhIXCg9yZWdpc3RyYXRpb25faWQYASABKAkSEwoLb3duZXJfZW1haWwYAiABKAkSFgoOd29ya3NwYWNlX25hbWUYAyABKAkSGAoQb3duZXJfZmlyc3RfbmFtZRgFIAEoCRIXCg9vd25lcl9sYXN0X25hbWUYBiABKAkSLwoLcmVjZWl2ZWRfYXQYCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wSgQIBxAISgQIBBAFUg1yZWdpc3RlcmVkX2F0UgR0aWVyImQKJEFkbWluTGlzdFBlbmRpbmdSZWdpc3RyYXRpb25zUmVxdWVzdBIRCglwYWdlX3NpemUYAiABKAUSHAoKcGFnZV90b2tlbhgDIAEoCUIIukgFcgMYgAhKBAgBEAJSBWxpbWl0In4KJUFkbWluTGlzdFBlbmRpbmdSZWdpc3RyYXRpb25zUmVzcG9uc2USPAoNcmVnaXN0cmF0aW9ucxgBIAMoCzIlLmdpYnNvbi50ZW5hbnQudjEuUGVuZGluZ1JlZ2lzdHJhdGlvbhIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiRgofQWRtaW5BcHByb3ZlUmVnaXN0cmF0aW9uUmVxdWVzdBIjCg9yZWdpc3RyYXRpb25faWQYASABKAlCCrpIB3IFEAEYgAgiWwogQWRtaW5BcHByb3ZlUmVnaXN0cmF0aW9uUmVzcG9uc2USEQoJdGVuYW50X2lkGAEgASgJEhUKDW93bmVyX3VzZXJfaWQYAiABKAlKBAgDEARSB3BsYW5faWQiYQoeQWRtaW5SZWplY3RSZWdpc3RyYXRpb25SZXF1ZXN0EiMKD3JlZ2lzdHJhdGlvbl9pZBgBIAEoCUIKukgHcgUQARiACBIaCgZyZWFzb24YAiABKAlCCrpIB3IFGICAgAgiIQofQWRtaW5SZWplY3RSZWdpc3RyYXRpb25SZXNwb25zZSKLAQobQWRtaW5Qcm92aXNpb25UZW5hbnRSZXF1ZXN0Eh0KCXRlbmFudF9pZBgBIAEoCUIKukgHcgUQARiACBIgCgxkaXNwbGF5X25hbWUYAiABKAlCCrpIB3IFEAEYgAgSHwoLb3duZXJfZW1haWwYAyABKAlCCrpIB3IFEAEYgCBKBAgEEAVSBHRpZXIiLQocQWRtaW5Qcm92aXNpb25UZW5hbnRSZXNwb25zZRINCgVvcF9pZBgBIAEoCSKPAQoYQWRtaW5VcGRhdGVUZW5hbnRSZXF1ZXN0Eh0KCXRlbmFudF9pZBgBIAEoCUIKukgHcgUQARiACBIeCgxkaXNwbGF5X25hbWUYBCABKAlCCLpIBXIDGIAIEhgKEGRpc3BsYXlfbmFtZV9zZXQYBSABKAhKBAgCEANKBAgDEARSBHRpZXJSCHRpZXJfc2V0IioKGUFkbWluVXBkYXRlVGVuYW50UmVzcG9uc2USDQoFb3BfaWQYASABKAkiOQoYQWRtaW5EZWxldGVUZW5hbnRSZXF1ZXN0Eh0KCXRlbmFudF9pZBgBIAEoCUIKukgHcgUQARiACCIqChlBZG1pbkRlbGV0ZVRlbmFudFJlc3BvbnNlEg0KBW9wX2lkGAEgASgJIh8KHUFkbWluR2V0UGxhdGZvcm1IZWFsdGhSZXF1ZXN0IoIBChNQbGF0Zm9ybVBsYW5lSGVhbHRoEg0KBXBsYW5lGAEgASgJEjMKBXN0YXRlGAIgASgOMiQuZ2lic29uLnRlbmFudC52MS5QbGF0Zm9ybVBsYW5lU3RhdGUSDgoGZGV0YWlsGAMgASgJEhcKD2NoZWNrZWRfYXRfdW5peBgEIAEoAyJXCh5BZG1pbkdldFBsYXRmb3JtSGVhbHRoUmVzcG9uc2USNQoGcGxhbmVzGAEgAygLMiUuZ2lic29uLnRlbmFudC52MS5QbGF0Zm9ybVBsYW5lSGVhbHRoKqIBChJQbGF0Zm9ybVBsYW5lU3RhdGUSJAogUExBVEZPUk1fUExBTkVfU1RBVEVfVU5TUEVDSUZJRUQQABIgChxQTEFURk9STV9QTEFORV9TVEFURV9IRUFMVEhZEAESIgoeUExBVEZPUk1fUExBTkVfU1RBVEVfVU5IRUFMVEhZEAISIAocUExBVEZPUk1fUExBTkVfU1RBVEVfVU5LTk9XThADMvoJChJBZG1pblRlbmFudFNlcnZpY2USqwEKFEFkbWluUHJvdmlzaW9uVGVuYW50Ei0uZ2lic29uLnRlbmFudC52MS5BZG1pblByb3Zpc2lvblRlbmFudFJlcXVlc3QaLi5naWJzb24udGVuYW50LnYxLkFkbWluUHJvdmlzaW9uVGVuYW50UmVzcG9uc2UiNIq1GDAKDnBsYXRmb3JtX293bmVyEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAESogEKEUFkbWluVXBkYXRlVGVuYW50EiouZ2lic29uLnRlbmFudC52MS5BZG1pblVwZGF0ZVRlbmFudFJlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkFkbWluVXBkYXRlVGVuYW50UmVzcG9uc2UiNIq1GDAKDnBsYXRmb3JtX293bmVyEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAESogEKEUFkbWluRGVsZXRlVGVuYW50EiouZ2lic29uLnRlbmFudC52MS5BZG1pbkRlbGV0ZVRlbmFudFJlcXVlc3QaKy5naWJzb24udGVuYW50LnYxLkFkbWluRGVsZXRlVGVuYW50UmVzcG9uc2UiNIq1GDAKDnBsYXRmb3JtX293bmVyEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAESxgEKHUFkbWluTGlzdFBlbmRpbmdSZWdpc3RyYXRpb25zEjYuZ2lic29uLnRlbmFudC52MS5BZG1pbkxpc3RQZW5kaW5nUmVnaXN0cmF0aW9uc1JlcXVlc3QaNy5naWJzb24udGVuYW50LnYxLkFkbWluTGlzdFBlbmRpbmdSZWdpc3RyYXRpb25zUmVzcG9uc2UiNIq1GDAKDnBsYXRmb3JtX293bmVyEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAEStwEKGEFkbWluQXBwcm92ZVJlZ2lzdHJhdGlvbhIxLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5BcHByb3ZlUmVnaXN0cmF0aW9uUmVxdWVzdBoyLmdpYnNvbi50ZW5hbnQudjEuQWRtaW5BcHByb3ZlUmVnaXN0cmF0aW9uUmVzcG9uc2UiNIq1GDAKDnBsYXRmb3JtX293bmVyEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAEStAEKF0FkbWluUmVqZWN0UmVnaXN0cmF0aW9uEjAuZ2lic29uLnRlbmFudC52MS5BZG1pblJlamVjdFJlZ2lzdHJhdGlvblJlcXVlc3QaMS5naWJzb24udGVuYW50LnYxLkFkbWluUmVqZWN0UmVnaXN0cmF0aW9uUmVzcG9uc2UiNIq1GDAKDnBsYXRmb3JtX293bmVyEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAESsQEKFkFkbWluR2V0UGxhdGZvcm1IZWFsdGgSLy5naWJzb24udGVuYW50LnYxLkFkbWluR2V0UGxhdGZvcm1IZWFsdGhSZXF1ZXN0GjAuZ2lic29uLnRlbmFudC52MS5BZG1pbkdldFBsYXRmb3JtSGVhbHRoUmVzcG9uc2UiNIq1GDAKDnBsYXRmb3JtX293bmVyEg1zeXN0ZW1fdGVuYW50Gg1zeXN0ZW1fdGVuYW50IAFCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_google_protobuf_timestamp, file_gibson_auth_v1_options, file_buf_validate_validate]);
 
 /**
  * PendingRegistration is one registration awaiting an administrator's
@@ -75,14 +75,6 @@ export type PendingRegistration = Message<"gibson.tenant.v1.PendingRegistration"
    * @generated from field: string workspace_name = 3;
    */
   workspaceName: string;
-
-  /**
-   * tier is the optional plan they asked for, as they typed it. Gibson does
-   * not judge it. Step 2 of gibson#1531 deletes it.
-   *
-   * @generated from field: string tier = 4;
-   */
-  tier: string;
 
   /**
    * owner_first_name / owner_last_name are the profile fields they supplied.
@@ -210,14 +202,6 @@ export type AdminApproveRegistrationResponse = Message<"gibson.tenant.v1.AdminAp
    * @generated from field: string owner_user_id = 2;
    */
   ownerUserId: string;
-
-  /**
-   * plan_id is the plan id of the registration, the same value enqueued for
-   * the operator. Empty when the person gave none.
-   *
-   * @generated from field: string plan_id = 3;
-   */
-  planId: string;
 };
 
 /**
@@ -303,14 +287,6 @@ export type AdminProvisionTenantRequest = Message<"gibson.tenant.v1.AdminProvisi
    * @generated from field: string owner_email = 3;
    */
   ownerEmail: string;
-
-  /**
-   * tier becomes Tenant.spec.tier. It is optional, and an empty tier gives
-   * a Tenant with no spec.tier. Step 2 of gibson#1531 deletes it.
-   *
-   * @generated from field: string tier = 4;
-   */
-  tier: string;
 };
 
 /**
@@ -343,9 +319,8 @@ export const AdminProvisionTenantResponseSchema: GenMessage<AdminProvisionTenant
   messageDesc(file_gibson_tenant_v1_admin_tenant, 8);
 
 /**
- * AdminUpdateTenantRequest patches a tenant's tier and/or display name. At least
- * one of the *_set flags must be true. Mirrors updateTenantInput's optional
- * {tier?, displayName?}.
+ * AdminUpdateTenantRequest patches a tenant's display name. display_name_set
+ * must be true. Mirrors updateTenantInput's {displayName}.
  *
  * @generated from message gibson.tenant.v1.AdminUpdateTenantRequest
  */
@@ -356,21 +331,6 @@ export type AdminUpdateTenantRequest = Message<"gibson.tenant.v1.AdminUpdateTena
    * @generated from field: string tenant_id = 1;
    */
   tenantId: string;
-
-  /**
-   * tier is the new Tenant.spec.tier; applied only when tier_set is true.
-   *
-   * @generated from field: string tier = 2;
-   */
-  tier: string;
-
-  /**
-   * tier_set marks tier for application (distinguishes "set tier" from "leave
-   * tier untouched").
-   *
-   * @generated from field: bool tier_set = 3;
-   */
-  tierSet: boolean;
 
   /**
    * display_name is the new Tenant.spec.displayName; applied only when
@@ -584,7 +544,7 @@ export const AdminTenantService: GenService<{
   /**
    * AdminProvisionTenant records intent to create a new tenant. Replaces
    * provisionTenantAction's applyTenant() Tenant-CR create. The operator creates
-   * a Tenant CR with spec {displayName, owner, tier}. Idempotent on tenant_id:
+   * a Tenant CR with spec {displayName, owner}. Idempotent on tenant_id:
    * re-recording a provision for a slug whose Tenant CR the operator already
    * created is a no-op at apply time (the operator's existence check), so a
    * double-submit cannot double-provision.
@@ -597,11 +557,10 @@ export const AdminTenantService: GenService<{
     output: typeof AdminProvisionTenantResponseSchema;
   },
   /**
-   * AdminUpdateTenant records intent to patch a tenant's tier and/or display
-   * name. Replaces updateTenantAction's patchTenant({spec}). The operator
-   * patches Tenant.spec.tier / spec.displayName for the fields the request marks
-   * set; unset fields are left untouched. Idempotent: applying the same patch
-   * twice converges.
+   * AdminUpdateTenant records intent to patch a tenant's display name.
+   * Replaces updateTenantAction's patchTenant({spec}). The operator patches
+   * Tenant.spec.displayName when the request marks it set. Idempotent:
+   * applying the same patch twice converges.
    *
    * @generated from rpc gibson.tenant.v1.AdminTenantService.AdminUpdateTenant
    */
