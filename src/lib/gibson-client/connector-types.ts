@@ -23,6 +23,8 @@ export interface CatalogEntryDTO {
   auth: string;
   /** Vendor base URL to pre-fill into the authorize form (e.g. "https://gitlab.com"); empty when the vendor has no single default. */
   defaultInstanceUrl: string;
+  /** The one tool class of the manifest (ADR-0177), for example "siem". Empty when the entry names none. */
+  toolClass: string;
 }
 
 /** ConnectorDTO is one connector the tenant has enabled, with its live status. */

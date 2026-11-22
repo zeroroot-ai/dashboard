@@ -80,6 +80,7 @@ import type {
   ConnectorDTO as Connector,
   ConnectorAuthDTO as ConnectorAuth,
 } from "@/src/lib/gibson-client/connector-types";
+import { groupByToolClass, toolClassLabel } from "@/src/lib/gibson-client/tool-class";
 import { useAccessibleComponents } from "@/src/hooks/useAccessibleComponents";
 
 // Tenant-admin lifecycle RPCs (gibson#1553). Members must not see the
@@ -457,8 +458,16 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
-                {enabled.map((c) => {
+              <div className="space-y-6">
+                {groupByToolClass(enabled, catalog).map((group) => (
+                  <div key={group.toolClass || "unknown"} className="space-y-4" data-testid="tool-class-group">
+                    <h3
+                      className="text-muted-foreground text-xs font-mono uppercase tracking-widest"
+                      data-testid="tool-class-heading"
+                    >
+                      {toolClassLabel(group.toolClass)}
+                    </h3>
+                {group.connectors.map((c) => {
                   const entry = catalog.find((e) => e.id === c.id);
                   const isOAuth = entry?.auth === "oauth";
                   const isSecret = entry?.auth === "secret";
@@ -606,6 +615,8 @@ export function ConnectorsContent({ docsHref }: { docsHref: string }) {
                     </Card>
                   );
                 })}
+                  </div>
+                ))}
               </div>
             )}
           </section>

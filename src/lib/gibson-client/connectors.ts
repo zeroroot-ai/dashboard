@@ -37,6 +37,7 @@ function toCatalogDTO(e: CatalogEntry): CatalogEntryDTO {
     shape: e.shape,
     auth: e.auth,
     defaultInstanceUrl: e.defaultInstanceUrl,
+    toolClass: e.toolClass,
   };
 }
 
