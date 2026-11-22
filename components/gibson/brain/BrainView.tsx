@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Pause, Play, Radio, SkipBack, SkipForward } from "lucide-react";
 import {
   Card,
@@ -321,13 +321,13 @@ export function BrainView({
   );
 
   // Open the position of a link once. The Timeline must hold the event first.
-  const [openedLink, setOpenedLink] = useState<number | null>(null);
+  const openedLink = useRef<number | null>(null);
   useEffect(() => {
-    if (linkedSeq !== undefined && linkedSeq !== openedLink && linkedSeq < total) {
-      setOpenedLink(linkedSeq);
+    if (linkedSeq !== undefined && linkedSeq !== openedLink.current && linkedSeq < total) {
+      openedLink.current = linkedSeq;
       onSelectTick(linkedSeq);
     }
-  }, [linkedSeq, openedLink, total, onSelectTick]);
+  }, [linkedSeq, total, onSelectTick]);
 
   // Compute WHAT CHANGED at the selected tick by diffing the folded frame at
   // seq N-1 vs N (ADR-0101: World == fold(Timeline)). Both frames come from the
