@@ -21,10 +21,8 @@ export const WAITS_TEXT = {
   title: "What waits on a person?",
   count: (n: number) => (n === 1 ? "1 item waits" : `${n} items wait`),
   oldest: (age: string) => `Oldest: ${age}`,
-  oldestUnknown: "Oldest: unknown",
   empty: "Nothing waits on a person.",
   waitLabel: "Waiting",
-  waitUnknown: "unknown",
   blastRadius: "Blast radius",
   blastRadiusUnknown: "not stated",
   reversible: "Reversible",
@@ -136,6 +134,7 @@ export const ACTIONS_TEXT = {
   openAudit: "Open the audit log",
   truncated: "The period holds more audit records than one read returns. The counts are partial.",
   loadFailed: "The actions of the agents did not load.",
+  adminOnly: "Only an owner or an admin can read what the agents did.",
 } as const;
 
 export const DASHBOARD_TEXT = {

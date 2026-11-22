@@ -23,11 +23,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorAlert } from "@/components/gibson/shared/ErrorAlert";
 import { TableSkeleton } from "@/components/gibson/shared/DataSkeleton";
 import { useActionsByGrant } from "@/src/hooks/useActionsByGrant";
+import { useAuthorize } from "@/src/lib/auth/use-authorize";
 import { useSession } from "@/src/lib/session-client";
 import { useUserRefs } from "@/src/hooks/useUserRefs";
 import { grantLabel, type ActionGroupView } from "@/src/lib/actions/actions-by-grant";
 import { principalLabel, userIdsToResolve } from "@/src/lib/principals/label";
 import { ACTIONS_TEXT } from "./texts";
+
+/** The read of the actions needs the admin relation (gibson world.proto). */
+const ACTIONS_METHOD = "/gibson.world.v1.WorldService/ListActionsByGrant";
 
 const AUDIT_LOG_HREF = "/dashboard/organization/audit-log";
 
@@ -36,7 +40,9 @@ function localTime(iso: string): string {
 }
 
 export function ActionsPanel() {
-  const { data, isLoading, error, refetch } = useActionsByGrant();
+  const { allowed, loading: authLoading } = useAuthorize(ACTIONS_METHOD);
+  const canRead = allowed && !authLoading;
+  const { data, isLoading, error, refetch } = useActionsByGrant(canRead);
   const { data: session } = useSession();
   const myUserId = session?.user.id ?? null;
   const groups = data?.groups ?? [];
@@ -61,7 +67,13 @@ export function ActionsPanel() {
         <p className="text-xs text-muted-foreground">{ACTIONS_TEXT.period}</p>
       </CardHeader>
       <CardContent className="space-y-3">
-        {isLoading ? (
+        {authLoading ? (
+          <TableSkeleton rows={3} cols={3} />
+        ) : !allowed ? (
+          <p className="text-sm text-muted-foreground" data-testid="actions-admin-only">
+            {ACTIONS_TEXT.adminOnly}
+          </p>
+        ) : isLoading ? (
           <TableSkeleton rows={3} cols={3} />
         ) : error ? (
           <ErrorAlert error={error} title={ACTIONS_TEXT.loadFailed} retry={() => void refetch()} />
