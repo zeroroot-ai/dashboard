@@ -27,11 +27,10 @@ beforeEach(() => {
         kind: 'finding.raised',
         summary: '',
         time: { seconds: BigInt(1795168800), nanos: 0 },
-        replaySeq: BigInt(4),
         findingId: 'f1',
         mergeRequest: '',
       },
-      { seq: BigInt(5), kind: 'host.observed', summary: '', replaySeq: BigInt(6), findingId: '', mergeRequest: '' },
+      { seq: BigInt(5), kind: 'host.observed', summary: '', findingId: '', mergeRequest: '' },
     ],
     nextPageToken: '',
   });
@@ -50,7 +49,7 @@ describe('GET /api/world/finding-activity', () => {
     expect(getTimeline).toHaveBeenCalledWith(expect.objectContaining({ missionId: '', findingId: 'f1' }));
     expect(getExposure).toHaveBeenCalledWith({ findingId: 'f1' });
     expect(body.events).toEqual([
-      { seq: 3, replaySeq: 4, kind: 'finding.raised', time: '2026-11-20T10:00:00.000Z', label: 'Raised' },
+      { seq: 3, kind: 'finding.raised', time: '2026-11-20T10:00:00.000Z', label: 'Raised' },
     ]);
     expect(body.exposure).toEqual({ found: true, verified: false, totalSeconds: 100, waitSeconds: 40, agentSeconds: 60 });
     expect(body.truncated).toBe(false);

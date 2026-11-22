@@ -51,7 +51,6 @@ export async function GET(req: NextRequest) {
         seq: Number(e.seq),
         kind: e.kind,
         time: e.time ? timestampDate(e.time).toISOString() : '',
-        replaySeq: Number(e.replaySeq),
       })),
     );
     return NextResponse.json({

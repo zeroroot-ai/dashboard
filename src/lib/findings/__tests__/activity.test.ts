@@ -5,11 +5,11 @@ import { describe, it, expect } from "vitest";
 import { activityOfFinding, replayHref, type TimelineEventDto } from "../activity";
 
 const events: TimelineEventDto[] = [
-  { seq: 0, kind: "host.observed", time: "", replaySeq: 1 },
-  { seq: 4, kind: "merge_request.observed", time: "2026-11-20T10:20:30.500Z", replaySeq: 5 },
-  { seq: 1, kind: "finding.raised", time: "2026-11-20T10:00:00.000Z", replaySeq: 2 },
-  { seq: 9, kind: "finding.status_changed", time: "", replaySeq: 10 },
-  { seq: 8, kind: "check.rerun", time: "2026-11-20T10:50:00.000Z", replaySeq: 9 },
+  { seq: 0, kind: "host.observed", time: "" },
+  { seq: 4, kind: "merge_request.observed", time: "2026-11-20T10:20:30.500Z" },
+  { seq: 1, kind: "finding.raised", time: "2026-11-20T10:00:00.000Z" },
+  { seq: 9, kind: "finding.status_changed", time: "" },
+  { seq: 8, kind: "check.rerun", time: "2026-11-20T10:50:00.000Z" },
 ];
 
 describe("activityOfFinding", () => {
@@ -30,11 +30,10 @@ describe("activityOfFinding", () => {
     ]);
   });
 
-  it("passes the typed time and the replay seq through and parses no text", () => {
+  it("passes the typed time through and parses no text", () => {
     const a = activityOfFinding(events);
     expect(a[1].time).toBe("2026-11-20T10:20:30.500Z");
     expect(a[3].time).toBe("");
-    expect(a.map((e) => e.replaySeq)).toEqual([2, 5, 9, 10]);
   });
 });
 
