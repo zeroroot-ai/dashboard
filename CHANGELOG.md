@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.139.0](https://github.com/zeroroot-ai/dashboard/compare/v0.138.0...v0.139.0) (2026-11-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* one plan, no plan picker and no tier ([#408](https://github.com/zeroroot-ai/dashboard/issues/408))
+
+### Features
+
+* drop the active mission cap input and two signup test nits ([#412](https://github.com/zeroroot-ai/dashboard/issues/412)) ([2c64ecd](https://github.com/zeroroot-ai/dashboard/commit/2c64ecd41fbee52433e07eab542a2b195d9cfe51))
+* one plan, no plan picker and no tier ([#408](https://github.com/zeroroot-ai/dashboard/issues/408)) ([0407ba8](https://github.com/zeroroot-ai/dashboard/commit/0407ba88f3881eeb94bc976b022874f11c04f3d8))
+
 ## [0.138.0](https://github.com/zeroroot-ai/dashboard/compare/v0.137.0...v0.138.0) (2026-11-20)
 
 
