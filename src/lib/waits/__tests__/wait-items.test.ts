@@ -8,7 +8,6 @@ import {
   summarizeWaits,
   waitItemsFromApi,
   type WaitingItemDto,
-  waitMs,
 } from "../wait-items";
 import type { PendingDestructiveAction } from "@/src/types/destructive-actions";
 
@@ -29,8 +28,10 @@ function action(id: string, requestedAt: string, over: Partial<PendingDestructiv
   };
 }
 
+/** A daemon item. The wait is the time from `since` to NOW, as the daemon counts it. */
 function dto(kind: string, id: string, since: string): WaitingItemDto {
-  return { kind, id, since, waitedSeconds: 0 };
+  const waitedSeconds = since ? Math.max(0, Math.round((NOW - new Date(since).getTime()) / 1000)) : 0;
+  return { kind, id, since, waitedSeconds };
 }
 
 /** The wait items of destructive actions, with the details from the queue. */
@@ -55,7 +56,7 @@ describe("waitItemsFromApi", () => {
       blastRadius: "one host",
       reversibility: "irreversible",
     });
-    expect(waitMs(item, NOW)).toBe(2 * 3600_000);
+    expect(item.waitedMs).toBe(2 * 3600_000);
   });
 
   it("keeps a destructive action that is not in the queue, with unknown details", () => {
@@ -76,46 +77,50 @@ describe("waitItemsFromApi", () => {
     expect(items[0].href).toBe("/dashboard/findings/f%2F1");
   });
 
-  it("drops a kind that it does not know", () => {
-    expect(waitItemsFromApi([dto("new_kind", "x", "")], [])).toEqual([]);
+  it("gives each kind of a finding its own title, not the raw id", () => {
+    const items = waitItemsFromApi(
+      [dto("merge_refused", "f1", ""), dto("next_scan", "f2", ""), dto("no_health_signal", "f3", "")],
+      [],
+    );
+    expect(items.map((i) => i.title)).toEqual([
+      "Merge refused: f1",
+      "Waits for the next scan: f2",
+      "No health signal: f3",
+    ]);
   });
 
-  it("gives an unknown start time for an empty or invalid timestamp", () => {
-    const items = waitItemsFromDestructiveActions([action("a", ""), action("b", "not a date")]);
-    expect(items.map((i) => i.waitStartedAtMs)).toEqual([null, null]);
+  it("takes the wait from waitedSeconds of the daemon and ignores since", () => {
+    const [item] = waitItemsFromApi(
+      [{ kind: "next_scan", id: "f", since: "2020-01-01T00:00:00.000Z", waitedSeconds: 90 }],
+      [],
+    );
+    expect(item.waitedMs).toBe(90_000);
+  });
+
+  it("drops a kind that it does not know", () => {
+    expect(waitItemsFromApi([dto("new_kind", "x", "")], [])).toEqual([]);
   });
 });
 
 describe("sorting and summary", () => {
   const items = waitItemsFromDestructiveActions([
     action("new", "2026-11-20T11:30:00.000Z"),
-    action("unknown", ""),
+    action("none", ""),
     action("old", "2026-11-18T12:00:00.000Z"),
   ]);
 
-  it("puts the longest wait first and the unknown wait last", () => {
-    expect(sortByLongestWait(items, NOW).map((i) => i.title)).toEqual([
-      "tech-old",
-      "tech-new",
-      "tech-unknown",
-    ]);
+  it("puts the longest wait first", () => {
+    expect(sortByLongestWait(items).map((i) => i.title)).toEqual(["tech-old", "tech-new", "tech-none"]);
   });
 
-  it("counts every item and takes the oldest known wait", () => {
-    expect(summarizeWaits(items, NOW)).toEqual({ count: 3, oldestMs: 2 * 24 * 3600_000 });
-  });
-
-  it("gives a null oldest wait when no item has a known start", () => {
-    expect(summarizeWaits(waitItemsFromDestructiveActions([action("u", "")]), NOW)).toEqual({
-      count: 1,
-      oldestMs: null,
-    });
-    expect(summarizeWaits([], NOW)).toEqual({ count: 0, oldestMs: null });
+  it("counts every item and takes the oldest wait", () => {
+    expect(summarizeWaits(items)).toEqual({ count: 3, oldestMs: 2 * 24 * 3600_000 });
+    expect(summarizeWaits([])).toEqual({ count: 0, oldestMs: null });
   });
 
   it("never gives a negative wait", () => {
-    const [future] = waitItemsFromDestructiveActions([action("f", "2026-11-20T13:00:00.000Z")]);
-    expect(waitMs(future, NOW)).toBe(0);
+    const [bad] = waitItemsFromApi([{ kind: "next_scan", id: "f", since: "", waitedSeconds: -5 }], []);
+    expect(bad.waitedMs).toBe(0);
   });
 });
 

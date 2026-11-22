@@ -27,20 +27,9 @@ import {
   formatWait,
   sortByLongestWait,
   summarizeWaits,
-  waitMs,
   type WaitItem,
 } from "@/src/lib/waits/wait-items";
 import { WAITS_TEXT } from "./texts";
-
-/** The current time. It updates each minute, the unit of the wait text. */
-function useNowEveryMinute(): number {
-  const [now, setNow] = React.useState(() => Date.now());
-  React.useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 60_000);
-    return () => window.clearInterval(id);
-  }, []);
-  return now;
-}
 
 function reversibilityText(item: WaitItem): string | null {
   if (item.kind !== "destructive-action") return null;
@@ -49,8 +38,7 @@ function reversibilityText(item: WaitItem): string | null {
   return WAITS_TEXT.reversibilityUnknown;
 }
 
-function WaitRow({ item, nowMs }: { item: WaitItem; nowMs: number }) {
-  const wait = waitMs(item, nowMs);
+function WaitRow({ item }: { item: WaitItem }) {
   const reversibility = reversibilityText(item);
   return (
     <li
@@ -74,7 +62,7 @@ function WaitRow({ item, nowMs }: { item: WaitItem; nowMs: number }) {
       </div>
       <div className="flex items-center gap-3 text-xs">
         <span className="text-muted-foreground tabular-nums" data-testid="wait-age">
-          {WAITS_TEXT.waitLabel}: {wait === null ? WAITS_TEXT.waitUnknown : formatWait(wait)}
+          {WAITS_TEXT.waitLabel}: {formatWait(item.waitedMs)}
         </span>
         <Link href={item.href} className="underline underline-offset-2 hover:text-highlight">
           {WAITS_TEXT.open}
@@ -86,9 +74,8 @@ function WaitRow({ item, nowMs }: { item: WaitItem; nowMs: number }) {
 
 export function WaitsPanel() {
   const { items, isLoading, error, refetch } = useWaitItems();
-  const nowMs = useNowEveryMinute();
-  const sorted = React.useMemo(() => sortByLongestWait(items, nowMs), [items, nowMs]);
-  const summary = React.useMemo(() => summarizeWaits(items, nowMs), [items, nowMs]);
+  const sorted = React.useMemo(() => sortByLongestWait(items), [items]);
+  const summary = React.useMemo(() => summarizeWaits(items), [items]);
 
   return (
     <Card className="glass-hack border-highlight/40" data-testid="panel-waits">
@@ -104,9 +91,7 @@ export function WaitsPanel() {
             <span className="font-semibold">{WAITS_TEXT.count(summary.count)}</span>
             {summary.count > 0 && (
               <span className="text-muted-foreground">
-                {summary.oldestMs === null
-                  ? WAITS_TEXT.oldestUnknown
-                  : WAITS_TEXT.oldest(formatWait(summary.oldestMs))}
+                {WAITS_TEXT.oldest(formatWait(summary.oldestMs ?? 0))}
               </span>
             )}
           </p>
@@ -122,7 +107,7 @@ export function WaitsPanel() {
         ) : (
           <ul className="space-y-2">
             {sorted.map((item) => (
-              <WaitRow key={item.id} item={item} nowMs={nowMs} />
+              <WaitRow key={item.id} item={item} />
             ))}
           </ul>
         )}

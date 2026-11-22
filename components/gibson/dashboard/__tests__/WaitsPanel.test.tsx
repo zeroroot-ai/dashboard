@@ -2,7 +2,7 @@
 // Copyright 2026 Zero Root AI
 
 import * as React from "react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 
 const { useWaitItems } = vi.hoisted(() => ({ useWaitItems: vi.fn() }));
@@ -17,26 +17,19 @@ function mockQueue(items: unknown[], extra: Record<string, unknown> = {}) {
 }
 
 function item(id: string, requestedAt: string, over: Record<string, unknown> = {}) {
-  const t = requestedAt ? new Date(requestedAt).getTime() : null;
+  // The daemon counts the wait. The test derives it from a start time for readability.
+  const waitedMs = new Date(NOW).getTime() - new Date(requestedAt).getTime();
   return {
     kind: "destructive-action",
     id: `destructive-action:${id}`,
     title: `tech-${id}`,
-    waitStartedAtMs: t,
+    waitedMs,
     href: "/dashboard/destructive-actions",
     blastRadius: "",
     reversibility: "unspecified",
     ...over,
   };
 }
-
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.setSystemTime(NOW);
-});
-afterEach(() => {
-  vi.useRealTimers();
-});
 
 describe("WaitsPanel", () => {
   it("shows the count, the age of the oldest item and the longest wait first", () => {
@@ -71,11 +64,10 @@ describe("WaitsPanel", () => {
     );
   });
 
-  it("shows an unknown wait, never zero, when the request time is missing", () => {
-    mockQueue([item("a", "")]);
+  it("shows the wait that the daemon counts, not the time of the browser", () => {
+    mockQueue([item("a", "2026-11-20T11:00:00.000Z", { waitedMs: 5 * 60_000 })]);
     render(<WaitsPanel />);
-    expect(screen.getByTestId("wait-age").textContent).toBe("Waiting: unknown");
-    expect(screen.getByTestId("waits-summary").textContent).toContain("Oldest: unknown");
+    expect(screen.getByTestId("wait-age").textContent).toBe("Waiting: 5 min");
   });
 
   it("shows the four kinds, each with its wait and one link", () => {
