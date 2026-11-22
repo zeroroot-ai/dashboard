@@ -22,8 +22,16 @@ beforeEach(() => {
   getTimeline.mockReset();
   getTimeline.mockResolvedValue({
     events: [
-      { seq: BigInt(0), kind: 'finding.raised', summary: '{ID:f1 At:2026-11-20 10:00:00 +0000 UTC}' },
-      { seq: BigInt(1), kind: 'finding.raised', summary: '{ID:f2 At:2026-11-20 10:00:00 +0000 UTC}' },
+      {
+        seq: BigInt(3),
+        kind: 'finding.raised',
+        summary: '',
+        time: { seconds: BigInt(1795168800), nanos: 0 },
+        replaySeq: BigInt(4),
+        findingId: 'f1',
+        mergeRequest: '',
+      },
+      { seq: BigInt(5), kind: 'host.observed', summary: '', replaySeq: BigInt(6), findingId: '', mergeRequest: '' },
     ],
     nextPageToken: '',
   });
@@ -37,12 +45,12 @@ beforeEach(() => {
 });
 
 describe('GET /api/world/finding-activity', () => {
-  it('reads the tenant Timeline, keeps the events of the finding and returns its exposure', async () => {
+  it('asks the Timeline for the finding and returns its typed events and its exposure', async () => {
     const body = await (await GET(req('?finding=f1'))).json();
-    expect(getTimeline).toHaveBeenCalledWith(expect.objectContaining({ missionId: '' }));
+    expect(getTimeline).toHaveBeenCalledWith(expect.objectContaining({ missionId: '', findingId: 'f1' }));
     expect(getExposure).toHaveBeenCalledWith({ findingId: 'f1' });
     expect(body.events).toEqual([
-      { seq: 0, kind: 'finding.raised', time: '2026-11-20T10:00:00.000Z', label: 'Raised' },
+      { seq: 3, replaySeq: 4, kind: 'finding.raised', time: '2026-11-20T10:00:00.000Z', label: 'Raised' },
     ]);
     expect(body.exposure).toEqual({ found: true, verified: false, totalSeconds: 100, waitSeconds: 40, agentSeconds: 60 });
     expect(body.truncated).toBe(false);

@@ -7,6 +7,7 @@ import { daemonErrorResponse } from '@/src/lib/api-errors';
 import { userClient } from '@/src/lib/gibson-client';
 import { isInvalidArgument, walkPages } from '@/src/lib/gibson-client/paging';
 import { activityOfFinding } from '@/src/lib/findings/activity';
+import { timestampDate } from '@bufbuild/protobuf/wkt';
 import { WorldService } from '@/src/gen/gibson/world/v1/world_pb';
 
 /**
@@ -14,8 +15,8 @@ import { WorldService } from '@/src/gen/gibson/world/v1/world_pb';
  *
  * The events of one finding on the Timeline, and its exposure window split
  * into agent time and wait time (WorldService.GetTimeline and GetExposure,
- * gibson#1467). GetTimeline has no filter by finding, so the route reads the
- * Timeline of the tenant and keeps the events of the finding. `truncated` is
+ * gibson#1467). GetTimeline keeps only the events of the finding when the
+ * request names it. `truncated` is
  * true when the read stopped at the page bound before the end of the Timeline.
  */
 export async function GET(req: NextRequest) {
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest) {
     const [timeline, exposure] = await Promise.all([
       walkPages(
         async (pageSize, pageToken) => {
-          const r = await client.getTimeline({ missionId: '', pageSize, pageToken });
+          const r = await client.getTimeline({ missionId: '', findingId, pageSize, pageToken });
           return { items: r.events, nextPageToken: r.nextPageToken };
         },
         { restartOnce: isInvalidArgument },
@@ -46,8 +47,12 @@ export async function GET(req: NextRequest) {
       client.getExposure({ findingId }),
     ]);
     const events = activityOfFinding(
-      timeline.items.map((e) => ({ seq: Number(e.seq), kind: e.kind, summary: e.summary })),
-      findingId,
+      timeline.items.map((e) => ({
+        seq: Number(e.seq),
+        kind: e.kind,
+        time: e.time ? timestampDate(e.time).toISOString() : '',
+        replaySeq: Number(e.replaySeq),
+      })),
     );
     return NextResponse.json({
       events,
