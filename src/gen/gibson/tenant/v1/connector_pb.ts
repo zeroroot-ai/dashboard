@@ -27,7 +27,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file gibson/tenant/v1/connector.proto.
  */
 export const file_gibson_tenant_v1_connector: GenFile = /*@__PURE__*/
-  fileDesc("CiBnaWJzb24vdGVuYW50L3YxL2Nvbm5lY3Rvci5wcm90bxIQZ2lic29uLnRlbmFudC52MSKAAQoMQ2F0YWxvZ0VudHJ5EgoKAmlkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRINCgVzaGFwZRgEIAEoCRIMCgRhdXRoGAUgASgJEhwKFGRlZmF1bHRfaW5zdGFuY2VfdXJsGAYgASgJIhQKEkxpc3RDYXRhbG9nUmVxdWVzdCJGChNMaXN0Q2F0YWxvZ1Jlc3BvbnNlEi8KB2VudHJpZXMYASADKAsyHi5naWJzb24udGVuYW50LnYxLkNhdGFsb2dFbnRyeSI2ChZFbmFibGVDb25uZWN0b3JSZXF1ZXN0EhwKCmNhdGFsb2dfaWQYASABKAlCCLpIBXIDGIAIIjsKF0VuYWJsZUNvbm5lY3RvclJlc3BvbnNlEhEKCWNvbm5lY3RvchgBIAEoCRINCgVwaGFzZRgCIAEoCSJ0CglDb25uZWN0b3ISCgoCaWQYASABKAkSDQoFc2hhcGUYAiABKAkSDwoHcnVudGltZRgDIAEoCRINCgVwaGFzZRgEIAEoCRIYChBkaXNjb3ZlcmVkX3Rvb2xzGAUgASgFEhIKCmxhc3RfZXJyb3IYBiABKAkiFwoVTGlzdENvbm5lY3RvcnNSZXF1ZXN0IkkKFkxpc3RDb25uZWN0b3JzUmVzcG9uc2USLwoKY29ubmVjdG9ycxgBIAMoCzIbLmdpYnNvbi50ZW5hbnQudjEuQ29ubmVjdG9yIjYKF0Rpc2FibGVDb25uZWN0b3JSZXF1ZXN0EhsKCWNvbm5lY3RvchgBIAEoCUIIukgFcgMYgCAiGgoYRGlzYWJsZUNvbm5lY3RvclJlc3BvbnNlMuAEChBDb25uZWN0b3JTZXJ2aWNlEogBCgtMaXN0Q2F0YWxvZxIkLmdpYnNvbi50ZW5hbnQudjEuTGlzdENhdGFsb2dSZXF1ZXN0GiUuZ2lic29uLnRlbmFudC52MS5MaXN0Q2F0YWxvZ1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKTAQoPRW5hYmxlQ29ubmVjdG9yEiguZ2lic29uLnRlbmFudC52MS5FbmFibGVDb25uZWN0b3JSZXF1ZXN0GikuZ2lic29uLnRlbmFudC52MS5FbmFibGVDb25uZWN0b3JSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKRAQoOTGlzdENvbm5lY3RvcnMSJy5naWJzb24udGVuYW50LnYxLkxpc3RDb25uZWN0b3JzUmVxdWVzdBooLmdpYnNvbi50ZW5hbnQudjEuTGlzdENvbm5lY3RvcnNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSlgEKEERpc2FibGVDb25uZWN0b3ISKS5naWJzb24udGVuYW50LnYxLkRpc2FibGVDb25uZWN0b3JSZXF1ZXN0GiouZ2lic29uLnRlbmFudC52MS5EaXNhYmxlQ29ubmVjdG9yUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IANCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_gibson_auth_v1_options, file_buf_validate_validate]);
+  fileDesc("CiBnaWJzb24vdGVuYW50L3YxL2Nvbm5lY3Rvci5wcm90bxIQZ2lic29uLnRlbmFudC52MSL7AQoMQ2F0YWxvZ0VudHJ5EgoKAmlkGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRINCgVzaGFwZRgEIAEoCRIMCgRhdXRoGAUgASgJEhwKFGRlZmF1bHRfaW5zdGFuY2VfdXJsGAYgASgJEhIKCnRvb2xfY2xhc3MYByABKAkSGQoRZW5kcG9pbnRfcGF0dGVybnMYCCADKAkSFAoMb2F1dGhfY2xpZW50GAkgASgJEjQKCXZhcmlhYmxlcxgKIAMoCzIhLmdpYnNvbi50ZW5hbnQudjEuQ2F0YWxvZ1ZhcmlhYmxlIj8KD0NhdGFsb2dWYXJpYWJsZRIMCgRuYW1lGAEgASgJEgwKBGtpbmQYAiABKAkSEAoIcGF0dGVybnMYAyADKAkiFAoSTGlzdENhdGFsb2dSZXF1ZXN0IkYKE0xpc3RDYXRhbG9nUmVzcG9uc2USLwoHZW50cmllcxgBIAMoCzIeLmdpYnNvbi50ZW5hbnQudjEuQ2F0YWxvZ0VudHJ5IrYCChZFbmFibGVDb25uZWN0b3JSZXF1ZXN0EhwKCmNhdGFsb2dfaWQYASABKAlCCLpIBXIDGIAIEhoKCGVuZHBvaW50GAIgASgJQgi6SAVyAxiAEBIhCg9vYXV0aF9jbGllbnRfaWQYAyABKAlCCLpIBXIDGIAEEioKGG9hdXRoX2NsaWVudF9zZWNyZXRfbmFtZRgEIAEoCUIIukgFcgMYgAQSYQoJdmFyaWFibGVzGAUgAygLMjcuZ2lic29uLnRlbmFudC52MS5FbmFibGVDb25uZWN0b3JSZXF1ZXN0LlZhcmlhYmxlc0VudHJ5QhW6SBKaAQ8QCCIEcgIYQCoFcgMYgBAaMAoOVmFyaWFibGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASI7ChdFbmFibGVDb25uZWN0b3JSZXNwb25zZRIRCgljb25uZWN0b3IYASABKAkSDQoFcGhhc2UYAiABKAkiiwIKCUNvbm5lY3RvchIKCgJpZBgBIAEoCRINCgVzaGFwZRgCIAEoCRIPCgdydW50aW1lGAMgASgJEg0KBXBoYXNlGAQgASgJEhgKEGRpc2NvdmVyZWRfdG9vbHMYBSABKAUSEgoKbGFzdF9lcnJvchgGIAEoCRISCgp0b29sX2NsYXNzGAcgASgJEhAKCGVuZHBvaW50GAggASgJEj0KCXZhcmlhYmxlcxgJIAMoCzIqLmdpYnNvbi50ZW5hbnQudjEuQ29ubmVjdG9yLlZhcmlhYmxlc0VudHJ5GjAKDlZhcmlhYmxlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiFwoVTGlzdENvbm5lY3RvcnNSZXF1ZXN0IkkKFkxpc3RDb25uZWN0b3JzUmVzcG9uc2USLwoKY29ubmVjdG9ycxgBIAMoCzIbLmdpYnNvbi50ZW5hbnQudjEuQ29ubmVjdG9yIjYKF0Rpc2FibGVDb25uZWN0b3JSZXF1ZXN0EhsKCWNvbm5lY3RvchgBIAEoCUIIukgFcgMYgCAiGgoYRGlzYWJsZUNvbm5lY3RvclJlc3BvbnNlMuAEChBDb25uZWN0b3JTZXJ2aWNlEogBCgtMaXN0Q2F0YWxvZxIkLmdpYnNvbi50ZW5hbnQudjEuTGlzdENhdGFsb2dSZXF1ZXN0GiUuZ2lic29uLnRlbmFudC52MS5MaXN0Q2F0YWxvZ1Jlc3BvbnNlIiyKtRgoCgZtZW1iZXISBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKTAQoPRW5hYmxlQ29ubmVjdG9yEiguZ2lic29uLnRlbmFudC52MS5FbmFibGVDb25uZWN0b3JSZXF1ZXN0GikuZ2lic29uLnRlbmFudC52MS5FbmFibGVDb25uZWN0b3JSZXNwb25zZSIrirUYJwoFYWRtaW4SBnRlbmFudBoUdGVuYW50X2Zyb21faWRlbnRpdHkgAxKRAQoOTGlzdENvbm5lY3RvcnMSJy5naWJzb24udGVuYW50LnYxLkxpc3RDb25uZWN0b3JzUmVxdWVzdBooLmdpYnNvbi50ZW5hbnQudjEuTGlzdENvbm5lY3RvcnNSZXNwb25zZSIsirUYKAoGbWVtYmVyEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IAMSlgEKEERpc2FibGVDb25uZWN0b3ISKS5naWJzb24udGVuYW50LnYxLkRpc2FibGVDb25uZWN0b3JSZXF1ZXN0GiouZ2lic29uLnRlbmFudC52MS5EaXNhYmxlQ29ubmVjdG9yUmVzcG9uc2UiK4q1GCcKBWFkbWluEgZ0ZW5hbnQaFHRlbmFudF9mcm9tX2lkZW50aXR5IANCVFpSZ2l0aHViLmNvbS96ZXJvcm9vdC1haS9naWJzb24vaW50ZXJuYWwvc2VydmVyL2RhZW1vbi9hcGkvZ2lic29uL3RlbmFudC92MTt0ZW5hbnR2MWIGcHJvdG8z", [file_gibson_auth_v1_options, file_buf_validate_validate]);
 
 /**
  * CatalogEntry is one curated connector the tenant may enable.
@@ -74,6 +74,44 @@ export type CatalogEntry = Message<"gibson.tenant.v1.CatalogEntry"> & {
    * @generated from field: string default_instance_url = 6;
    */
   defaultInstanceUrl: string;
+
+  /**
+   * tool_class is the tool class of the connector (ADR-0177): siem, edr,
+   * scanner, identity, cloud, observability, git-host, ticket, paging or
+   * patch.
+   *
+   * @generated from field: string tool_class = 7;
+   */
+  toolClass: string;
+
+  /**
+   * endpoint_patterns are the endpoints that a tenant may give when it enables
+   * a Remote connector (gibson#1534). Empty means the entry takes no tenant
+   * endpoint. A pattern is an https URL. Its host is exact or starts with one
+   * wildcard label, and a path segment can be one "*".
+   *
+   * @generated from field: repeated string endpoint_patterns = 8;
+   */
+  endpointPatterns: string[];
+
+  /**
+   * oauth_client is "dynamic" when the daemon registers an OAuth client at the
+   * vendor, and "tenant" when the tenant registers it and gives the client id
+   * and the name of the secret at enable time (gibson#1538). It is empty for an
+   * entry that does not use OAuth.
+   *
+   * @generated from field: string oauth_client = 9;
+   */
+  oauthClient: string;
+
+  /**
+   * variables are the values that a tenant gives when it enables a Hosted
+   * connector (gibson#1508). A connector with variables takes a value for each
+   * of them in EnableConnectorRequest.variables.
+   *
+   * @generated from field: repeated gibson.tenant.v1.CatalogVariable variables = 10;
+   */
+  variables: CatalogVariable[];
 };
 
 /**
@@ -82,6 +120,42 @@ export type CatalogEntry = Message<"gibson.tenant.v1.CatalogEntry"> & {
  */
 export const CatalogEntrySchema: GenMessage<CatalogEntry> = /*@__PURE__*/
   messageDesc(file_gibson_tenant_v1_connector, 0);
+
+/**
+ * CatalogVariable declares one value that a tenant gives for a Hosted
+ * connector, for example the address of its own Ansible Automation Platform.
+ *
+ * @generated from message gibson.tenant.v1.CatalogVariable
+ */
+export type CatalogVariable = Message<"gibson.tenant.v1.CatalogVariable"> & {
+  /**
+   * name is the key of the value in EnableConnectorRequest.variables.
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * kind is "endpoint": an https URL of a public DNS name.
+   *
+   * @generated from field: string kind = 2;
+   */
+  kind: string;
+
+  /**
+   * patterns limit the value. Empty means any public DNS name.
+   *
+   * @generated from field: repeated string patterns = 3;
+   */
+  patterns: string[];
+};
+
+/**
+ * Describes the message gibson.tenant.v1.CatalogVariable.
+ * Use `create(CatalogVariableSchema)` to create a new message.
+ */
+export const CatalogVariableSchema: GenMessage<CatalogVariable> = /*@__PURE__*/
+  messageDesc(file_gibson_tenant_v1_connector, 1);
 
 /**
  * @generated from message gibson.tenant.v1.ListCatalogRequest
@@ -94,7 +168,7 @@ export type ListCatalogRequest = Message<"gibson.tenant.v1.ListCatalogRequest"> 
  * Use `create(ListCatalogRequestSchema)` to create a new message.
  */
 export const ListCatalogRequestSchema: GenMessage<ListCatalogRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_connector, 1);
+  messageDesc(file_gibson_tenant_v1_connector, 2);
 
 /**
  * @generated from message gibson.tenant.v1.ListCatalogResponse
@@ -111,7 +185,7 @@ export type ListCatalogResponse = Message<"gibson.tenant.v1.ListCatalogResponse"
  * Use `create(ListCatalogResponseSchema)` to create a new message.
  */
 export const ListCatalogResponseSchema: GenMessage<ListCatalogResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_connector, 2);
+  messageDesc(file_gibson_tenant_v1_connector, 3);
 
 /**
  * @generated from message gibson.tenant.v1.EnableConnectorRequest
@@ -123,6 +197,44 @@ export type EnableConnectorRequest = Message<"gibson.tenant.v1.EnableConnectorRe
    * @generated from field: string catalog_id = 1;
    */
   catalogId: string;
+
+  /**
+   * endpoint is the MCP endpoint of a Remote connector with endpoint_patterns
+   * (gibson#1534). The daemon refuses an endpoint outside the patterns. Empty
+   * selects the default endpoint of the catalog entry.
+   *
+   * @generated from field: string endpoint = 2;
+   */
+  endpoint: string;
+
+  /**
+   * oauth_client_id is the id of the OAuth client that the tenant registered at
+   * its identity provider. It is required when the entry has
+   * oauth_client = "tenant", and refused otherwise (gibson#1538).
+   *
+   * @generated from field: string oauth_client_id = 3;
+   */
+  oauthClientId: string;
+
+  /**
+   * oauth_client_secret_name is the name of the secret in the secret store of
+   * the tenant that holds the client secret. The request never carries the
+   * secret value. It is required with oauth_client_id.
+   *
+   * @generated from field: string oauth_client_secret_name = 4;
+   */
+  oauthClientSecretName: string;
+
+  /**
+   * variables are the values for the variables of a Hosted connector, by
+   * name (gibson#1508). The daemon refuses a missing value, a value that the
+   * entry does not declare, and a value that breaks the rules of the entry: an
+   * https URL of a public DNS name, with no IP address, no private or cluster
+   * name and no system port. The egress of the connector follows the values.
+   *
+   * @generated from field: map<string, string> variables = 5;
+   */
+  variables: { [key: string]: string };
 };
 
 /**
@@ -130,7 +242,7 @@ export type EnableConnectorRequest = Message<"gibson.tenant.v1.EnableConnectorRe
  * Use `create(EnableConnectorRequestSchema)` to create a new message.
  */
 export const EnableConnectorRequestSchema: GenMessage<EnableConnectorRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_connector, 3);
+  messageDesc(file_gibson_tenant_v1_connector, 4);
 
 /**
  * @generated from message gibson.tenant.v1.EnableConnectorResponse
@@ -156,7 +268,7 @@ export type EnableConnectorResponse = Message<"gibson.tenant.v1.EnableConnectorR
  * Use `create(EnableConnectorResponseSchema)` to create a new message.
  */
 export const EnableConnectorResponseSchema: GenMessage<EnableConnectorResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_connector, 4);
+  messageDesc(file_gibson_tenant_v1_connector, 5);
 
 /**
  * Connector is one enabled connector and its live status.
@@ -196,6 +308,30 @@ export type Connector = Message<"gibson.tenant.v1.Connector"> & {
    * @generated from field: string last_error = 6;
    */
   lastError: string;
+
+  /**
+   * tool_class is the tool class of the catalog entry of the connector. It is
+   * empty when the connector left the catalog.
+   *
+   * @generated from field: string tool_class = 7;
+   */
+  toolClass: string;
+
+  /**
+   * endpoint is the endpoint that the tenant gave. It is empty when the
+   * connector uses the default endpoint of the catalog entry.
+   *
+   * @generated from field: string endpoint = 8;
+   */
+  endpoint: string;
+
+  /**
+   * variables are the values that the tenant gave for the variables of a Hosted
+   * connector. A value is the URL of a host and never a credential.
+   *
+   * @generated from field: map<string, string> variables = 9;
+   */
+  variables: { [key: string]: string };
 };
 
 /**
@@ -203,7 +339,7 @@ export type Connector = Message<"gibson.tenant.v1.Connector"> & {
  * Use `create(ConnectorSchema)` to create a new message.
  */
 export const ConnectorSchema: GenMessage<Connector> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_connector, 5);
+  messageDesc(file_gibson_tenant_v1_connector, 6);
 
 /**
  * @generated from message gibson.tenant.v1.ListConnectorsRequest
@@ -216,7 +352,7 @@ export type ListConnectorsRequest = Message<"gibson.tenant.v1.ListConnectorsRequ
  * Use `create(ListConnectorsRequestSchema)` to create a new message.
  */
 export const ListConnectorsRequestSchema: GenMessage<ListConnectorsRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_connector, 6);
+  messageDesc(file_gibson_tenant_v1_connector, 7);
 
 /**
  * @generated from message gibson.tenant.v1.ListConnectorsResponse
@@ -233,7 +369,7 @@ export type ListConnectorsResponse = Message<"gibson.tenant.v1.ListConnectorsRes
  * Use `create(ListConnectorsResponseSchema)` to create a new message.
  */
 export const ListConnectorsResponseSchema: GenMessage<ListConnectorsResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_connector, 7);
+  messageDesc(file_gibson_tenant_v1_connector, 8);
 
 /**
  * @generated from message gibson.tenant.v1.DisableConnectorRequest
@@ -250,7 +386,7 @@ export type DisableConnectorRequest = Message<"gibson.tenant.v1.DisableConnector
  * Use `create(DisableConnectorRequestSchema)` to create a new message.
  */
 export const DisableConnectorRequestSchema: GenMessage<DisableConnectorRequest> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_connector, 8);
+  messageDesc(file_gibson_tenant_v1_connector, 9);
 
 /**
  * @generated from message gibson.tenant.v1.DisableConnectorResponse
@@ -263,7 +399,7 @@ export type DisableConnectorResponse = Message<"gibson.tenant.v1.DisableConnecto
  * Use `create(DisableConnectorResponseSchema)` to create a new message.
  */
 export const DisableConnectorResponseSchema: GenMessage<DisableConnectorResponse> = /*@__PURE__*/
-  messageDesc(file_gibson_tenant_v1_connector, 9);
+  messageDesc(file_gibson_tenant_v1_connector, 10);
 
 /**
  * @generated from service gibson.tenant.v1.ConnectorService
