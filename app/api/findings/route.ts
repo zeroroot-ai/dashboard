@@ -11,6 +11,7 @@ import { userClient } from '@/src/lib/gibson-client';
 import { GraphService } from '@/src/gen/gibson/graph/v1/graph_pb';
 import { WorldService } from '@/src/gen/gibson/world/v1/world_pb';
 import { walkItems } from '@/src/lib/gibson-client/paging';
+import { logger } from '@/src/lib/logger';
 import { safeHttpUrl } from '@/src/lib/findings/open-findings';
 import { parseFindingPriority, parseFindingStatus } from '@/src/lib/findings/status';
 import type { Finding, PaginatedResponse } from '@/src/types';
@@ -25,7 +26,9 @@ import type { Finding, PaginatedResponse } from '@/src/types';
  * `properties` of GetFindings (gibson#1498). The place and the merge request
  * come from WorldService.ListOpenFindings, which lists the findings that are
  * not verified. A verified finding has no place and no merge request here.
- * The route sets no constant for a field of a finding.
+ * The route sets no constant for a field of a finding. When ListOpenFindings
+ * fails, the place and the merge request columns stay empty and the page of
+ * findings still loads.
  *
  * Spec: dashboard-neo4j-crud-removal (Phase 3, Task 11).
  */
@@ -68,6 +71,9 @@ export async function GET(request: NextRequest) {
       walkItems('world.openFindings', async (pageSize, token) => {
         const r = await userClient(WorldService).listOpenFindings({ pageSize, pageToken: token });
         return { items: r.findings, nextPageToken: r.nextPageToken };
+      }).catch((err: unknown) => {
+        logger.warn({ err }, 'ListOpenFindings failed, so the place and merge request columns are empty');
+        return [];
       }),
     ]);
     const openById = new Map(open.map((o) => [o.id, o]));

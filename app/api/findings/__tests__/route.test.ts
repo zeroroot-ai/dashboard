@@ -65,6 +65,26 @@ describe('GET /api/findings page tokens', () => {
   });
 });
 
+describe('GET /api/findings when ListOpenFindings fails', () => {
+  it('still returns the findings, with no place and no merge request', async () => {
+    mockGetFindings.mockResolvedValue({
+      findings: [{ id: 'f1', name: 'A', severity: 'high', labels: [], properties: { status: 'open' } }],
+      total: BigInt(1),
+      nextPageToken: '',
+    });
+    mockListOpen.mockRejectedValue(new Error('world unavailable'));
+
+    const res = await GET(request());
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0]).toMatchObject({ id: 'f1', status: 'open' });
+    expect(body.data[0].affectedAssets).toBeUndefined();
+    expect(body.data[0].mergeRequestUrl).toBeUndefined();
+  });
+});
+
 describe('GET /api/findings lifecycle fields', () => {
   it('reads the status, the priority and the confidence from properties and the place from the open findings', async () => {
     mockGetFindings.mockResolvedValue({
