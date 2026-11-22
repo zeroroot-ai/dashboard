@@ -199,6 +199,13 @@ describe('BrainView, a Timeline position from a link', () => {
     }, FOLD_TIMEOUT);
   });
 
+  it('opens the newest event of the Timeline, whose frame is the total', async () => {
+    render(<BrainView seq={1} />);
+    await waitFor(() => {
+      expect(fetched).toContain('/api/world/frame?seq=2');
+    }, FOLD_TIMEOUT);
+  });
+
   it('ignores a position that the Timeline does not hold', async () => {
     render(<BrainView seq={99} />);
     await screen.findByText(/2 \/ 2 events/);

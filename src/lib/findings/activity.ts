@@ -6,8 +6,7 @@
  * that belong to one finding, in Timeline order.
  *
  * GetTimeline keeps the events of one finding when the request names the
- * finding. Each event carries its own time, its replay seq, and the finding
- * and merge request that it names. This file reads those typed fields and
+ * finding. Each event carries its own time. This file reads those typed fields and
  * parses no text.
  */
 
@@ -17,15 +16,11 @@ export interface TimelineEventDto {
   kind: string;
   /** ISO time, or empty when the event holds no time. */
   time: string;
-  /** The seq to give the World frame call for the frame just after the event. */
-  replaySeq: number;
 }
 
 export interface FindingActivityEvent {
   /** The position on the Timeline. */
   seq: number;
-  /** The seq of the replay frame after the event. */
-  replaySeq: number;
   kind: string;
   /** ISO time, or empty when the event holds no time. */
   time: string;
@@ -51,7 +46,6 @@ export function activityOfFinding(events: readonly TimelineEventDto[]): FindingA
     .filter((e) => e.kind in KIND_LABELS)
     .map((e) => ({
       seq: e.seq,
-      replaySeq: e.replaySeq,
       kind: e.kind,
       time: e.time,
       label: KIND_LABELS[e.kind],
@@ -59,7 +53,10 @@ export function activityOfFinding(events: readonly TimelineEventDto[]): FindingA
     .sort((a, b) => a.seq - b.seq);
 }
 
-/** The page of the replay frame after an event. */
-export function replayHref(replaySeq: number): string {
-  return `/dashboard/world?seq=${replaySeq}`;
+/**
+ * The page of the replay of an event. The link holds the seq of the event.
+ * The World page selects that event and opens the frame just after it.
+ */
+export function replayHref(seq: number): string {
+  return `/dashboard/world?seq=${seq}`;
 }

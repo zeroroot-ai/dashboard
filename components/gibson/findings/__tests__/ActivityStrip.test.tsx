@@ -14,8 +14,8 @@ function mock(over: Record<string, unknown> = {}) {
   useFindingActivity.mockReturnValue({
     data: {
       events: [
-        { seq: 3, replaySeq: 4, kind: "finding.raised", time: "2026-11-20T10:00:00.000Z", label: "Raised" },
-        { seq: 9, replaySeq: 10, kind: "finding.status_changed", time: "", label: "Status changed: verified" },
+        { seq: 3, kind: "finding.raised", time: "2026-11-20T10:00:00.000Z", label: "Raised" },
+        { seq: 9, kind: "finding.status_changed", time: "", label: "Status changed: verified" },
       ],
       truncated: false,
       exposure: { found: true, verified: true, totalSeconds: 7200, waitSeconds: 1800, agentSeconds: 5400 },
@@ -33,8 +33,8 @@ describe("ActivityStrip", () => {
     render(<ActivityStrip findingId="f1" />);
     expect(screen.getAllByTestId("activity-event")).toHaveLength(2);
     expect(screen.getAllByTestId("activity-event-replay").map((a) => a.getAttribute("href"))).toEqual([
-      "/dashboard/world?seq=4",
-      "/dashboard/world?seq=10",
+      "/dashboard/world?seq=3",
+      "/dashboard/world?seq=9",
     ]);
     expect(screen.getAllByTestId("activity-event-time")[1].textContent).toBe("time unknown");
   });

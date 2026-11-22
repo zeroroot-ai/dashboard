@@ -2,11 +2,13 @@
 // Copyright 2026 Zero Root AI
 
 import * as React from "react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 const { useActionsByGrant } = vi.hoisted(() => ({ useActionsByGrant: vi.fn() }));
 vi.mock("@/src/hooks/useActionsByGrant", () => ({ useActionsByGrant }));
+const { useAuthorize } = vi.hoisted(() => ({ useAuthorize: vi.fn() }));
+vi.mock("@/src/lib/auth/use-authorize", () => ({ useAuthorize }));
 vi.mock("@/src/lib/session-client", () => ({ useSession: () => ({ data: { user: { id: "me" } } }) }));
 vi.mock("@/src/hooks/useUserRefs", () => ({
   useUserRefs: () => ({
@@ -40,7 +42,31 @@ function mock(groups: unknown[], truncated = false) {
   });
 }
 
+describe("ActionsPanel without the admin relation", () => {
+  it.each(["member", "viewer"])("shows a permission note and reads nothing for a %s", (_role) => {
+    useAuthorize.mockReturnValue({ allowed: false, loading: false });
+    mock([group()]);
+    render(<ActionsPanel />);
+    expect(screen.getByTestId("actions-admin-only")).toBeInTheDocument();
+    expect(screen.queryByTestId("action-group")).toBeNull();
+    expect(screen.queryByText("The actions of the agents did not load.")).toBeNull();
+    expect(useActionsByGrant).toHaveBeenLastCalledWith(false);
+  });
+
+  it("shows no permission note while the check runs", () => {
+    useAuthorize.mockReturnValue({ allowed: false, loading: true });
+    mock([]);
+    render(<ActionsPanel />);
+    expect(screen.queryByTestId("actions-admin-only")).toBeNull();
+    expect(useActionsByGrant).toHaveBeenLastCalledWith(false);
+  });
+});
+
 describe("ActionsPanel", () => {
+  beforeEach(() => {
+    useAuthorize.mockReturnValue({ allowed: true, loading: false });
+  });
+
   it("groups the actions by grant and by grantor", () => {
     mock([group(), group({ grantObject: "connector:chat", grantor: "me", count: 1 })]);
     render(<ActionsPanel />);

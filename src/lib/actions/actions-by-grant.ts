@@ -51,7 +51,7 @@ function toGroup(g: ActionGroup): ActionGroupView {
   };
 }
 
-export function toActionsByGrant(r: ListActionsByGrantResponse): ActionsByGrant {
+export function toActionsByGrant(r: Pick<ListActionsByGrantResponse, "groups" | "truncated">): ActionsByGrant {
   return { groups: r.groups.map(toGroup), truncated: r.truncated };
 }
 

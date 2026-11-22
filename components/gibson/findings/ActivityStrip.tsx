@@ -73,7 +73,7 @@ export function ActivityStrip({ findingId }: { findingId: string }) {
                     {localTime(e.time)}
                   </span>
                   <Link
-                    href={replayHref(e.replaySeq)}
+                    href={replayHref(e.seq)}
                     className="underline underline-offset-2 hover:text-highlight"
                     data-testid="activity-event-replay"
                   >

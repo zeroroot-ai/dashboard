@@ -26,7 +26,7 @@ export interface WaitingItemDto {
   kind: string;
   /** The id of the finding, or of the hypothesis for a destructive action. */
   id: string;
-  /** ISO time when the wait started. Empty when the daemon sends none. */
+  /** ISO time when the wait started. Empty when the daemon sends none. The wait uses `waitedSeconds`, never this time. */
   since: string;
   waitedSeconds: number;
 }
@@ -36,8 +36,8 @@ interface WaitItemBase {
   id: string;
   /** What waits, in one line. */
   title: string;
-  /** Epoch milliseconds when the wait started. Null when the source gives no time. */
-  waitStartedAtMs: number | null;
+  /** The wait so far in milliseconds, as the daemon counts it. */
+  waitedMs: number;
   /** The one place where a person acts. */
   href: string;
 }
@@ -80,9 +80,16 @@ const FINDING_KINDS = {
   no_health_signal: "no-health-signal",
 } as const;
 
-function startMs(since: string): number | null {
-  const t = since ? new Date(since).getTime() : Number.NaN;
-  return Number.isFinite(t) ? t : null;
+/** The title of a wait on a finding: what waits, then the id of the finding. */
+const FINDING_TITLES = {
+  merge_refused: "Merge refused",
+  next_scan: "Waits for the next scan",
+  no_health_signal: "No health signal",
+} as const;
+
+/** The wait in milliseconds. A negative or invalid count gives zero. */
+function waitedMsOf(seconds: number): number {
+  return Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : 0;
 }
 
 /**
@@ -98,14 +105,14 @@ export function waitItemsFromApi(
   const byHypothesis = new Map(destructive.map((a) => [a.hypothesisId || a.id, a]));
   const out: WaitItem[] = [];
   for (const it of items) {
-    const waitStartedAtMs = startMs(it.since);
+    const waitedMs = waitedMsOf(it.waitedSeconds);
     if (it.kind === "destructive_action") {
       const action = byHypothesis.get(it.id);
       out.push({
         kind: "destructive-action",
         id: `destructive-action:${it.id}`,
         title: action?.technique || it.id,
-        waitStartedAtMs,
+        waitedMs,
         href: DESTRUCTIVE_ACTIONS_HREF,
         blastRadius: action?.blastRadius ?? "",
         reversibility: action?.reversibility ?? "unspecified",
@@ -116,8 +123,8 @@ export function waitItemsFromApi(
       out.push({
         kind: FINDING_KINDS[it.kind],
         id: `${FINDING_KINDS[it.kind]}:${it.id}`,
-        title: it.id,
-        waitStartedAtMs,
+        title: `${FINDING_TITLES[it.kind]}: ${it.id}`,
+        waitedMs,
         href: `/dashboard/findings/${encodeURIComponent(it.id)}`,
       });
     }
@@ -125,35 +132,21 @@ export function waitItemsFromApi(
   return out;
 }
 
-/** The wait of an item in milliseconds. Null when the start is unknown. Never negative. */
-export function waitMs(item: WaitItem, nowMs: number): number | null {
-  if (item.waitStartedAtMs === null) return null;
-  return Math.max(0, nowMs - item.waitStartedAtMs);
-}
-
-/** Longest wait first. An item with an unknown wait comes last. */
-export function sortByLongestWait(items: readonly WaitItem[], nowMs: number): WaitItem[] {
-  return [...items].sort((a, b) => {
-    const wa = waitMs(a, nowMs);
-    const wb = waitMs(b, nowMs);
-    if (wa === null && wb === null) return 0;
-    if (wa === null) return 1;
-    if (wb === null) return -1;
-    return wb - wa;
-  });
+/** Longest wait first. */
+export function sortByLongestWait(items: readonly WaitItem[]): WaitItem[] {
+  return [...items].sort((a, b) => b.waitedMs - a.waitedMs);
 }
 
 export interface WaitSummary {
   count: number;
-  /** The wait of the oldest item. Null when no item has a known wait. */
+  /** The wait of the oldest item. Null when no item waits. */
   oldestMs: number | null;
 }
 
-export function summarizeWaits(items: readonly WaitItem[], nowMs: number): WaitSummary {
+export function summarizeWaits(items: readonly WaitItem[]): WaitSummary {
   let oldest: number | null = null;
   for (const item of items) {
-    const w = waitMs(item, nowMs);
-    if (w !== null && (oldest === null || w > oldest)) oldest = w;
+    if (oldest === null || item.waitedMs > oldest) oldest = item.waitedMs;
   }
   return { count: items.length, oldestMs: oldest };
 }

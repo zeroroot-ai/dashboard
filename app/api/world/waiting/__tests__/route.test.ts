@@ -20,6 +20,7 @@ beforeEach(() => {
       { kind: 'merge_refused', id: 'f1', since: { seconds: BigInt(1_700_000_000), nanos: 0 }, waitedSeconds: BigInt(90) },
       { kind: 'next_scan', id: 'f2', waitedSeconds: BigInt(5) },
     ],
+    nextPageToken: '',
   });
 });
 
@@ -30,6 +31,17 @@ describe('GET /api/world/waiting', () => {
       { kind: 'merge_refused', id: 'f1', since: '2023-11-14T22:13:20.000Z', waitedSeconds: 90 },
       { kind: 'next_scan', id: 'f2', since: '', waitedSeconds: 5 },
     ]);
+  });
+
+  it('reads every page', async () => {
+    listWaitingOnPerson.mockReset();
+    listWaitingOnPerson
+      .mockResolvedValueOnce({ items: [{ kind: 'next_scan', id: 'a', waitedSeconds: BigInt(1) }], nextPageToken: 'p2' })
+      .mockResolvedValueOnce({ items: [{ kind: 'next_scan', id: 'b', waitedSeconds: BigInt(2) }], nextPageToken: '' });
+    const body = await (await GET()).json();
+    expect(listWaitingOnPerson).toHaveBeenCalledTimes(2);
+    expect(listWaitingOnPerson.mock.calls[1][0]).toMatchObject({ pageToken: 'p2' });
+    expect(body.items.map((i: { id: string }) => i.id)).toEqual(['a', 'b']);
   });
 
   it('answers 401 with no session', async () => {
