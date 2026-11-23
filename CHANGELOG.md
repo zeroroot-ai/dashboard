@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.140.0](https://github.com/zeroroot-ai/dashboard/compare/v0.139.0...v0.140.0) (2026-11-23)
+
+
+### Features
+
+* **connectors:** group the enabled connectors by tool class ([#414](https://github.com/zeroroot-ai/dashboard/issues/414)) ([8451de1](https://github.com/zeroroot-ai/dashboard/commit/8451de1abfc36084b7c95ea2370779bb0871e7ea))
+* **dashboard:** replace the first screen with the blue team console ([#413](https://github.com/zeroroot-ai/dashboard/issues/413)) ([6149685](https://github.com/zeroroot-ai/dashboard/commit/6149685a28405b715e1a1676de3d2e8fd2583897))
+
+
+### Bug Fixes
+
+* **authz:** regenerate the registry from sdk v0.215.0 and gibson v0.170.0 ([#417](https://github.com/zeroroot-ai/dashboard/issues/417)) ([86ea013](https://github.com/zeroroot-ai/dashboard/commit/86ea01300f0ca6bdacbbfb2401f65bd0a89d6288))
+
 ## [0.139.0](https://github.com/zeroroot-ai/dashboard/compare/v0.138.0...v0.139.0) (2026-11-21)
 
 
